@@ -58,9 +58,9 @@ class _MyHeaderState extends State<MyHeader> {
               child: Text(
                 'Skip',
                 style: TextStyle(
-                  color: whiteColor,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
+                  color: textMuted,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
                 ),
               ),
             ),

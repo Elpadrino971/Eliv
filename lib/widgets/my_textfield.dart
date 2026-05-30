@@ -1,3 +1,4 @@
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -83,9 +84,10 @@ class MyTextField extends StatelessWidget {
         onFieldSubmitted: onSubmit,
         textAlign: textAlign ?? TextAlign.start,
         style: TextStyle(
+          fontFamily: AppFonts.body,
           fontSize: fontSize ?? 14,
           fontWeight: fontWeight,
-          color: textColor ?? (Get.isDarkMode ? whiteColor : blackColor),
+          color: textColor ?? (Get.isDarkMode ? ivory : blackColor),
         ),
         onTap: onTap,
         autofocus: autoFocus,
@@ -100,47 +102,50 @@ class MyTextField extends StatelessWidget {
         onChanged: onChanged,
         cursorHeight: 20,
         maxLength: maxLength,
-        cursorColor: Get.isDarkMode ? whiteColor : blackColor,
+        cursorColor: Get.isDarkMode ? goldPrimary : blackColor,
         decoration: InputDecoration(
           fillColor:
               fillColor ??
               (Get.isDarkMode ? cardDeep : Color(0xffFAFAFA)),
           filled: filled,
-          contentPadding: contentPadding ?? const EdgeInsets.all(12.0),
+          contentPadding: contentPadding ?? const EdgeInsets.all(14.0),
           suffixIcon: trailing,
           prefixIcon: leading,
           counterText: '',
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(borderRadius ?? 15),
             borderSide: BorderSide(
-              color: borderColor ?? Colors.transparent,
-
+              color:
+                  borderColor ??
+                  (Get.isDarkMode
+                      ? goldSecondary.withValues(alpha: 0.25)
+                      : Colors.transparent),
               width: 1,
             ),
           ),
           focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(
-              color: borderColor ?? Colors.transparent,
-
-              width: 1,
+              color: borderColor ?? goldPrimary,
+              width: 1.4,
             ),
             borderRadius: BorderRadius.circular(borderRadius ?? 15),
           ),
           border: OutlineInputBorder(
             borderSide: BorderSide(
-              color: borderColor ?? Colors.transparent,
-
+              color:
+                  borderColor ??
+                  (Get.isDarkMode
+                      ? goldSecondary.withValues(alpha: 0.25)
+                      : Colors.transparent),
               width: 1,
             ),
             borderRadius: BorderRadius.circular(borderRadius ?? 15),
           ),
           hintStyle: TextStyle(
-            color:
-                hintColor ??
-                (Get.isDarkMode ? Color(0xffFAFAFA) : cardDeep),
+            fontFamily: AppFonts.body,
+            color: hintColor ?? (Get.isDarkMode ? textMuted : greyColor),
             fontSize: hintSize ?? 13,
             fontWeight: hintWeight,
-
             fontStyle: isHintItalic ? FontStyle.italic : FontStyle.normal,
           ),
           hintText: hintText,

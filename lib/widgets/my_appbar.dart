@@ -1,5 +1,5 @@
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
-import 'package:artist/widgets/my_default_text.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -17,16 +17,22 @@ class MyAppbar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       actions: actions,
-      title: MyDefaultText(
-        text: title,
-        fontSize: 16,
-        color: Get.isDarkMode ? whiteColor : blackColor,
+      title: Text(
+        title,
+        style: TextStyle(
+          fontFamily: AppFonts.ui,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1,
+          color: Get.isDarkMode ? ivory : blackColor,
+        ),
       ),
-      backgroundColor: Get.isDarkMode ? cardDeep : whiteColor,
-      surfaceTintColor: whiteColor,
-      elevation: 2,
+      backgroundColor: Get.isDarkMode ? midnightPrimary : whiteColor,
+      surfaceTintColor: Get.isDarkMode ? midnightPrimary : whiteColor,
+      foregroundColor: Get.isDarkMode ? goldPrimary : blackColor,
+      iconTheme: IconThemeData(color: Get.isDarkMode ? goldPrimary : blackColor),
+      elevation: 0,
       centerTitle: true,
-      shadowColor: blackColor,
     );
   }
 }

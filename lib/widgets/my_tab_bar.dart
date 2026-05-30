@@ -1,3 +1,4 @@
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -43,8 +44,12 @@ class _MyTabBarState extends State<MyTabBar> {
       child: Container(
         height: Get.height * 0.05,
         decoration: BoxDecoration(
-          color: Color(0xffF8F9FA),
-          border: Border.all(color: blackColor.withValues(alpha: 0.2)),
+          color: Get.isDarkMode ? cardDeep : Color(0xffF8F9FA),
+          border: Border.all(
+            color: Get.isDarkMode
+                ? goldSecondary.withValues(alpha: 0.25)
+                : blackColor.withValues(alpha: 0.2),
+          ),
           borderRadius: BorderRadius.circular(15),
         ),
         child: TabBar(
@@ -52,27 +57,27 @@ class _MyTabBarState extends State<MyTabBar> {
 
           overlayColor: WidgetStatePropertyAll(Colors.transparent),
           indicator: BoxDecoration(
-            // Dynamic border radius based on selected tab
-            borderRadius: BorderRadius.circular(15),
-            color: Get.isDarkMode ? goldPrimary : mainThemeColor,
-            border: Border.all(
-              color: Get.isDarkMode ? goldPrimary : mainThemeColor,
-            ),
+            borderRadius: BorderRadius.circular(13),
+            gradient: kGoldGradient,
           ),
-          dividerHeight: 1,
+          dividerHeight: 0,
           labelStyle: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: widget.selectedSize ?? 15,
+            fontFamily: AppFonts.ui,
+            fontWeight: FontWeight.w700,
+            fontSize: widget.selectedSize ?? 14,
+            letterSpacing: 0.8,
           ),
           controller: widget.tabController,
-          labelColor: whiteColor,
+          labelColor: midnightPrimary,
           unselectedLabelStyle: TextStyle(
+            fontFamily: AppFonts.ui,
             fontWeight: FontWeight.w500,
-            fontSize: widget.unselectedSize ?? 15,
+            fontSize: widget.unselectedSize ?? 14,
+            letterSpacing: 0.8,
           ),
-          unselectedLabelColor: blackColor,
-          indicatorColor: widget.indicatorColor ?? mainThemeColor,
-          indicatorWeight: 3,
+          unselectedLabelColor: Get.isDarkMode ? textMuted : blackColor,
+          indicatorColor: Colors.transparent,
+          indicatorWeight: 0.1,
           dividerColor: Colors.transparent,
           indicatorSize: TabBarIndicatorSize.tab,
           tabs: [

@@ -1,3 +1,4 @@
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -59,21 +60,12 @@ class MyButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius ?? 30),
         child: Ink(
           decoration: BoxDecoration(
-            // gradient:
-
-            // buttonColor!=null? null:
-
-            //  LinearGradient(
-            //   colors: [Color(0xff9910F9), Color(0xffE50177)],
-
-            //   begin: Alignment.centerLeft,
-            //   end: Alignment.centerRight,
-            // ),
+            // Par defaut : degrade or premium. Si buttonColor est fourni,
+            // on utilise une couleur pleine (boutons secondaires/outline).
+            gradient: buttonColor == null ? kGoldGradient : null,
             boxShadow: boxShadow,
             border: Border.all(color: borderColor ?? Colors.transparent),
-            color:
-                buttonColor ??
-                (Get.isDarkMode ? Color(0xff7A0709) : mainThemeColor),
+            color: buttonColor,
             borderRadius: BorderRadius.circular(borderRadius ?? 30),
           ),
           child: SizedBox(
@@ -87,9 +79,11 @@ class MyButton extends StatelessWidget {
                       Text(
                         label,
                         style: TextStyle(
-                          color: labelColor ?? whiteColor,
-                          fontWeight: fontWeight ?? FontWeight.w600,
+                          fontFamily: AppFonts.ui,
+                          color: labelColor ?? midnightPrimary,
+                          fontWeight: fontWeight ?? FontWeight.w700,
                           fontSize: labelSize ?? 14,
+                          letterSpacing: 1,
                         ),
                       ),
                       width(0.02),
@@ -105,9 +99,11 @@ class MyButton extends StatelessWidget {
                     child: Text(
                       label,
                       style: TextStyle(
-                        color: labelColor ?? whiteColor,
-                        fontWeight: fontWeight ?? FontWeight.w600,
+                        fontFamily: AppFonts.ui,
+                        color: labelColor ?? midnightPrimary,
+                        fontWeight: fontWeight ?? FontWeight.w700,
                         fontSize: labelSize ?? 14,
+                        letterSpacing: 1,
                       ),
                     ),
                   ),

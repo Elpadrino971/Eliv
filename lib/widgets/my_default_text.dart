@@ -1,3 +1,4 @@
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +18,7 @@ class MyDefaultText extends StatelessWidget {
     required this.text,
     this.fontSize = 13,
     this.fontWeight = FontWeight.w500,
-    this.color = blackColor,
+    this.color = ivory,
     this.textAlign = TextAlign.left,
     this.maxLines,
     this.overflow,
@@ -31,6 +32,7 @@ class MyDefaultText extends StatelessWidget {
       maxLines: maxLines,
 
       style: TextStyle(
+        fontFamily: AppFonts.body,
         fontWeight: fontWeight,
         fontSize: fontSize,
         color: color,
