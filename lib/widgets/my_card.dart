@@ -81,7 +81,7 @@ class _MyCardState extends State<MyCard> {
                             right: 9,
                           ),
                           decoration: BoxDecoration(
-                            color: Color(0xffDD0000),
+                            color: liveRed,
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: Text(

@@ -128,9 +128,9 @@ class GiftSelectionCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: boxColor,
+          color: Get.isDarkMode ? midnightSecondary : boxColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: mainThemeColor.withValues(alpha: 0.3)),
+          border: Border.all(color: goldSecondary.withValues(alpha: 0.4)),
         ),
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -157,14 +157,14 @@ class GiftSelectionCard extends StatelessWidget {
               children: [
                 const Icon(
                   Icons.stars_rounded,
-                  color: mainThemeColor,
+                  color: goldPrimary,
                   size: 14,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   '${gift.coins} Coins',
                   style: const TextStyle(
-                    color: greyColor,
+                    color: goldPrimary,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),

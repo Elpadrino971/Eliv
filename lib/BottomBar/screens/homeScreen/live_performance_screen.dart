@@ -70,7 +70,7 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
                                             right: 9,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Color(0xffDD0000),
+                                            color: liveRed,
                                             borderRadius: BorderRadius.circular(
                                               15,
                                             ),

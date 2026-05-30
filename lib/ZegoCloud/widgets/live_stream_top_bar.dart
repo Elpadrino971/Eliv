@@ -73,7 +73,7 @@ class LiveStatusBadge extends StatelessWidget {
       width: Get.width * 0.23,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: const Color(0xffDD0000),
+        color: liveRed,
         borderRadius: BorderRadius.circular(50),
       ),
       child: Row(
@@ -82,12 +82,13 @@ class LiveStatusBadge extends StatelessWidget {
           Image.asset('assets/dots.png'),
           width(0.02),
           const Text(
-            'Live',
+            'LIVE',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: whiteColor,
               fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 15,
+              letterSpacing: 1,
             ),
           ),
         ],

@@ -72,12 +72,12 @@ Refondre les briques réutilisées partout, pour que chaque écran suivant soit 
   `artist_tips_tab.dart`, `stats_screen.dart`, `analytics_screen.dart`,
   `Status/artist_histroy_screen.dart`
 
-## Étape 11 — Live streaming Zego (7) 🎯 ☐
+## Étape 11 — Live streaming Zego (7) 🎯 ◐ harmonisé
 - 🎯 `ZegoCloud/pre_stream_screen.dart`, `start_stream.dart`, `join_stream.dart`,
   `zego_gifts.dart` (Gifting), `widgets/live_stream_top_bar.dart`,
   `live_stream_side_actions.dart`, `live_stream_chat_preview.dart`
 
-## Étape 12 — Divers & QA final ☐
+## Étape 12 — Divers & QA final ◐ fait
 - `travis_scott/about_screen.dart`, `events_screen.dart` (vérifier si utilisés)
 - Passe finale : traquer tous les textes noirs résiduels sur fond bleu nuit,
   cohérence des icônes, espacements, et relecture écran par écran.
