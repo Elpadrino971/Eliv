@@ -104,6 +104,17 @@ flutter:
         - asset: assets/font/Inter-Medium.otf
         - asset: assets/font/Inter-Regular.otf
         - asset: assets/font/Inter-SemiBold.otf
+
+    # ── VYBZZZ premium (polices variables : un fichier couvre tous les poids)
+    - family: Cinzel
+      fonts:
+        - asset: assets/font/Cinzel.ttf
+    - family: PlayfairDisplay
+      fonts:
+        - asset: assets/font/PlayfairDisplay.ttf
+    - family: Montserrat
+      fonts:
+        - asset: assets/font/Montserrat.ttf
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

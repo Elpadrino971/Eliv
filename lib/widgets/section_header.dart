@@ -1,3 +1,4 @@
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -35,10 +36,11 @@ class SectionHeader extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
+              fontFamily: AppFonts.ui,
               color: ivory,
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-              letterSpacing: 1.6,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              letterSpacing: 3,
             ),
           ),
         ),
@@ -51,10 +53,11 @@ class SectionHeader extends StatelessWidget {
                 Text(
                   'VIEW ALL',
                   style: TextStyle(
+                    fontFamily: AppFonts.ui,
                     color: textMuted,
                     fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    letterSpacing: 1,
+                    fontSize: 11,
+                    letterSpacing: 1.5,
                   ),
                 ),
                 const SizedBox(width: 6),

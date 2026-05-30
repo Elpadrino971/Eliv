@@ -1,6 +1,7 @@
 import 'package:artist/BottomBar/screens/LiveScreen/artist_detail.dart';
 import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
 import 'package:artist/Global/api.dart';
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
@@ -164,10 +165,11 @@ class _NextPerformanceCardState extends State<NextPerformanceCard> {
                           child: const Text(
                             'GET TICKET',
                             style: TextStyle(
+                              fontFamily: AppFonts.ui,
                               color: goldPrimary,
                               fontWeight: FontWeight.w700,
                               fontSize: 12,
-                              letterSpacing: 0.8,
+                              letterSpacing: 1,
                             ),
                           ),
                         ),

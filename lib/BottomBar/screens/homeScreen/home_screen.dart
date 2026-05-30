@@ -2,6 +2,7 @@ import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
 import 'package:artist/BottomBar/screens/homeScreen/live_performance_screen.dart';
 import 'package:artist/BottomBar/screens/homeScreen/performances_screen.dart';
 import 'package:artist/Controllers/controller.dart';
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/widgets/widget.dart';
@@ -321,10 +322,11 @@ class _HomeScreenState extends State<HomeScreen> {
           const Text(
             'VYBZZZ',
             style: TextStyle(
+              fontFamily: AppFonts.logo,
               color: goldPrimary,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               fontSize: 24,
-              letterSpacing: 3,
+              letterSpacing: 4,
             ),
           ),
           const Spacer(),

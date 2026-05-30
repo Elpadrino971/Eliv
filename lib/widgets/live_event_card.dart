@@ -1,6 +1,7 @@
 import 'package:artist/BottomBar/screens/homeScreen/check_out_screen.dart';
 import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
 import 'package:artist/Global/api.dart';
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
@@ -116,10 +117,11 @@ class LiveEventsCards extends StatelessWidget {
                             child: const Text(
                               'JOIN LIVE',
                               style: TextStyle(
+                                fontFamily: AppFonts.ui,
                                 color: midnightPrimary,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 12,
-                                letterSpacing: 0.8,
+                                letterSpacing: 1,
                               ),
                             ),
                           ),

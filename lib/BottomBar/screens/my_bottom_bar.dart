@@ -2,6 +2,7 @@ import 'package:artist/BottomBar/screens/homeScreen/home_screen.dart';
 import 'package:artist/BottomBar/screens/profile/profile.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/vybz_live_screen.dart';
 import 'package:artist/Controllers/theme_controller.dart';
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/BottomBar/screens/Disscover/disscover_screen.dart';
 import 'package:artist/BottomBar/screens/my_tIckets/my_tickets_screen.dart';
@@ -82,9 +83,15 @@ class _MyBottomBarState extends State<MyBottomBar> {
               currentIndex: currentIndex??0,
               selectedFontSize: 12,
               unselectedFontSize: 12,
-              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
+              selectedLabelStyle: const TextStyle(
+                fontFamily: AppFonts.ui,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1,
+              ),
               unselectedLabelStyle: const TextStyle(
-                fontWeight: FontWeight.w400,
+                fontFamily: AppFonts.ui,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 1,
               ),
               selectedItemColor: themeController.isDark.value
                   ? goldPrimary

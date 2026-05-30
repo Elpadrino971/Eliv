@@ -1,4 +1,5 @@
 import 'package:artist/Controllers/subscription_controller.dart';
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/OnBoarding/onboarding_1.dart';
@@ -65,13 +66,13 @@ class MyApp extends StatelessWidget {
       ),
       iconTheme: const IconThemeData(color: ivory),
       textTheme: base.textTheme.apply(
-        fontFamily: 'GoogleSans',
+        fontFamily: AppFonts.body,
         bodyColor: ivory,
         displayColor: ivory,
       ),
-      // Police par defaut de l'app (corrige l'ancien 'Google Sans' qui ne
-      // correspondait pas a la famille declaree dans pubspec.yaml).
-      fontFamily: 'GoogleSans',
+      // Corps de texte par defaut = Inter (les titres/boutons/logo utilisent
+      // PlayfairDisplay / Montserrat / Cinzel la ou c'est explicite).
+      fontFamily: AppFonts.body,
     );
   }
 }

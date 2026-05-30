@@ -1,5 +1,6 @@
 import 'package:artist/BottomBar/screens/homeScreen/check_out_screen.dart';
 import 'package:artist/Global/api.dart';
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:flutter/material.dart';
@@ -119,8 +120,9 @@ class HomeBannerCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
+                    fontFamily: AppFonts.heading,
                     color: ivory,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     fontSize: 30,
                     height: 1.05,
                   ),
@@ -131,8 +133,9 @@ class HomeBannerCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
+                    fontFamily: AppFonts.heading,
                     color: goldPrimary,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     fontSize: 18,
                     letterSpacing: 0.3,
                   ),
@@ -170,6 +173,7 @@ class HomeBannerCard extends StatelessWidget {
                               Text(
                                 'JOIN LIVE',
                                 style: TextStyle(
+                                  fontFamily: AppFonts.ui,
                                   color: midnightPrimary,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
