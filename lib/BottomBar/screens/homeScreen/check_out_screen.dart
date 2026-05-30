@@ -1,0 +1,409 @@
+import 'package:artist/Controllers/controller.dart';
+import 'package:artist/Global/colors.dart';
+import 'package:artist/Global/global.dart';
+import 'package:artist/Models/event_model.dart';
+import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_button.dart';
+import 'package:artist/widgets/my_textfield.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+class CheckOutScreen extends StatefulWidget {
+  const CheckOutScreen({super.key, required this.event});
+  final Event event;
+
+  @override
+  State<CheckOutScreen> createState() => _CheckOutScreenState();
+}
+
+class _CheckOutScreenState extends State<CheckOutScreen> {
+  List<Map> paymentList = [
+    {'name': 'Card', 'image': 'assets/card_icon.png'},
+    {'name': 'Pay', 'image': 'assets/pay_icon.png'},
+  ];
+  String selectedPayment = '';
+
+  late List<Map> textList;
+  String selectedAccess = '';
+  @override
+  void initState() {
+    textList = [
+      {
+        'title': 'Standard Pass',
+        'subTitle': '4K UHD Access',
+        'price': '\$${widget.event.ticketPrice}',
+      },
+    ];
+    selectedPayment = paymentList[0]['name'];
+    super.initState();
+  }
+
+  final cardholderController = TextEditingController();
+  final numberController = TextEditingController();
+  final dateController = TextEditingController();
+  final cvvController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Get.isDarkMode ? blackColor : scaffoldBackgroundColor,
+      appBar: MyAppbar(title: 'Checkout'),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: myPadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Select Access Tier'.toUpperCase(),
+                style: TextStyle(
+                  color: Color(0xff737373),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              height(0.02),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.all(0),
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedAccess = textList[index]['title'];
+                      });
+                    },
+                    child: Container(
+                      padding: myPadding,
+                      width: Get.width,
+                      decoration: BoxDecoration(
+                        color: Get.isDarkMode
+                            ? selectedAccess == textList[index]['title']
+                                  ? redColor
+                                  : darkmodeColor
+                            : selectedAccess == textList[index]['title']
+                            ? mainThemeColor.withValues(alpha: 0.2)
+                            : whiteColor,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Get.isDarkMode
+                              ? selectedAccess == textList[index]['title']
+                                    ? redColor
+                                    : borderGreyColor
+                              : selectedAccess == textList[index]['title']
+                              ? mainThemeColor
+                              : borderGreyColor,
+                          width: 2,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                textList[index]['title'],
+                                style: TextStyle(
+                                  color: Get.isDarkMode
+                                      ? whiteColor
+                                      : Color(0xff262626),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+
+                              Text(
+                                textList[index]['subTitle'],
+                                style: TextStyle(
+                                  color: Get.isDarkMode
+                                      ? whiteColor
+                                      : Color(0xff262626),
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          Spacer(),
+
+                          Text(
+                            textList[index]['price'],
+                            style: TextStyle(
+                              color: Get.isDarkMode
+                                  ? whiteColor
+                                  : Color(0xff262626),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                separatorBuilder: (context, index) {
+                  return height(0.02);
+                },
+                itemCount: textList.length,
+              ),
+
+              height(0.01),
+
+              Text(
+                'Payment Method'.toUpperCase(),
+                style: TextStyle(
+                  color: Color(0xff737373),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              height(0.02),
+
+              GridView.builder(
+                shrinkWrap: true,
+                padding: EdgeInsets.all(0),
+                physics: NeverScrollableScrollPhysics(),
+
+                itemCount: 2,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 1.6,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedPayment = paymentList[index]['name'];
+                      });
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        image: DecorationImage(
+                          image: Get.isDarkMode
+                              ? paymentList[index]['name'] == selectedPayment
+                                    ? AssetImage('assets/container4.png')
+                                    : AssetImage('assets/container5.png')
+                              : paymentList[index]['name'] == selectedPayment
+                              ? AssetImage('assets/container1.png')
+                              : AssetImage('assets/container2.png'),
+                          fit: BoxFit.cover,
+                        ),
+                        color: Get.isDarkMode
+                            ? selectedPayment == paymentList[index]['name']
+                                  ? redColor
+                                  : darkmodeColor
+                            : selectedPayment == paymentList[index]['name']
+                            ? mainThemeColor.withValues(alpha: 0.2)
+                            : whiteColor,
+                      ),
+
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            paymentList[index]['image'],
+                            width: 20,
+                            height: 20,
+                            color: paymentList[index]['name'] == selectedPayment
+                                ? whiteColor
+                                : Color(0xffA1A1A1),
+                          ),
+                          Text(
+                            paymentList[index]['name'],
+                            style: TextStyle(
+                              color:
+                                  paymentList[index]['name'] == selectedPayment
+                                  ? whiteColor
+                                  : Color(0xffA1A1A1),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              height(0.02),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Cardholder Name',
+                    style: TextStyle(
+                      color: Color(0xffA1A1A1),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  MyTextField(
+                    hintText: 'Alex Harrison',
+                    controller: cardholderController,
+                  ),
+
+                  height(0.01),
+                  Text(
+                    'Card Number',
+                    style: TextStyle(
+                      color: Color(0xffA1A1A1),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  MyTextField(
+                    hintText: '•••• •••• •••• 4242',
+                    controller: numberController,
+                    keyboardType: TextInputType.number,
+                  ),
+
+                  Row(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          height(0.01),
+                          Text(
+                            'Expiry Date',
+                            style: TextStyle(
+                              color: Color(0xffA1A1A1),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+
+                          SizedBox(
+                            width: Get.width * 0.44,
+                            child: MyTextField(
+                              hintText: 'MM / YY',
+                              controller: dateController,
+                              keyboardType: TextInputType.datetime,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      Spacer(),
+
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          height(0.01),
+                          Text(
+                            'CVV',
+                            style: TextStyle(
+                              color: Color(0xffA1A1A1),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+
+                          SizedBox(
+                            width: Get.width * 0.44,
+                            child: MyTextField(
+                              hintText: '•••',
+                              controller: cvvController,
+                              keyboardType: TextInputType.text,
+                              isObscure: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  height(0.01),
+                  Row(
+                    children: [
+                      Text(
+                        'Total Charged',
+                        style: TextStyle(
+                          color: Color(0xffA1A1A1),
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Spacer(),
+
+                      Text(
+                        selectedAccess.isEmpty
+                            ? textList[0]['price']
+                            : textList.firstWhere(
+                                (t) => t['title'] == selectedAccess,
+                              )['price'],
+                        style: TextStyle(
+                          color: blackColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  height(0.01),
+                  MyButton(
+                    label: 'AUTHORIZE PAYMENT',
+                    onTap: () async {
+                      final eventController = Get.find<EventController>();
+
+                      // 1. Get selected price and parse numeric value
+                      final selectedTier = selectedAccess.isEmpty
+                          ? textList[0]
+                          : textList.firstWhere(
+                              (t) => t['title'] == selectedAccess,
+                            );
+
+                      final String priceStr = selectedTier['price']
+                          .toString()
+                          .replaceAll(RegExp(r'[^0-9.]'), '');
+                      final double price = double.tryParse(priceStr) ?? 0.0;
+
+                      // 2. Check points
+                      final double userPoints =
+                          double.tryParse(
+                            userModel.value.user?.points ?? '0',
+                          ) ??
+                          0.0;
+
+                      if (userPoints < price) {
+                        myAlertDialog(
+                          title: 'Insufficient Points',
+                          content:
+                              'You do not have enough points to buy this event. Please top up your wallet.',
+                          onTap: () => Get.back(),
+                        );
+                        return;
+                      }
+
+                      // 3. Confirmation and Buy
+                      myAlertDialog(
+                        title: 'Confirm Purchase',
+                        content:
+                            'Are you sure you want to buy the ticket for ${widget.event.name}?',
+                        onTap: () async {
+                          Get.back(); // Close alert
+                          myLoadingDialog();
+                          await eventController.buyTicket(
+                            eventId: widget.event.id.toString(),
+                          );
+                        },
+                      );
+                    },
+                    labelColor: whiteColor,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

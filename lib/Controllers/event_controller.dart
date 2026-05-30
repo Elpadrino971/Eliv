@@ -1,0 +1,475 @@
+import 'dart:convert';
+
+import 'package:artist/Global/api.dart';
+import 'package:artist/Global/global.dart';
+import 'package:artist/Models/abusive_words_model.dart';
+import 'package:artist/Models/event_model.dart';
+import 'package:artist/Models/follow_model.dart';
+import 'package:artist/Models/gift_model.dart';
+import 'package:artist/Models/user_model.dart';
+import 'package:artist/services/api_services.dart';
+import 'package:get/get.dart';
+import 'package:video_player/video_player.dart';
+import 'package:zego_uikit_prebuilt_live_streaming/zego_uikit_prebuilt_live_streaming.dart';
+
+class EventController extends GetxController {
+  final response = ApiResponse();
+
+  Rx<EventsModel> featuredArtist = EventsModel().obs;
+  Rx<EventsModel> nextEvents = EventsModel().obs;
+  Rx<EventsModel> upcomingEvents = EventsModel().obs;
+  Rx<EventsModel> liveNowEvents = EventsModel().obs;
+  Rx<EventsModel> filteredEvents = EventsModel().obs;
+  Rx<EventsModel> allEvents = EventsModel().obs;
+  Rx<EventsModel> bannerEvents = EventsModel().obs;
+  Rx<EventsModel> userJoinedEvents = EventsModel().obs;
+  Rx<EventsModel> artistEvents = EventsModel().obs;
+  Rx<EventsModel> eventHistory = EventsModel().obs;
+  RxList<User> featuredArtists = <User>[].obs;
+  Rx<FollowModel> artistFollowers = FollowModel().obs;
+  Rx<UserModel> artistProfile = UserModel().obs;
+  Rx<GiftModel> gifts = GiftModel().obs;
+  Rx<AbusiveWordsModel> abusiveWords = AbusiveWordsModel().obs;
+
+  RxBool isLoading = false.obs;
+
+  /// Video Player Variables
+  Rxn<VideoPlayerController> currentController = Rxn<VideoPlayerController>();
+  var isMuted = false.obs;
+  var currentVideoIndex = 0.obs;
+  var showVideoControls = false.obs;
+
+  void initVideoPlayer(String videoUrl) {
+    currentController.value?.dispose();
+    currentController.value = null;
+
+    final controller =
+        VideoPlayerController.networkUrl(
+            Uri.parse('${APIs.eventVideoIP}/$videoUrl'),
+          )
+          ..initialize().then((_) {
+            update();
+          });
+    controller.setLooping(true);
+    controller.setVolume(isMuted.value ? 0 : 1);
+    currentController.value = controller;
+    controller.play();
+    update();
+  }
+
+  void onPageChanged(int index) {
+    currentVideoIndex.value = index;
+    final event = allEvents.value.data?[index];
+    if (event?.videoReel != null && event!.videoReel!.isNotEmpty) {
+      initVideoPlayer(event.videoReel!);
+    } else {
+      currentController.value?.dispose();
+      currentController.value = null;
+    }
+    update();
+  }
+
+  void toggleVideoControls() {
+    showVideoControls.value = !showVideoControls.value;
+    if (showVideoControls.value) {
+      Future.delayed(Duration(seconds: 3), () {
+        showVideoControls.value = false;
+        update();
+      });
+    }
+    update();
+  }
+
+  void playPauseVideo() {
+    if (currentController.value != null) {
+      var controller = currentController.value!;
+      controller.value.isPlaying ? controller.pause() : controller.play();
+      update();
+    }
+  }
+
+  void seekVideo(int seconds) {
+    if (currentController.value != null) {
+      var controller = currentController.value!;
+      final newPos = controller.value.position + Duration(seconds: seconds);
+      controller.seekTo(newPos < Duration.zero ? Duration.zero : newPos);
+      update();
+    }
+  }
+
+  void toggleMute() {
+    isMuted.value = !isMuted.value;
+    currentController.value?.setVolume(isMuted.value ? 0 : 1);
+    update();
+  }
+
+  void disposeVideoController() {
+    currentController.value?.dispose();
+    currentController.value = null;
+  }
+
+  Future<void> getEventsByStatus({
+    EventStatus status = EventStatus.published,
+    EventDateStatus? dateStatus,
+    List? genres,
+  }) async {
+    response.typeSetter = 'get';
+    response.urlSetter =
+        '${APIs.eventsAPI}?status=${status.name}&day=${dateStatus?.name ?? ''}&genre_ids=${genres?.join(',') ?? '[]'}';
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        /// Upcoming and All Events
+        if (dateStatus == EventDateStatus.future &&
+            status == EventStatus.published) {
+          allEvents.value = eventModelFromJson(value);
+          upcomingEvents.value = eventModelFromJson(value);
+
+          /// Upcoming Events
+        } else if (dateStatus == EventDateStatus.future) {
+          upcomingEvents.value = eventModelFromJson(value);
+
+          /// Live Events
+        } else if (status == EventStatus.live) {
+          liveNowEvents.value = eventModelFromJson(value);
+
+          /// Today's Events
+        } else if (dateStatus == EventDateStatus.today) {
+          nextEvents.value = eventModelFromJson(value);
+
+          /// Filtered Events
+        } else if (genres != null) {
+          filteredEvents.value = eventModelFromJson(value);
+        }
+        update();
+      } else {
+        parseError(value, doBack: false);
+      }
+    });
+  }
+
+  Future<void> getBannerEvents() async {
+    response.typeSetter = 'get';
+    response.urlSetter = APIs.getBannerEventsAPI;
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        bannerEvents.value = eventModelFromJson(value);
+        update();
+      } else {
+        parseError(value, doBack: false);
+      }
+    });
+  }
+
+  Future<void> getFeaturedArtists() async {
+    response.typeSetter = 'get';
+    response.urlSetter = APIs.featuredArtistAPI;
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        List data = jsonDecode(value)['data'];
+        featuredArtists.value = data.map((e) => User.fromJson(e)).toList();
+        update();
+      } else {
+        parseError(value, doBack: false);
+      }
+    });
+  }
+
+  Future<void> getArtistEvents({required String artistId}) async {
+    artistEvents.value = EventsModel();
+    response.typeSetter = 'get';
+    response.urlSetter = APIs.getArtistEventsAPI(artistId);
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        artistEvents.value = eventModelFromJson(value);
+        update();
+      } else {
+        parseError(value, doBack: false);
+      }
+    });
+  }
+
+  Future<void> getArtistFollowers({required String artistId}) async {
+    response.typeSetter = 'get';
+    response.urlSetter = '${APIs.getArtistFollowersAPI}/$artistId';
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        artistFollowers.value = followModelFromJson(value);
+        update();
+      } else {
+        parseError(value, doBack: false);
+      }
+    });
+  }
+
+  Future<void> followArtist({required String artistId}) async {
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.followArtistAPI;
+    response.bodySetter = {
+      "user_id": "${userModel.value.user?.id ?? 1}",
+      "artist_id": artistId,
+    };
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        update();
+      } else {
+        parseError(value);
+      }
+    });
+  }
+
+  Future<void> unfollowArtist({required String artistId}) async {
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.unfollowArtistAPI;
+    response.bodySetter = {
+      "user_id": "${userModel.value.user?.id ?? 1}",
+      "artist_id": artistId,
+    };
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        update();
+      } else {
+        parseError(value, doBack: false);
+      }
+    });
+  }
+
+  Future<Event?> buyTicket({required String eventId}) async {
+    Event? event;
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.buyTicketAPI;
+    response.bodySetter = {
+      "event_id": eventId,
+      "user_id": "${userModel.value.user?.id ?? 1}",
+    };
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        event = Event.fromJson(jsonDecode(value)['data']);
+
+        update();
+        mySuccessDialog(
+          subtitle: 'Ticket booked successfully',
+          ontap: () {
+            Get.back();
+            Get.back();
+            Get.back(result: event);
+          },
+        );
+      } else {
+        parseError(value, doBack: true);
+      }
+    });
+    return event;
+  }
+
+  Future<void> getUserJoinedEvents() async {
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.userEventHistoryAPI;
+    response.bodySetter = {"user_id": "${userModel.value.user?.id ?? 1}"};
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        userJoinedEvents.value = eventModelFromJson(value, 'list');
+        update();
+      } else {
+        parseError(value, doBack: false);
+      }
+    });
+  }
+
+  Future<List<Activity>?> getEventComments({
+    required String eventId,
+    required String comment,
+  }) async {
+    List<Activity>? data;
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.eventCommentAPI;
+    response.bodySetter = {
+      "event_id": eventId,
+      "user_id": '${userModel.value.user?.id ?? 1}',
+      "comment": comment,
+    };
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        data = (jsonDecode(value)['activity'] as List)
+            .map((x) => Activity.fromJson(x))
+            .toList();
+        update();
+        return data;
+      } else {
+        parseError(value, doBack: false);
+        return data;
+      }
+    });
+    return data;
+  }
+
+  Future<void> getUserModel({required String id}) async {
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.getUserAPI;
+    response.bodySetter = {'id': id};
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        artistProfile.value = userModelFromJson(value);
+        update();
+      } else {
+        parseError(value);
+      }
+    });
+  }
+
+  Future<List<Activity>?> getEventLogs({required String eventId}) async {
+    List<Activity>? data;
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.eventLogsAPI;
+    response.bodySetter = {'event_id': eventId};
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        data = (jsonDecode(value)['activity'] as List)
+            .map((x) => Activity.fromJson(x))
+            .toList();
+        update();
+      } else {
+        parseError(value);
+      }
+    });
+    return data;
+  }
+
+  Future<void> getEventHistory() async {
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.eventHistoryAPI;
+    response.bodySetter = {'user_id': '${userModel.value.user?.id ?? 1}'};
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        eventHistory.value = eventModelFromJson(value, 'list');
+        update();
+      } else {
+        parseError(value);
+      }
+    });
+  }
+
+  Future<void> getGifts() async {
+    response.typeSetter = 'get';
+    response.urlSetter = APIs.getGiftsAPI;
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        gifts.value = giftModelFromJson(value);
+        update();
+      } else {
+        parseError(value);
+      }
+    });
+  }
+
+  Future<List<Activity>?> sendGift({
+    required String eventId,
+    required String giftId,
+  }) async {
+    List<Activity>? data;
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.sendGiftAPI;
+    response.bodySetter = {
+      "event_id": eventId,
+      "user_id": '${userModel.value.user?.id ?? 1}',
+      "gift_id": giftId,
+    };
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        data = (jsonDecode(value)['activity'] as List)
+            .map((x) => Activity.fromJson(x))
+            .toList();
+
+        // Broadcast to Zego
+        try {
+          final gift = gifts.value.data?.firstWhere(
+            (element) => element.id.toString() == giftId,
+          );
+          if (gift != null) {
+            ZegoUIKit().sendInRoomCommand(
+              'gift:${gift.name}:${gift.image}',
+              [],
+            );
+          }
+        } catch (e) {
+          myPrint('Error broadcasting gift: $e');
+        }
+
+        update();
+      } else {
+        parseError(value);
+      }
+    });
+    return data;
+  }
+
+  Future<void> updateEventStatus({
+    required String eventId,
+    required String status,
+  }) async {
+    response.typeSetter = 'post';
+    response.urlSetter = '${APIs.updateEventStatusAPI}/$eventId';
+    response.bodySetter = {"status": status};
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        update();
+      } else {
+        parseError(value, showDialog: false);
+      }
+    });
+  }
+
+  Future<void> reportEvent({
+    required String eventId,
+    required String reason,
+    required String description,
+  }) async {
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.reportEventAPI;
+    response.bodySetter = {
+      "event_id": eventId,
+      "user_id": '${userModel.value.user?.id ?? 1}',
+      "reason": reason,
+      "description": description,
+    };
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        update();
+      } else {
+        parseError(value, showDialog: false);
+      }
+    });
+  }
+
+  Future<void> getAbusiveWords() async {
+    response.typeSetter = 'get';
+    response.urlSetter = APIs.getAbusiveWordsAPI;
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        abusiveWords.value = abusiveWordsModelFromJson(value);
+        update();
+      } else {
+        parseError(value, doBack: false);
+      }
+    });
+  }
+
+  bool hasAbusiveWords(String text) {
+    if (abusiveWords.value.data == null || abusiveWords.value.data!.isEmpty) {
+      return false;
+    }
+    final lowerText = text.toLowerCase();
+    for (var w in abusiveWords.value.data!) {
+      final abusiveWord = w.word?.trim().toLowerCase();
+      if (abusiveWord != null && abusiveWord.isNotEmpty) {
+        if (lowerText.contains(abusiveWord)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+}
+
+enum EventStatus { archived, published, cancelled, completed, postponed, live }
+
+enum EventDateStatus { today, future }

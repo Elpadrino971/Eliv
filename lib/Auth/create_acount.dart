@@ -1,0 +1,253 @@
+import 'package:artist/Auth/login_screen.dart';
+import 'package:artist/Controllers/auth_controller.dart';
+import 'package:artist/Global/colors.dart';
+import 'package:artist/Global/global.dart';
+import 'package:artist/widgets/my_button.dart';
+import 'package:artist/widgets/my_header.dart';
+import 'package:artist/widgets/my_textfield.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+class CreateAcount extends StatefulWidget {
+  const CreateAcount({super.key});
+
+  @override
+  State<CreateAcount> createState() => _CreateAcountState();
+}
+
+class _CreateAcountState extends State<CreateAcount> {
+  final authController = Get.find<AuthController>();
+
+  final emailController = TextEditingController();
+  final nameController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool hiddinPassword = true;
+
+  final formKey = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        padding: myPadding,
+        child: Form(
+          key: formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              height(0.04),
+              MyHeader(activeIndex: 0),
+              height(0.035),
+
+              Text(
+                'Create Account',
+                style: TextStyle(
+                  color: blackColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+              SizedBox(
+                width: Get.width * 0.65,
+                child: Text(
+                  "Join the ultimate virtual concert platform",
+                  style: TextStyle(
+                    color: const Color.fromARGB(255, 212, 212, 212),
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      MyTextField(
+                        hintText: 'John Doe',
+                        controller: nameController,
+                        keyboardType: TextInputType.text,
+                        validation: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your name';
+                          }
+                          return null;
+                        },
+                        leading: Image.asset(
+                          'assets/user_icon.png',
+                          width: 15,
+                          height: 15,
+                        ),
+                      ),
+
+                      MyTextField(
+                        hintText: 'name@email.com',
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        validation: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          if (!GetUtils.isEmail(value)) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                        leading: Image.asset(
+                          'assets/mail_icon.png',
+                          width: 15,
+                          height: 15,
+                        ),
+                      ),
+
+                      MyTextField(
+                        isObscure: hiddinPassword,
+                        hintText: 'Password',
+                        controller: passwordController,
+                        keyboardType: TextInputType.visiblePassword,
+                        onChanged: (value) {
+                          formKey.currentState!.validate();
+                        },
+                        validation: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          if (value.length < 8) {
+                            return 'Password must be at least 8 characters';
+                          }
+                          return null;
+                        },
+                        leading: Image.asset(
+                          'assets/lock_icon.png',
+                          width: 15,
+                          height: 15,
+                        ),
+
+                        trailing: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              hiddinPassword = !hiddinPassword;
+                            });
+                          },
+                          icon: hiddinPassword
+                              ? Icon(
+                                  Icons.remove_red_eye_rounded,
+                                  color: Color(0xffD4D4D4),
+                                )
+                              : Icon(
+                                  Icons.visibility_off_rounded,
+                                  color: Color(0xffD4D4D4),
+                                ),
+                        ),
+                      ),
+                      height(0.02),
+
+                      Row(
+                        children: [
+                          Image.asset('assets/check.png'),
+                          width(0.02),
+
+                          Text(
+                            'UNLIMITED CONCERT STREAMING',
+                            style: TextStyle(
+                              color: Color(0xff737373),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      height(0.01),
+                      Row(
+                        children: [
+                          Image.asset('assets/check.png'),
+                          width(0.02),
+
+                          Text(
+                            'EXCLUSIVE ARTIST UPDATES',
+                            style: TextStyle(
+                              color: Color(0xff737373),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                      height(0.01),
+
+                      Row(
+                        children: [
+                          Image.asset('assets/check.png'),
+                          width(0.02),
+
+                          Text(
+                            'SECURE TICKET STORAGE',
+                            style: TextStyle(
+                              color: Color(0xff737373),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      height(0.02),
+
+                      MyButton(
+                        label: 'Send Code',
+                        onTap: () async {
+                          if (formKey.currentState!.validate()) {
+                            await authController.signupUser(
+                              email: emailController.text,
+                              password: passwordController.text,
+                              name: nameController.text,
+                            );
+                          }
+                        },
+                        image: 'assets/arrow.png',
+                        imageColor: whiteColor,
+                        labelColor: whiteColor,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+
+      bottomNavigationBar: Padding(
+        padding: myPadding,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "Already have an account? ",
+              style: TextStyle(
+                color: Color(0xffA1A1A1),
+                fontWeight: FontWeight.w400,
+                fontSize: 14,
+              ),
+            ),
+            width(0.02),
+
+            GestureDetector(
+              onTap: () {
+                Get.to(() => LoginScreen());
+              },
+              child: Text(
+                "Log In",
+                style: TextStyle(
+                  color: mainThemeColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,388 @@
+// To parse this JSON data, do
+//
+//     final eventModel = eventModelFromJson(jsonString);
+
+import 'dart:convert';
+
+import 'package:artist/Models/genre_model.dart';
+import 'package:artist/Models/user_model.dart';
+
+EventsModel eventModelFromJson(String str, [String? key]) =>
+    EventsModel.fromJson(json.decode(str), key);
+
+String eventModelToJson(EventsModel data) => json.encode(data.toJson());
+
+class EventsModel {
+  final String? status;
+  final List<Event>? data;
+
+  EventsModel({this.status, this.data});
+
+  EventsModel copyWith({String? status, List<Event>? data}) =>
+      EventsModel(status: status ?? this.status, data: data ?? this.data);
+
+  factory EventsModel.fromJson(Map<String, dynamic> json, String? key) =>
+      EventsModel(
+        status: json["status"],
+        data: json[key ?? "data"] == null
+            ? []
+            : List<Event>.from(
+                json[key ?? "data"]!.map((x) => Event.fromJson(x)),
+              ),
+      );
+
+  Map<String, dynamic> toJson() => {
+    "status": status,
+    "data": data == null
+        ? []
+        : List<dynamic>.from(data!.map((x) => x.toJson())),
+  };
+}
+
+class Event {
+  final int? id;
+  final int? artistId;
+  final String? name;
+  final String? coverImage;
+  final String? ticketPrice;
+  final DateTime? startDateTime;
+  final DateTime? endDateTime;
+  final int? genreId;
+  final String? description;
+  final String? videoReel;
+  final int? isPrivate;
+  final int? hasLiveChat;
+  final int? capacityLimit;
+  final String? status;
+  final String? link;
+  final int? joinedUsersCount;
+  final int? likesCount;
+  final String? streamKey;
+  final String? streamUrl;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final List<int>? ticketBuyerIds;
+  final Genre? genre;
+  final User? artist;
+  final List<Ticket>? tickets;
+  final List<Activity>? activities;
+
+  Event({
+    this.id,
+    this.artistId,
+    this.name,
+    this.coverImage,
+    this.ticketPrice,
+    this.startDateTime,
+    this.endDateTime,
+    this.genreId,
+    this.description,
+    this.videoReel,
+    this.isPrivate,
+    this.hasLiveChat,
+    this.capacityLimit,
+    this.status,
+    this.link,
+    this.joinedUsersCount,
+    this.likesCount,
+    this.streamKey,
+    this.streamUrl,
+    this.createdAt,
+    this.updatedAt,
+    this.ticketBuyerIds,
+    this.genre,
+    this.artist,
+    this.tickets,
+    this.activities,
+  });
+
+  Event copyWith({
+    int? id,
+    int? artistId,
+    String? name,
+    String? coverImage,
+    String? ticketPrice,
+    DateTime? startDateTime,
+    DateTime? endDateTime,
+    int? genreId,
+    String? description,
+    String? videoReel,
+    int? isPrivate,
+    int? hasLiveChat,
+    int? capacityLimit,
+    String? status,
+    String? link,
+    int? joinedUsersCount,
+    int? likesCount,
+    String? streamKey,
+    String? streamUrl,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<int>? ticketBuyerIds,
+    Genre? genre,
+    User? artist,
+    List<Ticket>? tickets,
+    List<Activity>? activities,
+  }) => Event(
+    id: id ?? this.id,
+    artistId: artistId ?? this.artistId,
+    name: name ?? this.name,
+    coverImage: coverImage ?? this.coverImage,
+    ticketPrice: ticketPrice ?? this.ticketPrice,
+    startDateTime: startDateTime ?? this.startDateTime,
+    endDateTime: endDateTime ?? this.endDateTime,
+    genreId: genreId ?? this.genreId,
+    description: description ?? this.description,
+    videoReel: videoReel ?? this.videoReel,
+    isPrivate: isPrivate ?? this.isPrivate,
+    hasLiveChat: hasLiveChat ?? this.hasLiveChat,
+    capacityLimit: capacityLimit ?? this.capacityLimit,
+    status: status ?? this.status,
+    link: link ?? this.link,
+    joinedUsersCount: joinedUsersCount ?? this.joinedUsersCount,
+    likesCount: likesCount ?? this.likesCount,
+    streamKey: streamKey ?? this.streamKey,
+    streamUrl: streamUrl ?? this.streamUrl,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    ticketBuyerIds: ticketBuyerIds ?? this.ticketBuyerIds,
+    genre: genre ?? this.genre,
+    artist: artist ?? this.artist,
+    tickets: tickets ?? this.tickets,
+    activities: activities ?? this.activities,
+  );
+
+  factory Event.fromJson(Map<String, dynamic> json) => Event(
+    id: json["id"],
+    artistId: json["artist_id"],
+    name: json["name"],
+    coverImage: json["cover_image"],
+    ticketPrice: json["ticket_price"],
+    startDateTime: json["start_date_time"] == null
+        ? null
+        : DateTime.parse(json["start_date_time"]),
+    endDateTime: json["end_date_time"] == null
+        ? null
+        : DateTime.parse(json["end_date_time"]),
+    genreId: json["genre_id"],
+    description: json["description"],
+    videoReel: json["video_reel"],
+    isPrivate: json["is_private"],
+    hasLiveChat: json["has_live_chat"],
+    capacityLimit: json["capacity_limit"],
+    status: json["status"],
+    link: json["link"],
+    joinedUsersCount: json["joined_users_count"],
+    likesCount: json["likes_count"],
+    streamKey: json["stream_key"],
+    streamUrl: json["stream_url"],
+    createdAt: json["created_at"] == null
+        ? null
+        : DateTime.parse(json["created_at"]),
+    updatedAt: json["updated_at"] == null
+        ? null
+        : DateTime.parse(json["updated_at"]),
+    ticketBuyerIds: json["ticket_buyer_ids"] == null
+        ? []
+        : List<int>.from(json["ticket_buyer_ids"]!.map((x) => x)),
+    genre: json["genre"] == null ? null : Genre.fromJson(json["genre"]),
+    artist: json["artist"] == null ? null : User.fromJson(json["artist"]),
+    tickets: json["tickets"] == null
+        ? []
+        : List<Ticket>.from(json["tickets"]!.map((x) => Ticket.fromJson(x))),
+    activities: json["activity"] == null
+        ? json["logs"] == null
+              ? []
+              : List<Activity>.from(
+                  json["logs"]!.map((x) => Activity.fromJson(x)),
+                )
+        : List<Activity>.from(
+            json["activity"]!.map((x) => Activity.fromJson(x)),
+          ),
+  );
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "artist_id": artistId,
+    "name": name,
+    "cover_image": coverImage,
+    "ticket_price": ticketPrice,
+    "start_date_time": startDateTime?.toIso8601String(),
+    "end_date_time": endDateTime?.toIso8601String(),
+    "genre_id": genreId,
+    "description": description,
+    "video_reel": videoReel,
+    "is_private": isPrivate,
+    "has_live_chat": hasLiveChat,
+    "capacity_limit": capacityLimit,
+    "status": status,
+    "link": link,
+    "joined_users_count": joinedUsersCount,
+    "likes_count": likesCount,
+    "stream_key": streamKey,
+    "stream_url": streamUrl,
+    "created_at": createdAt?.toIso8601String(),
+    "updated_at": updatedAt?.toIso8601String(),
+    "ticket_buyer_ids": ticketBuyerIds == null
+        ? []
+        : List<dynamic>.from(ticketBuyerIds!.map((x) => x)),
+    "genre": genre?.toJson(),
+    "artist": artist?.toJson(),
+    "tickets": tickets == null
+        ? []
+        : List<dynamic>.from(tickets!.map((x) => x.toJson())),
+    "activity": activities == null 
+        ? []
+        : List<dynamic>.from(activities!.map((x) => x.toJson())),
+  };
+}
+
+class Ticket {
+  final int? id;
+  final int? eventId;
+  final int? userId;
+  final String? pricePaid;
+  final String? receiptNumber;
+  final String? status;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  Ticket({
+    this.id,
+    this.eventId,
+    this.userId,
+    this.pricePaid,
+    this.receiptNumber,
+    this.status,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  Ticket copyWith({
+    int? id,
+    int? eventId,
+    int? userId,
+    String? pricePaid,
+    String? receiptNumber,
+    String? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => Ticket(
+    id: id ?? this.id,
+    eventId: eventId ?? this.eventId,
+    userId: userId ?? this.userId,
+    pricePaid: pricePaid ?? this.pricePaid,
+    receiptNumber: receiptNumber ?? this.receiptNumber,
+    status: status ?? this.status,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+
+  factory Ticket.fromJson(Map<String, dynamic> json) => Ticket(
+    id: json["id"],
+    eventId: json["event_id"],
+    userId: json["user_id"],
+    pricePaid: json["price_paid"],
+    receiptNumber: json["receipt_number"],
+    status: json["status"],
+    createdAt: json["created_at"] == null
+        ? null
+        : DateTime.parse(json["created_at"]),
+    updatedAt: json["updated_at"] == null
+        ? null
+        : DateTime.parse(json["updated_at"]),
+  );
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "event_id": eventId,
+    "user_id": userId,
+    "price_paid": pricePaid,
+    "receipt_number": receiptNumber,
+    "status": status,
+    "created_at": createdAt?.toIso8601String(),
+    "updated_at": updatedAt?.toIso8601String(),
+  };
+}
+
+class Activity {
+  final int? id;
+  final int? userId;
+  final int? eventId;
+  final String? type;
+  final String? description;
+  final dynamic points;
+  final String? gift;
+  final User? userInfo;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  Activity({
+    this.id,
+    this.userId,
+    this.eventId,
+    this.type,
+    this.description,
+    this.points,
+    this.gift,
+    this.userInfo,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  Activity copyWith({
+    int? id,
+    int? userId,
+    int? eventId,
+    String? type,
+    String? description,
+    dynamic points,
+    dynamic gift,
+    User? userInfo,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => Activity(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    eventId: eventId ?? this.eventId,
+    type: type ?? this.type,
+    description: description ?? this.description,
+    points: points ?? this.points,
+    gift: gift ?? this.gift,
+    userInfo: userInfo ?? this.userInfo,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+
+  factory Activity.fromJson(Map<String, dynamic> json) => Activity(
+    id: json["id"],
+    userId: json["user_id"],
+    eventId: json["event_id"],
+    type: json["type"],
+    description: json["description"],
+    points: json["points"],
+    gift: json["gift"],
+    userInfo: json["user_info"] == null
+        ? null
+        : User.fromJson(json["user_info"]),
+    createdAt: json["created_at"] == null
+        ? null
+        : DateTime.parse(json["created_at"]),
+    updatedAt: json["updated_at"] == null
+        ? null
+        : DateTime.parse(json["updated_at"]),
+  );
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "user_id": userId,
+    "event_id": eventId,
+    "type": type,
+    "description": description,
+    "points": points,
+    "gift": gift,
+    "user_info": userInfo?.toJson(),
+    "created_at": createdAt?.toIso8601String(),
+    "updated_at": updatedAt?.toIso8601String(),
+  };
+}

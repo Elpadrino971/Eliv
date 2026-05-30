@@ -1,0 +1,475 @@
+import 'package:artist/Controllers/controller.dart';
+import 'package:artist/Global/api.dart';
+import 'package:artist/Global/colors.dart';
+import 'package:artist/Global/global.dart';
+import 'package:artist/Models/event_model.dart';
+import 'package:artist/ZegoCloud/start_stream.dart';
+import 'package:artist/artist_bottom_bar/screen/Events/analytics_screen.dart';
+// import 'package:artist/artist_bottom_bar/screen/Events/artist_live_screen.dart';
+import 'package:artist/widgets/widget.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'dart:async';
+
+class ArtistEventsScreen extends StatefulWidget {
+  const ArtistEventsScreen({super.key});
+
+  @override
+  State<ArtistEventsScreen> createState() => _ArtistEventsScreenState();
+}
+
+class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
+  final artistController = Get.find<ArtistController>();
+  final eventController = Get.find<EventController>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Row(
+          children: [
+            Get.isDarkMode
+                ? Image.asset('assets/logo6.png', width: 110)
+                : Image.asset('assets/logo3.png', width: 110),
+
+            Spacer(),
+
+            // Image.asset('assets/bell_icon2.png', width: 22, color: blackColor),
+          ],
+        ),
+      ),
+      body: Padding(
+        padding: myPadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'My Events',
+              style: TextStyle(
+                color: Get.isDarkMode ? whiteColor : blackColor,
+
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+
+            Text(
+              'Manage and control your virtual performances.',
+              style: TextStyle(
+                color: Color(0xff737373),
+
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+
+            height(0.01),
+
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    GetBuilder<ArtistController>(
+                      builder: (controller) {
+                        final events = controller.artistEvents.value.data ?? [];
+                        final published = events
+                            .where((e) => e.status == 'published')
+                            .toList();
+                        if (published.isEmpty) {
+                          return Center(
+                            child: Text(
+                              'No events found',
+                              style: TextStyle(
+                                color: Get.isDarkMode ? whiteColor : blackColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          );
+                        }
+                        return ListView.separated(
+                          separatorBuilder: (context, index) {
+                            return height(0.01);
+                          },
+                          itemCount: published.length,
+                          shrinkWrap: true,
+                          padding: EdgeInsets.all(0),
+                          physics: NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            published.sort(
+                              (a, b) =>
+                                  a.startDateTime!.compareTo(b.startDateTime!),
+                            );
+                            final event = published[index];
+                            return MyContainer(
+                              widget: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      ClipOval(
+                                        child: ImageWidget(
+                                          url:
+                                              event.artist?.artistProfile ??
+                                              '${APIs.profileIP}/default.png',
+                                          width: 50,
+                                          height: 50,
+                                        ),
+                                      ),
+                                      width(0.02),
+
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+
+                                        children: [
+                                          Text(
+                                            event.name ?? 'N/A',
+                                            style: TextStyle(
+                                              color: Get.isDarkMode
+                                                  ? whiteColor
+                                                  : blackColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+
+                                          SizedBox(
+                                            width: Get.width * 0.3,
+                                            child: Container(
+                                              width: Get.width,
+
+                                              padding: EdgeInsets.all(5),
+                                              decoration: BoxDecoration(
+                                                color: Color(0xffDCFCE7),
+                                                borderRadius:
+                                                    BorderRadius.circular(50),
+                                              ),
+                                              child: Text(
+                                                event.status?.capitalize ??
+                                                    'N/A',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  color: Color(0xff00A63E),
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  height(0.01),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Schedule',
+                                            style: TextStyle(
+                                              color: Color(0xffA1A1A1),
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          height(0.01),
+
+                                          Row(
+                                            children: [
+                                              Image.asset(
+                                                'assets/date_icon.png',
+                                                color: Get.isDarkMode
+                                                    ? redColor
+                                                    : mainThemeColor,
+                                                width: 15,
+                                              ),
+                                              width(0.01),
+
+                                              Text(
+                                                DateFormat(
+                                                  ' yyyy-MM-dd',
+                                                ).format(event.startDateTime!),
+                                                style: TextStyle(
+                                                  color: Get.isDarkMode
+                                                      ? whiteColor
+                                                      : blackColor,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          height(0.01),
+                                          Row(
+                                            children: [
+                                              Image.asset(
+                                                'assets/clock.png',
+                                                color: Color(0xffA1A1A1),
+                                                width: 15,
+                                              ),
+                                              width(0.01),
+
+                                              Text(
+                                                DateFormat(
+                                                  ' HH:mm a',
+                                                ).format(event.startDateTime!),
+                                                style: TextStyle(
+                                                  color: Color(0xffA1A1A1),
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Ticket Price',
+                                            style: TextStyle(
+                                              color: Color(0xffA1A1A1),
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          height(0.01),
+                                          Text(
+                                            '\$${event.ticketPrice ?? 10}',
+                                            style: TextStyle(
+                                              color: Get.isDarkMode
+                                                  ? whiteColor
+                                                  : blackColor,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+
+                                  height(0.02),
+
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: MyButton(
+                                          label: 'Analytics',
+                                          onTap: () {
+                                            Get.to(
+                                              () =>
+                                                  AnalyticsScreen(event: event),
+                                            );
+                                          },
+
+                                          image: 'assets/chart_icon.png',
+                                          imageHeight: 15,
+                                          imageWidth: 15,
+                                          imageColor: mainThemeColor,
+                                          buttonColor: Color(0xFFDADADA),
+                                          borderColor: Color(0xffF5F5F5),
+                                        ),
+                                      ),
+
+                                      width(0.02),
+
+                                      Expanded(
+                                        child: MyButton(
+                                          label: 'Go Live',
+                                          onTap: () async {
+                                            final now = DateTime.now();
+                                            if (event.startDateTime != null &&
+                                                event.endDateTime != null) {
+                                              if (now.isAfter(
+                                                    event.startDateTime!,
+                                                  ) &&
+                                                  now.isBefore(
+                                                    event.endDateTime!,
+                                                  )) {
+                                                await Get.to(
+                                                  () =>
+                                                      StartStream(event: event),
+                                                );
+                                                await completeEvent(event);
+                                              } else {
+                                                _showStreamTimeDialog(
+                                                  event: event,
+                                                );
+                                              }
+                                            } else {
+                                              // Fallback if dates are missing
+                                              await Get.to(
+                                                () => StartStream(event: event),
+                                              );
+                                              await completeEvent(event);
+                                            }
+                                          },
+
+                                          image: 'assets/play_icon.png',
+                                          imageHeight: 15,
+                                          imageWidth: 15,
+                                          imageColor: whiteColor,
+                                          buttonColor: Get.isDarkMode
+                                              ? redColor
+                                              : mainThemeColor,
+                                          borderColor: Color(0xffF5F5F5),
+                                          labelColor: whiteColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    height(0.08),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future completeEvent(Event event) async {
+    if (event.endDateTime!.isAfter(DateTime.now())) {
+      await eventController.updateEventStatus(
+        eventId: event.id.toString(),
+        status: 'completed',
+      );
+    }
+  }
+
+  void _showStreamTimeDialog({required Event event}) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: StreamTimerDialog(event: event),
+      ),
+    );
+  }
+}
+
+class StreamTimerDialog extends StatefulWidget {
+  final Event event;
+  const StreamTimerDialog({super.key, required this.event});
+
+  @override
+  State<StreamTimerDialog> createState() => _StreamTimerDialogState();
+}
+
+class _StreamTimerDialogState extends State<StreamTimerDialog> {
+  late Timer _timer;
+  late Duration _remaining;
+  bool _hasStarted = false;
+  bool _hasEnded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateRemaining();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _calculateRemaining();
+        });
+      }
+    });
+  }
+
+  void _calculateRemaining() {
+    final now = DateTime.now();
+    if (now.isBefore(widget.event.startDateTime!)) {
+      _remaining = widget.event.startDateTime!.difference(now);
+      _hasStarted = false;
+      _hasEnded = false;
+    } else if (now.isAfter(widget.event.endDateTime!)) {
+      _hasStarted = true;
+      _hasEnded = true;
+    } else {
+      _hasStarted = true;
+      _hasEnded = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _hasEnded ? Icons.event_available : Icons.timer,
+            size: 60,
+            color: _hasEnded ? greyColor : mainThemeColor,
+          ),
+          height(0.02),
+          Text(
+            _hasEnded
+                ? 'Stream Finished'
+                : _hasStarted
+                ? 'Stream is Live!'
+                : 'Stream Starting Soon',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          height(0.01),
+          Text(
+            _hasEnded
+                ? 'This event has already ended.'
+                : _hasStarted
+                ? 'You can start your stream now!'
+                : 'Your stream is scheduled for ${DateFormat('dd MMM, hh:mm a').format(widget.event.startDateTime!)}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, color: greyColor),
+          ),
+          if (!_hasStarted && !_hasEnded) ...[
+            height(0.02),
+            Text(
+              _formatDuration(_remaining),
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Get.isDarkMode ? whiteColor : blackColor,
+              ),
+            ),
+          ],
+          height(0.03),
+          MyButton(label: 'Close', onTap: () => Get.back()),
+        ],
+      ),
+    );
+  }
+}
