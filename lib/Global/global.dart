@@ -265,12 +265,40 @@ dynamic parseError(
   bool doBack = false,
   bool showDialog = true,
 }) {
-  final data = value.split('error ').last;
-  final error = jsonDecode(data);
   if (doBack) {
     Get.back();
   }
-  showDialog ? myWarningDialog(subtitle: error['message']) : null;
+  String message = 'Something went wrong';
+  try {
+    final data = value.split('error ').last;
+    final error = jsonDecode(data);
+
+    // Message principal renvoye par l'API
+    if (error is Map && error['message'] != null) {
+      message = error['message'].toString();
+    }
+
+    // Erreurs de validation detaillees (style Laravel : {"errors": {"champ": ["..."]}})
+    if (error is Map && error['errors'] is Map) {
+      final details = <String>[];
+      (error['errors'] as Map).forEach((key, val) {
+        if (val is List) {
+          details.addAll(val.map((e) => e.toString()));
+        } else {
+          details.add(val.toString());
+        }
+      });
+      if (details.isNotEmpty) {
+        message = details.join('\n');
+      }
+    }
+  } catch (_) {
+    // Reponse non-JSON : on garde le texte brut s'il est court
+    final raw = value.replaceFirst('error ', '').trim();
+    if (raw.isNotEmpty && raw.length < 200) message = raw;
+  }
+
+  if (showDialog) myWarningDialog(subtitle: message);
 }
 
 /// Calculate total watch time from a list of events
