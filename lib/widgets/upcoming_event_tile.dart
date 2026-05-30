@@ -1,10 +1,8 @@
 import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
-import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
-import 'package:artist/widgets/my_container.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -15,104 +13,105 @@ class UpcomingEventTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MyContainer(
-      padding: EdgeInsets.only(left: 10, right: 10),
-      widget: ListTile(
-        onTap: () {
-          Get.to(() => FutureScreen(event: event));
-        },
-        contentPadding: EdgeInsets.all(0),
-        titleAlignment: ListTileTitleAlignment.top,
-        leading: ClipRRect(
-          borderRadius: BorderRadiusGeometry.circular(10),
-          child: ImageWidget(
-            url: '${APIs.eventImageIP}/${event.coverImage}',
-            height: 60,
-            width: 60,
-            fit: BoxFit.cover,
-          ),
+    return GestureDetector(
+      onTap: () => Get.to(() => FutureScreen(event: event)),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: cardDeep,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: goldSecondary.withValues(alpha: 0.18)),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text(
-              event.artist?.artistName?.capitalize ?? 'N/A',
-              style: TextStyle(
-                color: Color(0xff626262),
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: ImageWidget(
+                url: '${APIs.eventImageIP}/${event.coverImage}',
+                height: 60,
+                width: 60,
+                fit: BoxFit.cover,
               ),
             ),
-            SizedBox(
-              width: Get.width * 0.5,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    (event.artist?.artistName ?? 'N/A').toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: goldPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    event.name?.capitalize ?? 'N/A',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: ivory,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined,
+                          size: 12, color: textMuted),
+                      const SizedBox(width: 4),
+                      Text(
+                        DateFormat('MMM dd')
+                            .format(event.startDateTime ?? DateTime.now()),
+                        style: TextStyle(
+                          color: textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(Icons.access_time, size: 12, color: textMuted),
+                      const SizedBox(width: 4),
+                      Text(
+                        DateFormat('hh:mm a')
+                            .format(event.startDateTime ?? DateTime.now()),
+                        style: TextStyle(
+                          color: textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: goldSecondary, width: 1.2),
+              ),
               child: Text(
-                event.name?.capitalize ?? 'N/A',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Color(0xff626262),
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                '\$${event.ticketPrice}',
+                style: const TextStyle(
+                  color: goldPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ),
-
-            Row(
-              children: [
-                Row(
-                  children: [
-                    Image.asset('assets/date_icon.png', width: 12),
-                    width(0.01),
-                    Text(
-                      DateFormat(
-                        'MMM dd',
-                      ).format(event.startDateTime ?? DateTime.now()),
-                      style: TextStyle(
-                        color: textXolor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                width(0.02),
-
-                Row(
-                  children: [
-                    Image.asset('assets/clock_icon.png', width: 12),
-                    width(0.01),
-                    Text(
-                      DateFormat(
-                        'hh:mm a',
-                      ).format(event.startDateTime ?? DateTime.now()),
-                      style: TextStyle(
-                        color: textXolor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ),
           ],
-        ),
-        trailing: Container(
-          // width: Get.width * 0.12,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: Get.isDarkMode ? Color(0xff7A0709) : mainThemeColor,
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: Text(
-            textAlign: TextAlign.center,
-            '\$${event.ticketPrice}',
-            style: TextStyle(
-              color: Get.isDarkMode ? whiteColor : blackColor,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
         ),
       ),
     );

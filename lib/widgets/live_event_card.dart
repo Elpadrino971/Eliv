@@ -2,7 +2,6 @@ import 'package:artist/BottomBar/screens/homeScreen/check_out_screen.dart';
 import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
-import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:flutter/material.dart';
@@ -16,159 +15,169 @@ class LiveEventsCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Get.to(() => FutureScreen(event: event));
-      },
+      onTap: () => Get.to(() => FutureScreen(event: event)),
       child: Container(
         width: Get.width * 0.8,
-        padding: myPadding,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          image: DecorationImage(
-            image: NetworkImage('${APIs.eventImageIP}/${event.coverImage}'),
-            fit: BoxFit.fill,
-          ),
+          borderRadius: BorderRadius.circular(18),
+          border: kGoldBorder,
+          boxShadow: kCardShadow,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: Get.width * 0.23,
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Color(0xffDD0000),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset('assets/dots.png'),
-                          width(0.02),
-                          Text(
-                            textAlign: TextAlign.center,
-                            'Live',
-                            style: TextStyle(
-                              color: whiteColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    width(0.02),
-                    Container(
-                      // width: Get.width * 0.16,
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(50),
-                        border: Border.all(
-                          color: whiteColor.withValues(alpha: 0.2),
-                          width: 2,
-                        ),
-                      ),
-                      child: Text(
-                        textAlign: TextAlign.center,
-                        event.genre?.genre?.capitalize ?? 'N/A',
-                        style: TextStyle(
-                          color: whiteColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Spacer(),
-
-                Text(
-                  '\$${event.ticketPrice}',
-                  style: TextStyle(
-                    color: whiteColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-
-            height(0.042),
-
-            Row(
-              children: [
-                Row(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.network(
+                '${APIs.eventImageIP}/${event.coverImage}',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(color: cardDeep),
+                loadingBuilder: (context, child, progress) =>
+                    progress == null ? child : Container(color: cardDeep),
+              ),
+              const DecoratedBox(
+                decoration: BoxDecoration(gradient: kImageOverlay),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipOval(
-                      child: ImageWidget(
-                        url: '${event.artist?.profileImage}',
-                        height: 30,
-                        width: 30,
-                      ),
-                    ),
-                    width(0.02),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
                       children: [
-                        SizedBox(
-                          width: Get.width * 0.38,
-                          child: Text(
-                            event.name?.capitalize ?? 'N/A',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: whiteColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
+                        _liveBadge(),
+                        const SizedBox(width: 8),
+                        Flexible(child: _genrePill()),
+                        const Spacer(),
+                        Text(
+                          '\$${event.ticketPrice}',
+                          style: const TextStyle(
+                            color: ivory,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
                           ),
                         ),
-                        height(0.001),
-                        Text(
-                          event.artist?.artistName ?? 'N/A',
-                          style: TextStyle(
-                            color: Color(0xffFFCCD3),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                      ],
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        ClipOval(
+                          child: ImageWidget(
+                            url: '${event.artist?.profileImage}',
+                            height: 32,
+                            width: 32,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                event.name?.capitalize ?? 'N/A',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: ivory,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                (event.artist?.artistName ?? 'N/A')
+                                    .toUpperCase(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: textMuted,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () =>
+                              Get.to(() => CheckOutScreen(event: event)),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 9,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: kGoldGradient,
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: const Text(
+                              'JOIN LIVE',
+                              style: TextStyle(
+                                color: midnightPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-                Spacer(),
-
-                GestureDetector(
-                  onTap: () {
-                    Get.to(() => CheckOutScreen(event: event));
-                  },
-                  child: Container(
-                    width: Get.width * 0.23,
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: mainThemeColor,
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    child: Text(
-                      textAlign: TextAlign.center,
-                      'Join live',
-                      style: TextStyle(
-                        color: blackColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+  Widget _liveBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: liveRed,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.circle, color: Colors.white, size: 7),
+          SizedBox(width: 5),
+          Text(
+            'LIVE',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+              letterSpacing: 0.8,
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _genrePill() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: midnightPrimary.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: goldSecondary.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        event.genre?.genre?.capitalize ?? 'N/A',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: ivory,
+          fontWeight: FontWeight.w600,
+          fontSize: 11,
         ),
       ),
     );

@@ -58,7 +58,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
           margin: const EdgeInsets.fromLTRB(15, 0, 15, 5),
           decoration: BoxDecoration(
             color: themeController.isDark.value
-                ? const Color(0xff0b0d12)
+                ? midnightSecondary
                 : whiteColor,
             borderRadius: BorderRadius.circular(35),
             boxShadow: const [
@@ -87,7 +87,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
                 fontWeight: FontWeight.w400,
               ),
               selectedItemColor: themeController.isDark.value
-                  ? redColor
+                  ? goldPrimary
                   : mainThemeColor,
               unselectedItemColor: const Color(0xff737373),
               elevation: 0,
@@ -105,12 +105,12 @@ class _MyBottomBarState extends State<MyBottomBar> {
                     decoration: currentIndex == 0
                         ? BoxDecoration(
                             color: themeController.isDark.value
-                                ? redColor.withValues(alpha: 0.2)
+                                ? goldPrimary.withValues(alpha: 0.2)
                                 : mainThemeColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(35),
                             border: Border.all(
                               color: themeController.isDark.value
-                                  ? redColor
+                                  ? goldPrimary
                                   : mainThemeColor,
                             ),
                           )
@@ -121,7 +121,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
                       height: 18,
                       color: currentIndex == 0
                           ? (themeController.isDark.value
-                                ? redColor
+                                ? goldPrimary
                                 : mainThemeColor)
                           : const Color(0xff737373),
                     ),
@@ -136,12 +136,12 @@ class _MyBottomBarState extends State<MyBottomBar> {
                     decoration: currentIndex == 1
                         ? BoxDecoration(
                             color: themeController.isDark.value
-                                ? redColor.withValues(alpha: 0.2)
+                                ? goldPrimary.withValues(alpha: 0.2)
                                 : mainThemeColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(35),
                             border: Border.all(
                               color: themeController.isDark.value
-                                  ? redColor
+                                  ? goldPrimary
                                   : mainThemeColor,
                             ),
                           )
@@ -152,7 +152,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
                       height: 18,
                       color: currentIndex == 1
                           ? (themeController.isDark.value
-                                ? redColor
+                                ? goldPrimary
                                 : mainThemeColor)
                           : const Color(0xff737373),
                     ),
@@ -167,12 +167,12 @@ class _MyBottomBarState extends State<MyBottomBar> {
                     decoration: currentIndex == 2
                         ? BoxDecoration(
                             color: themeController.isDark.value
-                                ? redColor.withValues(alpha: 0.2)
+                                ? goldPrimary.withValues(alpha: 0.2)
                                 : mainThemeColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(35),
                             border: Border.all(
                               color: themeController.isDark.value
-                                  ? redColor
+                                  ? goldPrimary
                                   : mainThemeColor,
                             ),
                           )
@@ -183,7 +183,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
                       height: 18,
                       color: currentIndex == 2
                           ? (themeController.isDark.value
-                                ? redColor
+                                ? goldPrimary
                                 : mainThemeColor)
                           : const Color(0xff737373),
                     ),
@@ -198,12 +198,12 @@ class _MyBottomBarState extends State<MyBottomBar> {
                     decoration: currentIndex == 3
                         ? BoxDecoration(
                             color: themeController.isDark.value
-                                ? redColor.withValues(alpha: 0.2)
+                                ? goldPrimary.withValues(alpha: 0.2)
                                 : mainThemeColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(35),
                             border: Border.all(
                               color: themeController.isDark.value
-                                  ? redColor
+                                  ? goldPrimary
                                   : mainThemeColor,
                             ),
                           )
@@ -214,7 +214,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
                       height: 18,
                       color: currentIndex == 3
                           ? (themeController.isDark.value
-                                ? redColor
+                                ? goldPrimary
                                 : mainThemeColor)
                           : const Color(0xff737373),
                     ),
@@ -229,12 +229,12 @@ class _MyBottomBarState extends State<MyBottomBar> {
                     decoration: currentIndex == 4
                         ? BoxDecoration(
                             color: themeController.isDark.value
-                                ? redColor.withValues(alpha: 0.2)
+                                ? goldPrimary.withValues(alpha: 0.2)
                                 : mainThemeColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(35),
                             border: Border.all(
                               color: themeController.isDark.value
-                                  ? redColor
+                                  ? goldPrimary
                                   : mainThemeColor,
                             ),
                           )
@@ -245,7 +245,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
                       height: 18,
                       color: currentIndex == 4
                           ? (themeController.isDark.value
-                                ? redColor
+                                ? goldPrimary
                                 : mainThemeColor)
                           : const Color(0xff737373),
                     ),

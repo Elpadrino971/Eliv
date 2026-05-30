@@ -2,7 +2,6 @@ import 'package:artist/BottomBar/screens/LiveScreen/artist_detail.dart';
 import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
-import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:flutter/material.dart';
@@ -55,217 +54,192 @@ class _NextPerformanceCardState extends State<NextPerformanceCard> {
     super.dispose();
   }
 
+  String _two(int v) => v.toString().padLeft(2, '0');
+
   @override
   Widget build(BuildContext context) {
     return Container(
       width: Get.width * 0.8,
-      padding: myPadding,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        image: DecorationImage(
-          image: NetworkImage(
-            '${APIs.eventImageIP}/${widget.event.coverImage}',
-          ),
-          fit: BoxFit.fill,
+        borderRadius: BorderRadius.circular(18),
+        border: kGoldBorder,
+        boxShadow: kCardShadow,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              '${APIs.eventImageIP}/${widget.event.coverImage}',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(color: cardDeep),
+              loadingBuilder: (context, child, progress) =>
+                  progress == null ? child : Container(color: cardDeep),
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(gradient: kImageOverlay),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      _countdownBadge(),
+                      const Spacer(),
+                      Text(
+                        '\$${widget.event.ticketPrice}',
+                        style: const TextStyle(
+                          color: ivory,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      ClipOval(
+                        child: ImageWidget(
+                          url: '${widget.event.artist?.profileImage}',
+                          height: 32,
+                          width: 32,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => Get.to(
+                            () => ArtistDetailScreen(
+                              artist: widget.event.artist!,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                widget.event.name ?? 'N/A',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: ivory,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                (widget.event.artist?.artistName ?? 'N/A')
+                                    .toUpperCase(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: textMuted,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () =>
+                            Get.to(() => FutureScreen(event: widget.event)),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(color: goldSecondary, width: 1.2),
+                          ),
+                          child: const Text(
+                            'GET TICKET',
+                            style: TextStyle(
+                              color: goldPrimary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+
+  Widget _countdownBadge() {
+    final showDays = _duration.inDays > 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: midnightPrimary.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: goldSecondary.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              Container(
-                width: _duration.inDays > 0
-                    ? Get.width * 0.35
-                    : Get.width * 0.23,
-                padding: EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: whiteColor.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    if (_duration.inDays > 0) ...[
-                      Column(
-                        children: [
-                          Text(
-                            textAlign: TextAlign.center,
-                            _duration.inDays.toString().padLeft(2, '0'),
-                            style: TextStyle(
-                              color: whiteColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                          Text(
-                            textAlign: TextAlign.center,
-                            'Day',
-                            style: TextStyle(
-                              color: whiteColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        textAlign: TextAlign.center,
-                        ':',
-                        style: TextStyle(
-                          color: whiteColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                    Column(
-                      children: [
-                        Text(
-                          textAlign: TextAlign.center,
-                          (_duration.inHours % 24).toString().padLeft(2, '0'),
-                          style: TextStyle(
-                            color: whiteColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-
-                        Text(
-                          textAlign: TextAlign.center,
-                          'Hour',
-                          style: TextStyle(
-                            color: whiteColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    Text(
-                      textAlign: TextAlign.center,
-                      ':',
-                      style: TextStyle(
-                        color: whiteColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-
-                    Column(
-                      children: [
-                        Text(
-                          textAlign: TextAlign.center,
-                          (_duration.inMinutes % 60).toString().padLeft(2, '0'),
-                          style: TextStyle(
-                            color: whiteColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-
-                        Text(
-                          textAlign: TextAlign.center,
-                          'Min',
-                          style: TextStyle(
-                            color: whiteColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Spacer(),
-
-              Text(
-                '\$${widget.event.ticketPrice}',
-                style: TextStyle(
-                  color: whiteColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-          height(0.06),
-
-          Row(
-            children: [
-              ClipOval(
-                child: ImageWidget(
-                  url: '${widget.event.artist?.profileImage}',
-                  height: 30,
-                  width: 30,
-                ),
-              ),
-              width(0.02),
-              GestureDetector(
-                onTap: () {
-                  Get.to(
-                    () => ArtistDetailScreen(artist: widget.event.artist!),
-                  );
-                },
-                child: SizedBox(
-                  width: Get.width * 0.35,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.event.name ?? 'N/A',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: whiteColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      height(0.001),
-                      Text(
-                        widget.event.artist?.artistName ?? 'N/A',
-                        style: TextStyle(
-                          color: Color(0xffFFCCD3),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              Spacer(),
-
-              GestureDetector(
-                onTap: () {
-                  Get.to(() => FutureScreen(event: widget.event));
-                },
-                child: Container(
-                  width: Get.width * 0.25,
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Get.isDarkMode ? redColor : mainThemeColor,
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: Text(
-                    textAlign: TextAlign.center,
-                    'Get Ticket',
-                    style: TextStyle(
-                      color: Get.isDarkMode ? whiteColor : blackColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          if (showDays) ...[
+            _unit(_two(_duration.inDays), 'DAY'),
+            _sep(),
+          ],
+          _unit(_two(_duration.inHours % 24), 'HR'),
+          _sep(),
+          _unit(_two(_duration.inMinutes % 60), 'MIN'),
         ],
       ),
     );
   }
+
+  Widget _unit(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            color: ivory,
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            color: textMuted,
+            fontWeight: FontWeight.w600,
+            fontSize: 9,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _sep() => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 6),
+        child: Text(
+          ':',
+          style: TextStyle(
+            color: goldPrimary,
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          ),
+        ),
+      );
 }

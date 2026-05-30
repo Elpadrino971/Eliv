@@ -64,33 +64,45 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: blackColor,
-      body: RefreshIndicator(
-        onRefresh: myInitMethod,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GetBuilder<EventController>(
-                builder: (controller) {
-                  final events = controller.bannerEvents.value.data;
-                  if (events == null) {
-                    return const BannerShimmer();
-                  }
-                  return Column(
-                    children: [
-                      if ((events).isEmpty) height(0.05),
-                      if (events.isNotEmpty)
-                        GestureDetector(
-                          onTap: () {
-                            Get.to(() => FutureScreen(event: events.first));
-                          },
-                          child: HomeBannerCard(event: events.first),
-                        ),
-                    ],
-                  );
-                },
-              ),
+      backgroundColor: midnightPrimary,
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          color: goldPrimary,
+          backgroundColor: midnightSecondary,
+          onRefresh: myInitMethod,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTopBar(),
+                GetBuilder<EventController>(
+                  builder: (controller) {
+                    final events = controller.bannerEvents.value.data;
+                    if (events == null) {
+                      return const BannerShimmer();
+                    }
+                    return Column(
+                      children: [
+                        if ((events).isEmpty) height(0.05),
+                        if (events.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 15),
+                            child: GestureDetector(
+                              onTap: () {
+                                Get.to(() => FutureScreen(event: events.first));
+                              },
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(22),
+                                child: HomeBannerCard(event: events.first),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
 
               Padding(
                 padding: myPadding,
@@ -121,43 +133,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           }
                           return Column(
                             children: [
-                              Row(
-                                children: [
-                                  Image.asset('assets/live_icon.png'),
-                                  width(0.02),
-                                  Text(
-                                    ' Live Now',
-                                    style: TextStyle(
-                                      color: Get.isDarkMode
-                                          ? whiteColor
-                                          : blackColor,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Spacer(),
-
-                                  GestureDetector(
-                                    onTap: () {
-                                      Get.to(
-                                        () => LivePerformanceScreen(
-                                          events: events,
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      textAlign: TextAlign.center,
-                                      'View All',
-                                      style: TextStyle(
-                                        color: textXolor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                              SectionHeader(
+                                title: 'Live Now',
+                                icon: 'assets/live_icon.png',
+                                onViewAll: () => Get.to(
+                                  () => LivePerformanceScreen(events: events),
+                                ),
                               ),
-                              height(0.01),
+                              height(0.015),
 
                               if (events.isEmpty)
                                 Center(
@@ -206,42 +189,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           }
                           return Column(
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    textAlign: TextAlign.center,
-                                    'Next Performance',
-                                    style: TextStyle(
-                                      color: blackColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
+                              SectionHeader(
+                                title: 'Next Performance',
+                                icon: 'assets/date_icon.png',
+                                onViewAll: () => Get.to(
+                                  () => PerformancesScreen(
+                                    events: events,
+                                    title: 'Next Performance',
                                   ),
-                                  Spacer(),
-
-                                  GestureDetector(
-                                    onTap: () {
-                                      Get.to(
-                                        () => PerformancesScreen(
-                                          events: events,
-                                          title: 'Next Performance',
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      textAlign: TextAlign.center,
-                                      'View All',
-                                      style: TextStyle(
-                                        color: textXolor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-
-                              height(0.01),
+                              height(0.015),
 
                               if (events.isEmpty)
                                 Center(
@@ -292,43 +250,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           }
                           return Column(
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    textAlign: TextAlign.center,
-                                    'Upcoming Events',
-                                    style: TextStyle(
-                                      color: Get.isDarkMode
-                                          ? whiteColor
-                                          : blackColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
+                              SectionHeader(
+                                title: 'Upcoming Events',
+                                icon: 'assets/date_icon.png',
+                                onViewAll: () => Get.to(
+                                  () => PerformancesScreen(
+                                    events: events,
+                                    title: 'Upcoming Events',
                                   ),
-                                  Spacer(),
-
-                                  GestureDetector(
-                                    onTap: () {
-                                      Get.to(
-                                        () => PerformancesScreen(
-                                          events: events,
-                                          title: 'Upcoming Events',
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      textAlign: TextAlign.center,
-                                      'View All',
-                                      style: TextStyle(
-                                        color: textXolor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-
                               height(0.02),
 
                               if (events.isEmpty)
@@ -377,6 +308,49 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+      ),
+    ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 14),
+      child: Row(
+        children: [
+          const Text(
+            'VYBZZZ',
+            style: TextStyle(
+              color: goldPrimary,
+              fontWeight: FontWeight.w700,
+              fontSize: 24,
+              letterSpacing: 3,
+            ),
+          ),
+          const Spacer(),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(
+                Icons.notifications_none_rounded,
+                color: ivory,
+                size: 26,
+              ),
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: goldPrimary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

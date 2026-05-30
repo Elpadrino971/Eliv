@@ -43,10 +43,18 @@ class MyApp extends StatelessWidget {
         darkTheme: ThemeData(
           brightness: Brightness.dark,
           fontFamily: 'Google Sans',
-          scaffoldBackgroundColor: blackColor,
+          scaffoldBackgroundColor: midnightPrimary,
+          primaryColor: goldPrimary,
+          colorScheme: const ColorScheme.dark(
+            primary: goldPrimary,
+            secondary: goldSecondary,
+            surface: midnightSecondary,
+          ),
           appBarTheme: AppBarTheme(
-            backgroundColor: blackColor,
-            foregroundColor: whiteColor,
+            backgroundColor: midnightPrimary,
+            foregroundColor: ivory,
+            surfaceTintColor: midnightPrimary,
+            elevation: 0,
           ),
         ),
         themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
