@@ -65,6 +65,14 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: goldPrimary),
+          onPressed: () => Get.back(),
+        ),
+      ),
       body: Padding(
         padding: myPadding,
         child: Form(
@@ -72,7 +80,7 @@ class _OtpScreenState extends State<OtpScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              height(0.1),
+              height(0.04),
               Text(
                 'Verify Email',
                 style: TextStyle(
@@ -82,9 +90,9 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
               ),
               Text(
-                "We've sent a code to novinj55@gmail.com",
+                "We've sent a code to ${widget.email}",
                 style: TextStyle(
-                  color: const Color.fromARGB(255, 212, 212, 212),
+                  color: textMuted,
                   fontWeight: FontWeight.w400,
                 ),
               ),
