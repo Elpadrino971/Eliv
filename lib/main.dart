@@ -70,9 +70,6 @@ class MyApp extends StatelessWidget {
         bodyColor: ivory,
         displayColor: ivory,
       ),
-      // Corps de texte par defaut = Inter (les titres/boutons/logo utilisent
-      // PlayfairDisplay / Montserrat / Cinzel la ou c'est explicite).
-      fontFamily: AppFonts.body,
     );
   }
 }
