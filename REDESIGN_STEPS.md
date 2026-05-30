@@ -51,23 +51,23 @@ Refondre les briques réutilisées partout, pour que chaque écran suivant soit 
   `artist_onboarding_screen.dart`, `artist_basic_info.dart`,
   `following_artists.dart`, `alerts_screen.dart`
 
-## Étape 7 — Portefeuille, points, paiement, abonnements (7) ☐
+## Étape 7 — Portefeuille, points, paiement, abonnements (7) ◐ harmonisé
 - `profile/user_wallet.dart`, `points_store.dart`, `payment_screen.dart`,
   `all_subscription_screen.dart`, `manage_subscription_screen.dart`,
   `artist_bank_details.dart` + cartes `points_card.dart`, `subscription_card.dart`,
   `transactions_card.dart`
 
-## Étape 8 — Support (3) ☐
+## Étape 8 — Support (3) ◐ harmonisé
 - `profile/Support/support_screen.dart`, `support_chat_screen.dart`,
   `all_support_chats.dart`
 
-## Étape 9 — Espace Artiste : Studio (8) ☐
+## Étape 9 — Espace Artiste : Studio (8) ◐ harmonisé
 - `Studio/studio_screen.dart`, `artist_events_screen.dart`,
   `artist_create_event.dart`, `add_acount.dart`, `artist_withdraw.dart`,
   `revenue_screen.dart`, `transaction_history.dart`, `artist_chat_tab.dart`
 - `artist_bottom_bar.dart` (barre artiste — déjà partiellement faite)
 
-## Étape 10 — Espace Artiste : Events & Stats (6) ☐
+## Étape 10 — Espace Artiste : Events & Stats (6) ◐ harmonisé
 - `Events/artist_live_screen.dart`, `artist_live_event_chat.dart`,
   `artist_tips_tab.dart`, `stats_screen.dart`, `analytics_screen.dart`,
   `Status/artist_histroy_screen.dart`
