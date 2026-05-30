@@ -7,7 +7,7 @@ Légende : ☐ à faire · ☑ fait · 🎯 = écran du moodboard
 
 ---
 
-## Étape 0 — Kit de composants premium (fondations) ☐
+## Étape 0 — Kit de composants premium (fondations) ☑
 Refondre les briques réutilisées partout, pour que chaque écran suivant soit rapide et cohérent.
 - `widgets/my_appbar.dart` (appbar bleu nuit, retour or, titre Montserrat)
 - `widgets/my_button.dart` (bouton or dégradé + variante outline)
@@ -19,11 +19,11 @@ Refondre les briques réutilisées partout, pour que chaque écran suivant soit 
 - `widgets/shimmer_loaders.dart` (shimmers bleu nuit)
 - ✅ déjà : `section_header.dart`
 
-## Étape 1 — Splash & Onboarding (4) ☐
+## Étape 1 — Splash & Onboarding (4) ☑
 - 🎯 `spalash_screen.dart`
 - `OnBoarding/onboarding_1.dart`, `onboarding_2.dart`, `onboarding_3.dart`
 
-## Étape 2 — Authentification (8) ☐
+## Étape 2 — Authentification (8) ☑
 - `Auth/intro_screen.dart`, `choice_screen.dart`, `login_screen.dart`,
   `create_acount.dart`, `create_passwrod.dart`, `forgot_password.dart`,
   `otp_screen.dart`, `complete_profile.dart`

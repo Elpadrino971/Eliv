@@ -47,7 +47,7 @@ class MyPinInputField extends StatelessWidget {
           ),
           decoration: InputDecoration(
             counterText: '',
-            fillColor: Get.isDarkMode ? cardDeep : Color(0xffF3F3F5),
+            fillColor: Get.isDarkMode ? cardDeep : cardDeep,
             filled: true,
             contentPadding: const EdgeInsets.only(top: 2, bottom: 2, left: 2),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),

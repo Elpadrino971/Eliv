@@ -80,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                       'zzZ',
                       style: TextStyle(
-                        color: yellowColor,
+                        color: goldPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
                         fontStyle: FontStyle.italic,
@@ -210,8 +210,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             }
                           },
                           image: 'assets/arrow.png',
-                          imageColor: whiteColor,
-                          labelColor: whiteColor,
+                          imageColor: midnightPrimary,
+                          labelColor: midnightPrimary,
                         ),
                         height(0.02),
 
@@ -262,9 +262,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: Container(
                                     padding: myPadding,
                                     decoration: BoxDecoration(
-                                      color: Color(0xffFAFAFA),
+                                      color: cardDeep,
                                       border: Border.all(
-                                        color: Color(0xffF5F5F5),
+                                        color: Color(0xff223046),
                                       ),
                                       borderRadius: BorderRadius.circular(16),
                                     ),
@@ -285,9 +285,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     child: Container(
                                       padding: myPadding,
                                       decoration: BoxDecoration(
-                                        color: Color(0xffFAFAFA),
+                                        color: cardDeep,
                                         border: Border.all(
-                                          color: Color(0xffF5F5F5),
+                                          color: Color(0xff223046),
                                         ),
                                         borderRadius: BorderRadius.circular(16),
                                       ),
@@ -305,9 +305,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     child: Container(
                                       padding: myPadding,
                                       decoration: BoxDecoration(
-                                        color: Color(0xffFAFAFA),
+                                        color: cardDeep,
                                         border: Border.all(
-                                          color: Color(0xffF5F5F5),
+                                          color: Color(0xff223046),
                                         ),
                                         borderRadius: BorderRadius.circular(16),
                                       ),

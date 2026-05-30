@@ -71,8 +71,8 @@ class _FollowingArtistsState extends State<FollowingArtists> {
                         decoration: BoxDecoration(
                           color: Get.isDarkMode
                               ? cardDeep
-                              : Color(0xffFAFAFA),
-                          border: Border.all(color: Color(0xffF5F5F5)),
+                              : cardDeep,
+                          border: Border.all(color: Color(0xff223046)),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Center(

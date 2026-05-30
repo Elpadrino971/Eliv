@@ -29,7 +29,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
             Text(
               'Reset Password',
               style: TextStyle(
-                color: blackColor,
+                color: ivory,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
               ),
@@ -75,8 +75,8 @@ class _ForgotPasswordState extends State<ForgotPassword> {
           },
           label: 'Send Link',
           image: 'assets/arrow.png',
-          imageColor: whiteColor,
-          labelColor: whiteColor,
+          imageColor: midnightPrimary,
+          labelColor: midnightPrimary,
         ),
       ),
     );

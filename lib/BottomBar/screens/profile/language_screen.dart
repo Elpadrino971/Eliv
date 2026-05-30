@@ -34,7 +34,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
             GestureDetector(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Get.isDarkMode ? cardDeep : Color(0xffFAFAFA),
+                  color: Get.isDarkMode ? cardDeep : cardDeep,
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(color: greyColor.withValues(alpha: 0.2)),
                 ),

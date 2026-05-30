@@ -42,7 +42,7 @@ class _CreateAcountState extends State<CreateAcount> {
               Text(
                 'Create Account',
                 style: TextStyle(
-                  color: blackColor,
+                  color: ivory,
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                 ),
@@ -205,8 +205,8 @@ class _CreateAcountState extends State<CreateAcount> {
                           }
                         },
                         image: 'assets/arrow.png',
-                        imageColor: whiteColor,
-                        labelColor: whiteColor,
+                        imageColor: midnightPrimary,
+                        labelColor: midnightPrimary,
                       ),
                     ],
                   ),

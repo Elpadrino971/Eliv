@@ -28,7 +28,7 @@ class _Onboarding1State extends State<Onboarding1> {
         width: Get.width,
         height: Get.height,
         decoration: BoxDecoration(
-          color: whiteColor,
+          color: midnightPrimary,
           image: DecorationImage(
             image: AssetImage('assets/background1.png'),
             fit: BoxFit.fill,
@@ -47,7 +47,7 @@ class _Onboarding1State extends State<Onboarding1> {
                 Get.to(() => Onboarding2());
               },
               image: 'assets/arrow.png',
-              imageColor: whiteColor,
+              imageColor: midnightPrimary,
             ),
           ],
         ),

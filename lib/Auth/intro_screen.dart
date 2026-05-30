@@ -55,7 +55,7 @@ class _IntroScreenState extends State<IntroScreen> {
               onTap: () {
                 Get.to(() => MyBottomBar());
               },
-              labelColor: whiteColor,
+              labelColor: midnightPrimary,
             ),
             height(0.01),
             Text(

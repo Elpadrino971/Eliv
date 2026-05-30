@@ -55,7 +55,7 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
                   textAlign: TextAlign.center,
                   'ZZZ',
                   style: TextStyle(
-                    color: yellowColor,
+                    color: goldPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
                     fontStyle: FontStyle.italic,
@@ -89,10 +89,10 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
                 color: Get.isDarkMode
                     ? selected == 'Artist'
                           ? goldPrimary
-                          : Color(0xffFAFAFA)
+                          : cardDeep
                     : selected == 'Artist'
                     ? mainThemeColor
-                    : Color(0xffFAFAFA),
+                    : cardDeep,
                 widget: Text(
                   textAlign: TextAlign.center,
                   'Artist',
@@ -122,10 +122,10 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
                 color: Get.isDarkMode
                     ? selected == 'User'
                           ? goldPrimary
-                          : Color(0xffFAFAFA)
+                          : cardDeep
                     : selected == 'User'
                     ? mainThemeColor
-                    : Color(0xffFAFAFA),
+                    : cardDeep,
                 widget: Text(
                   textAlign: TextAlign.center,
                   'User',
@@ -149,7 +149,7 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
               onTap: () {
                 Get.to(() => LoginScreen());
               },
-              labelColor: whiteColor,
+              labelColor: midnightPrimary,
             ),
           ],
         ),

@@ -74,7 +74,7 @@ class MyDropDown extends StatelessWidget {
           decoration: InputDecoration(
             fillColor:
                 fillColor ??
-                (Get.isDarkMode ? cardDeep : Color(0xffFAFAFA)),
+                (Get.isDarkMode ? cardDeep : cardDeep),
             filled: true,
             contentPadding: const EdgeInsets.all(12.0),
             counterText: '',

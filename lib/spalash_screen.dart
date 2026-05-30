@@ -1,5 +1,6 @@
 import 'package:artist/Auth/login_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/user_model.dart';
@@ -34,17 +35,46 @@ class _SpalashScreenState extends State<SpalashScreen> {
     return Container(
       width: Get.width,
       height: Get.height,
-      decoration: BoxDecoration(color: whiteColor),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [midnightSecondary, midnightPrimary],
+        ),
+      ),
       child: Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
-
           children: [
-            // Image.asset('assets/logo.png', width: 150),
-            height(0.02),
-
-            Image.asset('assets/text_img.png', width: 150),
+            // Wordmark VYBZZZ — serif premium dore
+            const Text(
+              'VYBZZZ',
+              style: TextStyle(
+                fontFamily: AppFonts.logo,
+                color: goldPrimary,
+                fontSize: 44,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 6,
+              ),
+            ),
+            const SizedBox(height: 14),
+            // Filet dore
+            Container(
+              width: 60,
+              height: 1.5,
+              color: goldSecondary.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'LIVE CONCERTS. ANYWHERE.',
+              style: TextStyle(
+                fontFamily: AppFonts.ui,
+                color: textMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 3,
+              ),
+            ),
           ],
         ),
       ),

@@ -252,7 +252,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   //       padding: EdgeInsets.all(10),
                   //       decoration: BoxDecoration(
                   //         color: whiteColor,
-                  //         border: Border.all(color: Color(0xffF5F5F5)),
+                  //         border: Border.all(color: Color(0xff223046)),
                   //         borderRadius: BorderRadius.circular(10),
                   //       ),
                   //       child: Center(

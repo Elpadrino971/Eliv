@@ -76,7 +76,7 @@ class _OtpScreenState extends State<OtpScreen> {
               Text(
                 'Verify Email',
                 style: TextStyle(
-                  color: blackColor,
+                  color: ivory,
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                 ),
@@ -179,8 +179,8 @@ class _OtpScreenState extends State<OtpScreen> {
                   }
                 },
                 image: 'assets/arrow.png',
-                imageColor: whiteColor,
-                labelColor: whiteColor,
+                imageColor: midnightPrimary,
+                labelColor: midnightPrimary,
               ),
 
               Spacer(),

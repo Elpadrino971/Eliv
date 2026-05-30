@@ -80,7 +80,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
             Text(
               'Complete Profile',
               style: TextStyle(
-                color: blackColor,
+                color: ivory,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
               ),
@@ -271,7 +271,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
                                       : selectedIndex.contains(genre)
                                       ? mainThemeColor
                                       : boxColor,
-                                  border: Border.all(color: Color(0xffF5F5F5)),
+                                  border: Border.all(color: Color(0xff223046)),
                                   borderRadius: BorderRadius.circular(15),
                                 ),
                                 child: Center(
@@ -306,8 +306,8 @@ class _CompleteProfileState extends State<CompleteProfile> {
                         );
                       },
                       image: 'assets/arrow.png',
-                      imageColor: whiteColor,
-                      labelColor: whiteColor,
+                      imageColor: midnightPrimary,
+                      labelColor: midnightPrimary,
                     ),
                   ],
                 ),

@@ -106,7 +106,7 @@ class MyTextField extends StatelessWidget {
         decoration: InputDecoration(
           fillColor:
               fillColor ??
-              (Get.isDarkMode ? cardDeep : Color(0xffFAFAFA)),
+              (Get.isDarkMode ? cardDeep : cardDeep),
           filled: filled,
           contentPadding: contentPadding ?? const EdgeInsets.all(14.0),
           suffixIcon: trailing,

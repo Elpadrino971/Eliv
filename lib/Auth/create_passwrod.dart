@@ -35,7 +35,7 @@ class _CreatePasswrodState extends State<CreatePasswrod> {
             Text(
               'New Security ',
               style: TextStyle(
-                color: blackColor,
+                color: ivory,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
               ),
@@ -123,8 +123,8 @@ class _CreatePasswrodState extends State<CreatePasswrod> {
                 );
               },
               image: 'assets/arrow.png',
-              imageColor: whiteColor,
-              labelColor: whiteColor,
+              imageColor: midnightPrimary,
+              labelColor: midnightPrimary,
             ),
           ],
         ),

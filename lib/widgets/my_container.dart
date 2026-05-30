@@ -28,9 +28,9 @@ class MyContainer extends StatelessWidget {
       width: noWidth ? null : Get.width,
       padding: padding ?? myPadding,
       decoration: BoxDecoration(
-        // color: color ?? Color(0xffFAFAFA),
+        // color: color ?? cardDeep,
         color:
-            color ?? (Get.isDarkMode ? cardDeep : Color(0xffFAFAFA)),
+            color ?? (Get.isDarkMode ? cardDeep : cardDeep),
         borderRadius: BorderRadius.circular(15),
         border: border ?? Border.all(color: greyColor.withValues(alpha: 0.2)),
       ),

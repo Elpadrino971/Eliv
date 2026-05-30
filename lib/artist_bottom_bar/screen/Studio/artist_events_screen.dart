@@ -281,7 +281,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                           imageWidth: 15,
                                           imageColor: mainThemeColor,
                                           buttonColor: Color(0xFFDADADA),
-                                          borderColor: Color(0xffF5F5F5),
+                                          borderColor: Color(0xff223046),
                                         ),
                                       ),
 
@@ -326,7 +326,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                           buttonColor: Get.isDarkMode
                                               ? goldPrimary
                                               : mainThemeColor,
-                                          borderColor: Color(0xffF5F5F5),
+                                          borderColor: Color(0xff223046),
                                           labelColor: whiteColor,
                                         ),
                                       ),

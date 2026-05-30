@@ -41,7 +41,7 @@ class _Onboarding2State extends State<Onboarding2> {
                 Get.to(() => Onboarding3());
               },
               image: 'assets/arrow.png',
-              imageColor: whiteColor,
+              imageColor: midnightPrimary,
             ),
           ],
         ),
