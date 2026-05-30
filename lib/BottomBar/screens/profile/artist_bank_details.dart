@@ -66,7 +66,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                       Text(
                         'Complete Your Profile',
                         style: TextStyle(
-                          color: blackColor,
+                          color: ivory,
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),

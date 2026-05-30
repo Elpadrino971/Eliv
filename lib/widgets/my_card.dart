@@ -202,7 +202,7 @@ class _MyCardState extends State<MyCard> {
                               Text(
                                 'Join Arena',
                                 style: TextStyle(
-                                  color: blackColor,
+                                  color: midnightPrimary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                 ),

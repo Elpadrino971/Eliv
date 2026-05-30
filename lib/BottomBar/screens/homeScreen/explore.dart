@@ -229,7 +229,7 @@ class _ExploreState extends State<Explore> {
               title: Text(
                 'Aria Sol',
                 style: TextStyle(
-                  color: blackColor,
+                  color: ivory,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -256,7 +256,7 @@ class _ExploreState extends State<Explore> {
             title: Text(
               'DJ Koda',
               style: TextStyle(
-                color: blackColor,
+                color: ivory,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),

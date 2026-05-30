@@ -144,7 +144,7 @@ class _ReportScreenState extends State<ReportScreen> {
               Text(
                 'Select Reason',
                 style: TextStyle(
-                  color: blackColor,
+                  color: ivory,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
@@ -221,7 +221,7 @@ class _ReportScreenState extends State<ReportScreen> {
               Text(
                 'Please Describe the Issue*',
                 style: TextStyle(
-                  color: blackColor,
+                  color: ivory,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),

@@ -114,7 +114,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                 Text(
                   'Create',
                   style: TextStyle(
-                    color: blackColor,
+                    color: ivory,
 
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
@@ -136,7 +136,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                 Text(
                   ' Event Details',
                   style: TextStyle(
-                    color: blackColor,
+                    color: ivory,
 
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -226,7 +226,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                 Text(
                   ' Cover Image *',
                   style: TextStyle(
-                    color: blackColor,
+                    color: ivory,
 
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -278,7 +278,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                 Text(
                   ' Visuals * (Video Only)',
                   style: TextStyle(
-                    color: blackColor,
+                    color: ivory,
 
                     fontWeight: FontWeight.bold,
                     fontSize: 14,

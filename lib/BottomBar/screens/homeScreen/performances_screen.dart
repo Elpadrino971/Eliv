@@ -96,7 +96,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
-                                              color: blackColor,
+                                              color: ivory,
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
                                             ),
@@ -180,7 +180,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                     Text(
                                       '\$${event.ticketPrice ?? '0.0'}',
                                       style: TextStyle(
-                                        color: blackColor,
+                                        color: ivory,
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                       ),

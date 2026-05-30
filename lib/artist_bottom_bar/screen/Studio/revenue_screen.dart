@@ -67,7 +67,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: blackColor,
+                  color: ivory,
                 ),
               ),
               Text(
@@ -137,7 +137,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
               Text(
                 ' Revenue Streams',
                 style: TextStyle(
-                  color: blackColor,
+                  color: ivory,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -216,7 +216,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
                   Text(
                     ' Transactions',
                     style: TextStyle(
-                      color: blackColor,
+                      color: ivory,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),

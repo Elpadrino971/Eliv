@@ -78,7 +78,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                       Text(
                         'Secure & Protected',
                         style: TextStyle(
-                          color: blackColor,
+                          color: ivory,
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),

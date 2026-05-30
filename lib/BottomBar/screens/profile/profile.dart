@@ -158,7 +158,7 @@ class _ProfileState extends State<Profile> {
                 Text(
                   'Profile',
                   style: TextStyle(
-                    color: blackColor,
+                    color: ivory,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
                   ),

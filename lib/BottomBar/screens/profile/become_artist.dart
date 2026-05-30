@@ -40,7 +40,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                 Text(
                   'Apply Now',
                   style: TextStyle(
-                    color: blackColor,
+                    color: ivory,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
                   ),

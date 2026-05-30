@@ -60,7 +60,7 @@ class _VybzLiveScreenState extends State<VybzLiveScreen> {
                             child: Container(
                               width: Get.width,
                               height: Get.height,
-                              color: blackColor,
+                              color: ivory,
                               child:
                                   videoController != null &&
                                       videoController.value.isInitialized

@@ -28,7 +28,7 @@ Refondre les briques réutilisées partout, pour que chaque écran suivant soit 
   `create_acount.dart`, `create_passwrod.dart`, `forgot_password.dart`,
   `otp_screen.dart`, `complete_profile.dart`
 
-## Étape 3 — Détail événement & Checkout (zone Home) (11) ☐
+## Étape 3 — Détail événement & Checkout (zone Home) (11) ◐ harmonisé
 - 🎯 `homeScreen/future_screen.dart` (Event Detail)
 - 🎯 `homeScreen/check_out_screen.dart` (Ticket & Checkout)
 - `homeScreen/entry_screen.dart`, `weating_screen.dart`, `explore.dart`,
@@ -36,15 +36,15 @@ Refondre les briques réutilisées partout, pour que chaque écran suivant soit 
   `performances_screen.dart`, `notification_screen.dart`,
   `report_screen.dart`, `live_broadcast_screen.dart`
 
-## Étape 4 — Discover & Live listing (3) ☐
+## Étape 4 — Discover & Live listing (3) ◐ harmonisé
 - `Disscover/disscover_screen.dart`, `LiveScreen/vybz_live_screen.dart`,
   `LiveScreen/artist_detail.dart`
 
-## Étape 5 — Billets / Tickets (5) ☐
+## Étape 5 — Billets / Tickets (5) ◐ harmonisé
 - `my_tIckets/my_tickets_screen.dart`, `my_tIckets/live_tickets_video_screen.dart`,
   `profile/my_tickets.dart`, `profile/history.dart`, `profile/topup_history.dart`
 
-## Étape 6 — Profil & réglages (13) ☐
+## Étape 6 — Profil & réglages (13) ◐ harmonisé
 - `profile/profile.dart`, `basic_info.dart`, `personal_screen.dart`,
   `security_screen.dart`, `settings.dart`, `language_screen.dart`,
   `faq_screen.dart`, `contant_page.dart`, `become_artist.dart`,

@@ -110,7 +110,7 @@ class _CurrentSubscriptionTab extends StatelessWidget {
         return Center(
           child: MyDefaultText(
             text: 'No Active Subscription',
-            color: blackColor,
+            color: ivory,
           ),
         );
       }
@@ -160,7 +160,7 @@ class _HistoryTab extends StatelessWidget {
         return Center(
           child: MyDefaultText(
             text: 'No Subscription History',
-            color: blackColor,
+            color: ivory,
           ),
         );
       }

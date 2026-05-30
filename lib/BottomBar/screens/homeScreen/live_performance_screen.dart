@@ -130,7 +130,7 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
                                       child: Text(
                                         '\$${event.ticketPrice}',
                                         style: TextStyle(
-                                          color: blackColor,
+                                          color: ivory,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -247,7 +247,7 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
                                             Text(
                                               'Join live',
                                               style: TextStyle(
-                                                color: blackColor,
+                                                color: ivory,
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w500,
                                               ),

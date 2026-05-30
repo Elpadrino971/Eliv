@@ -64,7 +64,7 @@ class _AddAcountState extends State<AddAcount> {
                     const Text(
                       'Secure & Protected',
                       style: TextStyle(
-                        color: blackColor,
+                        color: ivory,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),

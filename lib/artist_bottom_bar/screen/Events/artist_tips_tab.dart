@@ -70,7 +70,7 @@ class _ArtistTipsScreenState extends State<ArtistTipsScreen> {
                     title: Text(
                       activity.userInfo?.fullName ?? 'anonymous',
                       style: const TextStyle(
-                        color: blackColor,
+                        color: ivory,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),

@@ -34,7 +34,7 @@ class ImageWidget extends StatelessWidget {
           width: width,
           height: height,
           decoration: BoxDecoration(
-            color: blackColor,
+            color: cardDeep,
             borderRadius: BorderRadius.circular(10),
           ),
         ),

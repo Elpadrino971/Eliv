@@ -185,7 +185,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     title: Text(
                       'Apple Pay',
                       style: TextStyle(
-                        color: blackColor,
+                        color: ivory,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -218,7 +218,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     title: Text(
                       'Visa •••• 9901',
                       style: TextStyle(
-                        color: blackColor,
+                        color: ivory,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),

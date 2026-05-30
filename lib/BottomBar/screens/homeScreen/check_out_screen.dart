@@ -1,4 +1,5 @@
 import 'package:artist/Controllers/controller.dart';
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
@@ -56,10 +57,12 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
             children: [
               Text(
                 'Select Access Tier'.toUpperCase(),
-                style: TextStyle(
-                  color: Color(0xff737373),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                style: const TextStyle(
+                  fontFamily: AppFonts.ui,
+                  color: textMuted,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  letterSpacing: 2.5,
                 ),
               ),
               height(0.02),
@@ -153,10 +156,12 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
               Text(
                 'Payment Method'.toUpperCase(),
-                style: TextStyle(
-                  color: Color(0xff737373),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+                style: const TextStyle(
+                  fontFamily: AppFonts.ui,
+                  color: textMuted,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  letterSpacing: 2.5,
                 ),
               ),
               height(0.02),
@@ -339,7 +344,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                 (t) => t['title'] == selectedAccess,
                               )['price'],
                         style: TextStyle(
-                          color: blackColor,
+                          color: ivory,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -350,6 +355,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                   height(0.01),
                   MyButton(
                     label: 'AUTHORIZE PAYMENT',
+                    labelColor: midnightPrimary,
                     onTap: () async {
                       final eventController = Get.find<EventController>();
 
@@ -396,7 +402,6 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         },
                       );
                     },
-                    labelColor: whiteColor,
                   ),
                 ],
               ),

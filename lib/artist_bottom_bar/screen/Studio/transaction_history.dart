@@ -171,7 +171,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: blackColor,
+                    color: ivory,
                   ),
                 ),
                 Text(

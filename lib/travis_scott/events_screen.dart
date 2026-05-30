@@ -29,7 +29,7 @@ class _EventsScreenState extends State<EventsScreen> {
           //     Text(
           //       'Live Experience',
           //       style: TextStyle(
-          //         color: blackColor,
+          //         color: ivory,
           //         fontSize: 15,
           //         fontWeight: FontWeight.bold,
           //       ),
@@ -85,7 +85,7 @@ class _EventsScreenState extends State<EventsScreen> {
           //         'The After Hours Tour',
 
           //         style: TextStyle(
-          //           color: blackColor,
+          //           color: ivory,
           //           fontWeight: FontWeight.bold,
           //           fontSize: 15,
           //         ),
@@ -106,7 +106,7 @@ class _EventsScreenState extends State<EventsScreen> {
           Text(
             'Events Schedule',
             style: TextStyle(
-              color: blackColor,
+              color: ivory,
               fontWeight: FontWeight.bold,
               fontSize: 15,
             ),
