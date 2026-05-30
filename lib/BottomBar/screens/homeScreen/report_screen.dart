@@ -165,8 +165,8 @@ class _ReportScreenState extends State<ReportScreen> {
                       border: BoxBorder.all(
                         color: Get.isDarkMode
                             ? reasonList[index]['title'] == selectedReason
-                                  ? redColor
-                                  : Color(0xff141821)
+                                  ? goldPrimary
+                                  : cardDeep
                             : reasonList[index]['title'] == selectedReason
                             ? mainThemeColor
                             : Color(0xffE5E7EB),
@@ -199,7 +199,7 @@ class _ReportScreenState extends State<ReportScreen> {
                               height: 20,
                               color: Get.isDarkMode
                                   ? reasonList[index]['title'] == selectedReason
-                                        ? redColor
+                                        ? goldPrimary
                                         : whiteColor
                                   : reasonList[index]['title'] == selectedReason
                                   ? mainThemeColor

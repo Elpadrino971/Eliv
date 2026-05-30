@@ -10,7 +10,7 @@ const Color yellowColor = Color(0xffFFBD22);
 const Color textXolor = Color(0xffD4D4D4);
 const Color boxColor = Color.fromARGB(255, 243, 243, 243);
 const Color redColor = Color(0xff7A0709);
-const Color darkmodeColor  = Color(0xff141821);
+const Color darkmodeColor = cardDeep;
 
 /// ─────────────────────────────────────────────────────────────
 /// VYBZZZ — Premium design tokens (Midnight blue + Gold)

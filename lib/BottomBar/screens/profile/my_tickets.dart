@@ -39,7 +39,7 @@ class _MyTicketsState extends State<MyTickets> {
                             width: Get.width * 0.3,
                             padding: EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: Get.isDarkMode ? redColor : mainThemeColor,
+                              color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                               borderRadius: BorderRadius.circular(25),
                             ),
                             child: Text(
@@ -104,7 +104,7 @@ class _MyTicketsState extends State<MyTickets> {
                           Text(
                             'Watch Now ',
                             style: TextStyle(
-                              color: Get.isDarkMode ? redColor : mainThemeColor,
+                              color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -112,7 +112,7 @@ class _MyTicketsState extends State<MyTickets> {
                           width(0.02),
                           Image.asset(
                             'assets/play_icon.png',
-                            color: Get.isDarkMode ? redColor : mainThemeColor,
+                            color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                           ),
                         ],
                       ),

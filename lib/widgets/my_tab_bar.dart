@@ -54,9 +54,9 @@ class _MyTabBarState extends State<MyTabBar> {
           indicator: BoxDecoration(
             // Dynamic border radius based on selected tab
             borderRadius: BorderRadius.circular(15),
-            color: Get.isDarkMode ? redColor : mainThemeColor,
+            color: Get.isDarkMode ? goldPrimary : mainThemeColor,
             border: Border.all(
-              color: Get.isDarkMode ? redColor : mainThemeColor,
+              color: Get.isDarkMode ? goldPrimary : mainThemeColor,
             ),
           ),
           dividerHeight: 1,

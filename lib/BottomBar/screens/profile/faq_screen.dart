@@ -68,7 +68,7 @@ class _FaqScreenState extends State<FaqScreen> {
               final faq = faqList[index];
               return Container(
                 decoration: BoxDecoration(
-                  color: Get.isDarkMode ? const Color(0xff141821) : whiteColor,
+                  color: Get.isDarkMode ? const cardDeep : whiteColor,
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(color: greyColor.withValues(alpha: 0.1)),
                   boxShadow: [

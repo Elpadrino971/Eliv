@@ -186,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'Forgot Password?',
                                 style: TextStyle(
                                   color: Get.isDarkMode
-                                      ? redColor
+                                      ? goldPrimary
                                       : mainThemeColor,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -340,7 +340,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 "Join Now",
                                 style: TextStyle(
                                   color: Get.isDarkMode
-                                      ? redColor
+                                      ? goldPrimary
                                       : mainThemeColor,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,

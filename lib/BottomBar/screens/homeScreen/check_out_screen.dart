@@ -80,7 +80,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                       decoration: BoxDecoration(
                         color: Get.isDarkMode
                             ? selectedAccess == textList[index]['title']
-                                  ? redColor
+                                  ? goldPrimary
                                   : darkmodeColor
                             : selectedAccess == textList[index]['title']
                             ? mainThemeColor.withValues(alpha: 0.2)
@@ -89,7 +89,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         border: Border.all(
                           color: Get.isDarkMode
                               ? selectedAccess == textList[index]['title']
-                                    ? redColor
+                                    ? goldPrimary
                                     : borderGreyColor
                               : selectedAccess == textList[index]['title']
                               ? mainThemeColor
@@ -195,7 +195,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         ),
                         color: Get.isDarkMode
                             ? selectedPayment == paymentList[index]['name']
-                                  ? redColor
+                                  ? goldPrimary
                                   : darkmodeColor
                             : selectedPayment == paymentList[index]['name']
                             ? mainThemeColor.withValues(alpha: 0.2)

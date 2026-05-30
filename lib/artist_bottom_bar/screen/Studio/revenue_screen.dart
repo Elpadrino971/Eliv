@@ -320,7 +320,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
                       border: BoxBorder.all(
                         color: Get.isDarkMode
                             ? methodsList[index]['title'] == _selected
-                                  ? redColor
+                                  ? goldPrimary
                                   : greyColor.withValues(alpha: 0.2)
                             : methodsList[index]['title'] == _selected
                             ? mainThemeColor

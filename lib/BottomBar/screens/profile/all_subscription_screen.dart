@@ -129,7 +129,7 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 15),
                         decoration: BoxDecoration(
-                          color: Get.isDarkMode ? redColor : mainThemeColor,
+                          color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                           borderRadius: BorderRadius.circular(20),
                           // boxShadow: [
                           //   BoxShadow(

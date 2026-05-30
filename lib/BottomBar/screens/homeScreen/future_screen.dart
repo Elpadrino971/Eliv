@@ -146,7 +146,7 @@ class _FutureScreenState extends State<FutureScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: Get.isDarkMode
-                                        ? const Color(0xff141821)
+                                        ? const cardDeep
                                         : whiteColor,
                                     borderRadius: const BorderRadius.vertical(
                                       top: Radius.circular(30),

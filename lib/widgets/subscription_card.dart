@@ -23,7 +23,7 @@ class SubscriptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Get.isDarkMode;
-    final Color accentColor = isDark ? redColor : mainThemeColor;
+    final Color accentColor = isDark ? goldPrimary : mainThemeColor;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -59,7 +59,7 @@ class SubscriptionCard extends StatelessWidget {
                 top: Radius.circular(19),
               ),
               border: Border.all(
-                color: Get.isDarkMode ? redColor : mainThemeColor,
+                color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                 width: 1.5,
               ),
             ),

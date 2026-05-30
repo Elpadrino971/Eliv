@@ -136,7 +136,7 @@ class _ArtistChatScreenState extends State<ArtistChatScreen> {
                 onTap: _sendMessage,
                 child: MyContainer(
                   padding: const EdgeInsets.all(11),
-                  color: Get.isDarkMode ? redColor : mainThemeColor,
+                  color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   noWidth: true,
                   widget: const Icon(
                     Icons.arrow_forward,

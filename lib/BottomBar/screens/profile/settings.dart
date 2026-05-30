@@ -353,7 +353,7 @@ class _SettingsState extends State<Settings> {
                     },
                     inactiveThumbColor: whiteColor,
                     inactiveTrackColor: greyColor,
-                    activeTrackColor: redColor,
+                    activeTrackColor: goldPrimary,
                     activeThumbColor: whiteColor,
                   ),
                 ),

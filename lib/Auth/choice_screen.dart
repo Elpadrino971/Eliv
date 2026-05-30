@@ -88,7 +88,7 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
               child: MyContainer(
                 color: Get.isDarkMode
                     ? selected == 'Artist'
-                          ? redColor
+                          ? goldPrimary
                           : Color(0xffFAFAFA)
                     : selected == 'Artist'
                     ? mainThemeColor
@@ -121,7 +121,7 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
               child: MyContainer(
                 color: Get.isDarkMode
                     ? selected == 'User'
-                          ? redColor
+                          ? goldPrimary
                           : Color(0xffFAFAFA)
                     : selected == 'User'
                     ? mainThemeColor

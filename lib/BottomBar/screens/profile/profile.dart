@@ -180,7 +180,7 @@ class _ProfileState extends State<Profile> {
               width: Get.width,
               padding: myPadding,
               decoration: BoxDecoration(
-                color: Get.isDarkMode ? redColor : mainThemeColor,
+                color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Column(

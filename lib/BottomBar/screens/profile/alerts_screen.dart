@@ -57,7 +57,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
                   inactiveThumbColor: whiteColor,
                   inactiveTrackColor: greyColor,
-                  activeTrackColor: Get.isDarkMode ? redColor : mainThemeColor,
+                  activeTrackColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   activeThumbColor: whiteColor,
                 ),
               ),
@@ -75,7 +75,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
                   inactiveThumbColor: whiteColor,
                   inactiveTrackColor: greyColor,
-                  activeTrackColor: Get.isDarkMode ? redColor : mainThemeColor,
+                  activeTrackColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   activeThumbColor: whiteColor,
                 ),
               ),
@@ -94,7 +94,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
                   inactiveThumbColor: whiteColor,
                   inactiveTrackColor: greyColor,
-                  activeTrackColor: Get.isDarkMode ? redColor : mainThemeColor,
+                  activeTrackColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   activeThumbColor: whiteColor,
                 ),
               ),
@@ -123,7 +123,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
                   inactiveThumbColor: whiteColor,
                   inactiveTrackColor: greyColor,
-                  activeTrackColor: Get.isDarkMode ? redColor : mainThemeColor,
+                  activeTrackColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   activeThumbColor: whiteColor,
                 ),
               ),
@@ -142,7 +142,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
                   inactiveThumbColor: whiteColor,
                   inactiveTrackColor: greyColor,
-                  activeTrackColor: Get.isDarkMode ? redColor : mainThemeColor,
+                  activeTrackColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   activeThumbColor: whiteColor,
                 ),
               ),
@@ -160,7 +160,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
                   inactiveThumbColor: whiteColor,
                   inactiveTrackColor: greyColor,
-                  activeTrackColor: Get.isDarkMode ? redColor : mainThemeColor,
+                  activeTrackColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   activeThumbColor: whiteColor,
                 ),
               ),
@@ -190,7 +190,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
                   inactiveThumbColor: whiteColor,
                   inactiveTrackColor: greyColor,
-                  activeTrackColor: Get.isDarkMode ? redColor : mainThemeColor,
+                  activeTrackColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   activeThumbColor: whiteColor,
                 ),
               ),
@@ -208,7 +208,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
                   inactiveThumbColor: whiteColor,
                   inactiveTrackColor: greyColor,
-                  activeTrackColor: Get.isDarkMode ? redColor : mainThemeColor,
+                  activeTrackColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   activeThumbColor: whiteColor,
                 ),
               ),
@@ -226,7 +226,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
                   inactiveThumbColor: whiteColor,
                   inactiveTrackColor: greyColor,
-                  activeTrackColor: Get.isDarkMode ? redColor : mainThemeColor,
+                  activeTrackColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   activeThumbColor: whiteColor,
                 ),
               ),

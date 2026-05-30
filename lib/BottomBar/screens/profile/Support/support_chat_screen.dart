@@ -100,7 +100,7 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
                             color: isUser
                                 ? mainThemeColor
                                 : (Get.isDarkMode
-                                      ? const Color(0xff141821)
+                                      ? const cardDeep
                                       : const Color(0xffF2F2F2)),
                             borderRadius: BorderRadius.circular(15).copyWith(
                               bottomRight: isUser
@@ -169,7 +169,7 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             decoration: BoxDecoration(
                               color: Get.isDarkMode
-                                  ? const Color(0xff141821)
+                                  ? const cardDeep
                                   : const Color(0xffF8F8F8),
                               borderRadius: BorderRadius.circular(25),
                             ),

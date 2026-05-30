@@ -45,10 +45,10 @@ class _UserWalletState extends State<UserWallet> {
                 padding: const EdgeInsets.all(30),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(40),
-                  color: Get.isDarkMode ? redColor : mainThemeColor,
+                  color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   boxShadow: [
                     BoxShadow(
-                      color: Get.isDarkMode ? redColor : mainThemeColor,
+                      color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -67,7 +67,7 @@ class _UserWalletState extends State<UserWallet> {
                         ),
                         child: Icon(
                           Icons.attach_money,
-                          color: Get.isDarkMode ? redColor : mainThemeColor,
+                          color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                           size: 20,
                         ),
                       ),
@@ -120,7 +120,7 @@ class _UserWalletState extends State<UserWallet> {
                           },
                           buttonColor: whiteColor,
                           labelColor: Get.isDarkMode
-                              ? redColor
+                              ? goldPrimary
                               : mainThemeColor,
                         ),
                       ],
@@ -143,7 +143,7 @@ class _UserWalletState extends State<UserWallet> {
                     child: Text(
                       'VIEW HISTORY',
                       style: TextStyle(
-                        color: Get.isDarkMode ? redColor : mainThemeColor,
+                        color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -207,7 +207,7 @@ class _UserWalletState extends State<UserWallet> {
                     borderRadius: BorderRadius.circular(25),
                     gradient: Get.isDarkMode
                         ? LinearGradient(
-                            colors: [redColor.withValues(alpha: 0.8), redColor],
+                            colors: [goldPrimary.withValues(alpha: 0.8), goldPrimary],
                           )
                         : LinearGradient(
                             colors: [
@@ -258,7 +258,7 @@ class _UserWalletState extends State<UserWallet> {
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Get.isDarkMode
-                                    ? redColor
+                                    ? goldPrimary
                                     : mainThemeColor,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -268,7 +268,7 @@ class _UserWalletState extends State<UserWallet> {
                             width(0.02),
                             Icon(
                               Icons.arrow_forward_ios,
-                              color: Get.isDarkMode ? redColor : mainThemeColor,
+                              color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                               size: 12,
                             ),
                           ],

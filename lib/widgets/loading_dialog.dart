@@ -26,7 +26,7 @@ class LoadingDialog extends StatelessWidget {
               const SizedBox(width: 6.0),
               CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  color ?? (Get.isDarkMode ? redColor : mainThemeColor),
+                  color ?? (Get.isDarkMode ? goldPrimary : mainThemeColor),
                 ),
               ),
               const SizedBox(width: 26.0),

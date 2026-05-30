@@ -104,7 +104,7 @@ class MyTextField extends StatelessWidget {
         decoration: InputDecoration(
           fillColor:
               fillColor ??
-              (Get.isDarkMode ? Color(0xff141821) : Color(0xffFAFAFA)),
+              (Get.isDarkMode ? cardDeep : Color(0xffFAFAFA)),
           filled: filled,
           contentPadding: contentPadding ?? const EdgeInsets.all(12.0),
           suffixIcon: trailing,
@@ -137,7 +137,7 @@ class MyTextField extends StatelessWidget {
           hintStyle: TextStyle(
             color:
                 hintColor ??
-                (Get.isDarkMode ? Color(0xffFAFAFA) : Color(0xff141821)),
+                (Get.isDarkMode ? Color(0xffFAFAFA) : cardDeep),
             fontSize: hintSize ?? 13,
             fontWeight: hintWeight,
 

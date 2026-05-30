@@ -196,7 +196,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         width: Get.width,
                         padding: EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Get.isDarkMode ? redColor : mainThemeColor,
+                          color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: eventController.isLoading.value
@@ -280,7 +280,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 child: TabBar(
                   labelColor: Get.isDarkMode ? whiteColor : blackColor,
                   dividerColor: greyColor.withValues(alpha: 0.2),
-                  indicatorColor: Get.isDarkMode ? redColor : mainThemeColor,
+                  indicatorColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   unselectedLabelColor: Color(0xff737373),
                   tabs: [
                     Tab(text: 'Events'),

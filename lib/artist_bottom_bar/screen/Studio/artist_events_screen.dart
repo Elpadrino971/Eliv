@@ -189,7 +189,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                               Image.asset(
                                                 'assets/date_icon.png',
                                                 color: Get.isDarkMode
-                                                    ? redColor
+                                                    ? goldPrimary
                                                     : mainThemeColor,
                                                 width: 15,
                                               ),
@@ -324,7 +324,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                           imageWidth: 15,
                                           imageColor: whiteColor,
                                           buttonColor: Get.isDarkMode
-                                              ? redColor
+                                              ? goldPrimary
                                               : mainThemeColor,
                                           borderColor: Color(0xffF5F5F5),
                                           labelColor: whiteColor,

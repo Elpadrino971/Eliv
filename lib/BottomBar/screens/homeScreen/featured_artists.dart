@@ -47,8 +47,8 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
             //         decoration: BoxDecoration(
             //           color: Get.isDarkMode
             //               ? featuredList[index] == selected
-            //                     ? redColor
-            //                     : Color(0xff141821)
+            //                     ? goldPrimary
+            //                     : cardDeep
             //               : featuredList[index] == selected
             //               ? mainThemeColor
             //               : Color(0xffF3F4F6),
@@ -191,7 +191,7 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
                                 padding: EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: Get.isDarkMode
-                                      ? redColor
+                                      ? goldPrimary
                                       : mainThemeColor,
                                   borderRadius: BorderRadius.circular(50),
                                 ),

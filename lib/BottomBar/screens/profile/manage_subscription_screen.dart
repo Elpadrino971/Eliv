@@ -41,7 +41,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen>
   @override
   Widget build(BuildContext context) {
     final bool isDark = Get.isDarkMode;
-    final Color accentColor = isDark ? redColor : mainThemeColor;
+    final Color accentColor = isDark ? goldPrimary : mainThemeColor;
 
     return Scaffold(
       backgroundColor: isDark ? darkmodeColor : const Color(0xffF8F8F8),

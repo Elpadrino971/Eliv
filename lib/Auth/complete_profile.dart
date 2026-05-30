@@ -66,7 +66,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
                   child: Text(
                     "Skip",
                     style: TextStyle(
-                      color: Get.isDarkMode ? redColor : mainThemeColor,
+                      color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -266,7 +266,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
                                 decoration: BoxDecoration(
                                   color: Get.isDarkMode
                                       ? selectedIndex.contains(genre)
-                                            ? redColor
+                                            ? goldPrimary
                                             : boxColor
                                       : selectedIndex.contains(genre)
                                       ? mainThemeColor
@@ -338,7 +338,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
       //         child: Text(
       //           "Log In",
       //           style: TextStyle(
-      //             color: Get.isDarkMode ? redColor : mainThemeColor,
+      //             color: Get.isDarkMode ? goldPrimary : mainThemeColor,
       //             fontWeight: FontWeight.bold,
       //             fontSize: 14,
       //           ),

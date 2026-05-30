@@ -22,7 +22,7 @@ class MyAppbar extends StatelessWidget implements PreferredSizeWidget {
         fontSize: 16,
         color: Get.isDarkMode ? whiteColor : blackColor,
       ),
-      backgroundColor: Get.isDarkMode ? Color(0xff141821) : whiteColor,
+      backgroundColor: Get.isDarkMode ? cardDeep : whiteColor,
       surfaceTintColor: whiteColor,
       elevation: 2,
       centerTitle: true,

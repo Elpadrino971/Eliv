@@ -248,7 +248,7 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
   // Future<void> _showFilterBottomSheet(BuildContext context) async {
   //   await showModalBottomSheet(
   //     backgroundColor: Get.isDarkMode
-  //         ? const Color(0xff141821)
+  //         ? const cardDeep
   //         : scaffoldBackgroundColor,
   //     context: context,
   //     builder: (context) {
@@ -339,8 +339,8 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
   //                         child: MyContainer(
   //                           color: Get.isDarkMode
   //                               ? selectedLocation == location
-  //                                     ? redColor.withValues(alpha: 0.2)
-  //                                     : const Color(0xff141821)
+  //                                     ? goldPrimary.withValues(alpha: 0.2)
+  //                                     : const cardDeep
   //                               : selectedLocation == location
   //                               ? const Color(0xffF4EDDF)
   //                               : whiteColor,
@@ -348,7 +348,7 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
   //                             width: 3,
   //                             color: Get.isDarkMode
   //                                 ? selectedLocation == location
-  //                                       ? redColor
+  //                                       ? goldPrimary
   //                                       : const Color(0xffE5E7EB)
   //                                 : selectedLocation == location
   //                                 ? mainThemeColor

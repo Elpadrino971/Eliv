@@ -43,7 +43,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                     decoration: BoxDecoration(
                       color: Get.isDarkMode
                           ? selectedText == 'All'
-                                ? redColor
+                                ? goldPrimary
                                 : greyColor.withValues(alpha: 0.2)
                           : selectedText == 'All'
                           ? blackColor
@@ -78,7 +78,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                     decoration: BoxDecoration(
                       color: Get.isDarkMode
                           ? selectedText == 'Credit'
-                                ? redColor
+                                ? goldPrimary
                                 : greyColor.withValues(alpha: 0.2)
                           : selectedText == 'Credit'
                           ? blackColor
@@ -126,7 +126,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                     decoration: BoxDecoration(
                       color: Get.isDarkMode
                           ? selectedText == 'Debit'
-                                ? redColor
+                                ? goldPrimary
                                 : greyColor.withValues(alpha: 0.2)
                           : selectedText == 'Debit'
                           ? blackColor

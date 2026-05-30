@@ -145,7 +145,7 @@ class _EventsScreenState extends State<EventsScreen> {
                                     event.startDateTime ?? DateTime.now(),
                                   ),
                                   style: TextStyle(
-                                    color: redColor,
+                                    color: goldPrimary,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
@@ -199,7 +199,7 @@ class _EventsScreenState extends State<EventsScreen> {
                               padding: myPadding,
                               decoration: BoxDecoration(
                                 color: Get.isDarkMode
-                                    ? redColor
+                                    ? goldPrimary
                                     : mainThemeColor,
                                 borderRadius: BorderRadius.circular(10),
                               ),

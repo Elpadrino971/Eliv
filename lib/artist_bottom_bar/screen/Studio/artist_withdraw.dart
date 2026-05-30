@@ -76,7 +76,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                 padding: myPadding,
                 width: Get.width,
                 decoration: BoxDecoration(
-                  color: Get.isDarkMode ? redColor : blackColor,
+                  color: Get.isDarkMode ? goldPrimary : blackColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
@@ -242,7 +242,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                       child: MyContainer(
                         border: Border.all(
                           color: isPicked
-                              ? (Get.isDarkMode ? redColor : mainThemeColor)
+                              ? (Get.isDarkMode ? goldPrimary : mainThemeColor)
                               : Colors.transparent,
                         ),
                         widget: ListTile(
@@ -302,7 +302,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                               IconButton(
                                 icon: Icon(
                                   Icons.delete_outline,
-                                  color: Get.isDarkMode ? redColor : Colors.red,
+                                  color: Get.isDarkMode ? goldPrimary : Colors.red,
                                   size: 22,
                                 ),
                                 onPressed: () {
@@ -345,7 +345,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                 },
                 child: MyContainer(
                   border: Border.all(
-                    color: Get.isDarkMode ? redColor : mainThemeColor,
+                    color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   ),
                   widget: ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -376,7 +376,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                 label: 'Confirm Withdrawal',
                 onTap: _onConfirmWithdraw,
                 labelColor: whiteColor,
-                buttonColor: Get.isDarkMode ? redColor : mainThemeColor,
+                buttonColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
               ),
               height(0.03),
             ],

@@ -44,7 +44,7 @@ class MyDropDown extends StatelessWidget {
             color: Get.isDarkMode ? whiteColor : blackColor,
             fontSize: 14,
           ),
-          dropdownColor: Get.isDarkMode ? Color(0xff141821) : whiteColor,
+          dropdownColor: Get.isDarkMode ? cardDeep : whiteColor,
           onTap: onTap,
           validator: validation,
           onChanged: onChanged,
@@ -71,7 +71,7 @@ class MyDropDown extends StatelessWidget {
           decoration: InputDecoration(
             fillColor:
                 fillColor ??
-                (Get.isDarkMode ? Color(0xff141821) : Color(0xffFAFAFA)),
+                (Get.isDarkMode ? cardDeep : Color(0xffFAFAFA)),
             filled: true,
             contentPadding: const EdgeInsets.all(12.0),
             counterText: '',

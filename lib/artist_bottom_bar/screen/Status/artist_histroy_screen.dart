@@ -183,7 +183,7 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                         child: SizedBox(
                           height: 140,
                           child: MyContainer(
-                            color: Get.isDarkMode ? redColor : mainThemeColor,
+                            color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                             widget: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [

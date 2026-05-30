@@ -32,7 +32,7 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
         padding: EdgeInsets.symmetric(horizontal: 10),
         margin: EdgeInsets.fromLTRB(15, 0, 15, 5),
         decoration: BoxDecoration(
-          color: Get.isDarkMode ? Color(0xff0b0d12) : whiteColor,
+          color: Get.isDarkMode ? midnightSecondary : whiteColor,
           borderRadius: BorderRadius.circular(35),
 
           boxShadow: [
@@ -59,7 +59,7 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
             unselectedFontSize: 12,
             selectedLabelStyle: TextStyle(fontWeight: FontWeight.w600),
             unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w400),
-            selectedItemColor: Get.isDarkMode ? redColor : mainThemeColor,
+            selectedItemColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
             unselectedItemColor: Color(0xff737373),
             elevation: 0,
 
@@ -78,11 +78,11 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
                   decoration: currentIndex == 0
                       ? BoxDecoration(
                           color: Get.isDarkMode
-                              ? redColor.withValues(alpha: 0.2)
+                              ? goldPrimary.withValues(alpha: 0.2)
                               : mainThemeColor.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(30),
                           border: Border.all(
-                            color: Get.isDarkMode ? redColor : mainThemeColor,
+                            color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                           ),
                         )
                       : null,
@@ -91,7 +91,7 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
                     width: 18,
                     height: 18,
                     color: currentIndex == 0
-                        ? (Get.isDarkMode ? redColor : mainThemeColor)
+                        ? (Get.isDarkMode ? goldPrimary : mainThemeColor)
                         : Color(0xff737373),
                   ),
                 ),
@@ -105,11 +105,11 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
                   decoration: currentIndex == 1
                       ? BoxDecoration(
                           color: Get.isDarkMode
-                              ? redColor.withValues(alpha: 0.2)
+                              ? goldPrimary.withValues(alpha: 0.2)
                               : mainThemeColor.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(30),
                           border: Border.all(
-                            color: Get.isDarkMode ? redColor : mainThemeColor,
+                            color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                           ),
                         )
                       : null,
@@ -118,7 +118,7 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
                     width: 18,
                     height: 18,
                     color: currentIndex == 1
-                        ? (Get.isDarkMode ? redColor : mainThemeColor)
+                        ? (Get.isDarkMode ? goldPrimary : mainThemeColor)
                         : Color(0xff737373),
                   ),
                 ),
@@ -132,11 +132,11 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
                   decoration: currentIndex == 2
                       ? BoxDecoration(
                           color: Get.isDarkMode
-                              ? redColor.withValues(alpha: 0.2)
+                              ? goldPrimary.withValues(alpha: 0.2)
                               : mainThemeColor.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(30),
                           border: Border.all(
-                            color: Get.isDarkMode ? redColor : mainThemeColor,
+                            color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                           ),
                         )
                       : null,
@@ -145,7 +145,7 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
                     width: 18,
                     height: 18,
                     color: currentIndex == 2
-                        ? (Get.isDarkMode ? redColor : mainThemeColor)
+                        ? (Get.isDarkMode ? goldPrimary : mainThemeColor)
                         : Color(0xff737373),
                   ),
                 ),
@@ -159,11 +159,11 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
                   decoration: currentIndex == 3
                       ? BoxDecoration(
                           color: Get.isDarkMode
-                              ? redColor.withValues(alpha: 0.2)
+                              ? goldPrimary.withValues(alpha: 0.2)
                               : mainThemeColor.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(30),
                           border: Border.all(
-                            color: Get.isDarkMode ? redColor : mainThemeColor,
+                            color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                           ),
                         )
                       : null,
@@ -172,7 +172,7 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
                     width: 18,
                     height: 18,
                     color: currentIndex == 3
-                        ? (Get.isDarkMode ? redColor : mainThemeColor)
+                        ? (Get.isDarkMode ? goldPrimary : mainThemeColor)
                         : Color(0xff737373),
                   ),
                 ),
