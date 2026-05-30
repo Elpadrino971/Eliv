@@ -10,7 +10,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:googleapis_auth/auth_io.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
@@ -26,11 +25,7 @@ const myPaddingTwo = EdgeInsets.only(top: 15, left: 15, right: 15);
 const textFieldPadding = EdgeInsets.symmetric(vertical: 5);
 const String themeKey = 'isDarkMode';
 
-AccessCredentials? credentials;
-
 const String revenueCatAppleApiKey = 'appl_KIbaeOroARylQdwdEhBeHEGIVms';
-
-String fcmAccessToken = '';
 
 Widget height(double height) {
   return SizedBox(height: Get.height * height);

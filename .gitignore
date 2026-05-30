@@ -43,3 +43,21 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Secrets / credentials — NE JAMAIS committer
+# Service accounts & clés privées
+**/*service-account*.json
+**/*serviceAccount*.json
+**/*-adminsdk-*.json
+*.pem
+*.p8
+*.p12
+# Signing (Android)
+**/key.properties
+**/*.jks
+**/*.keystore
+# Variables d'environnement / dart-define
+.env
+.env.*
+env/
+*.env.json
