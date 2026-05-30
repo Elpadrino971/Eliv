@@ -47,7 +47,7 @@ class SuccessDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Get.isDarkMode ? blackColor : whiteColor,
+        color: Get.isDarkMode ? midnightSecondary : whiteColor,
         borderRadius: BorderRadius.circular(15.0),
         border: Border.all(color: Colors.grey),
       ),
@@ -150,7 +150,7 @@ class WarningDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Get.isDarkMode ? blackColor : whiteColor,
+        color: Get.isDarkMode ? midnightSecondary : whiteColor,
         borderRadius: BorderRadius.circular(15.0),
         border: Border.all(color: greyColor),
       ),

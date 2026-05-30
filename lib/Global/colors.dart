@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-const Color scaffoldBackgroundColor = whiteColor;
+const Color scaffoldBackgroundColor = midnightPrimary;
 const Color whiteColor = Colors.white;
 const Color blackColor = Colors.black;
-const Color mainThemeColor = Color(0xffc6a75e);
+// Accent de base unifie sur l'or premium (voir goldPrimary plus bas).
+const Color mainThemeColor = goldPrimary;
 const Color borderGreyColor = Color(0xffB3B3B3);
 const Color greyColor = Color(0xff808080);
 const Color yellowColor = Color(0xffFFBD22);

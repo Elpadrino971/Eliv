@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Get.isDarkMode ? blackColor : Color(0xfffffcf6),
+      backgroundColor: Get.isDarkMode ? midnightPrimary : Color(0xfffffcf6),
 
       body: Center(
         child: Container(

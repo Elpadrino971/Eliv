@@ -46,7 +46,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Get.isDarkMode ? blackColor : scaffoldBackgroundColor,
+      backgroundColor: Get.isDarkMode ? midnightPrimary : scaffoldBackgroundColor,
       appBar: MyAppbar(title: 'Checkout'),
       body: SingleChildScrollView(
         child: Padding(

@@ -19,7 +19,7 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Get.isDarkMode ? blackColor : scaffoldBackgroundColor,
+      backgroundColor: Get.isDarkMode ? midnightPrimary : scaffoldBackgroundColor,
       body: Padding(
         padding: myPadding,
         child: Column(

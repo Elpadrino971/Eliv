@@ -48,7 +48,7 @@ class _FutureScreenState extends State<FutureScreen> {
   Widget build(BuildContext context) {
     bool isLive = event.status == 'live';
     return Scaffold(
-      backgroundColor: Get.isDarkMode ? blackColor : scaffoldBackgroundColor,
+      backgroundColor: Get.isDarkMode ? midnightPrimary : scaffoldBackgroundColor,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

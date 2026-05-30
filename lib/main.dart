@@ -25,43 +25,53 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = box.read(themeKey) ?? true;
+    // Thème premium unique (bleu nuit + or) applique a TOUS les ecrans.
+    final premiumTheme = _buildPremiumTheme();
 
     return SafeArea(
       top: false,
       child: GetMaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          brightness: Brightness.light,
-          fontFamily: 'Google Sans',
-          scaffoldBackgroundColor: whiteColor,
-          appBarTheme: AppBarTheme(
-            backgroundColor: whiteColor,
-            foregroundColor: blackColor,
-          ),
-        ),
-        darkTheme: ThemeData(
-          brightness: Brightness.dark,
-          fontFamily: 'Google Sans',
-          scaffoldBackgroundColor: midnightPrimary,
-          primaryColor: goldPrimary,
-          colorScheme: const ColorScheme.dark(
-            primary: goldPrimary,
-            secondary: goldSecondary,
-            surface: midnightSecondary,
-          ),
-          appBarTheme: AppBarTheme(
-            backgroundColor: midnightPrimary,
-            foregroundColor: ivory,
-            surfaceTintColor: midnightPrimary,
-            elevation: 0,
-          ),
-        ),
-        themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+        // Le meme theme pour light/dark + themeMode force => une seule
+        // identite visuelle, quel que soit le reglage systeme ou stocke.
+        theme: premiumTheme,
+        darkTheme: premiumTheme,
+        themeMode: ThemeMode.dark,
         home: (box.read('init') == null)
             ? const Onboarding1()
             : const SpalashScreen(),
       ),
+    );
+  }
+
+  ThemeData _buildPremiumTheme() {
+    final base = ThemeData(brightness: Brightness.dark);
+    return base.copyWith(
+      scaffoldBackgroundColor: midnightPrimary,
+      primaryColor: goldPrimary,
+      canvasColor: midnightPrimary,
+      colorScheme: const ColorScheme.dark(
+        primary: goldPrimary,
+        secondary: goldSecondary,
+        surface: midnightSecondary,
+        onPrimary: midnightPrimary,
+        onSurface: ivory,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: midnightPrimary,
+        foregroundColor: ivory,
+        surfaceTintColor: midnightPrimary,
+        elevation: 0,
+      ),
+      iconTheme: const IconThemeData(color: ivory),
+      textTheme: base.textTheme.apply(
+        fontFamily: 'GoogleSans',
+        bodyColor: ivory,
+        displayColor: ivory,
+      ),
+      // Police par defaut de l'app (corrige l'ancien 'Google Sans' qui ne
+      // correspondait pas a la famille declaree dans pubspec.yaml).
+      fontFamily: 'GoogleSans',
     );
   }
 }
