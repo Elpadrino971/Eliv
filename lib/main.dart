@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
   }
 
   ThemeData _buildPremiumTheme() {
-    final base = ThemeData(brightness: Brightness.dark);
+    final base = ThemeData(brightness: Brightness.dark, fontFamily: AppFonts.body);
     return base.copyWith(
       scaffoldBackgroundColor: midnightPrimary,
       primaryColor: goldPrimary,
