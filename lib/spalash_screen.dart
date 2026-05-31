@@ -155,7 +155,7 @@ class _SpalashScreenState extends State<SpalashScreen>
                       errorBuilder: (_, __, ___) => Padding(
                         padding: EdgeInsets.symmetric(vertical: h * 0.12),
                         child: const Text(
-                          'VYBZZZ',
+                          'VybzzZ',
                           style: TextStyle(
                             fontFamily: AppFonts.logo,
                             color: goldPrimary,

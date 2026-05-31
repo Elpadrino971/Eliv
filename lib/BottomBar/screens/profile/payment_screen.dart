@@ -261,7 +261,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 SizedBox(
                   width: Get.width * 0.7,
                   child: Text(
-                    'Secure 256-bit SSL encrypted checkout powered by VyBzzZ Pay.',
+                    'Secure 256-bit SSL encrypted checkout powered by VybzzZ Pay.',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,

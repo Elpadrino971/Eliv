@@ -339,7 +339,7 @@ class _LiveBroadcastScreenState extends State<LiveBroadcastScreen> {
                       height(0.01),
 
                       Text(
-                        'VyBzzZ_BOT',
+                        'VybzzZ_BOT',
                         style: TextStyle(
                           color: Color(0xff51A2FF),
                           fontSize: 16,

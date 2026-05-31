@@ -450,7 +450,7 @@ class _ProfileState extends State<Profile> {
                     Center(
                       child: Text(
                         textAlign: TextAlign.center,
-                        'VyBzzZ Mobile App ',
+                        'VybzzZ Mobile App ',
                         style: TextStyle(
                           color: Color(0xffA1A1A1),
                           fontSize: 16,

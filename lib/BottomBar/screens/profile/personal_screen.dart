@@ -146,7 +146,7 @@ class _PersonalScreenState extends State<PersonalScreen> {
                     ),
 
                     MyTextField(
-                      hintText: 'alex.h@VyBzzZ.com',
+                      hintText: 'alex.h@VybzzZ.com',
                       controller: emailController,
                       readOnly: true,
                       keyboardType: TextInputType.emailAddress,

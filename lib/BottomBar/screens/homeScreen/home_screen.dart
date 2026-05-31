@@ -320,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         children: [
           const Text(
-            'VYBZZZ',
+            'VybzzZ',
             style: TextStyle(
               fontFamily: AppFonts.logo,
               color: goldPrimary,

@@ -128,7 +128,7 @@ class _VybzLiveScreenState extends State<VybzLiveScreen> {
                                 Row(
                                   children: [
                                     Text(
-                                      'VYBZ',
+                                      'VybzzZ',
                                       style: TextStyle(
                                         color: whiteColor,
                                         fontSize: 18,
