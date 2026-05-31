@@ -24,10 +24,10 @@ class FutureScreen extends StatefulWidget {
 class _FutureScreenState extends State<FutureScreen> {
   final eventController = Get.find<EventController>();
   List<Map> futureList = [
-    {'name': '4K Ultra HD Streaming', 'image': 'assets/icon3.png'},
-    {'name': 'Dolby Atmos Spatial Audio', 'image': 'assets/icon4.png'},
-    {'name': 'Exclusive Digital Merch', 'image': 'assets/icon3.png'},
-    {'name': 'Live Chat with VIP Fans', 'image': 'assets/icon5.png'},
+    {'name': '4K Ultra HD Streaming', 'icon': Icons.high_quality_rounded},
+    {'name': 'Dolby Atmos Spatial Audio', 'icon': Icons.surround_sound_rounded},
+    {'name': 'Exclusive Digital Merch', 'icon': Icons.shopping_bag_outlined},
+    {'name': 'Live Chat with VIP Fans', 'icon': Icons.chat_bubble_outline_rounded},
   ];
   Event event = Event();
   var selectedAccess = '';
@@ -44,302 +44,223 @@ class _FutureScreenState extends State<FutureScreen> {
     event = widget.event;
   }
 
+  /// Bouton circulaire "glass" premium (bleu nuit + contour or).
+  Widget _glassButton({required VoidCallback onTap, required Widget child}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(9),
+        decoration: BoxDecoration(
+          color: midnightPrimary.withValues(alpha: 0.55),
+          shape: BoxShape.circle,
+          border: Border.all(color: goldSecondary.withValues(alpha: 0.5)),
+        ),
+        child: child,
+      ),
+    );
+  }
+
+  /// Carte d'info (date / heure) bleu nuit + accent or.
+  Widget _infoCard({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: kCardGradient,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: goldSecondary.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: goldPrimary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: goldPrimary, size: 20),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              color: textMuted,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: const TextStyle(
+              color: ivory,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isLive = event.status == 'live';
     return Scaffold(
-      backgroundColor: Get.isDarkMode ? midnightPrimary : scaffoldBackgroundColor,
+      backgroundColor: midnightPrimary,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: myPadding,
+          // ── Héro : image + dégradé bleu nuit + contenu
+          SizedBox(
             width: Get.width,
             height: Get.height * 0.42,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage('${APIs.eventImageIP}/${event.coverImage}'),
-                fit: BoxFit.fill,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                height(0.03),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Get.back();
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: greyColor.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(50),
-                          border: Border.all(
-                            color: whiteColor.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Image.asset(
-                          'assets/arrow2.png',
-                          width: 20,
-                          height: 20,
-                        ),
-                      ),
-                    ),
-
-                    Spacer(),
-
-                    GestureDetector(
-                      onTap: () async {
-                        await myShare(message: APIs.mainIP);
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: greyColor.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(50),
-                          border: Border.all(
-                            color: whiteColor.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Center(
-                          child: Image.asset(
-                            'assets/share.png',
-                            width: 20,
-                            height: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                ImageWidget(
+                  url: '${APIs.eventImageIP}/${event.coverImage}',
+                  fit: BoxFit.cover,
                 ),
-                height(0.01),
-                Row(
-                  children: [
-                    Spacer(),
-
-                    InkWell(
-                      onTap: () {
-                        String selectedReason = '';
-                        final otherReasonController = TextEditingController();
-                        final descController = TextEditingController();
-
-                        showModalBottomSheet(
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          context: context,
-                          builder: (context) {
-                            return StatefulBuilder(
-                              builder: (context, setModalState) {
-                                return Container(
-                                  padding: EdgeInsets.only(
-                                    left: 20,
-                                    right: 20,
-                                    top: 20,
-                                    bottom:
-                                        MediaQuery.of(
-                                          context,
-                                        ).viewInsets.bottom +
-                                        20,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Get.isDarkMode
-                                        ? cardDeep
-                                        : whiteColor,
-                                    borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(30),
-                                    ),
-                                  ),
-                                  child: SingleChildScrollView(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Center(
-                                          child: Container(
-                                            width: 50,
-                                            height: 5,
-                                            decoration: BoxDecoration(
-                                              color: greyColor.withValues(
-                                                alpha: 0.3,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                          ),
-                                        ),
-                                        height(0.02),
-                                        const Text(
-                                          'Report Event',
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const Text(
-                                          'Please select a reason for reporting this event.',
-                                          style: TextStyle(
-                                            color: greyColor,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                        height(0.02),
-                                        ...[
-                                          'Spam',
-                                          'Inappropriate Content',
-                                          'Harassment',
-                                          'Copyright Issue',
-                                          'Other',
-                                        ].map((reason) {
-                                          return RadioListTile<String>(
-                                            contentPadding: EdgeInsets.zero,
-                                            title: Text(
-                                              reason,
-                                              style: TextStyle(
-                                                color: Get.isDarkMode
-                                                    ? whiteColor
-                                                    : blackColor,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                            value: reason,
-                                            groupValue: selectedReason,
-                                            activeColor: mainThemeColor,
-                                            onChanged: (value) {
-                                              setModalState(() {
-                                                selectedReason = value!;
-                                              });
-                                            },
-                                          );
-                                        }),
-                                        if (selectedReason == 'Other') ...[
-                                          height(0.01),
-                                          MyTextField(
-                                            hintText: 'Enter your reason...',
-                                            controller: otherReasonController,
-                                          ),
-                                        ],
-                                        height(0.02),
-                                        const Text(
-                                          'Description',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        height(0.01),
-                                        MyTextField(
-                                          hintText: 'Provide more details...',
-                                          controller: descController,
-                                          maxLines: 4,
-                                        ),
-                                        height(0.03),
-                                        MyButton(
-                                          label: 'Submit Report',
-                                          onTap: () async {
-                                            String finalReason =
-                                                selectedReason == 'Other'
-                                                ? otherReasonController.text
-                                                      .trim()
-                                                : selectedReason;
-
-                                            if (finalReason.isEmpty) {
-                                              myWarningDialog(
-                                                subtitle:
-                                                    'Please select or enter a reason.',
-                                              );
-                                              return;
-                                            }
-
-                                            myLoadingDialog();
-                                            await eventController.reportEvent(
-                                              eventId: '${event.id}',
-                                              reason: finalReason,
-                                              description: descController.text
-                                                  .trim(),
-                                            );
-                                            Get.back(); // close loading
-                                            Get.back(); // close sheet
-
-                                            mySuccessDialog(
-                                              subtitle:
-                                                  'Report submitted. We will review it shortly.',
-                                              ontap: () => Get.back(),
-                                            );
-                                          },
-                                          labelColor: whiteColor,
-                                        ),
-                                        height(0.01),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        );
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: greyColor.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(50),
-                          border: Border.all(
-                            color: whiteColor.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Center(
-                          child: Icon(Icons.more_vert, color: whiteColor),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                height(0.02),
-
-                height(0.01),
-                SizedBox(
-                  width: Get.width * 0.4,
-                  child: Text(
-                    event.name?.capitalize ?? 'N/A',
-                    style: TextStyle(
-                      color: Get.isDarkMode ? whiteColor : blackColor,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 22,
-
-                      fontFamily: 'Google Sans',
+                // Dégradé pour la lisibilité du texte
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x66071426), Color(0xF2071426)],
+                      stops: [0.35, 1.0],
                     ),
                   ),
                 ),
-                height(0.02),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 50,
-                      height: 50,
-                      child: ClipOval(
-                        child: ImageWidget(
-                          url: '${event.artist?.profileImage}',
-                          fit: BoxFit.fill,
-                          width: 50,
-                          height: 50,
+                Padding(
+                  padding: myPadding,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      height(0.03),
+                      Row(
+                        children: [
+                          _glassButton(
+                            onTap: () => Get.back(),
+                            child: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: ivory,
+                              size: 18,
+                            ),
+                          ),
+                          const Spacer(),
+                          _glassButton(
+                            onTap: () async {
+                              await myShare(message: APIs.mainIP);
+                            },
+                            child: const Icon(
+                              Icons.ios_share_rounded,
+                              color: ivory,
+                              size: 18,
+                            ),
+                          ),
+                          width(0.02),
+                          _glassButton(
+                            onTap: _showReportSheet,
+                            child: const Icon(
+                              Icons.more_vert,
+                              color: ivory,
+                              size: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      // Badge LIVE si en direct
+                      if (isLive) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: liveRed,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            '● LIVE',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                        height(0.012),
+                      ],
+                      Text(
+                        event.name?.capitalize ?? 'N/A',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: ivory,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 26,
+                          height: 1.1,
+                          fontFamily: 'Google Sans',
                         ),
                       ),
-                    ),
-                    width(0.02),
-
-                    Text(
-                      event.artist?.artistName ?? 'N/A',
-                      style: TextStyle(
-                        color: Get.isDarkMode ? whiteColor : blackColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                      height(0.015),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(1.5),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: goldSecondary.withValues(alpha: 0.7),
+                                width: 1.4,
+                              ),
+                            ),
+                            child: ClipOval(
+                              child: ImageWidget(
+                                url: '${event.artist?.profileImage}',
+                                fit: BoxFit.cover,
+                                width: 42,
+                                height: 42,
+                              ),
+                            ),
+                          ),
+                          width(0.025),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'PERFORMING ARTIST',
+                                style: TextStyle(
+                                  color: textMuted,
+                                  fontSize: 10,
+                                  letterSpacing: 1.2,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                event.artist?.artistName ?? 'N/A',
+                                style: const TextStyle(
+                                  color: ivory,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      height(0.02),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -352,173 +273,111 @@ class _FutureScreenState extends State<FutureScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    height(0.02),
+                    // ── Cartes date / heure
                     Row(
                       children: [
-                        SizedBox(
-                          width: Get.width * 0.48,
-                          child: Container(
-                            padding: myPadding,
-                            decoration: BoxDecoration(
-                              color: Get.isDarkMode
-                                  ? darkmodeColor
-                                  : whiteColor,
-                              border: Border.all(
-                                color: Get.isDarkMode
-                                    ? darkmodeColor
-                                    : borderGreyColor,
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: Column(
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xffF3E3E5),
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                  child: Image.asset('assets/date_icon2.png'),
-                                ),
-                                height(0.01),
-                                Text(
-                                  'Live Date',
-                                  style: TextStyle(
-                                    color: Color(0xff737373),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                Text(
-                                  DateFormat(
-                                    'MMM dd, HH:mm a',
-                                  ).format(event.startDateTime!),
-                                  style: TextStyle(
-                                    color: Get.isDarkMode
-                                        ? greyColor
-                                        : blackColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 17,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        Expanded(
+                          child: _infoCard(
+                            icon: Icons.calendar_month_rounded,
+                            label: 'Live Date',
+                            value: DateFormat(
+                              'MMM dd, HH:mm a',
+                            ).format(event.startDateTime!),
                           ),
                         ),
-
-                        Spacer(),
-
-                        SizedBox(
-                          width: Get.width * 0.4,
-                          child: Container(
-                            padding: myPadding,
-                            decoration: BoxDecoration(
-                              color: Get.isDarkMode
-                                  ? darkmodeColor
-                                  : borderGreyColor,
-                              border: Border.all(
-                                color: Get.isDarkMode
-                                    ? darkmodeColor
-                                    : borderGreyColor,
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: Column(
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xffE5EEFB),
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                  child: Image.asset('assets/clock.png'),
-                                ),
-                                height(0.01),
-                                Text(
-                                  'Kick Off',
-                                  style: TextStyle(
-                                    color: Color(0xff737373),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                Text(
-                                  DateFormat(
-                                    'HH:mm a',
-                                  ).format(event.endDateTime!),
-                                  style: TextStyle(
-                                    color: Get.isDarkMode
-                                        ? greyColor
-                                        : blackColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        width(0.03),
+                        Expanded(
+                          child: _infoCard(
+                            icon: Icons.schedule_rounded,
+                            label: 'Kick Off',
+                            value: DateFormat(
+                              'HH:mm a',
+                            ).format(event.endDateTime!),
                           ),
                         ),
                       ],
                     ),
-                    height(0.01),
-                    Text(
+                    height(0.025),
+
+                    // ── Description
+                    const Text(
                       'Description',
                       style: TextStyle(
-                        color: Color(0xff262626),
+                        color: ivory,
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
                       ),
                     ),
-                    SizedBox(
-                      width: Get.width * 0.8,
-                      child: Text(
-                        event.description ?? 'N/A',
-                        style: TextStyle(
-                          color: greyColor,
-                          fontWeight: FontWeight.w400,
-                          fontSize: 16,
-                        ),
+                    height(0.01),
+                    Text(
+                      event.description ?? 'N/A',
+                      style: const TextStyle(
+                        color: textMuted,
+                        fontWeight: FontWeight.w400,
+                        fontSize: 15,
+                        height: 1.5,
                       ),
                     ),
-                    height(0.02),
+                    height(0.025),
 
+                    // ── Ce qui est inclus
+                    const Text(
+                      "What's Included",
+                      style: TextStyle(
+                        color: ivory,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                    height(0.015),
                     ListView.separated(
                       shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      padding: EdgeInsets.all(0),
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
                       itemBuilder: (context, index) {
-                        String title = futureList[index]['name'];
                         return Row(
                           children: [
-                            Image.asset(futureList[index]['image']),
-                            width(0.02),
-                            Text(
-                              title.toUpperCase(),
-                              style: TextStyle(
-                                color: Color(0xff525252),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                            Container(
+                              padding: const EdgeInsets.all(9),
+                              decoration: BoxDecoration(
+                                color: goldPrimary.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                futureList[index]['icon'] as IconData,
+                                color: goldPrimary,
+                                size: 20,
+                              ),
+                            ),
+                            width(0.035),
+                            Expanded(
+                              child: Text(
+                                futureList[index]['name'],
+                                style: const TextStyle(
+                                  color: ivory,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 15,
+                                ),
                               ),
                             ),
                           ],
                         );
                       },
-                      separatorBuilder: (context, index) {
-                        return height(0.03);
-                      },
+                      separatorBuilder: (context, index) => height(0.018),
                       itemCount: futureList.length,
                     ),
+                    height(0.03),
 
-                    height(0.01),
-
-                    Text(
+                    // ── Sélection d'accès
+                    const Text(
                       'Select Access Tier',
                       style: TextStyle(
-                        color: Color(0xff262626),
-                        fontWeight: FontWeight.w400,
+                        color: ivory,
+                        fontWeight: FontWeight.w600,
                         fontSize: 18,
                       ),
                     ),
-
                     height(0.02),
                     if (canJoinRoom()) ...[
                       MyButton(
@@ -589,6 +448,7 @@ class _FutureScreenState extends State<FutureScreen> {
                             imageColor: whiteColor,
                             labelColor: whiteColor,
                           ),
+                    height(0.02),
                   ],
                 ),
               ),
@@ -596,6 +456,149 @@ class _FutureScreenState extends State<FutureScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showReportSheet() {
+    String selectedReason = '';
+    final otherReasonController = TextEditingController();
+    final descController = TextEditingController();
+
+    showModalBottomSheet(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              decoration: const BoxDecoration(
+                color: cardDeep,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 50,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: goldSecondary.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    height(0.02),
+                    const Text(
+                      'Report Event',
+                      style: TextStyle(
+                        color: ivory,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      'Please select a reason for reporting this event.',
+                      style: TextStyle(color: textMuted, fontSize: 13),
+                    ),
+                    height(0.02),
+                    ...[
+                      'Spam',
+                      'Inappropriate Content',
+                      'Harassment',
+                      'Copyright Issue',
+                      'Other',
+                    ].map((reason) {
+                      return RadioListTile<String>(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          reason,
+                          style: const TextStyle(
+                            color: ivory,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        value: reason,
+                        groupValue: selectedReason,
+                        activeColor: goldPrimary,
+                        onChanged: (value) {
+                          setModalState(() {
+                            selectedReason = value!;
+                          });
+                        },
+                      );
+                    }),
+                    if (selectedReason == 'Other') ...[
+                      height(0.01),
+                      MyTextField(
+                        hintText: 'Enter your reason...',
+                        controller: otherReasonController,
+                      ),
+                    ],
+                    height(0.02),
+                    const Text(
+                      'Description',
+                      style: TextStyle(
+                        color: ivory,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    height(0.01),
+                    MyTextField(
+                      hintText: 'Provide more details...',
+                      controller: descController,
+                      maxLines: 4,
+                    ),
+                    height(0.03),
+                    MyButton(
+                      label: 'Submit Report',
+                      onTap: () async {
+                        String finalReason = selectedReason == 'Other'
+                            ? otherReasonController.text.trim()
+                            : selectedReason;
+
+                        if (finalReason.isEmpty) {
+                          myWarningDialog(
+                            subtitle: 'Please select or enter a reason.',
+                          );
+                          return;
+                        }
+
+                        myLoadingDialog();
+                        await eventController.reportEvent(
+                          eventId: '${event.id}',
+                          reason: finalReason,
+                          description: descController.text.trim(),
+                        );
+                        Get.back(); // close loading
+                        Get.back(); // close sheet
+
+                        mySuccessDialog(
+                          subtitle:
+                              'Report submitted. We will review it shortly.',
+                          ontap: () => Get.back(),
+                        );
+                      },
+                      labelColor: whiteColor,
+                    ),
+                    height(0.01),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
