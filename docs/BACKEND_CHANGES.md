@@ -277,4 +277,33 @@ artists promote, never monetize personal data.
 
 ---
 
+## 12. Pricing tiers (Standard / Premium / VIP) — backend wiring TODO
+
+**Current state (frontend):** the Event Detail screen now shows 3 access tiers.
+Prices are **derived on the client** from the single `ticket_price`:
+`Standard = ticket_price`, `Premium = x2`, `VIP = x5`. This is a temporary
+display/UX solution validated with the team. The checkout shows the selected
+tier's price and checks the user's points against it, **but the purchase API
+still records only the single price** (see below).
+
+**To make tiers real (no fake prices / perks):**
+1. **DB / Event:** add real per-tier pricing. Either three columns
+   (`standard_price`, `premium_price`, `vip_price`) or a `pricing_tiers` JSON
+   array `[{name, price, perks[]}]`.
+2. **Event model (Flutter):** parse those fields into the `Event` class
+   (replace the client-side x2/x5 multipliers).
+3. **Artist event creation:** add Premium & VIP price inputs (the unused
+   `vipController` in `artist_create_event.dart` is a leftover to reuse), plus
+   recommended price presets per artist level (small / confirmed / major).
+4. **Buy API:** `buyTicket` must accept the chosen tier
+   (`tier_name`/`tier_id` + `amount`) so the backend charges and records the
+   correct price. Today it only sends `event_id` + `user_id`.
+5. **Ticket model:** store the purchased `tier` so the app can unlock the right
+   perks (replay length, VIP chat, digital merch, etc.).
+6. **Perks gating:** back the tier perks server-side (what each tier actually
+   unlocks) — do not gate only on the client.
+
+Until 1–5 land, VIP/Premium are **display-only**: the backend still records the
+base `ticket_price` for every purchase.
+
 _To be completed once backend access is obtained._

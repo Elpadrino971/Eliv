@@ -23,15 +23,38 @@ class FutureScreen extends StatefulWidget {
 
 class _FutureScreenState extends State<FutureScreen> {
   final eventController = Get.find<EventController>();
-  List<Map> futureList = [
+
+  final List<Map> futureList = [
     {'name': '4K Ultra HD Streaming', 'icon': Icons.high_quality_rounded},
     {'name': 'Dolby Atmos Spatial Audio', 'icon': Icons.surround_sound_rounded},
     {'name': 'Exclusive Digital Merch', 'icon': Icons.shopping_bag_outlined},
     {'name': 'Live Chat with VIP Fans', 'icon': Icons.chat_bubble_outline_rounded},
   ];
-  Event event = Event();
-  var selectedAccess = '';
 
+  // Paliers : Standard (prix reel), Premium (x2), VIP (x5)
+  final List<Map> tiers = [
+    {
+      'name': 'STANDARD',
+      'icon': Icons.person_outline_rounded,
+      'tag': 'Access to live stream',
+      'mult': 1,
+    },
+    {
+      'name': 'PREMIUM',
+      'icon': Icons.star_outline_rounded,
+      'tag': 'Best quality + extras',
+      'mult': 2,
+    },
+    {
+      'name': 'VIP',
+      'icon': Icons.workspace_premium_outlined,
+      'tag': 'All access + VIP perks',
+      'mult': 5,
+    },
+  ];
+  int selectedTier = 1; // Premium par defaut (le plus populaire)
+
+  Event event = Event();
   var like = false;
 
   Future myInitMethod() async {
@@ -43,6 +66,14 @@ class _FutureScreenState extends State<FutureScreen> {
     super.initState();
     event = widget.event;
   }
+
+  double get _basePrice => double.tryParse(event.ticketPrice ?? '') ?? 0;
+  double _tierPrice(int i) => _basePrice * (tiers[i]['mult'] as int);
+  String _money(double v) =>
+      '\$${v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2)}';
+
+  bool get _hasTicket =>
+      (event.ticketBuyerIds ?? []).contains(userModel.value.user?.id ?? 1);
 
   /// Bouton circulaire "glass" premium (bleu nuit + contour or).
   Widget _glassButton({required VoidCallback onTap, required Widget child}) {
@@ -60,47 +91,157 @@ class _FutureScreenState extends State<FutureScreen> {
     );
   }
 
-  /// Carte d'info (date / heure) bleu nuit + accent or.
-  Widget _infoCard({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
+  /// Petite info compacte (icone or + texte).
+  Widget _metaItem(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: goldPrimary, size: 16),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: const TextStyle(
+            color: ivory,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _metaDivider() => Container(
+        width: 1,
+        height: 16,
+        color: goldSecondary.withValues(alpha: 0.3),
+        margin: const EdgeInsets.symmetric(horizontal: 12),
+      );
+
+  /// Chip de feature (badge icone or + label).
+  Widget _featureChip(IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: goldPrimary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Icon(icon, color: goldPrimary, size: 15),
+        ),
+        const SizedBox(width: 7),
+        Text(
+          label,
+          style: const TextStyle(
+            color: ivory,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _tierCard(int index) {
+    final selected = selectedTier == index;
+    final popular = index == 1;
+    final card = AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
       decoration: BoxDecoration(
-        gradient: kCardGradient,
+        gradient: selected ? null : kCardGradient,
+        color: selected ? goldPrimary.withValues(alpha: 0.10) : null,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: goldSecondary.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: selected ? goldPrimary : goldSecondary.withValues(alpha: 0.25),
+          width: selected ? 1.8 : 1,
+        ),
+        boxShadow: selected
+            ? [
+                BoxShadow(
+                  color: goldPrimary.withValues(alpha: 0.25),
+                  blurRadius: 18,
+                  spreadRadius: 1,
+                ),
+              ]
+            : null,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: goldPrimary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: goldPrimary, size: 20),
+          Icon(
+            tiers[index]['icon'] as IconData,
+            color: selected ? goldPrimary : ivory,
+            size: 24,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
-            label.toUpperCase(),
-            style: const TextStyle(
-              color: textMuted,
-              fontWeight: FontWeight.w600,
-              fontSize: 11,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            value,
+            tiers[index]['name'] as String,
             style: const TextStyle(
               color: ivory,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _money(_tierPrice(index)),
+            style: TextStyle(
+              color: selected ? goldPrimary : ivory,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            tiers[index]['tag'] as String,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: textMuted,
+              fontSize: 10.5,
+              height: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final tappable = GestureDetector(
+      onTap: () => setState(() => selectedTier = index),
+      child: card,
+    );
+
+    if (!popular) return tappable;
+
+    return GestureDetector(
+      onTap: () => setState(() => selectedTier = index),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          card,
+          Positioned(
+            top: -11,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: kGoldGradient,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'MOST POPULAR',
+                  style: TextStyle(
+                    color: midnightPrimary,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -110,16 +251,16 @@ class _FutureScreenState extends State<FutureScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool isLive = event.status == 'live';
+    final bool isLive = event.status == 'live';
     return Scaffold(
       backgroundColor: midnightPrimary,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Héro : image + dégradé bleu nuit + contenu
+          // ── Héro : image plein écran + dégradé + overlay
           SizedBox(
             width: Get.width,
-            height: Get.height * 0.42,
+            height: Get.height * 0.46,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -127,14 +268,13 @@ class _FutureScreenState extends State<FutureScreen> {
                   url: '${APIs.eventImageIP}/${event.coverImage}',
                   fit: BoxFit.cover,
                 ),
-                // Dégradé pour la lisibilité du texte
                 const DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Color(0x66071426), Color(0xF2071426)],
-                      stops: [0.35, 1.0],
+                      colors: [Color(0x99071426), Color(0x00071426), Color(0xFF071426)],
+                      stops: [0.0, 0.4, 1.0],
                     ),
                   ),
                 ),
@@ -155,6 +295,17 @@ class _FutureScreenState extends State<FutureScreen> {
                             ),
                           ),
                           const Spacer(),
+                          _glassButton(
+                            onTap: () => setState(() => like = !like),
+                            child: Icon(
+                              like
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              color: like ? goldPrimary : ivory,
+                              size: 18,
+                            ),
+                          ),
+                          width(0.02),
                           _glassButton(
                             onTap: () async {
                               await myShare(message: APIs.mainIP);
@@ -177,29 +328,45 @@ class _FutureScreenState extends State<FutureScreen> {
                         ],
                       ),
                       const Spacer(),
-                      // Badge LIVE si en direct
-                      if (isLive) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: liveRed,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            '● LIVE',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 11,
-                              letterSpacing: 1,
-                            ),
-                          ),
+                      // Badge LIVE / LIVE CONCERT
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 11,
+                          vertical: 6,
                         ),
-                        height(0.012),
-                      ],
+                        decoration: BoxDecoration(
+                          color: isLive
+                              ? liveRed
+                              : midnightPrimary.withValues(alpha: 0.55),
+                          borderRadius: BorderRadius.circular(20),
+                          border: isLive
+                              ? null
+                              : Border.all(
+                                  color: goldSecondary.withValues(alpha: 0.5),
+                                ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.circle,
+                              color: isLive ? Colors.white : goldPrimary,
+                              size: 8,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              isLive ? 'LIVE NOW' : 'LIVE CONCERT',
+                              style: TextStyle(
+                                color: isLive ? Colors.white : ivory,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      height(0.012),
                       Text(
                         event.name?.capitalize ?? 'N/A',
                         maxLines: 2,
@@ -207,58 +374,25 @@ class _FutureScreenState extends State<FutureScreen> {
                         style: const TextStyle(
                           color: ivory,
                           fontWeight: FontWeight.w900,
-                          fontSize: 26,
-                          height: 1.1,
+                          fontSize: 30,
+                          height: 1.05,
                           fontFamily: 'Google Sans',
                         ),
                       ),
-                      height(0.015),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(1.5),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: goldSecondary.withValues(alpha: 0.7),
-                                width: 1.4,
-                              ),
-                            ),
-                            child: ClipOval(
-                              child: ImageWidget(
-                                url: '${event.artist?.profileImage}',
-                                fit: BoxFit.cover,
-                                width: 42,
-                                height: 42,
-                              ),
-                            ),
-                          ),
-                          width(0.025),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'PERFORMING ARTIST',
-                                style: TextStyle(
-                                  color: textMuted,
-                                  fontSize: 10,
-                                  letterSpacing: 1.2,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                event.artist?.artistName ?? 'N/A',
-                                style: const TextStyle(
-                                  color: ivory,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                      const SizedBox(height: 4),
+                      Text(
+                        (event.artist?.artistName ?? 'Live Stream')
+                            .toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: goldPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.5,
+                        ),
                       ),
-                      height(0.02),
+                      height(0.015),
                     ],
                   ),
                 ),
@@ -266,195 +400,297 @@ class _FutureScreenState extends State<FutureScreen> {
             ),
           ),
 
+          // ── Contenu défilant
           Expanded(
             child: SingleChildScrollView(
-              child: Padding(
-                padding: myPadding,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    height(0.02),
-                    // ── Cartes date / heure
-                    Row(
+              padding: EdgeInsets.fromLTRB(
+                myPadding.horizontal / 2,
+                10,
+                myPadding.horizontal / 2,
+                20,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Ligne date / heure compacte
+                  Row(
+                    children: [
+                      _metaItem(
+                        Icons.calendar_month_rounded,
+                        DateFormat('MMM dd, yyyy').format(event.startDateTime!),
+                      ),
+                      _metaDivider(),
+                      _metaItem(
+                        Icons.schedule_rounded,
+                        DateFormat('HH:mm a').format(event.startDateTime!),
+                      ),
+                    ],
+                  ),
+                  height(0.02),
+                  // Chips de features
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 10,
+                    children: [
+                      _featureChip(Icons.high_quality_rounded, '4K Ultra HD'),
+                      _featureChip(Icons.surround_sound_rounded, 'Dolby Atmos'),
+                      _featureChip(
+                        Icons.chat_bubble_outline_rounded,
+                        'VIP Fan Chat',
+                      ),
+                    ],
+                  ),
+                  height(0.025),
+
+                  if (!_hasTicket) ...[
+                    // ── Choix du palier
+                    const Text(
+                      'CHOOSE YOUR ACCESS',
+                      style: TextStyle(
+                        color: textMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(child: _tierCard(0)),
+                          const SizedBox(width: 10),
+                          Expanded(child: _tierCard(1)),
+                          const SizedBox(width: 10),
+                          Expanded(child: _tierCard(2)),
+                        ],
+                      ),
+                    ),
+                    height(0.025),
+                  ],
+
+                  // ── Inclus
+                  Container(
+                    width: Get.width,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: kCardGradient,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: goldSecondary.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: _infoCard(
-                            icon: Icons.calendar_month_rounded,
-                            label: 'Live Date',
-                            value: DateFormat(
-                              'MMM dd, HH:mm a',
-                            ).format(event.startDateTime!),
+                        Text(
+                          _hasTicket
+                              ? 'INCLUDED WITH YOUR PASS'
+                              : 'INCLUDED WITH ${tiers[selectedTier]['name']}',
+                          style: const TextStyle(
+                            color: goldPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
                           ),
                         ),
-                        width(0.03),
-                        Expanded(
-                          child: _infoCard(
-                            icon: Icons.schedule_rounded,
-                            label: 'Kick Off',
-                            value: DateFormat(
-                              'HH:mm a',
-                            ).format(event.endDateTime!),
-                          ),
-                        ),
+                        height(0.018),
+                        ...List.generate(futureList.length, (index) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom:
+                                  index == futureList.length - 1 ? 0 : 14,
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(7),
+                                  decoration: BoxDecoration(
+                                    color: goldPrimary.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    futureList[index]['icon'] as IconData,
+                                    color: goldPrimary,
+                                    size: 17,
+                                  ),
+                                ),
+                                width(0.035),
+                                Expanded(
+                                  child: Text(
+                                    futureList[index]['name'],
+                                    style: const TextStyle(
+                                      color: ivory,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
                       ],
                     ),
-                    height(0.025),
+                  ),
+                  height(0.025),
 
-                    // ── Description
-                    const Text(
-                      'Description',
-                      style: TextStyle(
-                        color: ivory,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
+                  // ── À propos
+                  const Text(
+                    'ABOUT THIS EVENT',
+                    style: TextStyle(
+                      color: textMuted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
                     ),
-                    height(0.01),
-                    Text(
-                      event.description ?? 'N/A',
-                      style: const TextStyle(
-                        color: textMuted,
-                        fontWeight: FontWeight.w400,
-                        fontSize: 15,
-                        height: 1.5,
-                      ),
+                  ),
+                  height(0.012),
+                  Text(
+                    event.description ?? 'N/A',
+                    style: const TextStyle(
+                      color: textMuted,
+                      fontWeight: FontWeight.w400,
+                      fontSize: 14,
+                      height: 1.55,
                     ),
-                    height(0.025),
+                  ),
 
-                    // ── Ce qui est inclus
-                    const Text(
-                      "What's Included",
-                      style: TextStyle(
-                        color: ivory,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                    height(0.015),
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: EdgeInsets.zero,
-                      itemBuilder: (context, index) {
-                        return Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(9),
-                              decoration: BoxDecoration(
-                                color: goldPrimary.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                futureList[index]['icon'] as IconData,
-                                color: goldPrimary,
-                                size: 20,
-                              ),
-                            ),
-                            width(0.035),
-                            Expanded(
-                              child: Text(
-                                futureList[index]['name'],
-                                style: const TextStyle(
-                                  color: ivory,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
+                  // ── Bouton "Join Room" (jour J, avant le live)
+                  if (canJoinRoom()) ...[
+                    height(0.025),
+                    MyButton(
+                      label: 'Join Room',
+                      buttonColor: Colors.transparent,
+                      borderColor: goldPrimary,
+                      labelColor: goldPrimary,
+                      onTap: () async {
+                        await Get.to(() => PreStreamScreen(event: event));
+                        await myInitMethod();
+                        final data = eventController.userJoinedEvents.value.data
+                            ?.firstWhere((element) => element.id == event.id);
+                        data != null ? event = data : null;
+                        setState(() {});
                       },
-                      separatorBuilder: (context, index) => height(0.018),
-                      itemCount: futureList.length,
                     ),
-                    height(0.03),
-
-                    // ── Sélection d'accès
-                    const Text(
-                      'Select Access Tier',
-                      style: TextStyle(
-                        color: ivory,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 18,
-                      ),
-                    ),
-                    height(0.02),
-                    if (canJoinRoom()) ...[
-                      MyButton(
-                        label: 'Join Room',
-                        onTap: () async {
-                          await Get.to(() => PreStreamScreen(event: event));
-                          await myInitMethod();
-                          final data = eventController
-                              .userJoinedEvents
-                              .value
-                              .data
-                              ?.firstWhere((element) => element.id == event.id);
-                          data != null ? event = data : null;
-                          setState(() {});
-                        },
-                      ),
-                      height(0.01),
-                    ],
-                    (event.ticketBuyerIds ?? []).contains(
-                          userModel.value.user?.id ?? 1,
-                        )
-                        ? MyButton(
-                            label: isLive
-                                ? 'Join Event'
-                                : event.status == 'completed'
-                                ? 'Event Completed'
-                                : 'Wait for Live',
-                            onTap: !isLive
-                                ? () {}
-                                : event.status == 'completed'
-                                ? () {}
-                                : () async {
-                                    await Get.to(
-                                      () => JoinStream(event: event),
-                                    );
-                                    await myInitMethod();
-                                    final data = eventController
-                                        .userJoinedEvents
-                                        .value
-                                        .data
-                                        ?.firstWhere(
-                                          (element) => element.id == event.id,
-                                        );
-                                    data != null ? event = data : null;
-                                    setState(() {});
-                                  },
-                            image: 'assets/arrow.png',
-                            imageColor: whiteColor,
-                            labelColor: whiteColor,
-                          )
-                        : MyButton(
-                            label: 'Continue to Checkout',
-                            onTap: () async {
-                              final value = await Get.to(
-                                () => CheckOutScreen(event: event),
-                              );
-                              if (value != null) {
-                                event = event.copyWith(
-                                  ticketBuyerIds: [
-                                    ...(event.ticketBuyerIds ?? []),
-                                    userModel.value.user?.id ?? 1,
-                                  ],
-                                );
-                                setState(() {});
-                              }
-                            },
-                            image: 'assets/arrow.png',
-                            imageColor: whiteColor,
-                            labelColor: whiteColor,
-                          ),
-                    height(0.02),
                   ],
-                ),
+                  height(0.01),
+                ],
               ),
             ),
           ),
+
+          // ── Barre CTA sticky (toujours visible)
+          _buildStickyBar(isLive),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStickyBar(bool isLive) {
+    final bool hasTicket = _hasTicket;
+
+    Widget content;
+    if (hasTicket) {
+      // Déjà acheté : action selon le statut de l'event
+      final completed = event.status == 'completed';
+      content = MyButton(
+        label: isLive
+            ? 'Join Event'
+            : completed
+                ? 'Event Completed'
+                : 'Wait for Live',
+        image: 'assets/arrow.png',
+        imageColor: midnightPrimary,
+        labelColor: midnightPrimary,
+        buttonColor: (isLive) ? null : greyColor.withValues(alpha: 0.4),
+        onTap: (!isLive || completed)
+            ? () {}
+            : () async {
+                await Get.to(() => JoinStream(event: event));
+                await myInitMethod();
+                final data = eventController.userJoinedEvents.value.data
+                    ?.firstWhere((element) => element.id == event.id);
+                data != null ? event = data : null;
+                setState(() {});
+              },
+      );
+    } else {
+      // Pas encore acheté : prix du palier + checkout
+      content = Row(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Total',
+                style: TextStyle(color: textMuted, fontSize: 12),
+              ),
+              Text(
+                _money(_tierPrice(selectedTier)),
+                style: const TextStyle(
+                  color: ivory,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              Text(
+                '${(tiers[selectedTier]['name'] as String).capitalizeFirst} Access',
+                style: const TextStyle(color: textMuted, fontSize: 11),
+              ),
+            ],
+          ),
+          width(0.04),
+          Expanded(
+            child: MyButton(
+              label: 'CONTINUE TO CHECKOUT',
+              image: 'assets/arrow.png',
+              imageColor: midnightPrimary,
+              labelColor: midnightPrimary,
+              onTap: () async {
+                final tierName = tiers[selectedTier]['name'] as String;
+                final value = await Get.to(
+                  () => CheckOutScreen(
+                    event: event,
+                    tierTitle:
+                        '${tierName.capitalizeFirst} Pass',
+                    tierSubtitle: tiers[selectedTier]['tag'] as String,
+                    tierPrice: _money(_tierPrice(selectedTier)),
+                  ),
+                );
+                if (value != null) {
+                  event = event.copyWith(
+                    ticketBuyerIds: [
+                      ...(event.ticketBuyerIds ?? []),
+                      userModel.value.user?.id ?? 1,
+                    ],
+                  );
+                  setState(() {});
+                }
+              },
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: midnightSecondary,
+        border: Border(
+          top: BorderSide(color: goldSecondary.withValues(alpha: 0.2)),
+        ),
+        boxShadow: const [
+          BoxShadow(color: Color(0x66000000), blurRadius: 16, offset: Offset(0, -4)),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+          child: content,
+        ),
       ),
     );
   }
