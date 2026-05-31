@@ -19,43 +19,37 @@ class SpalashScreen extends StatefulWidget {
 class _SpalashScreenState extends State<SpalashScreen>
     with TickerProviderStateMixin {
   // Logo : démarre petit -> grandit
-  late final AnimationController _introController;
-  late final Animation<double> _logoScale;
-  late final Animation<double> _logoFade;
-  late final Animation<double> _taglineFade;
+  late final AnimationController _introController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2200),
+  );
+
+  // Petit -> grand (0.25 -> 1.0) avec un léger rebond
+  late final Animation<double> _logoScale =
+      Tween<double>(begin: 0.25, end: 1.0).animate(
+    CurvedAnimation(
+      parent: _introController,
+      curve: const Interval(0.0, 0.75, curve: Curves.easeOutBack),
+    ),
+  );
+  late final Animation<double> _logoFade = CurvedAnimation(
+    parent: _introController,
+    curve: const Interval(0.0, 0.4, curve: Curves.easeIn),
+  );
+  late final Animation<double> _taglineFade = CurvedAnimation(
+    parent: _introController,
+    curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
+  );
 
   // Paillettes dorées qui tombent en continu
-  late final AnimationController _sparkleController;
+  late final AnimationController _sparkleController = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 6),
+  )..repeat();
 
   @override
   void initState() {
     super.initState();
-
-    _introController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2200),
-    );
-    // Petit -> grand (0.25 -> 1.0) avec un léger rebond
-    _logoScale = Tween<double>(begin: 0.25, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _introController,
-        curve: const Interval(0.0, 0.75, curve: Curves.easeOutBack),
-      ),
-    );
-    _logoFade = CurvedAnimation(
-      parent: _introController,
-      curve: const Interval(0.0, 0.4, curve: Curves.easeIn),
-    );
-    _taglineFade = CurvedAnimation(
-      parent: _introController,
-      curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
-    );
-
-    _sparkleController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 6),
-    )..repeat();
-
     _introController.forward();
   }
 
