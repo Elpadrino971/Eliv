@@ -306,3 +306,30 @@ Until 1–5 land, VIP/Premium are **display-only**: the backend still records th
 base `ticket_price` for every purchase.
 
 _To be completed once backend access is obtained._
+
+---
+
+## 13. Onglet Live — feed 2 pages ("Pour toi" + "En direct") — v1 front
+
+**Livré (front, sans backend) :**
+- L'onglet Live est maintenant un **PageView horizontal à 2 pages** avec pastille
+  de navigation "Pour toi · En direct" :
+  - **Page 0 "Pour toi"** : feed vertical de reels (logique existante conservée,
+    `allEvents` + `videoReel`). La vidéo se met en pause quand on swipe vers les lives.
+  - **Page 1 "En direct"** : feed vertical des lives en cours
+    (`liveNowEvents`, `getEventsByStatus(status: live)`). Chaque carte = image de
+    couverture (léger zoom) + badge LIVE + **aperçu gratuit 60 s** (barre de
+    progression) → puis **overlay opaque** (gate) avec CTA. Accès direct (pas de
+    gate) si le user possède déjà le billet ou si l'event est gratuit.
+
+**À faire côté backend / Zego pour la suite (V2) :**
+1. **Vrai aperçu live** : remplacer l'image de couverture par le flux Zego réel
+   en lecture seule (viewer), coupé après la fenêtre d'aperçu. Nécessite
+   l'intégration du viewer Zego + un flag `is_live` fiable par event.
+2. **Durée d'aperçu configurable** : exposer la durée (60 s par défaut) dans
+   `settings/get-settings` pour l'ajuster sans MAJ de l'app.
+3. **Compteur de spectateurs** en temps réel (depuis Zego ou backend) à afficher
+   à côté du badge LIVE.
+4. **Feed "Pour toi" algorithmique** : aujourd'hui = simple liste `allEvents`.
+   Prévoir un endpoint de reco (par genre suivi / artistes suivis / popularité)
+   pour vraiment "retenir" l'utilisateur.
