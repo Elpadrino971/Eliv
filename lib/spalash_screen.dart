@@ -7,6 +7,7 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/user_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class SpalashScreen extends StatefulWidget {
@@ -24,7 +25,6 @@ class _SpalashScreenState extends State<SpalashScreen>
     duration: const Duration(milliseconds: 2200),
   );
 
-  // Petit -> grand (0.25 -> 1.0) avec un léger rebond
   late final Animation<double> _logoScale =
       Tween<double>(begin: 0.25, end: 1.0).animate(
     CurvedAnimation(
@@ -41,11 +41,17 @@ class _SpalashScreenState extends State<SpalashScreen>
     curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
   );
 
-  // Paillettes dorées qui tombent en continu
+  // Paillettes dorées + halo qui respire
   late final AnimationController _sparkleController = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 6),
   )..repeat();
+
+  // Flash de transition (or -> blanc) à la validation
+  late final AnimationController _flashController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 650),
+  );
 
   @override
   void initState() {
@@ -53,7 +59,10 @@ class _SpalashScreenState extends State<SpalashScreen>
     _introController.forward();
   }
 
-  void _enter() {
+  void _onConfirmed() async {
+    // Petit punch haptique + flash lumineux, puis navigation
+    HapticFeedback.heavyImpact();
+    await _flashController.forward();
     final hasUser = box.read('user') != null;
     if (hasUser) {
       userModel.value = UserModel.fromJson(box.read('user'));
@@ -65,6 +74,7 @@ class _SpalashScreenState extends State<SpalashScreen>
   void dispose() {
     _introController.dispose();
     _sparkleController.dispose();
+    _flashController.dispose();
     super.dispose();
   }
 
@@ -77,7 +87,7 @@ class _SpalashScreenState extends State<SpalashScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Fond : image foule + spot doré (à déposer dans assets)
+          // ── Fond : image foule + spot doré
           Image.asset(
             'assets/launch_bg.png',
             fit: BoxFit.cover,
@@ -92,7 +102,32 @@ class _SpalashScreenState extends State<SpalashScreen>
             ),
           ),
 
-          // ── Paillettes dorées animées (tombent depuis le haut)
+          // ── Halo doré central qui respire (comble le vide + met le logo en valeur)
+          AnimatedBuilder(
+            animation: _sparkleController,
+            builder: (context, _) {
+              final pulse =
+                  0.10 + (math.sin(_sparkleController.value * math.pi * 2) + 1) / 2 * 0.10;
+              return Align(
+                alignment: const Alignment(0, -0.35),
+                child: Container(
+                  width: w * 0.9,
+                  height: w * 0.9,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        goldPrimary.withValues(alpha: pulse),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // ── Paillettes dorées animées
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _sparkleController,
@@ -106,16 +141,16 @@ class _SpalashScreenState extends State<SpalashScreen>
           SafeArea(
             child: Column(
               children: [
-                SizedBox(height: h * 0.06),
+                SizedBox(height: h * 0.10),
 
-                // Logo emblème "V" : petit -> grand
+                // Logo emblème "V" : petit -> grand (agrandi à 0.80)
                 FadeTransition(
                   opacity: _logoFade,
                   child: ScaleTransition(
                     scale: _logoScale,
                     child: Image.asset(
                       'assets/launch_logo.png',
-                      width: w * 0.72,
+                      width: w * 0.80,
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) => Padding(
                         padding: EdgeInsets.symmetric(vertical: h * 0.12),
@@ -134,12 +169,11 @@ class _SpalashScreenState extends State<SpalashScreen>
                   ),
                 ),
 
-                // Tagline (si le logo n'inclut pas déjà le texte)
                 FadeTransition(
                   opacity: _taglineFade,
                   child: Column(
                     children: [
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         'LIVE CONCERTS',
                         style: TextStyle(
@@ -150,47 +184,95 @@ class _SpalashScreenState extends State<SpalashScreen>
                           letterSpacing: 4,
                         ),
                       ),
+                      const SizedBox(height: 14),
+                      // Phrase courte pour combler le vide central
+                      Text(
+                        'Exclusive live events. Anytime. Anywhere.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: AppFonts.body,
+                          color: ivory.withValues(alpha: 0.65),
+                          fontSize: 13,
+                          height: 1.4,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
                     ],
                   ),
                 ),
 
                 const Spacer(),
 
-                // 3 piliers
+                // ── Bloc bas : scrim sombre derrière piliers + slider (lisibilité)
                 FadeTransition(
                   opacity: _taglineFade,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: const [
-                      _Pillar(icon: Icons.explore_outlined, label: 'DISCOVER'),
-                      _PillarDivider(),
-                      _Pillar(
-                        icon: Icons.confirmation_number_outlined,
-                        label: 'BOOK',
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Color(0xCC071426)],
+                        stops: [0.0, 0.45],
                       ),
-                      _PillarDivider(),
-                      _Pillar(icon: Icons.graphic_eq, label: 'LIVE'),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: h * 0.04),
-
-                // Bouton slide-to-confirm (glisser pour entrer) + lumière animée
-                FadeTransition(
-                  opacity: _taglineFade,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: _SlideToEnter(
-                      shimmer: _sparkleController,
-                      onConfirmed: _enter,
+                    ),
+                    padding: const EdgeInsets.fromLTRB(24, 30, 24, 40),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: const [
+                            _Pillar(
+                              icon: Icons.explore_outlined,
+                              label: 'DISCOVER',
+                            ),
+                            _PillarDivider(),
+                            _Pillar(
+                              icon: Icons.confirmation_number_outlined,
+                              label: 'BOOK',
+                            ),
+                            _PillarDivider(),
+                            _Pillar(icon: Icons.graphic_eq, label: 'LIVE'),
+                          ],
+                        ),
+                        const SizedBox(height: 26),
+                        _SlideToEnter(
+                          shimmer: _sparkleController,
+                          onConfirmed: _onConfirmed,
+                        ),
+                      ],
                     ),
                   ),
                 ),
-
-                SizedBox(height: h * 0.04),
               ],
             ),
+          ),
+
+          // ── Flash de transition (or -> blanc) par-dessus tout
+          AnimatedBuilder(
+            animation: _flashController,
+            builder: (context, _) {
+              if (_flashController.value == 0) return const SizedBox.shrink();
+              return Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: _flashController.value),
+                          goldPrimary.withValues(
+                            alpha: _flashController.value * 0.8,
+                          ),
+                          midnightPrimary.withValues(
+                            alpha: _flashController.value,
+                          ),
+                        ],
+                        stops: const [0.0, 0.4, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -198,20 +280,19 @@ class _SpalashScreenState extends State<SpalashScreen>
   }
 }
 
-/// Peintre des paillettes dorées qui tombent.
+/// Paillettes dorées qui tombent.
 class _SparklePainter extends CustomPainter {
   _SparklePainter({required this.progress});
   final double progress;
 
-  // Particules fixes (positions pseudo-aléatoires déterministes)
-  static final List<_Particle> _particles = List.generate(40, (i) {
+  static final List<_Particle> _particles = List.generate(46, (i) {
     final rnd = math.Random(i * 7 + 3);
     return _Particle(
       x: rnd.nextDouble(),
       speed: 0.4 + rnd.nextDouble() * 0.8,
       phase: rnd.nextDouble(),
       radius: 0.6 + rnd.nextDouble() * 1.8,
-      spread: 0.2 + rnd.nextDouble() * 0.6, // concentre vers le haut/centre
+      spread: 0.2 + rnd.nextDouble() * 0.6,
     );
   });
 
@@ -220,10 +301,9 @@ class _SparklePainter extends CustomPainter {
     final paint = Paint()..color = goldPrimary;
     for (final p in _particles) {
       final t = (progress * p.speed + p.phase) % 1.0;
-      // Les paillettes restent surtout dans le tiers supérieur (comme la maquette)
       final dy = t * size.height * 0.55;
-      // Léger balancement horizontal
-      final dx = (p.x + math.sin(t * math.pi * 2) * 0.02 * p.spread) * size.width;
+      final dx =
+          (p.x + math.sin(t * math.pi * 2) * 0.02 * p.spread) * size.width;
       final opacity = (1.0 - t) * 0.9;
       paint.color = goldPrimary.withValues(alpha: opacity.clamp(0.0, 1.0));
       canvas.drawCircle(Offset(dx, dy), p.radius, paint);
@@ -250,7 +330,7 @@ class _Particle {
   final double spread;
 }
 
-/// Bouton "glisser pour entrer" avec curseur or et lumière animée.
+/// Bouton "glisser pour entrer" — haptique, traînée lumineuse, halo qui suit le doigt.
 class _SlideToEnter extends StatefulWidget {
   const _SlideToEnter({required this.onConfirmed, required this.shimmer});
   final VoidCallback onConfirmed;
@@ -263,9 +343,10 @@ class _SlideToEnter extends StatefulWidget {
 class _SlideToEnterState extends State<_SlideToEnter> {
   double _dragX = 0;
   bool _confirmed = false;
+  int _lastHapticStep = 0;
 
-  static const double _height = 60;
-  static const double _knob = 52;
+  static const double _height = 62;
+  static const double _knob = 54;
 
   @override
   Widget build(BuildContext context) {
@@ -277,108 +358,133 @@ class _SlideToEnterState extends State<_SlideToEnter> {
         return Container(
           height: _height,
           decoration: BoxDecoration(
-            color: midnightPrimary.withValues(alpha: 0.55),
+            color: midnightPrimary.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(_height / 2),
             border: Border.all(color: goldSecondary, width: 1.4),
+            boxShadow: [
+              // Halo global qui s'intensifie quand on approche du bout
+              BoxShadow(
+                color: goldPrimary.withValues(alpha: 0.15 + pct * 0.35),
+                blurRadius: 18 + pct * 22,
+                spreadRadius: pct * 2,
+              ),
+            ],
           ),
-          child: Stack(
-            alignment: Alignment.centerLeft,
-            children: [
-              // Remplissage doré qui suit le curseur
-              FractionallySizedBox(
-                widthFactor: (pct * 0.9 + 0.12).clamp(0.0, 1.0),
-                child: Container(
-                  height: _height,
-                  decoration: BoxDecoration(
-                    gradient: kGoldGradient,
-                    borderRadius: BorderRadius.circular(_height / 2),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(_height / 2),
+            child: Stack(
+              alignment: Alignment.centerLeft,
+              children: [
+                // Traînée lumineuse dorée derrière le curseur
+                FractionallySizedBox(
+                  widthFactor: (pct * 0.9 + 0.14).clamp(0.0, 1.0),
+                  child: Container(
+                    height: _height,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          goldPrimary.withValues(alpha: 0.0),
+                          goldPrimary.withValues(alpha: 0.55),
+                          goldPrimary,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(_height / 2),
+                    ),
                   ),
                 ),
-              ),
 
-              // Texte + lumière (shimmer) qui balaie
-              Center(
-                child: AnimatedBuilder(
-                  animation: widget.shimmer,
-                  builder: (context, child) {
-                    return ShaderMask(
-                      shaderCallback: (rect) {
-                        final dx = (widget.shimmer.value * 2 - 0.5) * rect.width;
-                        return LinearGradient(
-                          colors: [
-                            ivory.withValues(alpha: 0.5),
-                            Colors.white,
-                            ivory.withValues(alpha: 0.5),
-                          ],
-                          stops: const [0.35, 0.5, 0.65],
-                          begin: Alignment(-1 + dx / rect.width * 2, 0),
-                          end: Alignment(1 + dx / rect.width * 2, 0),
-                        ).createShader(rect);
-                      },
-                      child: child,
-                    );
-                  },
-                  child: Opacity(
-                    opacity: (1 - pct).clamp(0.2, 1.0),
-                    child: Text(
-                      'SLIDE TO ENTER  ›››',
-                      style: TextStyle(
-                        fontFamily: AppFonts.ui,
-                        color: pct > 0.4 ? midnightPrimary : ivory,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 2,
+                // Texte + lumière (shimmer) qui balaie
+                Center(
+                  child: AnimatedBuilder(
+                    animation: widget.shimmer,
+                    builder: (context, child) {
+                      return ShaderMask(
+                        shaderCallback: (rect) {
+                          final dx =
+                              (widget.shimmer.value * 2 - 0.5) * rect.width;
+                          return LinearGradient(
+                            colors: [
+                              ivory.withValues(alpha: 0.55),
+                              Colors.white,
+                              ivory.withValues(alpha: 0.55),
+                            ],
+                            stops: const [0.35, 0.5, 0.65],
+                            begin: Alignment(-1 + dx / rect.width * 2, 0),
+                            end: Alignment(1 + dx / rect.width * 2, 0),
+                          ).createShader(rect);
+                        },
+                        child: child,
+                      );
+                    },
+                    child: Opacity(
+                      opacity: (1 - pct).clamp(0.25, 1.0),
+                      child: Text(
+                        'SLIDE TO ENTER  ›››',
+                        style: TextStyle(
+                          fontFamily: AppFonts.ui,
+                          color: pct > 0.4 ? midnightPrimary : ivory,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 2,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
 
-              // Curseur draggable
-              Positioned(
-                left: 4 + _dragX,
-                child: GestureDetector(
-                  onHorizontalDragUpdate: (d) {
-                    if (_confirmed) return;
-                    setState(() {
-                      _dragX = (_dragX + d.delta.dx).clamp(0.0, maxX);
-                    });
-                  },
-                  onHorizontalDragEnd: (_) {
-                    if (_confirmed) return;
-                    if (pct > 0.85) {
+                // Curseur draggable + halo qui suit le doigt
+                Positioned(
+                  left: 4 + _dragX,
+                  child: GestureDetector(
+                    onHorizontalDragUpdate: (d) {
+                      if (_confirmed) return;
                       setState(() {
-                        _dragX = maxX;
-                        _confirmed = true;
+                        _dragX = (_dragX + d.delta.dx).clamp(0.0, maxX);
                       });
-                      widget.onConfirmed();
-                    } else {
-                      setState(() => _dragX = 0); // revient au départ
-                    }
-                  },
-                  child: Container(
-                    width: _knob,
-                    height: _knob,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: kGoldGradient,
-                      boxShadow: [
-                        BoxShadow(
-                          color: goldPrimary.withValues(alpha: 0.5),
-                          blurRadius: 16,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.arrow_forward,
-                      color: midnightPrimary,
-                      size: 24,
+                      // Petits crans haptiques pendant le glissement
+                      final step = (pct * 5).floor();
+                      if (step != _lastHapticStep) {
+                        _lastHapticStep = step;
+                        HapticFeedback.selectionClick();
+                      }
+                    },
+                    onHorizontalDragEnd: (_) {
+                      if (_confirmed) return;
+                      if (pct > 0.85) {
+                        setState(() {
+                          _dragX = maxX;
+                          _confirmed = true;
+                        });
+                        widget.onConfirmed();
+                      } else {
+                        HapticFeedback.lightImpact();
+                        setState(() => _dragX = 0);
+                      }
+                    },
+                    child: Container(
+                      width: _knob,
+                      height: _knob,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: kGoldGradient,
+                        boxShadow: [
+                          BoxShadow(
+                            color: goldPrimary.withValues(alpha: 0.4 + pct * 0.4),
+                            blurRadius: 14 + pct * 20,
+                            spreadRadius: 1 + pct * 3,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        _confirmed ? Icons.check : Icons.arrow_forward,
+                        color: midnightPrimary,
+                        size: 24,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -401,6 +507,7 @@ class _Pillar extends StatelessWidget {
           height: 52,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
+            color: midnightPrimary.withValues(alpha: 0.45),
             border: Border.all(color: goldSecondary, width: 1.4),
           ),
           child: Icon(icon, color: goldPrimary, size: 24),
@@ -408,12 +515,15 @@ class _Pillar extends StatelessWidget {
         const SizedBox(height: 10),
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: AppFonts.ui,
-            color: ivory,
+            color: Colors.white,
             fontSize: 11,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             letterSpacing: 2,
+            shadows: [
+              Shadow(color: Color(0xCC000000), blurRadius: 6),
+            ],
           ),
         ),
       ],
