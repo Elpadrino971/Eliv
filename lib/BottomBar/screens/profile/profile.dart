@@ -158,9 +158,10 @@ class _ProfileState extends State<Profile> {
                 Text(
                   'Profile',
                   style: TextStyle(
-                    color: ivory,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                    color: goldPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 26,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 Spacer(),
@@ -170,7 +171,23 @@ class _ProfileState extends State<Profile> {
                     await Get.to(() => Settings());
                     setState(() {});
                   },
-                  child: Image.asset('assets/setting4.png', width: 40),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: cardDeep,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: goldSecondary.withValues(alpha: 0.4),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.settings_outlined,
+                      color: goldPrimary,
+                      size: 22,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -180,20 +197,50 @@ class _ProfileState extends State<Profile> {
               width: Get.width,
               padding: myPadding,
               decoration: BoxDecoration(
-                color: Get.isDarkMode ? goldPrimary : mainThemeColor,
-                borderRadius: BorderRadius.circular(15),
+                gradient: kCardGradient,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: goldSecondary.withValues(alpha: 0.45),
+                  width: 1,
+                ),
               ),
-              child: Column(
+              child: Stack(
+                children: [
+                  // Filigrane "V" discret
+                  Positioned(
+                    right: 4,
+                    bottom: -8,
+                    child: Text(
+                      'V',
+                      style: TextStyle(
+                        fontSize: 90,
+                        fontWeight: FontWeight.bold,
+                        color: goldPrimary.withValues(alpha: 0.05),
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                  Column(
                 children: [
                   Row(
                     children: [
-                      ClipOval(
-                        child: ImageWidget(
-                          url: widget.fromArtist
-                              ? '${userModel.value.user?.artistProfile}'
-                              : '${userModel.value.user?.profileImage}',
-                          width: 50,
-                          height: 50,
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: goldSecondary.withValues(alpha: 0.6),
+                            width: 1.4,
+                          ),
+                        ),
+                        child: ClipOval(
+                          child: ImageWidget(
+                            url: widget.fromArtist
+                                ? '${userModel.value.user?.artistProfile}'
+                                : '${userModel.value.user?.profileImage}',
+                            width: 50,
+                            height: 50,
+                          ),
                         ),
                       ),
 
@@ -230,8 +277,8 @@ class _ProfileState extends State<Profile> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: whiteColor,
-                                fontWeight: FontWeight.w500,
+                                color: ivory,
+                                fontWeight: FontWeight.w600,
                                 fontSize: 20,
                               ),
                             ),
@@ -242,7 +289,7 @@ class _ProfileState extends State<Profile> {
                               userModel.value.user?.email ?? 'N/A',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: whiteColor),
+                              style: TextStyle(color: textMuted),
                             ),
                           ),
                         ],
@@ -252,26 +299,28 @@ class _ProfileState extends State<Profile> {
 
                   height(0.02),
 
-                  Divider(color: whiteColor.withValues(alpha: 0.2)),
+                  Divider(color: goldSecondary.withValues(alpha: 0.25)),
                   Row(
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Total Points',
+                            'TOTAL POINTS',
                             style: TextStyle(
-                              color: whiteColor.withValues(alpha: 0.3),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              color: textMuted,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                              letterSpacing: 1.5,
                             ),
                           ),
+                          height(0.005),
                           Text(
                             userModel.value.user?.points.toString() ?? 'N/A',
                             style: TextStyle(
-                              color: whiteColor,
+                              color: goldPrimary,
                               fontWeight: FontWeight.bold,
-                              fontSize: 18,
+                              fontSize: 20,
                             ),
                           ),
                         ],
@@ -279,6 +328,8 @@ class _ProfileState extends State<Profile> {
                       Spacer(),
                     ],
                   ),
+                ],
+              ),
                 ],
               ),
             ),
@@ -290,14 +341,15 @@ class _ProfileState extends State<Profile> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Account Experience',
+                      'ACCOUNT EXPERIENCE',
                       style: TextStyle(
-                        color: Color(0xffA1A1A1),
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        color: textMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 2,
                       ),
                     ),
-                    height(0.01),
+                    height(0.015),
 
                     ListView.separated(
                       shrinkWrap: true,
@@ -310,24 +362,13 @@ class _ProfileState extends State<Profile> {
                         return GestureDetector(
                           onTap: acountList[index]['onTap'] as VoidCallback,
                           child: ListTile(
-                            contentPadding: EdgeInsets.symmetric(vertical: 4),
-                            leading: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: cardDeep,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: goldSecondary.withValues(alpha: 0.25),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Icon(
-                                acountList[index]['icon'] as IconData,
-                                color: goldPrimary,
-                                size: 22,
-                              ),
+                            contentPadding: EdgeInsets.symmetric(vertical: 6),
+                            leading: Icon(
+                              acountList[index]['icon'] as IconData,
+                              color: goldPrimary,
+                              size: 28,
                             ),
+                            horizontalTitleGap: 14,
                             title: Text(
                               acountList[index]['title'],
                               style: TextStyle(
@@ -338,7 +379,11 @@ class _ProfileState extends State<Profile> {
                             ),
                             subtitle: Text(
                               acountList[index]['subTitle'],
-                              style: TextStyle(color: textMuted, fontSize: 13),
+                              style: TextStyle(
+                                color: textMuted,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w300,
+                              ),
                             ),
                             trailing: Icon(
                               Icons.arrow_forward_ios_sharp,
@@ -349,7 +394,13 @@ class _ProfileState extends State<Profile> {
                         );
                       },
                       separatorBuilder: (context, index) {
-                        return height(0.0);
+                        if (widget.fromArtist && index == 0) {
+                          return SizedBox();
+                        }
+                        return Divider(
+                          height: 1,
+                          color: goldSecondary.withValues(alpha: 0.12),
+                        );
                       },
                       itemCount: acountList.length,
                     ),
