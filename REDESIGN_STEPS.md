@@ -107,3 +107,11 @@ Refondre les briques réutilisées partout, pour que chaque écran suivant soit 
   countdown + CTA (acheter / découvrir plus / shorts accroche).
 - Parrainage (artiste/user) + Passe Fantôme VIP gamifié.
 - Détails et dépendances backend : `docs/BACKEND_CHANGES.md` §1-5.
+
+### Affiches premium + Event Pulse
+- Affiches concert : l'artiste upload sa VRAIE photo, l'app applique un template
+  premium (bleu nuit/or, badges, date, CTA). PAS de génération IA de visage
+  (évite blocage célébrité / droits image). Multi-formats (story, carré, cover).
+- Event Pulse : insights AGRÉGÉS et ANONYMISÉS (vues, likes, zones approximatives,
+  meilleurs créneaux) pour aider l'artiste à vendre. AUCUNE donnée perso, AUCUNE
+  revente. Détails + règles RGPD : `docs/BACKEND_CHANGES.md` §10-11.

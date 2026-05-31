@@ -202,4 +202,79 @@ the Language screen to actually switch locale.
 
 ---
 
+## 10. 🟠 EVENT POSTERS (template-based, NOT AI face generation)
+
+**Goal**: turn an artist's **official photo** into a premium VYBZZZ poster for an
+upcoming concert. The app composes the artist's real photo with a branded
+template — it does **NOT** generate or alter faces with AI (avoids
+celebrity-detection blocks, deepfake issues, and image-rights problems).
+
+### Flow (artist studio → "Create Event Poster")
+1. Artist uploads their **own official photo**.
+2. Picks event type (Concert / Live / Showcase / Festival…).
+3. Picks a style (Gold Premium / Red Urban / Blue Midnight / Festival Energy).
+4. App generates 2–3 poster variants (overlay + artist name + date + venue +
+   badge "This week / Live soon / Exclusive" + CTA).
+5. Selected poster becomes the event cover on Home, and can be exported to
+   social formats (story, square, FB/YT cover).
+
+### Backend impact
+- Store multiple cover formats per event (e.g. `cover_image`, `cover_story`,
+  `cover_square`) OR a single source + format metadata.
+- Optional: `poster_style` / `poster_template` field on the event for re-render.
+- Legal: artist must accept a clause guaranteeing they hold the rights to the
+  images/logos/names provided (add to artist terms).
+- The app does the composition client-side; no backend image generation required
+  for v1 (backend only stores the result).
+
+---
+
+## 11. 🟠 EVENT PULSE — aggregated, anonymized insights (NO data selling)
+
+**Goal**: help artists understand interest around their events to sell better.
+**Strictly aggregated & anonymized.** VYBZZZ does **NOT** sell personal data and
+does **NOT** expose individual users to artists. Purpose: propel VYBZZZ + help
+artists promote, never monetize personal data.
+
+### What artists see (example)
+> "Your event was viewed 3,240 times this week. 18% showed strong interest.
+> Most active areas: Cayenne, Kourou, Paris, Pointe-à-Pitre. Best engagement
+> window: Friday evening."
+
+### Metrics to track (per event, aggregated only)
+- views, likes, favorites/saves, shares
+- clicks on "Book" / "Notify me"
+- conversion rate to ticket page
+- **approximate** area/region (NOT precise address)
+- best day/time of engagement
+- return rate to the event page
+- (optional) poster variant performance (A/B)
+
+### Backend impact
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/event/{id}/signal` | Record an interaction (view/like/save/notify/book-intent) |
+| `GET` | `/event/{id}/pulse` | Aggregated insights for the artist dashboard |
+
+### HARD RULES (privacy / legal)
+- 🔴 **Never** return to artists: user lists, emails, phones, individual profiles,
+  precise location, or per-user behavior.
+- Only **aggregated** numbers + **approximate** regions.
+- Region must be coarse (city/region level), with a **minimum cohort size**
+  (e.g. hide a region if < N users) to prevent re-identification.
+- Profiling for marketing requires clear, prior **user consent** (RGPD):
+  transparency, purpose limitation, data minimization, retention limits, and
+  user rights (access/erasure).
+- Present this as **"aggregated analytics / event insights"**, never "data sale".
+
+### Artist dashboard UI ("Event Pulse")
+- Interest Score (0–100)
+- Audience Signals (views/likes/saves/book clicks)
+- Top Areas (coarse regions)
+- Best Time to Push
+- Poster Performance (if A/B)
+- Recommendation (e.g. "Gaining traction — push a 48h early-access offer")
+
+---
+
 _To be completed once backend access is obtained._
