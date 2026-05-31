@@ -277,16 +277,15 @@ artists promote, never monetize personal data.
 
 ---
 
-## 12. Pricing tiers (Standard / Premium / VIP) — backend wiring TODO
+## 12. Pricing tiers (Standard / Premium / VIP) — DEFERRED TO V2
 
-**Current state (frontend):** the Event Detail screen now shows 3 access tiers.
-Prices are **derived on the client** from the single `ticket_price`:
-`Standard = ticket_price`, `Premium = x2`, `VIP = x5`. This is a temporary
-display/UX solution validated with the team. The checkout shows the selected
-tier's price and checks the user's points against it, **but the purchase API
-still records only the single price** (see below).
+**Decision:** v1 ships with the **single fixed price** (`ticket_price`) already
+in production. The 3-tier model (Standard / Premium / VIP) is **postponed to
+v2** — the Event Detail UI currently shows one price and one "Continue to
+Checkout" CTA. The premium layout (large hero, gradient, compact info chips,
+sticky CTA) is kept; only the multi-tier pricing was removed.
 
-**To make tiers real (no fake prices / perks):**
+**For v2 — to make tiers real (no fake prices / perks):**
 1. **DB / Event:** add real per-tier pricing. Either three columns
    (`standard_price`, `premium_price`, `vip_price`) or a `pricing_tiers` JSON
    array `[{name, price, perks[]}]`.

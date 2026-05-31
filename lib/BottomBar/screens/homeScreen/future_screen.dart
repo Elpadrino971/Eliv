@@ -31,29 +31,6 @@ class _FutureScreenState extends State<FutureScreen> {
     {'name': 'Live Chat with VIP Fans', 'icon': Icons.chat_bubble_outline_rounded},
   ];
 
-  // Paliers : Standard (prix reel), Premium (x2), VIP (x5)
-  final List<Map> tiers = [
-    {
-      'name': 'STANDARD',
-      'icon': Icons.person_outline_rounded,
-      'tag': 'Access to live stream',
-      'mult': 1,
-    },
-    {
-      'name': 'PREMIUM',
-      'icon': Icons.star_outline_rounded,
-      'tag': 'Best quality + extras',
-      'mult': 2,
-    },
-    {
-      'name': 'VIP',
-      'icon': Icons.workspace_premium_outlined,
-      'tag': 'All access + VIP perks',
-      'mult': 5,
-    },
-  ];
-  int selectedTier = 1; // Premium par defaut (le plus populaire)
-
   Event event = Event();
   var like = false;
 
@@ -66,11 +43,6 @@ class _FutureScreenState extends State<FutureScreen> {
     super.initState();
     event = widget.event;
   }
-
-  double get _basePrice => double.tryParse(event.ticketPrice ?? '') ?? 0;
-  double _tierPrice(int i) => _basePrice * (tiers[i]['mult'] as int);
-  String _money(double v) =>
-      '\$${v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2)}';
 
   bool get _hasTicket =>
       (event.ticketBuyerIds ?? []).contains(userModel.value.user?.id ?? 1);
@@ -140,112 +112,6 @@ class _FutureScreenState extends State<FutureScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _tierCard(int index) {
-    final selected = selectedTier == index;
-    final popular = index == 1;
-    final card = AnimatedContainer(
-      duration: const Duration(milliseconds: 160),
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
-      decoration: BoxDecoration(
-        gradient: selected ? null : kCardGradient,
-        color: selected ? goldPrimary.withValues(alpha: 0.10) : null,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: selected ? goldPrimary : goldSecondary.withValues(alpha: 0.25),
-          width: selected ? 1.8 : 1,
-        ),
-        boxShadow: selected
-            ? [
-                BoxShadow(
-                  color: goldPrimary.withValues(alpha: 0.25),
-                  blurRadius: 18,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            tiers[index]['icon'] as IconData,
-            color: selected ? goldPrimary : ivory,
-            size: 24,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            tiers[index]['name'] as String,
-            style: const TextStyle(
-              color: ivory,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            _money(_tierPrice(index)),
-            style: TextStyle(
-              color: selected ? goldPrimary : ivory,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            tiers[index]['tag'] as String,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: textMuted,
-              fontSize: 10.5,
-              height: 1.2,
-            ),
-          ),
-        ],
-      ),
-    );
-
-    final tappable = GestureDetector(
-      onTap: () => setState(() => selectedTier = index),
-      child: card,
-    );
-
-    if (!popular) return tappable;
-
-    return GestureDetector(
-      onTap: () => setState(() => selectedTier = index),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          card,
-          Positioned(
-            top: -11,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: kGoldGradient,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'MOST POPULAR',
-                  style: TextStyle(
-                    color: midnightPrimary,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -442,33 +308,6 @@ class _FutureScreenState extends State<FutureScreen> {
                   ),
                   height(0.025),
 
-                  if (!_hasTicket) ...[
-                    // ── Choix du palier
-                    const Text(
-                      'CHOOSE YOUR ACCESS',
-                      style: TextStyle(
-                        color: textMuted,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(child: _tierCard(0)),
-                          const SizedBox(width: 10),
-                          Expanded(child: _tierCard(1)),
-                          const SizedBox(width: 10),
-                          Expanded(child: _tierCard(2)),
-                        ],
-                      ),
-                    ),
-                    height(0.025),
-                  ],
-
                   // ── Inclus
                   Container(
                     width: Get.width,
@@ -483,11 +322,9 @@ class _FutureScreenState extends State<FutureScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          _hasTicket
-                              ? 'INCLUDED WITH YOUR PASS'
-                              : 'INCLUDED WITH ${tiers[selectedTier]['name']}',
-                          style: const TextStyle(
+                        const Text(
+                          "WHAT'S INCLUDED",
+                          style: TextStyle(
                             color: goldPrimary,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -628,16 +465,16 @@ class _FutureScreenState extends State<FutureScreen> {
                 style: TextStyle(color: textMuted, fontSize: 12),
               ),
               Text(
-                _money(_tierPrice(selectedTier)),
+                '\$${event.ticketPrice}',
                 style: const TextStyle(
                   color: ivory,
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              Text(
-                '${(tiers[selectedTier]['name'] as String).capitalizeFirst} Access',
-                style: const TextStyle(color: textMuted, fontSize: 11),
+              const Text(
+                'Full Access',
+                style: TextStyle(color: textMuted, fontSize: 11),
               ),
             ],
           ),
@@ -649,15 +486,8 @@ class _FutureScreenState extends State<FutureScreen> {
               imageColor: midnightPrimary,
               labelColor: midnightPrimary,
               onTap: () async {
-                final tierName = tiers[selectedTier]['name'] as String;
                 final value = await Get.to(
-                  () => CheckOutScreen(
-                    event: event,
-                    tierTitle:
-                        '${tierName.capitalizeFirst} Pass',
-                    tierSubtitle: tiers[selectedTier]['tag'] as String,
-                    tierPrice: _money(_tierPrice(selectedTier)),
-                  ),
+                  () => CheckOutScreen(event: event),
                 );
                 if (value != null) {
                   event = event.copyWith(

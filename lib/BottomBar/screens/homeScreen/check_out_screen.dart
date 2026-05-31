@@ -10,17 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class CheckOutScreen extends StatefulWidget {
-  const CheckOutScreen({
-    super.key,
-    required this.event,
-    this.tierTitle,
-    this.tierSubtitle,
-    this.tierPrice,
-  });
+  const CheckOutScreen({super.key, required this.event});
   final Event event;
-  final String? tierTitle;
-  final String? tierSubtitle;
-  final String? tierPrice; // ex: "$19"
 
   @override
   State<CheckOutScreen> createState() => _CheckOutScreenState();
@@ -39,12 +30,11 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   void initState() {
     textList = [
       {
-        'title': widget.tierTitle ?? 'Standard Pass',
-        'subTitle': widget.tierSubtitle ?? '4K UHD Access',
-        'price': widget.tierPrice ?? '\$${widget.event.ticketPrice}',
+        'title': 'Standard Pass',
+        'subTitle': '4K UHD Access',
+        'price': '\$${widget.event.ticketPrice}',
       },
     ];
-    selectedAccess = textList[0]['title'];
     selectedPayment = paymentList[0]['name'];
     super.initState();
   }
