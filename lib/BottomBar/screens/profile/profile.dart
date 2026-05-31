@@ -47,7 +47,7 @@ class _ProfileState extends State<Profile> {
     acountList = [
       widget.fromArtist
           ? {
-              'image': 'assets/image2.png',
+              'icon': Icons.swap_horiz_rounded,
               'title': 'Switch to User',
               'subTitle': 'Switch to user mode',
               'onTap': () {
@@ -55,7 +55,7 @@ class _ProfileState extends State<Profile> {
               },
             }
           : {
-              'image': 'assets/image2.png',
+              'icon': Icons.mic_none_rounded,
               'title': 'Become An Artist',
               'subTitle': 'Do live performances',
               'onTap': () {
@@ -83,37 +83,37 @@ class _ProfileState extends State<Profile> {
               },
             },
       {
-        'image': 'assets/image3.png',
+        'icon': Icons.favorite_border_rounded,
         'title': 'Following Artists',
         'subTitle': 'Artists you love',
         'onTap': () => Get.to(() => FollowingArtists()),
       },
       {
-        'image': 'assets/image4.png',
+        'icon': Icons.history_rounded,
         'title': 'Stream History',
         'subTitle': 'Stream History',
         'onTap': () => Get.to(() => History()),
       },
       {
-        'image': 'assets/wallet.png',
+        'icon': Icons.account_balance_wallet_outlined,
         'title': 'Wallet',
         'subTitle': 'View your wallet balance',
         'onTap': () => Get.to(() => const UserWallet()),
       },
       {
-        'image': 'assets/wallet.png',
+        'icon': Icons.workspace_premium_outlined,
         'title': 'Purchase Subscription',
         'subTitle': 'Unlock artist features with a subscription plan',
         'onTap': () => Get.to(() => const AllSubscriptionScreen()),
       },
       {
-        'image': 'assets/wallet.png',
+        'icon': Icons.card_membership_outlined,
         'title': 'Manage Subscription',
         'subTitle': 'View & manage your active subscription',
         'onTap': () => Get.to(() => const ManageSubscriptionScreen()),
       },
       {
-        'image': 'assets/icon10.png',
+        'icon': Icons.shield_outlined,
         'title': 'Privacy Policy',
         'subTitle': 'View privacy policy',
         'onTap': () => Get.to(
@@ -124,7 +124,7 @@ class _ProfileState extends State<Profile> {
         ),
       },
       {
-        'image': 'assets/warning.png',
+        'icon': Icons.description_outlined,
         'title': 'Terms & Conditions',
         'subTitle': 'View terms & conditions',
         'onTap': () => Get.to(
@@ -310,20 +310,40 @@ class _ProfileState extends State<Profile> {
                         return GestureDetector(
                           onTap: acountList[index]['onTap'] as VoidCallback,
                           child: ListTile(
-                            contentPadding: EdgeInsets.all(0),
-                            leading: Image.asset(
-                              acountList[index]['image'],
-                              height: 45,
+                            contentPadding: EdgeInsets.symmetric(vertical: 4),
+                            leading: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: cardDeep,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: goldSecondary.withValues(alpha: 0.25),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Icon(
+                                acountList[index]['icon'] as IconData,
+                                color: goldPrimary,
+                                size: 22,
+                              ),
                             ),
-                            title: Text(acountList[index]['title']),
+                            title: Text(
+                              acountList[index]['title'],
+                              style: TextStyle(
+                                color: ivory,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
                             subtitle: Text(
                               acountList[index]['subTitle'],
-                              style: TextStyle(color: Color(0xffA1A1A1)),
+                              style: TextStyle(color: textMuted, fontSize: 13),
                             ),
                             trailing: Icon(
                               Icons.arrow_forward_ios_sharp,
-                              size: 15,
-                              color: greyColor,
+                              size: 14,
+                              color: goldSecondary.withValues(alpha: 0.5),
                             ),
                           ),
                         );
