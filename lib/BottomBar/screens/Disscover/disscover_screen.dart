@@ -248,7 +248,7 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
   // Future<void> _showFilterBottomSheet(BuildContext context) async {
   //   await showModalBottomSheet(
   //     backgroundColor: Get.isDarkMode
-  //         ? const cardDeep
+  //         ? cardDeep
   //         : scaffoldBackgroundColor,
   //     context: context,
   //     builder: (context) {
@@ -340,7 +340,7 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
   //                           color: Get.isDarkMode
   //                               ? selectedLocation == location
   //                                     ? goldPrimary.withValues(alpha: 0.2)
-  //                                     : const cardDeep
+  //                                     : cardDeep
   //                               : selectedLocation == location
   //                               ? const Color(0xffF4EDDF)
   //                               : whiteColor,

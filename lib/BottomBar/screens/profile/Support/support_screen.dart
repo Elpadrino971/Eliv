@@ -59,7 +59,7 @@ class _SupportScreenState extends State<SupportScreen> {
       Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Get.isDarkMode ? const cardDeep : whiteColor,
+          color: Get.isDarkMode ? cardDeep : whiteColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         ),
         child: SingleChildScrollView(

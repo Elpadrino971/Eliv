@@ -82,7 +82,7 @@ class _StatsScreenState extends State<StatsScreen> {
           ),
           subtitle: Row(
             children: [
-              Image.asset('assets/dots.png', color: const goldPrimary),
+              Image.asset('assets/dots.png', color: goldPrimary),
               width(0.02),
               const Text(
                 'Live',
