@@ -63,6 +63,16 @@ class _FutureScreenState extends State<FutureScreen> {
     );
   }
 
+  /// Heure lisible "2:41 PM (GMT+2)" (12h + fuseau) au lieu du "14:41 PM" casse.
+  String _timeLabel(DateTime dt) {
+    final off = dt.timeZoneOffset;
+    final sign = off.isNegative ? '-' : '+';
+    final h = off.inHours.abs();
+    final m = off.inMinutes.abs() % 60;
+    final gmt = m == 0 ? 'GMT$sign$h' : 'GMT$sign$h:${m.toString().padLeft(2, '0')}';
+    return '${DateFormat('h:mm a').format(dt)} ($gmt)';
+  }
+
   /// Petite info compacte (icone or + texte).
   Widget _metaItem(IconData icon, String text) {
     return Row(
@@ -288,7 +298,7 @@ class _FutureScreenState extends State<FutureScreen> {
                       _metaDivider(),
                       _metaItem(
                         Icons.schedule_rounded,
-                        DateFormat('HH:mm a').format(event.startDateTime!),
+                        _timeLabel(event.startDateTime!),
                       ),
                     ],
                   ),
