@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:artist/Auth/login_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/BottomBar/screens/profile/all_subscription_screen.dart';
@@ -206,17 +208,12 @@ class _ProfileState extends State<Profile> {
               ),
               child: Stack(
                 children: [
-                  // Filigrane logo discret (faible opacite)
-                  Positioned(
-                    right: -10,
-                    bottom: -20,
-                    child: Opacity(
-                      opacity: 0.06,
-                      child: Image.asset(
-                        'assets/launch_logo.png',
-                        width: 120,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  // Traînée de paillettes dorées (forte opacite)
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: CustomPaint(
+                        painter: _SparkleTrailPainter(),
                       ),
                     ),
                   ),
@@ -240,7 +237,6 @@ class _ProfileState extends State<Profile> {
                                 : '${userModel.value.user?.profileImage}',
                             width: 50,
                             height: 50,
-                            errorAsset: 'assets/profile_demo.png',
                           ),
                         ),
                       ),
@@ -474,4 +470,48 @@ class _ProfileState extends State<Profile> {
 
   Future unSub(String topic) async =>
       await FirebaseMessaging.instance.unsubscribeFromTopic(topic);
+}
+
+/// Traînée de paillettes dorées en diagonale, à forte opacité,
+/// pour habiller la carte profil (style comète).
+class _SparkleTrailPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rnd = math.Random(11);
+    final paint = Paint()
+      ..color = goldPrimary
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 0.4);
+
+    const count = 70;
+    for (int i = 0; i < count; i++) {
+      final t = i / count;
+      // Axe diagonal : du centre-haut vers le bas-droite
+      final baseX = size.width * (0.40 + t * 0.62);
+      final baseY = size.height * (0.02 + t * 1.0);
+      final jitterX = (rnd.nextDouble() - 0.5) * size.width * 0.28;
+      final jitterY = (rnd.nextDouble() - 0.5) * size.height * 0.32;
+      final x = baseX + jitterX;
+      final y = baseY + jitterY;
+
+      // Plus dense / opaque vers la fin de la traînée
+      final r = 0.6 + rnd.nextDouble() * 2.4;
+      final op = (0.25 + rnd.nextDouble() * 0.45 + t * 0.25).clamp(0.0, 0.85);
+      paint.color = goldPrimary.withValues(alpha: op);
+      canvas.drawCircle(Offset(x, y), r, paint);
+
+      // Quelques éclats en étoile à 4 branches
+      if (rnd.nextDouble() > 0.82) {
+        final s = 3.0 + rnd.nextDouble() * 3.0;
+        final star = Paint()
+          ..color = goldPrimary.withValues(alpha: op.clamp(0.0, 0.8))
+          ..strokeWidth = 1.0
+          ..strokeCap = StrokeCap.round;
+        canvas.drawLine(Offset(x - s, y), Offset(x + s, y), star);
+        canvas.drawLine(Offset(x, y - s), Offset(x, y + s), star);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SparkleTrailPainter oldDelegate) => false;
 }
