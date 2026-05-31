@@ -28,7 +28,7 @@
 
 ### 0.3 Rotate other secrets if exposed
 - ZegoCloud `appSign` and RevenueCat key: rotate if present in any public repo.
-  Ideally, Zego access should use a **server-issued token** (see §4).
+  Ideally, Zego access should use a **server-issued token**.
 
 ---
 
@@ -51,7 +51,7 @@ then a CTA offers to buy access / see other lives / watch shorts.
 ### Business rule
 - Watching the teaser **does not consume** a ticket and **must not count** as a
   paid entry (exclude from sales stats / artist revenue).
-- (Optional anti-abuse) limit the number of teasers per user/live → see §5.
+- (Optional anti-abuse) limit the number of teasers per user/live.
 
 ---
 
@@ -143,13 +143,25 @@ login streaks, referral…).
 
 ---
 
-## 6. 🟢 TEST DATA QUALITY (cleanup)
+## 6. 🟢 LOCALIZATION / I18N (future)
 
-- The `link` / `stream_url` field on some test events points to a third-party
-  store (`ordaraat.com`) — visible in the demo live.
-  → Clean up test data so it points to real VYBZZZ streams.
-- Several test artists have **no profile picture** (gray avatar).
-  → Add realistic `profile_image` values on demo accounts.
+**Current state**: the app is **single-language (English, hard-coded)**. There is
+NO i18n system in place (no `flutter_localizations`, no `.arb`, no GetX
+translations). The in-app "Language" screen is **cosmetic only** — selecting a
+language does nothing yet. `intl` is used solely for date formatting.
+
+**Planned**: introduce real i18n in the app (likely GetX Translations) and wire
+the Language screen to actually switch locale.
+
+### Backend impact (when we get there)
+- **Dynamic content** (event names, descriptions, API error messages) is sent by
+  the backend and won't be translated client-side. If multilingual content is
+  desired, the backend must support it:
+  - Either accept an `Accept-Language` header / `?lang=` param and return
+    localized strings, or
+  - Return translatable fields as keyed/multilingual objects.
+- Keep returning **machine-readable error codes** (not just human text) so the
+  app can map them to localized messages.
 
 ---
 
@@ -165,6 +177,7 @@ login streaks, referral…).
 | Real referral | UI only | 🟠 `/referral/*` endpoints |
 | Real ghost pass | UI + timer | 🟠 `ghost_pass` + stats exclusion |
 | Broader discovery | — | 🟢 `/discover/*` |
+| App UI localization | ✅ (i18n system) | 🟢 only for dynamic content |
 
 ---
 
@@ -176,6 +189,16 @@ login streaks, referral…).
   returned by the API (`errors` per field) instead of a generic message.
   → keep this response format on the backend.
 - The app forces **dark mode** (single visual identity).
+
+---
+
+## 9. TEST DATA QUALITY (cleanup)
+
+- The `link` / `stream_url` field on some test events points to a third-party
+  store (`ordaraat.com`) — visible in the demo live.
+  → Clean up test data so it points to real VYBZZZ streams.
+- Several test artists have **no profile picture** (gray avatar).
+  → Add realistic `profile_image` values on demo accounts.
 
 ---
 

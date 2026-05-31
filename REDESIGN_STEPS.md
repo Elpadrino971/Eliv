@@ -89,3 +89,21 @@ Refondre les briques réutilisées partout, pour que chaque écran suivant soit 
 2. Commit + push.
 3. Tu lances l'app, captures, on ajuste si besoin.
 4. On passe à l'étape suivante.
+
+---
+
+## Chantiers futurs (notés, non démarrés)
+
+### Localisation / i18n
+- État actuel : app **mono-langue (anglais en dur)**, aucun système i18n.
+  L'écran "Language" est cosmétique (ne change rien) + petit bug int/String.
+- À faire : intégrer GetX Translations, extraire tous les textes, brancher
+  l'écran Language (`Get.updateLocale`). Voir `docs/BACKEND_CHANGES.md` §6 pour
+  le volet contenu dynamique (backend).
+
+### Live "façon TikTok" (2 axes) + teaser
+- Nav 2 axes : feed shorts ↕ + swipe ◀️ vers le live en cours.
+- Teaser gratuit (30/60s) avec overlay qui s'assombrit jusqu'à l'opacité +
+  countdown + CTA (acheter / découvrir plus / shorts accroche).
+- Parrainage (artiste/user) + Passe Fantôme VIP gamifié.
+- Détails et dépendances backend : `docs/BACKEND_CHANGES.md` §1-5.
