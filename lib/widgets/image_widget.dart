@@ -10,6 +10,7 @@ class ImageWidget extends StatelessWidget {
   final double? width;
   final BoxFit? fit;
   final Color? color;
+  final String errorAsset;
   const ImageWidget({
     super.key,
     required this.url,
@@ -17,6 +18,7 @@ class ImageWidget extends StatelessWidget {
     this.width,
     this.fit,
     this.color,
+    this.errorAsset = "assets/no_img.jpg",
   });
 
   @override
@@ -40,7 +42,7 @@ class ImageWidget extends StatelessWidget {
         ),
       ),
       errorWidget: (context, url, error) => Image.asset(
-        "assets/no_img.jpg",
+        errorAsset,
         height: height,
         width: width,
         fit: BoxFit.cover,

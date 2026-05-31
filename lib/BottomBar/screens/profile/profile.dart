@@ -206,17 +206,17 @@ class _ProfileState extends State<Profile> {
               ),
               child: Stack(
                 children: [
-                  // Filigrane "V" discret
+                  // Filigrane logo discret (faible opacite)
                   Positioned(
-                    right: 4,
-                    bottom: -8,
-                    child: Text(
-                      'V',
-                      style: TextStyle(
-                        fontSize: 90,
-                        fontWeight: FontWeight.bold,
-                        color: goldPrimary.withValues(alpha: 0.05),
-                        height: 1,
+                    right: -10,
+                    bottom: -20,
+                    child: Opacity(
+                      opacity: 0.06,
+                      child: Image.asset(
+                        'assets/launch_logo.png',
+                        width: 120,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                       ),
                     ),
                   ),
@@ -240,6 +240,7 @@ class _ProfileState extends State<Profile> {
                                 : '${userModel.value.user?.profileImage}',
                             width: 50,
                             height: 50,
+                            errorAsset: 'assets/profile_demo.png',
                           ),
                         ),
                       ),
