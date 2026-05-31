@@ -1,185 +1,182 @@
-# VYBZZZ — Annexe backend (changements à opérer)
+# VYBZZZ — Backend Changes (Annex)
 
-> Document destiné au développeur backend (`vybzzz.fryandeatfood.com`).
-> Recense les endpoints / champs / règles métier nécessaires pour les nouvelles
-> fonctionnalités côté app. À réajuster une fois les accès backend disponibles.
+> Document for the backend developer (`vybzzz.fryandeatfood.com`).
+> Lists the endpoints / fields / business rules required by the app's new
+> features, so nothing comes as a surprise. To be refined once backend access
+> is available.
 >
-> Légende priorité : 🔴 critique (sécurité) · 🟠 nécessaire à une feature · 🟢 confort
-> Légende effort : S (petit) · M (moyen) · L (gros)
+> Priority legend: 🔴 critical (security) · 🟠 required for a feature · 🟢 nice-to-have
+> Effort legend: S (small) · M (medium) · L (large)
 
 ---
 
-## 0. 🔴 SÉCURITÉ — À TRAITER EN PRIORITÉ ABSOLUE
+## 0. 🔴 SECURITY — TOP PRIORITY
 
-### 0.1 Révoquer la clé Firebase Admin exposée
-- Le service account **Firebase Admin SDK** (`firebase-adminsdk-fbsvc@vybzzz`,
-  clé `bf1200fc5027…`) était **embarqué en clair dans l'app mobile**
-  (`lib/services/vybzzz_bf1200fc5027.dart`, désormais supprimé côté app).
-- **Action** : révoquer/régénérer cette clé dans Google Cloud Console
-  (IAM → Comptes de service → Clés). **La considérer comme compromise.**
-- La nouvelle clé doit rester **uniquement côté serveur** (variable
-  d'environnement), jamais renvoyée à l'app.
+### 0.1 Revoke the exposed Firebase Admin key
+- The **Firebase Admin SDK** service account (`firebase-adminsdk-fbsvc@vybzzz`,
+  key `bf1200fc5027…`) was **bundled in clear text inside the mobile app**
+  (`lib/services/vybzzz_bf1200fc5027.dart`, now removed from the app).
+- **Action**: revoke/regenerate this key in Google Cloud Console
+  (IAM → Service Accounts → Keys). **Treat it as compromised.**
+- The new key must stay **server-side only** (environment variable), never
+  returned to the app.
 
-### 0.2 Envoi des notifications push côté serveur
-- L'app ne génère plus de token FCM admin (retiré). L'envoi des notifications
-  doit se faire **exclusivement côté backend** (endpoint serveur).
-- Vérifier/exposer un mécanisme : « envoyer notif à user X / topic Y ».
+### 0.2 Send push notifications from the server
+- The app no longer generates an admin FCM token (removed). Push notifications
+  must be sent **exclusively from the backend** (server endpoint).
+- Verify/expose a mechanism: "send notification to user X / topic Y".
 
-### 0.3 Autres secrets à faire tourner si exposés
-- `appSign` ZegoCloud et clé RevenueCat : si présents dans des dépôts publics,
-  prévoir rotation. Idéalement, accès Zego via **token serveur** (voir §4).
+### 0.3 Rotate other secrets if exposed
+- ZegoCloud `appSign` and RevenueCat key: rotate if present in any public repo.
+  Ideally, Zego access should use a **server-issued token** (see §4).
 
 ---
 
-## 1. 🟠 TEASER LIVE (aperçu gratuit du live en cours)
+## 1. 🟠 LIVE TEASER (free preview of the ongoing live)
 
-**Objectif UX** : l'utilisateur swipe (droite → gauche) vers le live en cours
-et peut le regarder **gratuitement 30 s ou 60 s**. Un overlay s'assombrit
-progressivement jusqu'à devenir opaque, puis un CTA propose d'acheter l'accès /
-voir d'autres lives / des shorts.
+**UX goal**: the user swipes (right → left) toward the ongoing live and can watch
+it **for free for 30s or 60s**. An overlay gradually darkens until fully opaque,
+then a CTA offers to buy access / see other lives / watch shorts.
 
-### Champs à ajouter sur l'objet `event`
-| Champ | Type | Rôle |
+### Fields to add to the `event` object
+| Field | Type | Purpose |
 |---|---|---|
-| `teaser_enabled` | bool | Active/désactive l'aperçu gratuit pour ce live |
-| `teaser_duration` | int (secondes) | Durée de l'aperçu (ex. 30 ou 60) |
-| `teaser_stream_url` | string (option) | Flux/segment dédié au teaser si différent du live complet |
+| `teaser_enabled` | bool | Enable/disable the free preview for this live |
+| `teaser_duration` | int (seconds) | Preview length (e.g. 30 or 60) |
+| `teaser_stream_url` | string (optional) | Dedicated teaser stream/segment if different from full live |
 
-> Si on ne veut pas gérer la durée par event, l'app peut utiliser une valeur
-> fixe (60 s). Mais une valeur backend par live est préférable (flexibilité
-> artiste/admin).
+> If we don't want per-event durations, the app can use a fixed value (60s).
+> A backend-controlled value per live is preferred (artist/admin flexibility).
 
-### Règle métier
-- Le visionnage du teaser **ne consomme pas** de ticket et **ne compte pas**
-  comme une entrée payante (à exclure des stats de vente / revenus artiste).
-- (Option anti-abus) limiter le nombre de teasers par user/live → voir §5.
+### Business rule
+- Watching the teaser **does not consume** a ticket and **must not count** as a
+  paid entry (exclude from sales stats / artist revenue).
+- (Optional anti-abuse) limit the number of teasers per user/live → see §5.
 
 ---
 
-## 2. 🟠 VÉRIFICATION D'ACCÈS AU LIVE (ticket)
+## 2. 🟠 LIVE ACCESS CHECK (ticket)
 
-**Objectif** : au passage sur le live, l'app vérifie automatiquement si
-l'utilisateur a le droit d'entrer.
+**Goal**: when entering the live, the app automatically checks whether the user
+is allowed in.
 
-### Existant
-- Le modèle `event` expose déjà `ticket_buyer_ids` (liste des acheteurs).
-  L'app peut comparer avec l'ID user. ✅
+### Existing
+- The `event` model already exposes `ticket_buyer_ids` (list of buyers). The app
+  can compare it against the current user ID. ✅
 
-### À confirmer / exposer
-- Un endpoint fiable du type **`GET /event/{id}/access`** renvoyant l'état
-  d'accès de l'utilisateur courant :
+### To confirm / expose
+- A reliable endpoint such as **`GET /event/{id}/access`** returning the current
+  user's access state:
   ```json
   {
     "has_access": true,
     "access_type": "ticket | ghost_pass | referral | none",
-    "expires_at": "2026-06-15T20:30:00Z"  // pour les accès limités dans le temps
+    "expires_at": "2026-06-15T20:30:00Z"  // for time-limited access
   }
   ```
-- Pourquoi un endpoint dédié plutôt que `ticket_buyer_ids` : nécessaire pour
-  gérer les accès **temporaires** (passe fantôme, referral) qui ne sont pas de
-  simples achats.
+- Why a dedicated endpoint rather than `ticket_buyer_ids`: needed to handle
+  **temporary** access (ghost pass, referral) that aren't simple purchases.
 
 ---
 
-## 3. 🟠 PARRAINAGE (referral) — artiste ET user
+## 3. 🟠 REFERRAL — artist AND user
 
-**Objectif** : un artiste ou un user peut parrainer quelqu'un.
-- **Artiste → user** : offrir des **tickets gratuits complets**.
-- **User → user** : récompenses (ex. passe fantôme, points…).
+**Goal**: an artist or a user can refer someone.
+- **Artist → user**: grant **full free tickets**.
+- **User → user**: rewards (e.g. ghost pass, points…).
 
-### Endpoints à créer
-| Méthode | Endpoint | Rôle |
+### Endpoints to create
+| Method | Endpoint | Purpose |
 |---|---|---|
-| `POST` | `/referral/generate` | Génère un code/lien de parrainage pour l'utilisateur courant |
-| `GET` | `/referral/me` | Liste des parrainages émis + statut (en attente / validé) |
-| `POST` | `/referral/redeem` | Valider un code reçu (body : `{ "code": "..." }`) |
+| `POST` | `/referral/generate` | Generate a referral code/link for the current user |
+| `GET` | `/referral/me` | List of referrals sent + status (pending / validated) |
+| `POST` | `/referral/redeem` | Redeem a received code (body: `{ "code": "..." }`) |
 
-### Règles métier à définir
-- Qui peut parrainer quoi (artiste = tickets complets ; user = récompense moindre).
-- Limites (nb max de parrainages, anti-fraude : pas d'auto-parrainage, 1 redeem
-  par user, etc.).
-- Récompense attribuée au parrain ET/OU au filleul.
+### Business rules to define
+- Who can refer what (artist = full tickets; user = lesser reward).
+- Limits (max referrals, anti-fraud: no self-referral, one redeem per user, etc.).
+- Reward granted to the referrer AND/OR the referee.
 
-### Champs user utiles
-- `referral_code` (string, unique) sur l'objet user.
-- `referred_by` (id, option) pour tracer la source.
+### Useful user fields
+- `referral_code` (string, unique) on the user object.
+- `referred_by` (id, optional) to track the source.
 
 ---
 
-## 4. 🟠 PASSE FANTÔME 👻 (accès VIP gamifié, gratuit, limité)
+## 4. 🟠 GHOST PASS 👻 (gamified, free, time-limited VIP access)
 
-**Objectif** : donner un accès VIP **temporaire** (ex. 10 min) à un live, qui
-**n'est PAS compté comme un client payant** mais comme une **récompense de
-gamification** (engagement, série de connexions, parrainage…).
+**Goal**: give **temporary** VIP access (e.g. 10 min) to a live, which is **NOT
+counted as a paying customer** but as a **gamification reward** (engagement,
+login streaks, referral…).
 
-### Point clé
-- Doit être un **type d'accès distinct** d'un ticket payant, pour que le backend
-  puisse l'**exclure des statistiques de vente et des revenus de l'artiste**.
+### Key point
+- Must be a **distinct access type** from a paid ticket, so the backend can
+  **exclude it from sales stats and artist revenue**.
 
-### Endpoints / champs
-| Méthode | Endpoint | Rôle |
+### Endpoints / fields
+| Method | Endpoint | Purpose |
 |---|---|---|
-| `POST` | `/ghost-pass/grant` | Octroie un passe fantôme à un user pour un event (durée en min) |
-| `GET` | `/ghost-pass/me` | Passes fantômes actifs de l'utilisateur (avec `expires_at`) |
+| `POST` | `/ghost-pass/grant` | Grant a ghost pass to a user for an event (duration in min) |
+| `GET` | `/ghost-pass/me` | User's active ghost passes (with `expires_at`) |
 
-- Type d'accès renvoyé par `/event/{id}/access` : `"access_type": "ghost_pass"`.
-- Champ `duration_minutes` + `expires_at` pour le compte à rebours côté app.
-- Règle : un passe fantôme **expiré** ne redonne pas accès (l'app force la sortie
-  ou propose l'achat à l'expiration).
-
----
-
-## 5. 🟢 DÉCOUVERTE & ANTI-ABUS (confort)
-
-### Feed découverte élargi
-- Endpoint pour récupérer des lives/shorts **hors centres d'intérêt** de l'user
-  (découverte large), ex. `GET /discover/live?scope=all`.
-- Permet le CTA de fin de teaser « découvrir plus de concerts ».
-
-### Shorts « accroche »
-- Marquer certains shorts comme **accroche/teaser** (`is_hook: true`) pour les
-  pousser en fin d'aperçu live.
-
-### Anti-abus teaser (optionnel)
-- Suivi du nombre de teasers vus par user/live (`teaser_views`) si on veut
-  limiter le re-visionnage gratuit.
+- Access type returned by `/event/{id}/access`: `"access_type": "ghost_pass"`.
+- `duration_minutes` + `expires_at` for the in-app countdown.
+- Rule: an **expired** ghost pass grants no access (the app forces exit or
+  prompts purchase at expiry).
 
 ---
 
-## 6. 🟢 QUALITÉ DES DONNÉES DE TEST (à nettoyer)
+## 5. 🟢 DISCOVERY & ANTI-ABUSE (nice-to-have)
 
-- Le champ `link` / `stream_url` de certains events de test pointe vers un site
-  marchand tiers (`ordaraat.com`) — visible dans le live en démo.
-  → Nettoyer les données de test pour qu'elles pointent vers de vrais flux VYBZZZ.
-- Plusieurs artistes de test n'ont **pas de photo de profil** (avatar gris).
-  → Ajouter des `profile_image` réalistes sur les comptes de démo.
+### Broader discovery feed
+- Endpoint to fetch lives/shorts **outside the user's interests** (broad
+  discovery), e.g. `GET /discover/live?scope=all`.
+- Powers the end-of-teaser CTA "discover more concerts".
+
+### "Hook" shorts
+- Flag some shorts as **hook/teaser** (`is_hook: true`) to surface them at the
+  end of a live teaser.
+
+### Teaser anti-abuse (optional)
+- Track teaser views per user/live (`teaser_views`) if we want to limit free
+  re-watching.
 
 ---
 
-## 7. RÉCAP — Ce que l'app peut faire SANS backend vs CE QUI BLOQUE
+## 6. 🟢 TEST DATA QUALITY (cleanup)
 
-| Feature | App seule | Backend requis |
+- The `link` / `stream_url` field on some test events points to a third-party
+  store (`ordaraat.com`) — visible in the demo live.
+  → Clean up test data so it points to real VYBZZZ streams.
+- Several test artists have **no profile picture** (gray avatar).
+  → Add realistic `profile_image` values on demo accounts.
+
+---
+
+## 7. SUMMARY — App-only vs Backend-blocked
+
+| Feature | App alone | Backend required |
 |---|---|---|
-| Overlay teaser qui s'assombrit + countdown | ✅ | — |
-| CTA de fin de teaser (UI) | ✅ | — |
-| Durée de teaser fixe (60 s) | ✅ | — (mais § 1 préférable) |
-| Durée de teaser par live | — | 🟠 `teaser_duration` |
-| Vérif accès live | partiel (`ticket_buyer_ids`) | 🟠 `/event/{id}/access` pour accès temporaires |
-| Parrainage réel | UI seulement | 🟠 endpoints `/referral/*` |
-| Passe fantôme réel | UI + timer | 🟠 `ghost_pass` + exclusion stats |
-| Découverte élargie | — | 🟢 `/discover/*` |
+| Darkening teaser overlay + countdown | ✅ | — |
+| End-of-teaser CTA (UI) | ✅ | — |
+| Fixed teaser duration (60s) | ✅ | — (but §1 preferred) |
+| Per-live teaser duration | — | 🟠 `teaser_duration` |
+| Live access check | partial (`ticket_buyer_ids`) | 🟠 `/event/{id}/access` for temporary access |
+| Real referral | UI only | 🟠 `/referral/*` endpoints |
+| Real ghost pass | UI + timer | 🟠 `ghost_pass` + stats exclusion |
+| Broader discovery | — | 🟢 `/discover/*` |
 
 ---
 
-## 8. NOTES DIVERSES (déjà fait côté app)
+## 8. MISC (already done in the app)
 
-- Refonte design complète en **bleu nuit + or** (thème unique verrouillé, polices
+- Full design redesign to **midnight blue + gold** (single locked theme, fonts
   Cinzel/Playfair/Montserrat/Inter).
-- Gestion d'erreur améliorée : l'app affiche désormais les **erreurs de validation
-  détaillées** renvoyées par l'API (`errors` par champ) au lieu d'un message
-  générique. → garder ce format de réponse côté backend.
-- L'app force le **mode sombre** (identité visuelle unique).
+- Improved error handling: the app now shows **detailed validation errors**
+  returned by the API (`errors` per field) instead of a generic message.
+  → keep this response format on the backend.
+- The app forces **dark mode** (single visual identity).
 
 ---
 
-_Document à compléter une fois les accès backend obtenus._
+_To be completed once backend access is obtained._
