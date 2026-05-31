@@ -1,10 +1,11 @@
-import 'package:artist/BottomBar/screens/homeScreen/check_out_screen.dart';
+import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 class HomeBannerCard extends StatelessWidget {
   const HomeBannerCard({super.key, required this.event});
@@ -112,7 +113,7 @@ class HomeBannerCard extends StatelessWidget {
 
                 const Spacer(),
 
-                if (_isLive) _liveBadge(),
+                _isLive ? _liveBadge() : _eventTypeLabel(),
                 const SizedBox(height: 10),
 
                 Text(
@@ -140,14 +141,16 @@ class HomeBannerCard extends StatelessWidget {
                     letterSpacing: 0.3,
                   ),
                 ),
+                const SizedBox(height: 12),
+
+                _infoRows(),
                 const SizedBox(height: 14),
 
                 Row(
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        onTap: () =>
-                            Get.to(() => CheckOutScreen(event: event)),
+                        onTap: () => Get.to(() => FutureScreen(event: event)),
                         child: Container(
                           height: 52,
                           decoration: BoxDecoration(
@@ -207,6 +210,83 @@ class HomeBannerCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _eventTypeLabel() {
+    return const Text(
+      'LIVE CONCERT',
+      style: TextStyle(
+        fontFamily: AppFonts.ui,
+        color: goldPrimary,
+        fontWeight: FontWeight.w700,
+        fontSize: 12,
+        letterSpacing: 2,
+      ),
+    );
+  }
+
+  Widget _infoRows() {
+    final dt = event.startDateTime;
+    final hasDate = dt != null;
+    final address = event.artist?.address;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (hasDate)
+          Row(
+            children: [
+              const Icon(Icons.calendar_today_rounded,
+                  color: goldPrimary, size: 14),
+              const SizedBox(width: 6),
+              Text(
+                DateFormat('EEE, MMM dd').format(dt).toUpperCase(),
+                style: const TextStyle(
+                  color: ivory,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12.5,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Icon(Icons.schedule_rounded,
+                  color: goldPrimary, size: 14),
+              const SizedBox(width: 6),
+              Text(
+                DateFormat('h:mm a').format(dt),
+                style: const TextStyle(
+                  color: ivory,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12.5,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        if (hasDate && (address != null && address.isNotEmpty))
+          const SizedBox(height: 8),
+        if (address != null && address.isNotEmpty)
+          Row(
+            children: [
+              const Icon(Icons.location_on_outlined,
+                  color: goldPrimary, size: 14),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  address.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: ivory,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.5,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+      ],
     );
   }
 

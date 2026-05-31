@@ -24,6 +24,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   var like = false;
 
+  final PageController _bannerController = PageController();
+  int _bannerPage = 0;
+
+  @override
+  void dispose() {
+    _bannerController.dispose();
+    super.dispose();
+  }
+
   Future myInitMethod() async {
     /// Banner Events
     await eventController.getBannerEvents();
@@ -84,22 +93,58 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (events == null) {
                       return const BannerShimmer();
                     }
+                    if (events.isEmpty) return height(0.05);
                     return Column(
                       children: [
-                        if ((events).isEmpty) height(0.05),
-                        if (events.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 15),
-                            child: GestureDetector(
-                              onTap: () {
-                                Get.to(() => FutureScreen(event: events.first));
-                              },
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(22),
-                                child: HomeBannerCard(event: events.first),
-                              ),
-                            ),
+                        SizedBox(
+                          height: Get.height * 0.46,
+                          child: PageView.builder(
+                            controller: _bannerController,
+                            itemCount: events.length,
+                            onPageChanged: (i) =>
+                                setState(() => _bannerPage = i),
+                            itemBuilder: (context, index) {
+                              final event = events[index];
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 15,
+                                ),
+                                child: GestureDetector(
+                                  onTap: () => Get.to(
+                                    () => FutureScreen(event: event),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(22),
+                                    child: HomeBannerCard(event: event),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
+                        ),
+                        if (events.length > 1) ...[
+                          const SizedBox(height: 14),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(events.length, (i) {
+                              final active = i == _bannerPage;
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 250),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 3,
+                                ),
+                                width: active ? 22 : 7,
+                                height: 7,
+                                decoration: BoxDecoration(
+                                  color: active
+                                      ? goldPrimary
+                                      : ivory.withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              );
+                            }),
+                          ),
+                        ],
                       ],
                     );
                   },
