@@ -5,8 +5,7 @@ import 'package:artist/widgets/my_appBar.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/get_navigation.dart';
+import 'package:get/get.dart';
 
 class BecomeArtist extends StatefulWidget {
   const BecomeArtist({super.key});
@@ -26,7 +25,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Become Artist'),
+      appBar: MyAppbar(title: 'prof_become_artist'.tr),
 
       body: Padding(
         padding: myPadding,
@@ -38,7 +37,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                 Image.asset('assets/icon7.png'),
                 width(0.02),
                 Text(
-                  'Apply Now',
+                  'ba_apply_now'.tr,
                   style: TextStyle(
                     color: ivory,
                     fontWeight: FontWeight.bold,
@@ -64,7 +63,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                       ),
                     ),
                     MyTextField(
-                      hintText: 'Enter your stage name',
+                      hintText: 'ba_stage_hint'.tr,
                       controller: nameController,
                       hintColor: Get.isDarkMode ? whiteColor : blackColor,
                     ),
@@ -138,7 +137,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                     ),
 
                     Text(
-                      'Social Media / Website',
+                      'ba_social'.tr,
                       style: TextStyle(
                         color: Color(0xff364153),
                         fontWeight: FontWeight.bold,
@@ -158,7 +157,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                     ),
 
                     Text(
-                      'Tell Us About Yourself',
+                      'ba_tell_about'.tr,
                       style: TextStyle(
                         color: Color(0xff364153),
                         fontWeight: FontWeight.bold,
@@ -174,7 +173,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                     height(0.01),
 
                     MyButton(
-                      label: 'Submit Application',
+                      label: 'ba_submit_app'.tr,
                       onTap: () {
                         myLoadingDialog(title: 'Weating For Submition');
                         Future.delayed(Duration(seconds: 3), () {

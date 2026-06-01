@@ -48,7 +48,7 @@ class _BasicInfoState extends State<BasicInfo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Become Artist'),
+      appBar: MyAppbar(title: 'prof_become_artist'.tr),
       body: Form(
         key: formKey,
         child: Column(
@@ -181,11 +181,11 @@ class _BasicInfoState extends State<BasicInfo> {
                       ),
 
                       MyTextField(
-                        hintText: 'Enter your stage name',
+                        hintText: 'ba_stage_hint'.tr,
                         controller: nameController,
                         validation: (v) {
                           if (v!.isEmpty) {
-                            return 'Please enter your stage name';
+                            return 'val_stage'.tr;
                           }
                           return null;
                         },
@@ -219,7 +219,7 @@ class _BasicInfoState extends State<BasicInfo> {
                         controller: phoneController,
                         validation: (v) {
                           if (v!.isEmpty) {
-                            return 'Please enter your phone number';
+                            return 'val_phone'.tr;
                           }
                           return null;
                         },
@@ -239,7 +239,7 @@ class _BasicInfoState extends State<BasicInfo> {
                         controller: primaryController,
                         validation: (v) {
                           if (v!.isEmpty) {
-                            return 'Please enter your primary genre';
+                            return 'val_genre'.tr;
                           }
                           return null;
                         },
@@ -258,7 +258,7 @@ class _BasicInfoState extends State<BasicInfo> {
                         controller: performanceController,
                         validation: (v) {
                           if (v!.isEmpty) {
-                            return 'Please enter your performance experience';
+                            return 'val_experience'.tr;
                           }
                           return null;
                         },
@@ -297,11 +297,11 @@ class _BasicInfoState extends State<BasicInfo> {
                             SizedBox(
                               width: Get.width * 0.25,
                               child: MyTextField(
-                                hintText: 'Social Name',
+                                hintText: 'ba_social_name'.tr,
                                 controller: socialNameController[index],
                                 validation: (v) {
                                   if (v!.isEmpty) {
-                                    return 'Please enter social name';
+                                    return 'val_social_name'.tr;
                                   }
                                   return null;
                                 },
@@ -310,11 +310,11 @@ class _BasicInfoState extends State<BasicInfo> {
                             width(0.02),
                             Expanded(
                               child: MyTextField(
-                                hintText: 'Instagram, Spotify, or Youtube',
+                                hintText: 'ba_social_hint'.tr,
                                 controller: socialURLController[index],
                                 validation: (v) {
                                   if (v!.isEmpty) {
-                                    return 'Please enter social url';
+                                    return 'val_social_url'.tr;
                                   }
                                   return null;
                                 },
@@ -326,7 +326,7 @@ class _BasicInfoState extends State<BasicInfo> {
 
                       height(0.02),
                       MyButton(
-                        label: 'Continue',
+                        label: 'common_continue'.tr,
                         onTap: () {
                           if (formKey.currentState!.validate()) {
                             Map socialLinks = {};

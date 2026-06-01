@@ -41,7 +41,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Become Artist'),
+      appBar: MyAppbar(title: 'prof_become_artist'.tr),
 
       body: Form(
         key: formKey,
@@ -86,7 +86,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                       SizedBox(
                         width: Get.width * 0.75,
                         child: Text(
-                          'Your banking information is encrypted and stored securely. We never share your details.',
+                          'bank_secure_note'.tr,
                           style: TextStyle(
                             color: Color(0xff4A5565),
                             fontWeight: FontWeight.bold,
@@ -108,7 +108,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Account Holder Name',
+                        'bank_holder'.tr,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -121,14 +121,14 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         controller: accountController,
                         validation: (v) {
                           if (v!.isEmpty) {
-                            return 'Please enter account holder name';
+                            return 'val_bank_holder'.tr;
                           }
                           return null;
                         },
                       ),
 
                       Text(
-                        'Bank Name',
+                        'bank_name'.tr,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -141,14 +141,14 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         controller: nameController,
                         validation: (v) {
                           if (v!.isEmpty) {
-                            return 'Please enter bank name';
+                            return 'val_bank_name'.tr;
                           }
                           return null;
                         },
                       ),
 
                       Text(
-                        'Account Number',
+                        'bank_account_num'.tr,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -163,13 +163,13 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         keyboardType: TextInputType.number,
                         validation: (v) {
                           if (v!.isEmpty) {
-                            return 'Please enter account number';
+                            return 'val_bank_account'.tr;
                           }
                           return null;
                         },
                       ),
                       Text(
-                        'Swift Number',
+                        'bank_swift'.tr,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -185,13 +185,13 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         keyboardType: TextInputType.number,
                         validation: (v) {
                           if (v!.isEmpty) {
-                            return 'Please enter swift number';
+                            return 'val_bank_swift'.tr;
                           }
                           return null;
                         },
                       ),
                       Text(
-                        'Routing Number',
+                        'bank_routing'.tr,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -206,7 +206,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         keyboardType: TextInputType.number,
                         validation: (v) {
                           if (v!.isEmpty) {
-                            return 'Please enter routing number';
+                            return 'val_bank_routing'.tr;
                           }
                           return null;
                         },
@@ -214,7 +214,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                       height(0.02),
 
                       MyButton(
-                        label: 'Continue',
+                        label: 'common_continue'.tr,
                         onTap: () {
                           if (formKey.currentState!.validate()) {
                             body['account_holder_name'] =

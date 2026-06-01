@@ -110,7 +110,7 @@ class _PersonalScreenState extends State<PersonalScreen> {
 
                     Center(
                       child: Text(
-                        'Upload Photo',
+                        'auth_upload_photo'.tr,
                         style: TextStyle(
                           color: Color(0xffA1A1A1),
 
@@ -123,7 +123,7 @@ class _PersonalScreenState extends State<PersonalScreen> {
                     height(0.02),
 
                     Text(
-                      'Full Name',
+                      'f_full_name'.tr,
                       style: TextStyle(
                         color: greyColor,
                         fontSize: 14,
@@ -153,7 +153,7 @@ class _PersonalScreenState extends State<PersonalScreen> {
                     ),
 
                     Text(
-                      'Phone Number',
+                      'f_phone'.tr,
                       style: TextStyle(
                         color: greyColor,
                         fontSize: 14,
@@ -169,7 +169,7 @@ class _PersonalScreenState extends State<PersonalScreen> {
                     ),
 
                     Text(
-                      'Date of Birth',
+                      'auth_date_of_birth'.tr,
                       style: TextStyle(
                         color: greyColor,
                         fontSize: 14,
@@ -199,7 +199,7 @@ class _PersonalScreenState extends State<PersonalScreen> {
                       keyboardType: TextInputType.datetime,
                     ),
                     Text(
-                      'Bio',
+                      'f_bio'.tr,
                       style: TextStyle(
                         color: greyColor,
                         fontSize: 14,
@@ -208,7 +208,7 @@ class _PersonalScreenState extends State<PersonalScreen> {
                     ),
 
                     MyTextField(
-                      hintText: 'Write a short bio about yourself',
+                      hintText: 'ba_bio_hint'.tr,
                       controller: bioController,
                       maxLines: 5,
                       keyboardType: TextInputType.text,
@@ -217,7 +217,7 @@ class _PersonalScreenState extends State<PersonalScreen> {
                     height(0.02),
 
                     MyButton(
-                      label: 'Update Profile',
+                      label: 'ba_update_profile'.tr,
                       onTap: () async {
                         await authController.updateProfile(
                           name: nameController.text,
