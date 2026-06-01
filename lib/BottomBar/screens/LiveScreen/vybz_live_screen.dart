@@ -15,6 +15,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 
+/// Formate une duree video en m:ss (ou h:mm:ss si > 1h).
+String _fmtDur(Duration d) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  final m = two(d.inMinutes.remainder(60));
+  final s = two(d.inSeconds.remainder(60));
+  return d.inHours > 0 ? '${d.inHours}:$m:$s' : '$m:$s';
+}
+
 /// Onglet Live = 2 pages en swipe horizontal :
 ///  - Page 0 "Pour toi" : feed vertical de reels (VybzzZ Originals)
 ///  - Page 1 "En direct" : lives en cours, apercu gratuit 60s puis gate opaque
@@ -234,36 +242,103 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                           Positioned.fill(
                             child: Container(
                               color: blackColor.withValues(alpha: 0.3),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                              child: Column(
                                 children: [
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.replay_5,
-                                      color: whiteColor,
-                                      size: 40,
+                                  Expanded(
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.replay_5,
+                                            color: whiteColor,
+                                            size: 40,
+                                          ),
+                                          onPressed: () =>
+                                              controller.seekVideo(-5),
+                                        ),
+                                        width(0.05),
+                                        IconButton(
+                                          icon: Icon(
+                                            videoController.value.isPlaying
+                                                ? Icons.pause_circle_filled
+                                                : Icons.play_circle_filled,
+                                            color: whiteColor,
+                                            size: 60,
+                                          ),
+                                          onPressed: () =>
+                                              controller.playPauseVideo(),
+                                        ),
+                                        width(0.05),
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.forward_5,
+                                            color: whiteColor,
+                                            size: 40,
+                                          ),
+                                          onPressed: () =>
+                                              controller.seekVideo(5),
+                                        ),
+                                      ],
                                     ),
-                                    onPressed: () => controller.seekVideo(-5),
                                   ),
-                                  width(0.05),
-                                  IconButton(
-                                    icon: Icon(
-                                      videoController.value.isPlaying
-                                          ? Icons.pause_circle_filled
-                                          : Icons.play_circle_filled,
-                                      color: whiteColor,
-                                      size: 60,
+                                  // Jauge scrubbable (glisser pour avancer/reculer)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      0,
+                                      16,
+                                      150,
                                     ),
-                                    onPressed: () => controller.playPauseVideo(),
-                                  ),
-                                  width(0.05),
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.forward_5,
-                                      color: whiteColor,
-                                      size: 40,
+                                    child: ValueListenableBuilder<
+                                      VideoPlayerValue
+                                    >(
+                                      valueListenable: videoController,
+                                      builder: (context, value, _) {
+                                        return Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            VideoProgressIndicator(
+                                              videoController,
+                                              allowScrubbing: true,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 8,
+                                                  ),
+                                              colors: const VideoProgressColors(
+                                                playedColor: goldPrimary,
+                                                bufferedColor: Colors.white24,
+                                                backgroundColor: Colors.white12,
+                                              ),
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Text(
+                                                  _fmtDur(value.position),
+                                                  style: const TextStyle(
+                                                    color: whiteColor,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  _fmtDur(value.duration),
+                                                  style: TextStyle(
+                                                    color: whiteColor
+                                                        .withValues(alpha: 0.7),
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        );
+                                      },
                                     ),
-                                    onPressed: () => controller.seekVideo(5),
                                   ),
                                 ],
                               ),
