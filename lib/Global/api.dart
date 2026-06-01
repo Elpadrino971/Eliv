@@ -27,7 +27,8 @@ class APIs {
   // "Regarder le replay" apparait alors sur la fiche event.
   // En prod, ce champ viendra du backend par event (signed playback id).
   // ───────────────────────────────────────────────────────────────────────
-  static const String muxDemoPlaybackId = '';
+  static const String muxDemoPlaybackId =
+      'sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU';
 
   //Auth
   static const String loginAPI = '$baseAPI/login';
