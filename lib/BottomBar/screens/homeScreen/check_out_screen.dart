@@ -10,8 +10,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class CheckOutScreen extends StatefulWidget {
-  const CheckOutScreen({super.key, required this.event});
+  const CheckOutScreen({super.key, required this.event, this.discountPercent = 0});
   final Event event;
+
+  /// Remise (%) appliquee via une promo live (ex: 20 = -20%). 0 = aucune.
+  final int discountPercent;
 
   @override
   State<CheckOutScreen> createState() => _CheckOutScreenState();
@@ -24,11 +27,20 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   ];
   String selectedPayment = '';
 
+  double get _ticketPrice {
+    final base = double.tryParse(widget.event.ticketPrice ?? '0') ?? 0;
+    return widget.discountPercent > 0
+        ? base * (1 - widget.discountPercent / 100)
+        : base;
+  }
+
   List<Map> get textList => [
     {
       'title': 'home_standard_pass'.tr,
-      'subTitle': 'home_4k_uhd_access'.tr,
-      'price': '\$${widget.event.ticketPrice}',
+      'subTitle': widget.discountPercent > 0
+          ? 'Promo -${widget.discountPercent}% appliquée'
+          : 'home_4k_uhd_access'.tr,
+      'price': '\$${_ticketPrice.toStringAsFixed(2)}',
     },
   ];
   String selectedAccess = '';

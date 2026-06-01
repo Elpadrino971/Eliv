@@ -4,7 +4,9 @@ import 'dart:async';
 
 import 'package:artist/Animation/gift_animation_manager.dart';
 import 'package:artist/Animation/heart_animation.dart';
+import 'package:artist/BottomBar/screens/homeScreen/check_out_screen.dart';
 import 'package:artist/Controllers/event_controller.dart';
+import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_chat_preview.dart';
@@ -31,6 +33,9 @@ class _JoinStreamState extends State<JoinStream> {
   late Event currentEvent;
   final TextEditingController commentController = TextEditingController();
   StreamSubscription? _commandSubscription;
+  int? _promoPercent;
+  int _promoRemaining = 0;
+  Timer? _promoTimer;
 
   Future myInitMethod() async {
     await eventController.getAbusiveWords();
@@ -69,6 +74,7 @@ class _JoinStreamState extends State<JoinStream> {
   void dispose() {
     commentController.dispose();
     _commandSubscription?.cancel();
+    _promoTimer?.cancel();
     super.dispose();
   }
 
@@ -103,9 +109,97 @@ class _JoinStreamState extends State<JoinStream> {
     }
   }
 
+  void _startPromo(int percent, int seconds) {
+    _promoTimer?.cancel();
+    setState(() {
+      _promoPercent = percent;
+      _promoRemaining = seconds;
+    });
+    _promoTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      if (_promoRemaining <= 1) {
+        t.cancel();
+        setState(() {
+          _promoPercent = null;
+          _promoRemaining = 0;
+        });
+      } else {
+        setState(() => _promoRemaining--);
+      }
+    });
+  }
+
+  String _fmtPromo(int s) =>
+      '${(s ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
+
+  Widget _promoBanner() {
+    return GestureDetector(
+      onTap: () => Get.to(
+        () => CheckOutScreen(
+          event: currentEvent,
+          discountPercent: _promoPercent!,
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xffE6C76A), goldSecondary],
+          ),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.local_offer_rounded,
+              color: midnightPrimary,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'PROMO -$_promoPercent% • ${_fmtPromo(_promoRemaining)}',
+                style: const TextStyle(
+                  color: midnightPrimary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: midnightPrimary,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                'Acheter',
+                style: TextStyle(
+                  color: goldPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _onInRoomCommandReceived(ZegoInRoomCommandReceivedData data) {
     if (data.command == 'like') {
       _heartKey.currentState?.addHeart();
+    } else if (data.command.startsWith('promo:')) {
+      final parts = data.command.split(':');
+      if (parts.length >= 3) {
+        final percent = int.tryParse(parts[1]) ?? 0;
+        final seconds = int.tryParse(parts[2]) ?? 0;
+        if (percent > 0 && seconds > 0) _startPromo(percent, seconds);
+      }
     } else if (data.command.startsWith('gift:')) {
       final parts = data.command.split(':');
       if (parts.length >= 3) {
@@ -171,6 +265,10 @@ class _JoinStreamState extends State<JoinStream> {
             padding: myPadding,
             child: LiveStreamTopBar(event: currentEvent),
           ),
+
+          // Bannière promo (compte à rebours) — diffusée par l'artiste
+          if (_promoPercent != null)
+            Padding(padding: myPadding, child: _promoBanner()),
 
           const Spacer(),
 
