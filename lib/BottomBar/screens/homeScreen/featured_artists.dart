@@ -19,7 +19,7 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Featured artist’s'),
+      appBar: MyAppbar(title: 'home_featured_artists_title'.tr),
 
       body: Padding(
         padding: myPadding,
@@ -77,7 +77,7 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
             height(0.02),
 
             widget.artists.isEmpty
-                ? Center(child: Text('No Featured Artists'))
+                ? Center(child: Text('home_no_featured_artists'.tr))
                 : GridView.builder(
                     shrinkWrap: true,
                     physics: NeverScrollableScrollPhysics(),
@@ -197,7 +197,7 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
                                 ),
                                 child: Text(
                                   textAlign: TextAlign.center,
-                                  'View',
+                                  'home_view'.tr,
                                   style: TextStyle(
                                     color: Get.isDarkMode
                                         ? whiteColor

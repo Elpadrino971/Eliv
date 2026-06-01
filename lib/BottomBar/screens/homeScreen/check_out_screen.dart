@@ -18,20 +18,21 @@ class CheckOutScreen extends StatefulWidget {
 }
 
 class _CheckOutScreenState extends State<CheckOutScreen> {
-  List<Map> paymentList = [
-    {'name': 'Card', 'image': 'assets/card_icon.png'},
-    {'name': 'Pay', 'image': 'assets/pay_icon.png'},
-  ];
+  late List<Map> paymentList;
   String selectedPayment = '';
 
   late List<Map> textList;
   String selectedAccess = '';
   @override
   void initState() {
+    paymentList = [
+      {'name': 'home_payment_card'.tr, 'image': 'assets/card_icon.png'},
+      {'name': 'home_payment_pay'.tr, 'image': 'assets/pay_icon.png'},
+    ];
     textList = [
       {
-        'title': 'Standard Pass',
-        'subTitle': '4K UHD Access',
+        'title': 'home_standard_pass'.tr,
+        'subTitle': 'home_4k_uhd_access'.tr,
         'price': '\$${widget.event.ticketPrice}',
       },
     ];
@@ -48,7 +49,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Get.isDarkMode ? midnightPrimary : scaffoldBackgroundColor,
-      appBar: MyAppbar(title: 'Checkout'),
+      appBar: MyAppbar(title: 'home_checkout'.tr),
       body: SingleChildScrollView(
         child: Padding(
           padding: myPadding,
@@ -56,7 +57,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Select Access Tier'.toUpperCase(),
+                'home_select_access_tier'.tr.toUpperCase(),
                 style: const TextStyle(
                   fontFamily: AppFonts.ui,
                   color: textMuted,
@@ -155,7 +156,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
               height(0.01),
 
               Text(
-                'Payment Method'.toUpperCase(),
+                'home_payment_method'.tr.toUpperCase(),
                 style: const TextStyle(
                   fontFamily: AppFonts.ui,
                   color: textMuted,
@@ -241,7 +242,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Cardholder Name',
+                    'home_cardholder_name'.tr,
                     style: TextStyle(
                       color: Color(0xffA1A1A1),
                       fontSize: 16,
@@ -256,7 +257,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
                   height(0.01),
                   Text(
-                    'Card Number',
+                    'home_card_number'.tr,
                     style: TextStyle(
                       color: Color(0xffA1A1A1),
                       fontSize: 16,
@@ -277,7 +278,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         children: [
                           height(0.01),
                           Text(
-                            'Expiry Date',
+                            'home_expiry_date'.tr,
                             style: TextStyle(
                               color: Color(0xffA1A1A1),
                               fontSize: 16,
@@ -303,7 +304,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         children: [
                           height(0.01),
                           Text(
-                            'CVV',
+                            'home_cvv'.tr,
                             style: TextStyle(
                               color: Color(0xffA1A1A1),
                               fontSize: 16,
@@ -328,7 +329,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                   Row(
                     children: [
                       Text(
-                        'Total Charged',
+                        'home_total_charged'.tr,
                         style: TextStyle(
                           color: Color(0xffA1A1A1),
                           fontSize: 14,
@@ -354,7 +355,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
                   height(0.01),
                   MyButton(
-                    label: 'AUTHORIZE PAYMENT',
+                    label: 'home_authorize_payment'.tr,
                     labelColor: midnightPrimary,
                     onTap: () async {
                       final eventController = Get.find<EventController>();
@@ -380,9 +381,8 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
                       if (userPoints < price) {
                         myAlertDialog(
-                          title: 'Insufficient Points',
-                          content:
-                              'You do not have enough points to buy this event. Please top up your wallet.',
+                          title: 'home_insufficient_points'.tr,
+                          content: 'home_insufficient_points_msg'.tr,
                           onTap: () => Get.back(),
                         );
                         return;
@@ -390,9 +390,10 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
                       // 3. Confirmation and Buy
                       myAlertDialog(
-                        title: 'Confirm Purchase',
-                        content:
-                            'Are you sure you want to buy the ticket for ${widget.event.name}?',
+                        title: 'home_confirm_purchase'.tr,
+                        content: 'home_confirm_purchase_msg'.trParams({
+                          'name': '${widget.event.name}',
+                        }),
                         onTap: () async {
                           Get.back(); // Close alert
                           myLoadingDialog();

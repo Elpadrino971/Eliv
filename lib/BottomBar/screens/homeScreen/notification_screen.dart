@@ -3,8 +3,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/widgets/my_appBar.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -52,7 +51,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Alerts'),
+      appBar: MyAppbar(title: 'home_alerts'.tr),
 
       body: Padding(
         padding: EdgeInsetsGeometry.all(10),

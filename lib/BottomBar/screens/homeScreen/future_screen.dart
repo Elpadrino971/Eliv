@@ -24,11 +24,14 @@ class FutureScreen extends StatefulWidget {
 class _FutureScreenState extends State<FutureScreen> {
   final eventController = Get.find<EventController>();
 
-  final List<Map> futureList = [
-    {'name': '4K Ultra HD Streaming', 'icon': Icons.high_quality_rounded},
-    {'name': 'Dolby Atmos Spatial Audio', 'icon': Icons.surround_sound_rounded},
-    {'name': 'Exclusive Digital Merch', 'icon': Icons.shopping_bag_outlined},
-    {'name': 'Live Chat with VIP Fans', 'icon': Icons.chat_bubble_outline_rounded},
+  late final List<Map> futureList = [
+    {'name': 'home_feature_4k_streaming'.tr, 'icon': Icons.high_quality_rounded},
+    {'name': 'home_feature_dolby'.tr, 'icon': Icons.surround_sound_rounded},
+    {'name': 'home_feature_merch'.tr, 'icon': Icons.shopping_bag_outlined},
+    {
+      'name': 'home_feature_vip_chat'.tr,
+      'icon': Icons.chat_bubble_outline_rounded,
+    },
   ];
 
   Event event = Event();
@@ -224,7 +227,7 @@ class _FutureScreenState extends State<FutureScreen> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              isLive ? 'LIVE NOW' : 'LIVE CONCERT',
+                              isLive ? 'live_now'.tr : 'live_concert'.tr,
                               style: TextStyle(
                                 color: isLive ? Colors.white : ivory,
                                 fontSize: 11,
@@ -250,7 +253,7 @@ class _FutureScreenState extends State<FutureScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        (event.artist?.artistName ?? 'Live Stream')
+                        (event.artist?.artistName ?? 'home_live_stream'.tr)
                             .toUpperCase(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -301,11 +304,14 @@ class _FutureScreenState extends State<FutureScreen> {
                     spacing: 16,
                     runSpacing: 10,
                     children: [
-                      _featureChip(Icons.high_quality_rounded, '4K Ultra HD'),
-                      _featureChip(Icons.surround_sound_rounded, 'Dolby Atmos'),
+                      _featureChip(Icons.high_quality_rounded, 'home_chip_4k'.tr),
+                      _featureChip(
+                        Icons.surround_sound_rounded,
+                        'home_chip_dolby'.tr,
+                      ),
                       _featureChip(
                         Icons.chat_bubble_outline_rounded,
-                        'VIP Fan Chat',
+                        'home_chip_vip_chat'.tr,
                       ),
                     ],
                   ),
@@ -325,9 +331,9 @@ class _FutureScreenState extends State<FutureScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          "WHAT'S INCLUDED",
-                          style: TextStyle(
+                        Text(
+                          'home_whats_included'.tr,
+                          style: const TextStyle(
                             color: goldPrimary,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -376,9 +382,9 @@ class _FutureScreenState extends State<FutureScreen> {
                   height(0.025),
 
                   // ── À propos
-                  const Text(
-                    'ABOUT THIS EVENT',
-                    style: TextStyle(
+                  Text(
+                    'home_about_this_event'.tr,
+                    style: const TextStyle(
                       color: textMuted,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -400,7 +406,7 @@ class _FutureScreenState extends State<FutureScreen> {
                   if (canJoinRoom()) ...[
                     height(0.025),
                     MyButton(
-                      label: 'Join Room',
+                      label: 'home_join_room'.tr,
                       buttonColor: Colors.transparent,
                       borderColor: goldPrimary,
                       labelColor: goldPrimary,
@@ -436,10 +442,10 @@ class _FutureScreenState extends State<FutureScreen> {
       final completed = event.status == 'completed';
       content = MyButton(
         label: isLive
-            ? 'Join Event'
+            ? 'home_join_event'.tr
             : completed
-                ? 'Event Completed'
-                : 'Wait for Live',
+                ? 'home_event_completed'.tr
+                : 'home_wait_for_live'.tr,
         image: 'assets/arrow.png',
         imageColor: midnightPrimary,
         labelColor: midnightPrimary,
@@ -463,9 +469,9 @@ class _FutureScreenState extends State<FutureScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Total',
-                style: TextStyle(color: textMuted, fontSize: 12),
+              Text(
+                'home_total'.tr,
+                style: const TextStyle(color: textMuted, fontSize: 12),
               ),
               Text(
                 '\$${event.ticketPrice}',
@@ -475,16 +481,16 @@ class _FutureScreenState extends State<FutureScreen> {
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const Text(
-                'Full Access',
-                style: TextStyle(color: textMuted, fontSize: 11),
+              Text(
+                'home_full_access'.tr,
+                style: const TextStyle(color: textMuted, fontSize: 11),
               ),
             ],
           ),
           width(0.04),
           Expanded(
             child: MyButton(
-              label: 'CONTINUE TO CHECKOUT',
+              label: 'home_continue_to_checkout'.tr,
               image: 'assets/arrow.png',
               imageColor: midnightPrimary,
               labelColor: midnightPrimary,
@@ -567,37 +573,46 @@ class _FutureScreenState extends State<FutureScreen> {
                       ),
                     ),
                     height(0.02),
-                    const Text(
-                      'Report Event',
-                      style: TextStyle(
+                    Text(
+                      'home_report_event'.tr,
+                      style: const TextStyle(
                         color: ivory,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const Text(
-                      'Please select a reason for reporting this event.',
-                      style: TextStyle(color: textMuted, fontSize: 13),
+                    Text(
+                      'home_report_event_msg'.tr,
+                      style: const TextStyle(color: textMuted, fontSize: 13),
                     ),
                     height(0.02),
                     ...[
-                      'Spam',
-                      'Inappropriate Content',
-                      'Harassment',
-                      'Copyright Issue',
-                      'Other',
+                      {'value': 'Spam', 'label': 'home_reason_spam'.tr},
+                      {
+                        'value': 'Inappropriate Content',
+                        'label': 'home_reason_inappropriate'.tr,
+                      },
+                      {
+                        'value': 'Harassment',
+                        'label': 'home_reason_harassment'.tr,
+                      },
+                      {
+                        'value': 'Copyright Issue',
+                        'label': 'home_reason_copyright'.tr,
+                      },
+                      {'value': 'Other', 'label': 'home_reason_other'.tr},
                     ].map((reason) {
                       return RadioListTile<String>(
                         contentPadding: EdgeInsets.zero,
                         title: Text(
-                          reason,
+                          reason['label']!,
                           style: const TextStyle(
                             color: ivory,
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        value: reason,
+                        value: reason['value']!,
                         groupValue: selectedReason,
                         activeColor: goldPrimary,
                         onChanged: (value) {
@@ -610,27 +625,27 @@ class _FutureScreenState extends State<FutureScreen> {
                     if (selectedReason == 'Other') ...[
                       height(0.01),
                       MyTextField(
-                        hintText: 'Enter your reason...',
+                        hintText: 'home_enter_reason_hint'.tr,
                         controller: otherReasonController,
                       ),
                     ],
                     height(0.02),
-                    const Text(
-                      'Description',
-                      style: TextStyle(
+                    Text(
+                      'home_description'.tr,
+                      style: const TextStyle(
                         color: ivory,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     height(0.01),
                     MyTextField(
-                      hintText: 'Provide more details...',
+                      hintText: 'home_provide_details_hint'.tr,
                       controller: descController,
                       maxLines: 4,
                     ),
                     height(0.03),
                     MyButton(
-                      label: 'Submit Report',
+                      label: 'home_submit_report'.tr,
                       onTap: () async {
                         String finalReason = selectedReason == 'Other'
                             ? otherReasonController.text.trim()
@@ -638,7 +653,7 @@ class _FutureScreenState extends State<FutureScreen> {
 
                         if (finalReason.isEmpty) {
                           myWarningDialog(
-                            subtitle: 'Please select or enter a reason.',
+                            subtitle: 'home_select_enter_reason'.tr,
                           );
                           return;
                         }
@@ -653,8 +668,7 @@ class _FutureScreenState extends State<FutureScreen> {
                         Get.back(); // close sheet
 
                         mySuccessDialog(
-                          subtitle:
-                              'Report submitted. We will review it shortly.',
+                          subtitle: 'home_report_submitted'.tr,
                           ontap: () => Get.back(),
                         );
                       },

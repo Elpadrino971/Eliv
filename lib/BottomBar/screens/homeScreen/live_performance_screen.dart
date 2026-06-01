@@ -22,10 +22,10 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Live performance'),
+      appBar: MyAppbar(title: 'home_live_performance_title'.tr),
 
       body: widget.events.isEmpty
-          ? Center(child: Text('No Live Events'))
+          ? Center(child: Text('no_live_events'.tr))
           : SingleChildScrollView(
         child: Padding(
           padding: myPadding,
@@ -76,7 +76,7 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
                                             ),
                                           ),
                                           child: Text(
-                                            'LIVE NOW',
+                                            'live_now'.tr,
                                             style: TextStyle(
                                               color: whiteColor,
                                               fontSize: 13,
@@ -188,7 +188,7 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
                                         Row(
                                           children: [
                                             Text(
-                                              'Today',
+                                              'home_today'.tr,
                                               style: TextStyle(
                                                 color: whiteColor,
                                                 fontWeight: FontWeight.w400,
@@ -245,7 +245,7 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
                                             Image.asset('assets/play.png'),
                                             width(0.01),
                                             Text(
-                                              'Join live',
+                                              'join_live'.tr,
                                               style: TextStyle(
                                                 color: ivory,
                                                 fontSize: 13,

@@ -4,8 +4,7 @@ import 'package:artist/BottomBar/screens/homeScreen/report_screen.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 
 class LiveBroadcastScreen extends StatefulWidget {
   const LiveBroadcastScreen({super.key});
@@ -140,7 +139,7 @@ class _LiveBroadcastScreenState extends State<LiveBroadcastScreen> {
                                       Get.to(() => ReportScreen());
                                     },
                                     child: Text(
-                                      'Report',
+                                      'home_report'.tr,
                                       style: TextStyle(
                                         color: whiteColor,
                                         fontSize: 16,
@@ -361,7 +360,7 @@ class _LiveBroadcastScreenState extends State<LiveBroadcastScreen> {
                         width: Get.width * 0.9,
                         child: MyTextField(
                           fillColor: whiteColor.withValues(alpha: 0.2),
-                          hintText: 'Join the conversation...',
+                          hintText: 'home_join_conversation'.tr,
                           controller: commentController,
                           borderRadius: 50,
                           textColor: whiteColor,
