@@ -180,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           return Column(
                             children: [
                               SectionHeader(
-                                title: 'Live Now',
+                                title: 'live_now'.tr,
                                 icon: 'assets/live_icon.png',
                                 onViewAll: () => Get.to(
                                   () => LivePerformanceScreen(events: events),
@@ -191,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               if (events.isEmpty)
                                 Center(
                                   child: Text(
-                                    'No Live Events',
+                                    'no_live_events'.tr,
                                     style: TextStyle(
                                       color: Get.isDarkMode
                                           ? whiteColor
@@ -236,12 +236,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           return Column(
                             children: [
                               SectionHeader(
-                                title: 'Next Performance',
+                                title: 'next_performance'.tr,
                                 icon: 'assets/date_icon.png',
                                 onViewAll: () => Get.to(
                                   () => PerformancesScreen(
                                     events: events,
-                                    title: 'Next Performance',
+                                    title: 'next_performance'.tr,
                                   ),
                                 ),
                               ),
@@ -250,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               if (events.isEmpty)
                                 Center(
                                   child: Text(
-                                    'No Next Events Available',
+                                    'no_upcoming_events'.tr,
                                     style: TextStyle(
                                       color: Get.isDarkMode
                                           ? whiteColor
@@ -297,12 +297,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           return Column(
                             children: [
                               SectionHeader(
-                                title: 'Upcoming Events',
+                                title: 'upcoming_events'.tr,
                                 icon: 'assets/date_icon.png',
                                 onViewAll: () => Get.to(
                                   () => PerformancesScreen(
                                     events: events,
-                                    title: 'Upcoming Events',
+                                    title: 'upcoming_events'.tr,
                                   ),
                                 ),
                               ),
@@ -311,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               if (events.isEmpty)
                                 Center(
                                   child: Text(
-                                    'No Next Events Available',
+                                    'no_upcoming_events'.tr,
                                     style: TextStyle(
                                       color: Get.isDarkMode
                                           ? whiteColor

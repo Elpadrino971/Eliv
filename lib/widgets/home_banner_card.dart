@@ -164,18 +164,18 @@ class HomeBannerCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.play_arrow_rounded,
                                 color: midnightPrimary,
                                 size: 24,
                               ),
-                              SizedBox(width: 6),
+                              const SizedBox(width: 6),
                               Text(
-                                'JOIN LIVE',
-                                style: TextStyle(
+                                'join_live'.tr.toUpperCase(),
+                                style: const TextStyle(
                                   fontFamily: AppFonts.ui,
                                   color: midnightPrimary,
                                   fontWeight: FontWeight.w700,
@@ -214,9 +214,9 @@ class HomeBannerCard extends StatelessWidget {
   }
 
   Widget _eventTypeLabel() {
-    return const Text(
-      'LIVE CONCERT',
-      style: TextStyle(
+    return Text(
+      'live_concert'.tr.toUpperCase(),
+      style: const TextStyle(
         fontFamily: AppFonts.ui,
         color: goldPrimary,
         fontWeight: FontWeight.w700,

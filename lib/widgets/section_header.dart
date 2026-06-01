@@ -51,7 +51,7 @@ class SectionHeader extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  'VIEW ALL',
+                  'view_all'.tr.toUpperCase(),
                   style: TextStyle(
                     fontFamily: AppFonts.ui,
                     color: textMuted,

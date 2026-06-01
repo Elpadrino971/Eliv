@@ -2,6 +2,8 @@ import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/locale_service.dart';
+import 'package:artist/Global/translations/app_translations.dart';
 import 'package:artist/OnBoarding/onboarding_1.dart';
 import 'package:artist/firebase_options.dart';
 import 'package:artist/services/push_notification.dart';
@@ -33,6 +35,11 @@ class MyApp extends StatelessWidget {
       top: false,
       child: GetMaterialApp(
         debugShowCheckedModeBanner: false,
+        // i18n : dictionnaire, langue initiale (choix utilisateur > systeme >
+        // anglais) et langue de repli.
+        translations: AppTranslations(),
+        locale: LocaleService.initialLocale,
+        fallbackLocale: LocaleService.fallback,
         // Le meme theme pour light/dark + themeMode force => une seule
         // identite visuelle, quel que soit le reglage systeme ou stocke.
         theme: premiumTheme,

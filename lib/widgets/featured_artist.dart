@@ -18,7 +18,7 @@ class FeaturedArtistsAvatar extends StatelessWidget {
     return Column(
       children: [
         SectionHeader(
-          title: 'Featured Artists',
+          title: 'featured_artists'.tr,
           icon: 'assets/icon2.png',
           onViewAll: () => Get.to(() => FeaturedArtists(artists: artists)),
         ),

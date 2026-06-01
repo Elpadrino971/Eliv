@@ -106,7 +106,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
               items: [
                 /// HOME
                 BottomNavigationBarItem(
-                  label: 'Home',
+                  label: 'nav_home'.tr,
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: currentIndex == 0
@@ -137,7 +137,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
 
                 /// EXPLORE
                 BottomNavigationBarItem(
-                  label: 'Explore',
+                  label: 'nav_explore'.tr,
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: currentIndex == 1
@@ -168,7 +168,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
 
                 /// LIVE
                 BottomNavigationBarItem(
-                  label: 'Live',
+                  label: 'nav_live'.tr,
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: currentIndex == 2
@@ -199,7 +199,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
 
                 /// TICKETS
                 BottomNavigationBarItem(
-                  label: 'Tickets',
+                  label: 'nav_tickets'.tr,
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: currentIndex == 3
@@ -230,7 +230,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
 
                 /// PROFILE
                 BottomNavigationBarItem(
-                  label: 'Profile',
+                  label: 'nav_profile'.tr,
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: currentIndex == 4
