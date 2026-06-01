@@ -6,6 +6,7 @@ import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/artist_detail.dart';
+import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/ZegoCloud/join_stream.dart';
 import 'package:artist/widgets/image_widget.dart';
@@ -187,7 +188,7 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                           child: Container(
                             width: Get.width,
                             height: Get.height,
-                            color: ivory,
+                            color: blackColor,
                             child:
                                 videoController != null &&
                                     videoController.value.isInitialized
@@ -205,6 +206,29 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                                   ),
                           ),
                         ),
+                        // Bouton fermer (toujours visible) -> sortie du live
+                        Positioned(
+                          top: MediaQuery.of(context).padding.top + 10,
+                          left: 12,
+                          child: GestureDetector(
+                            onTap: () =>
+                                Get.offAll(() => const MyBottomBar()),
+                            child: Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: blackColor.withValues(alpha: 0.4),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                color: whiteColor,
+                                size: 22,
+                              ),
+                            ),
+                          ),
+                        ),
+
                         if (controller.showVideoControls.value &&
                             videoController != null)
                           Positioned.fill(
@@ -245,7 +269,8 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                               ),
                             ),
                           ),
-                        Container(
+                        if (controller.showVideoControls.value)
+                          Container(
                           padding: myPadding,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,7 +322,8 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                             ],
                           ),
                         ),
-                        Positioned(
+                        if (controller.showVideoControls.value)
+                          Positioned(
                           bottom: 0,
                           left: 0,
                           child: Padding(
