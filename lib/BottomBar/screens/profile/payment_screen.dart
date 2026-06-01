@@ -26,7 +26,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Primary Method',
+              'pay_primary_method'.tr,
               style: TextStyle(
                 color: greyColor,
                 fontWeight: FontWeight.bold,
@@ -161,7 +161,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             height(0.02),
 
             Text(
-              'Other Methods',
+              'pay_other_methods'.tr,
               style: TextStyle(
                 color: greyColor,
                 fontWeight: FontWeight.bold,
@@ -191,7 +191,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ),
                     ),
                     subtitle: Text(
-                      'Linked to iCloud',
+                      'pay_linked_icloud'.tr,
                       style: TextStyle(
                         color: Color(0xff737373),
                         fontWeight: FontWeight.bold,
@@ -224,7 +224,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ),
                     ),
                     subtitle: Text(
-                      'Backup method',
+                      'pay_backup_method'.tr,
                       style: TextStyle(
                         color: Color(0xff737373),
                         fontWeight: FontWeight.bold,
@@ -261,7 +261,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 SizedBox(
                   width: Get.width * 0.7,
                   child: Text(
-                    'Secure 256-bit SSL encrypted checkout powered by VybzzZ Pay.',
+                    'pay_secure_ssl'.tr,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,

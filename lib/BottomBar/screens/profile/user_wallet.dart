@@ -76,7 +76,7 @@ class _UserWalletState extends State<UserWallet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'ARENA POINTS BALANCE',
+                          'wallet_arena_points'.tr,
                           style: TextStyle(
                             color: whiteColor.withValues(alpha: 0.85),
                             fontWeight: FontWeight.w600,
@@ -114,7 +114,7 @@ class _UserWalletState extends State<UserWallet> {
                         ),
                         height(0.01),
                         MyButton(
-                          label: 'Withdraw Points',
+                          label: 'points_withdraw'.tr,
                           onTap: () {
                             Get.to(() => ArtistWithdraw());
                           },
@@ -134,8 +134,8 @@ class _UserWalletState extends State<UserWallet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'TOP UP POINTS',
+                  Text(
+                    'points_top_up'.tr,
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                   ),
                   GestureDetector(
@@ -174,8 +174,8 @@ class _UserWalletState extends State<UserWallet> {
                     return PointsCard(
                       onTap: () async {
                         await myAlertDialog(
-                          title: 'Buy Package',
-                          content: 'Are you sure you want to buy this package?',
+                          title: 'pay_buy_package'.tr,
+                          content: 'pay_buy_package_confirm'.tr,
                           onTap: () async {
                             Get.back();
                             await authController.purchasePackage(
@@ -222,8 +222,8 @@ class _UserWalletState extends State<UserWallet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Points Store',
+                            Text(
+                              'points_store'.tr,
                               style: TextStyle(
                                 color: whiteColor,
                                 fontSize: 22,
@@ -232,7 +232,7 @@ class _UserWalletState extends State<UserWallet> {
                             ),
                             height(0.005),
                             Text(
-                              'Unlock special bundles, limited-time multipliers, and more.',
+                              'points_store_desc'.tr,
                               style: TextStyle(
                                 color: whiteColor.withValues(alpha: 0.9),
                                 fontSize: 11,

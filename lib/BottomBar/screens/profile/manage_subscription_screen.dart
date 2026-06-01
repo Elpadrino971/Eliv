@@ -45,7 +45,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen>
 
     return Scaffold(
       backgroundColor: isDark ? darkmodeColor : const Color(0xffF8F8F8),
-      appBar: MyAppbar(title: 'Manage Subscription'),
+      appBar: MyAppbar(title: 'prof_manage_sub'.tr),
       body: Padding(
         padding: myPadding,
         child: Column(
@@ -53,7 +53,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen>
             // ── Tab Bar ────────────────────────────────────────────────
             MyTabBar(
               tabController: _tabController,
-              tabOne: 'Current Subscription',
+              tabOne: 'sub_current'.tr,
               tabTwo: 'History',
             ),
 

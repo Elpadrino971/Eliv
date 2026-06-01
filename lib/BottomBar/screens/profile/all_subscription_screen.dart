@@ -136,12 +136,12 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
                 ),
                 height(0.02),
                 Text(
-                  'Tap To Confirm Subscription',
+                  'sub_tap_confirm'.tr,
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
 
                 Text(
-                  'By continuing, you agree to pay for the following plan',
+                  'pay_confirm_continue'.tr,
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
                 ),
                 height(0.02),
@@ -169,9 +169,9 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
                                 subscriptionId: id,
                               )
                             : myWarningDialog(
-                                title: 'Purchasing failed',
-                                subtitle: 'Subscribing a new package failed',
-                                btnTitle: 'Continue',
+                                title: 'pay_purchasing_failed'.tr,
+                                subtitle: 'pay_subscribe_failed'.tr,
+                                btnTitle: 'common_continue'.tr,
                               );
                       },
                       child: Container(
@@ -220,8 +220,8 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
                                   height(0.005),
                                   Text(
                                     product.subscriptionPeriod == 'P1M'
-                                        ? 'Monthly Plan'
-                                        : 'Yearly Plan',
+                                        ? 'sub_monthly_plan'.tr
+                                        : 'sub_yearly_plan'.tr,
                                     style: TextStyle(
                                       color: whiteColor,
                                       fontWeight: FontWeight.w600,

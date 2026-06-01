@@ -63,7 +63,7 @@ class _HistoryState extends State<History> {
                           ),
                         ),
                         Text(
-                          'Hours Watched',
+                          'pay_hours_watched'.tr,
                           style: TextStyle(
                             color: greyColor,
                             fontWeight: FontWeight.w500,
@@ -84,7 +84,7 @@ class _HistoryState extends State<History> {
                       children: [
                         height(0.02),
                         Text(
-                          'Recent Streams',
+                          'recent_streams'.tr,
                           style: TextStyle(
                             color: greyColor,
                             fontWeight: FontWeight.w500,

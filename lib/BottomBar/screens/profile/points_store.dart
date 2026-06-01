@@ -21,7 +21,7 @@ class _PointsStoreState extends State<PointsStore> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Get.isDarkMode ? darkmodeColor : whiteColor,
-      appBar: MyAppbar(title: 'Points Store'),
+      appBar: MyAppbar(title: 'points_store'.tr),
       body: SafeArea(
         child: widget.packages.isEmpty
             ? Center(child: Text('empty_no_packages'.tr))
@@ -49,9 +49,8 @@ class _PointsStoreState extends State<PointsStore> {
                           isHighlighted: index == 0,
                           onTap: () async {
                             await myAlertDialog(
-                              title: 'Buy Package',
-                              content:
-                                  'Are you sure you want to buy this package?',
+                              title: 'pay_buy_package'.tr,
+                              content: 'pay_buy_package_confirm'.tr,
                               onTap: () async {
                                 Get.back();
                                 await userController.purchasePackage(
