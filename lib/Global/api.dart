@@ -39,6 +39,7 @@ class APIs {
   /// Plusieurs assets de demo pour valider le defilement du feed "Pour toi".
   /// (En prod : un playback id par event/short, fourni par le backend.)
   static const List<String> muxDemoPlaybackIds = [
+    '01c02msAhj7ug800qbzrvHkTNx4JZn79TBsCC8xtV7tc5k', // clip louis
     'sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU', // KRYS
     'MW3Ts7Jng66mhzjyUg4AGqQ9ow9yqjgwUI003lSPRLag', // YTDown
   ];
