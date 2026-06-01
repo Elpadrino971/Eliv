@@ -278,7 +278,7 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? darkmodeColor : const Color(0xffF8F8F8),
-      appBar: MyAppbar(title: 'Subscriptions'),
+      appBar: MyAppbar(title: 'subs_title'.tr),
       body: Obx(() {
         final list = subscriptionController.subscriptionModel.value.list;
 

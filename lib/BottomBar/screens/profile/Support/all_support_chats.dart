@@ -32,7 +32,7 @@ class _AllSupportChatsState extends State<AllSupportChats> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Support Tickets'),
+      appBar: MyAppbar(title: 'sup_tickets'.tr),
       body: RefreshIndicator(
         onRefresh: myInitMethod,
         child: Padding(

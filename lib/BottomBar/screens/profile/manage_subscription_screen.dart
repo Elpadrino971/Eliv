@@ -54,7 +54,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen>
             MyTabBar(
               tabController: _tabController,
               tabOne: 'sub_current'.tr,
-              tabTwo: 'History',
+              tabTwo: 'common_history'.tr,
             ),
 
             height(0.015),

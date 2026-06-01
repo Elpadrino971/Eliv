@@ -76,7 +76,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Secure & Protected',
+                        'sec_protected'.tr,
                         style: TextStyle(
                           color: ivory,
                           fontWeight: FontWeight.bold,

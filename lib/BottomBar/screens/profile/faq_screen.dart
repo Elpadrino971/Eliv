@@ -92,7 +92,7 @@ class _FaqScreenState extends State<FaqScreen> {
                         vertical: 4,
                       ),
                       title: Text(
-                        faq.name ?? 'No Question Title',
+                        faq.name ?? 'sup_no_title'.tr,
                         style: TextStyle(
                           color: Get.isDarkMode ? whiteColor : blackColor,
                           fontWeight: FontWeight.bold,
@@ -109,7 +109,7 @@ class _FaqScreenState extends State<FaqScreen> {
                             bottom: 16,
                           ),
                           child: Text(
-                            faq.description ?? 'No answer provided.',
+                            faq.description ?? 'sup_no_answer'.tr,
                             style: TextStyle(
                               color: greyColor.withValues(alpha: 0.8),
                               fontSize: 14,

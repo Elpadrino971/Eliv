@@ -3,6 +3,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/widgets/my_alerts.dart';
 import 'package:artist/widgets/my_appBar.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:get/state_manager.dart';
 
@@ -27,7 +28,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Alerts'),
+      appBar: MyAppbar(title: 'alerts_title'.tr),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -101,7 +102,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
               height(0.02),
               Text(
-                'Transactions',
+                'transactions_title'.tr,
                 style: TextStyle(
                   color: greyColor,
                   fontWeight: FontWeight.w600,
@@ -131,7 +132,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               height(0.01),
 
               MyAlerts(
-                text: 'Payment Success',
+                text: 'pay_success'.tr,
                 widget: Switch(
                   value: payment,
                   onChanged: (value) {

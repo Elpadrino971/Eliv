@@ -45,7 +45,7 @@ class _PersonalScreenState extends State<PersonalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Personal'),
+      appBar: MyAppbar(title: 'personal_title'.tr),
       body: Padding(
         padding: myPadding,
         child: Column(

@@ -3,6 +3,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/widgets/my_appbar.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 
@@ -17,7 +18,7 @@ class _MyTicketsState extends State<MyTickets> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'My Tickets'),
+      appBar: MyAppbar(title: 'my_tickets_title'.tr),
 
       body: Padding(
         padding: myPadding,

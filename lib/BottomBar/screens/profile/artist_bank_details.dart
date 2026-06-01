@@ -268,7 +268,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                       height(0.02),
 
                       MyButton(
-                        label: 'Submit Request',
+                        label: 'sup_submit_request'.tr,
                         onTap: () async {
                           if (formKey.currentState!.validate()) {
                             // Print all collected forms data

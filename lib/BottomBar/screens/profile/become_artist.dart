@@ -175,7 +175,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                     MyButton(
                       label: 'ba_submit_app'.tr,
                       onTap: () {
-                        myLoadingDialog(title: 'Weating For Submition');
+                        myLoadingDialog(title: 'sup_waiting'.tr);
                         Future.delayed(Duration(seconds: 3), () {
                           Get.to(() => ArtistOnboardingScreen());
                         });

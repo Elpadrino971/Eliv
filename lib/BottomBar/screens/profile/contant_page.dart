@@ -21,11 +21,11 @@ class ContantPage extends StatelessWidget {
           children: [
             height(0.01),
             if (content.isEmpty)
-              const Center(
+              Center(
                 child: Padding(
-                  padding: EdgeInsets.only(top: 50),
+                  padding: const EdgeInsets.only(top: 50),
                   child: Text(
-                    'No content available.',
+                    'empty_no_content'.tr,
                     style: TextStyle(color: greyColor, fontSize: 16),
                   ),
                 ),

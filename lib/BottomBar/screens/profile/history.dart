@@ -33,7 +33,7 @@ class _HistoryState extends State<History> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'History'),
+      appBar: MyAppbar(title: 'common_history'.tr),
       body: Padding(
         padding: myPadding,
         child: GetBuilder<EventController>(

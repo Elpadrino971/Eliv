@@ -18,7 +18,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Payment'),
+      appBar: MyAppbar(title: 'pay_title'.tr),
 
       body: Padding(
         padding: myPadding,
@@ -85,7 +85,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                         ),
                         child: Text(
-                          'Default',
+                          'common_default'.tr,
                           style: TextStyle(
                             color: whiteColor,
                             fontWeight: FontWeight.bold,
@@ -124,7 +124,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Expires',
+                            'label_expires'.tr,
                             style: TextStyle(
                               color: whiteColor.withValues(alpha: 0.3),
                               fontWeight: FontWeight.bold,

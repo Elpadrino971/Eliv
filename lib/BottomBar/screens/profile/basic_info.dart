@@ -149,7 +149,7 @@ class _BasicInfoState extends State<BasicInfo> {
                         ),
                       ),
                       Text(
-                        'Rating',
+                        'sup_rating'.tr,
                         style: TextStyle(
                           color: Color(0xff4A5565),
                           fontSize: 16,
