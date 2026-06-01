@@ -19,9 +19,7 @@ import 'package:artist/artist_bottom_bar/artist_bottom_bar.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/get_core.dart';
-import 'package:get/get_instance/get_instance.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class Profile extends StatefulWidget {
@@ -50,22 +48,22 @@ class _ProfileState extends State<Profile> {
       widget.fromArtist
           ? {
               'icon': Icons.swap_horiz_rounded,
-              'title': 'Switch to User',
-              'subTitle': 'Switch to user mode',
+              'title': 'prof_switch_user'.tr,
+              'subTitle': 'prof_switch_user_sub'.tr,
               'onTap': () {
                 Get.offAll(() => MyBottomBar());
               },
             }
           : {
               'icon': Icons.mic_none_rounded,
-              'title': 'Become An Artist',
-              'subTitle': 'Do live performances',
+              'title': 'prof_become_artist'.tr,
+              'subTitle': 'prof_do_live'.tr,
               'onTap': () {
                 if (userActiveSubscriptions.isEmpty) {
                   myWarningDialog(
                     title: 'Warning',
                     subtitle:
-                        'You have no active subscription, subscribe to become an artist',
+                        'prof_no_sub_become_artist'.tr,
                     ontap: () {
                       Get.back();
                       Get.to(
@@ -86,52 +84,52 @@ class _ProfileState extends State<Profile> {
             },
       {
         'icon': Icons.favorite_border_rounded,
-        'title': 'Following Artists',
-        'subTitle': 'Artists you love',
+        'title': 'prof_following_artists'.tr,
+        'subTitle': 'prof_following_artists_sub'.tr,
         'onTap': () => Get.to(() => FollowingArtists()),
       },
       {
         'icon': Icons.history_rounded,
-        'title': 'Stream History',
-        'subTitle': 'Stream History',
+        'title': 'prof_stream_history'.tr,
+        'subTitle': 'prof_stream_history'.tr,
         'onTap': () => Get.to(() => History()),
       },
       {
         'icon': Icons.account_balance_wallet_outlined,
-        'title': 'Wallet',
-        'subTitle': 'View your wallet balance',
+        'title': 'prof_wallet'.tr,
+        'subTitle': 'prof_wallet_sub'.tr,
         'onTap': () => Get.to(() => const UserWallet()),
       },
       {
         'icon': Icons.workspace_premium_outlined,
-        'title': 'Purchase Subscription',
-        'subTitle': 'Unlock artist features with a subscription plan',
+        'title': 'prof_purchase_sub'.tr,
+        'subTitle': 'prof_become_artist_sub'.tr,
         'onTap': () => Get.to(() => const AllSubscriptionScreen()),
       },
       {
         'icon': Icons.card_membership_outlined,
-        'title': 'Manage Subscription',
-        'subTitle': 'View & manage your active subscription',
+        'title': 'prof_manage_sub'.tr,
+        'subTitle': 'prof_manage_sub_sub'.tr,
         'onTap': () => Get.to(() => const ManageSubscriptionScreen()),
       },
       {
         'icon': Icons.shield_outlined,
-        'title': 'Privacy Policy',
-        'subTitle': 'View privacy policy',
+        'title': 'prof_privacy'.tr,
+        'subTitle': 'prof_privacy_sub'.tr,
         'onTap': () => Get.to(
           () => ContantPage(
-            title: 'Privacy Policy',
+            title: 'prof_privacy'.tr,
             content: authController.settings['privacy_policy'],
           ),
         ),
       },
       {
         'icon': Icons.description_outlined,
-        'title': 'Terms & Conditions',
-        'subTitle': 'View terms & conditions',
+        'title': 'prof_terms'.tr,
+        'subTitle': 'prof_terms_sub'.tr,
         'onTap': () => Get.to(
           () => ContantPage(
-            title: 'Terms & Conditions',
+            title: 'prof_terms'.tr,
             content: authController.settings['terms_and_conditions'],
           ),
         ),
@@ -303,7 +301,7 @@ class _ProfileState extends State<Profile> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'TOTAL POINTS',
+                            'prof_total_points'.tr,
                             style: TextStyle(
                               color: textMuted,
                               fontWeight: FontWeight.w600,
@@ -338,7 +336,7 @@ class _ProfileState extends State<Profile> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'ACCOUNT EXPERIENCE',
+                      'prof_account_experience'.tr,
                       style: TextStyle(
                         color: textMuted,
                         fontSize: 13,
@@ -405,8 +403,8 @@ class _ProfileState extends State<Profile> {
                     GestureDetector(
                       onTap: () async {
                         await myAlertDialog(
-                          title: 'Logout',
-                          content: 'Are you sure you want to logout?',
+                          title: 'prof_logout'.tr,
+                          content: 'prof_logout_confirm'.tr,
                           onTap: () async {
                             myLoadingDialog();
                             await unSub('00${userModel.value.user?.id}');
