@@ -11,6 +11,7 @@ import 'package:artist/services/api_services.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SubscriptionController extends GetxController {
   final response = ApiResponse();
@@ -65,6 +66,36 @@ class SubscriptionController extends GetxController {
         myWarningDialog(title: 'Error', subtitle: data['message']);
       }
     });
+  }
+
+  /// MODELE HYBRIDE — chemin "web" (Stripe), sans commission Apple/Google.
+  /// Ouvre le Stripe Checkout dans le navigateur, en passant l'utilisateur et le
+  /// plan pour que le backend relie le paiement. C'est le chemin "marge" : on le
+  /// propose EN PLUS de l'IAP (qui reste le chemin instantane).
+  ///
+  /// [SCAFFOLD] Tant que APIs.webSubscribeUrl est vide (backend pas encore pret),
+  /// on informe l'utilisateur au lieu de planter.
+  Future<void> subscribeOnWeb({String subscriptionId = ''}) async {
+    if (APIs.webSubscribeUrl.isEmpty) {
+      myWarningDialog(
+        title: 'Bientôt disponible',
+        subtitle:
+            "Le paiement web arrive très bientôt. En attendant, tu peux t'abonner directement dans l'app.",
+      );
+      return;
+    }
+
+    final params = {'user_id': '${userModel.value.user?.id}'};
+    if (subscriptionId.isNotEmpty) params['subscription_id'] = subscriptionId;
+    final uri = Uri.parse(APIs.webSubscribeUrl).replace(queryParameters: params);
+
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok) {
+      myWarningDialog(
+        title: 'Error',
+        subtitle: "Impossible d'ouvrir la page de paiement. Réessaie.",
+      );
+    }
   }
 
   static Future init() async {

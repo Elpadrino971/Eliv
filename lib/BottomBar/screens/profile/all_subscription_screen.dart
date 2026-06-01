@@ -18,6 +18,54 @@ class AllSubscriptionScreen extends StatefulWidget {
 class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
   final subscriptionController = Get.put(SubscriptionController());
 
+  /// [SCAFFOLD HYBRIDE] Bannière non-bloquante "s'abonner sur le web".
+  /// L'IAP reste le bouton principal (instantané) ; ceci est l'option marge.
+  Widget _webSaveBanner() {
+    return GestureDetector(
+      onTap: () => subscriptionController.subscribeOnWeb(),
+      child: Container(
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: goldPrimary.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: goldPrimary.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.savings_outlined, color: goldPrimary, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "S'abonner sur le web",
+                    style: TextStyle(
+                      color: ivory,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Meilleur prix, paiement sécurisé',
+                    style: TextStyle(color: textMuted, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_rounded,
+              color: goldPrimary,
+              size: 18,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -257,8 +305,9 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
 
         return ListView.builder(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          itemCount: list.length,
+          itemCount: list.length + 1,
           itemBuilder: (context, index) {
+            if (index == list.length) return _webSaveBanner();
             final sub = list[index];
             return SubscriptionCard(
               subscription: sub,

@@ -10,6 +10,16 @@ class APIs {
 
   static const String baseAPI = '$mainIP/api';
 
+  // ───────────────────────────────────────────────────────────────────────
+  // ABONNEMENT WEB (Stripe) — modele HYBRIDE.
+  //
+  // [A BRANCHER PAR LE DEV BACKEND] : page web qui lance le Stripe Checkout.
+  // L'app y ajoutera ?user_id=...&subscription_id=... pour relier le paiement.
+  // Tant que cette valeur est VIDE, l'app affiche "bientot disponible" (aucune
+  // casse). Exemple attendu : '$mainIP/subscribe'
+  // ───────────────────────────────────────────────────────────────────────
+  static const String webSubscribeUrl = '';
+
   //Auth
   static const String loginAPI = '$baseAPI/login';
   static const String signupAPI = '$baseAPI/sign-up';
