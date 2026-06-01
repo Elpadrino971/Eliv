@@ -53,7 +53,9 @@ class _MyBottomBarState extends State<MyBottomBar> {
     return Scaffold(
       body: screenList[currentIndex ?? 0],
 
-      bottomNavigationBar: Obx(
+      bottomNavigationBar: (currentIndex ?? 0) == 2
+          ? null
+          : Obx(
         () => Container(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           margin: const EdgeInsets.fromLTRB(15, 0, 15, 5),
