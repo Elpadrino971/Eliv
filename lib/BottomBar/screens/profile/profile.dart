@@ -61,7 +61,7 @@ class _ProfileState extends State<Profile> {
               'onTap': () {
                 if (userActiveSubscriptions.isEmpty) {
                   myWarningDialog(
-                    title: 'Warning',
+                    title: 'common_warning'.tr,
                     subtitle:
                         'prof_no_sub_become_artist'.tr,
                     ontap: () {

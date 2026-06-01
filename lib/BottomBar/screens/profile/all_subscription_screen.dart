@@ -291,7 +291,7 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
         if (list.isEmpty) {
           return Center(
             child: Text(
-              'No Subscriptions Available',
+              'empty_no_subscriptions'.tr,
               style: TextStyle(
                 color: isDark
                     ? whiteColor.withValues(alpha: 0.6)

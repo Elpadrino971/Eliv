@@ -44,7 +44,7 @@ class _FollowingArtistsState extends State<FollowingArtists> {
                   return Center(child: CircularProgressIndicator.adaptive());
                 }
                 if (followingArtists.isEmpty) {
-                  return Center(child: Text('No Following Artists'));
+                  return Center(child: Text('empty_no_following'.tr));
                 }
                 return GridView.builder(
                   shrinkWrap: true,

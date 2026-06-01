@@ -175,10 +175,10 @@ class _TopupHistoryState extends State<TopupHistory> {
                   final grouped = groupTransactions(transactions);
 
                   if (grouped.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Padding(
-                        padding: EdgeInsets.only(top: 20.0),
-                        child: Text('No Transactions Found'),
+                        padding: const EdgeInsets.only(top: 20.0),
+                        child: Text('empty_no_transactions'.tr),
                       ),
                     );
                   }

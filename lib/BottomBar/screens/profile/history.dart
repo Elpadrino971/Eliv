@@ -43,7 +43,7 @@ class _HistoryState extends State<History> {
               return Center(child: EventTileShimmer());
             }
             if (eventHistory.isEmpty) {
-              return Center(child: Text('No History Found'));
+              return Center(child: Text('empty_no_history'.tr));
             }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,

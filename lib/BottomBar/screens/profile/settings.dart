@@ -71,7 +71,7 @@ class _SettingsState extends State<Settings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Settings'),
+      appBar: MyAppbar(title: 'common_settings'.tr),
 
       body: SingleChildScrollView(
         child: Padding(
@@ -80,7 +80,7 @@ class _SettingsState extends State<Settings> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Acount',
+                'section_account'.tr,
                 style: TextStyle(
                   color: Color(0xff737373),
                   fontWeight: FontWeight.w600,
@@ -202,7 +202,7 @@ class _SettingsState extends State<Settings> {
               // ),
               height(0.01),
               Text(
-                'Support',
+                'section_support'.tr,
                 style: TextStyle(
                   color: Color(0xff737373),
                   fontWeight: FontWeight.w600,
@@ -270,7 +270,7 @@ class _SettingsState extends State<Settings> {
                     subtitle:
                         'prof_delete_warning'.tr,
                     image: 'assets/warning.png',
-                    btnTitle: 'Back',
+                    btnTitle: 'common_back'.tr,
                     secondBtnTitle: 'prof_delete_account'.tr,
                     secondOnTap: () async {
                       await authController.deleteAccount();

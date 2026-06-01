@@ -109,7 +109,7 @@ class _CurrentSubscriptionTab extends StatelessWidget {
       if (activeOnly.isEmpty) {
         return Center(
           child: MyDefaultText(
-            text: 'No Active Subscription',
+            text: 'empty_no_active_sub'.tr,
             color: ivory,
           ),
         );
@@ -159,7 +159,7 @@ class _HistoryTab extends StatelessWidget {
       if (historySubs.isEmpty) {
         return Center(
           child: MyDefaultText(
-            text: 'No Subscription History',
+            text: 'empty_no_sub_history'.tr,
             color: ivory,
           ),
         );

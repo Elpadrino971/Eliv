@@ -141,7 +141,7 @@ class _UserWalletState extends State<UserWallet> {
                   GestureDetector(
                     onTap: () => Get.to(() => const TopupHistory()),
                     child: Text(
-                      'VIEW HISTORY',
+                      'common_view_history'.tr,
                       style: TextStyle(
                         color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                         fontWeight: FontWeight.bold,
@@ -157,7 +157,7 @@ class _UserWalletState extends State<UserWallet> {
               Obx(() {
                 final packages = authController.packages.value.list ?? [];
                 if (packages.isEmpty) {
-                  return Center(child: Text('No Packages Available'));
+                  return Center(child: Text('empty_no_packages'.tr));
                 }
                 return GridView.builder(
                   shrinkWrap: true,

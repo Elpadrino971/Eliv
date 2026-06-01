@@ -52,10 +52,10 @@ class _FaqScreenState extends State<FaqScreen> {
           }
 
           if (faqList.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                'No FAQs available right now.',
-                style: TextStyle(color: greyColor, fontSize: 16),
+                'empty_no_faqs'.tr,
+                style: const TextStyle(color: greyColor, fontSize: 16),
               ),
             );
           }

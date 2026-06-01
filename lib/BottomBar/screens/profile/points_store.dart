@@ -24,7 +24,7 @@ class _PointsStoreState extends State<PointsStore> {
       appBar: MyAppbar(title: 'Points Store'),
       body: SafeArea(
         child: widget.packages.isEmpty
-            ? Center(child: Text('No Packages Available'))
+            ? Center(child: Text('empty_no_packages'.tr))
             : SingleChildScrollView(
                 padding: myPadding,
                 child: Column(

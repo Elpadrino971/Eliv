@@ -58,8 +58,8 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
                       supportController.update();
                     }
                   },
-                  child: const Text(
-                    'Done',
+                  child: Text(
+                    'common_done'.tr,
                     style: TextStyle(
                       color: mainThemeColor,
                       fontWeight: FontWeight.bold,
