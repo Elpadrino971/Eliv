@@ -24,7 +24,7 @@ class FutureScreen extends StatefulWidget {
 class _FutureScreenState extends State<FutureScreen> {
   final eventController = Get.find<EventController>();
 
-  late final List<Map> futureList = [
+  List<Map> get futureList => [
     {'name': 'home_feature_4k_streaming'.tr, 'icon': Icons.high_quality_rounded},
     {'name': 'home_feature_dolby'.tr, 'icon': Icons.surround_sound_rounded},
     {'name': 'home_feature_merch'.tr, 'icon': Icons.shopping_bag_outlined},

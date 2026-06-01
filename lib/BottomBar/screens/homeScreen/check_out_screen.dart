@@ -18,24 +18,22 @@ class CheckOutScreen extends StatefulWidget {
 }
 
 class _CheckOutScreenState extends State<CheckOutScreen> {
-  late List<Map> paymentList;
+  List<Map> get paymentList => [
+    {'name': 'home_payment_card'.tr, 'image': 'assets/card_icon.png'},
+    {'name': 'home_payment_pay'.tr, 'image': 'assets/pay_icon.png'},
+  ];
   String selectedPayment = '';
 
-  late List<Map> textList;
+  List<Map> get textList => [
+    {
+      'title': 'home_standard_pass'.tr,
+      'subTitle': 'home_4k_uhd_access'.tr,
+      'price': '\$${widget.event.ticketPrice}',
+    },
+  ];
   String selectedAccess = '';
   @override
   void initState() {
-    paymentList = [
-      {'name': 'home_payment_card'.tr, 'image': 'assets/card_icon.png'},
-      {'name': 'home_payment_pay'.tr, 'image': 'assets/pay_icon.png'},
-    ];
-    textList = [
-      {
-        'title': 'home_standard_pass'.tr,
-        'subTitle': 'home_4k_uhd_access'.tr,
-        'price': '\$${widget.event.ticketPrice}',
-      },
-    ];
     selectedPayment = paymentList[0]['name'];
     super.initState();
   }

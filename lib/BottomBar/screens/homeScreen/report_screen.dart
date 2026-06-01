@@ -17,7 +17,7 @@ class ReportScreen extends StatefulWidget {
 class _ReportScreenState extends State<ReportScreen> {
   final describeController = TextEditingController();
   String selectedReason = '';
-  late final List<Map> reasonList = [
+  List<Map> get reasonList => [
     {
       'title': 'home_reason_harassment_title'.tr,
       'subTitle': 'home_reason_harassment_sub'.tr,

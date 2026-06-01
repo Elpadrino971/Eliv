@@ -35,7 +35,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
     {'title': 'Bank Payout', 'date': 'Jan 28', 'price': '-\$5,000'},
   ];
 
-  List<Map> methodsList = [
+  List<Map> get methodsList => [
     {
       'image': 'assets/chase_icon.png',
       'title': 'Chase Business',

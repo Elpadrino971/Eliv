@@ -4,6 +4,7 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/BottomBar/screens/profile/alerts_screen.dart';
 import 'package:artist/BottomBar/screens/profile/language_screen.dart';
+import 'package:artist/Global/locale_service.dart';
 import 'package:artist/BottomBar/screens/profile/personal_screen.dart';
 import 'package:artist/BottomBar/screens/profile/security_screen.dart';
 import 'package:artist/BottomBar/screens/profile/Support/all_support_chats.dart';
@@ -21,7 +22,7 @@ class Settings extends StatefulWidget {
 
 class _SettingsState extends State<Settings> {
   final authController = Get.find<AuthController>();
-  List<Map> acountList = [
+  List<Map> get acountList => [
     {
       'title': 'prof_personal_info'.tr,
       'subTitle': 'prof_personal_info_sub'.tr,
@@ -36,14 +37,19 @@ class _SettingsState extends State<Settings> {
     },
     {
       'title': 'language'.tr,
-      'subTitle': 'English (US)',
+      'subTitle': LocaleService.supported
+          .firstWhere(
+            (l) => l.code == LocaleService.currentCode,
+            orElse: () => LocaleService.supported.first,
+          )
+          .name,
       'image': 'assets/icon10.png',
 
       'screen': LanguageScreen(),
     },
   ];
 
-  List<Map> preferencesList = [
+  List<Map> get preferencesList => [
     {
       'title': 'prof_notifications'.tr,
       'subTitle': 'prof_notifications_sub'.tr,
@@ -52,7 +58,7 @@ class _SettingsState extends State<Settings> {
     },
   ];
 
-  List<Map> supportList = [
+  List<Map> get supportList => [
     {
       'title': 'prof_help_center'.tr,
       'subTitle': 'prof_help_center_sub'.tr,

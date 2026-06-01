@@ -35,7 +35,6 @@ class _ProfileState extends State<Profile> {
 
   List<UserSubscription> userActiveSubscriptions = [];
 
-  late List<Map> acountList = [];
   Future myInitMethod() async {
     final data = userModel.value.user?.userSubscription;
     if (data != null && data.isNotEmpty) {
@@ -43,8 +42,11 @@ class _ProfileState extends State<Profile> {
           .where((e) => e.status == 'active')
           .toList();
     }
+    await authController.getSettings();
+    if (mounted) setState(() {});
+  }
 
-    acountList = [
+  List<Map> get acountList => [
       widget.fromArtist
           ? {
               'icon': Icons.swap_horiz_rounded,
@@ -134,9 +136,7 @@ class _ProfileState extends State<Profile> {
           ),
         ),
       },
-    ];
-    await authController.getSettings();
-  }
+  ];
 
   @override
   void initState() {
@@ -156,7 +156,7 @@ class _ProfileState extends State<Profile> {
             Row(
               children: [
                 Text(
-                  'Profile',
+                  'nav_profile'.tr,
                   style: TextStyle(
                     color: goldPrimary,
                     fontWeight: FontWeight.w600,
