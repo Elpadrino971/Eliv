@@ -35,6 +35,7 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
         Uri.parse(Mux.hlsUrl(widget.playbackId)),
       );
       await c.initialize();
+      await c.setLooping(true);
       c.play();
       setState(() {
         _controller = c;

@@ -155,10 +155,11 @@ class _ForYouFeedState extends State<_ForYouFeed> {
   void initState() {
     super.initState();
     final events = eventController.allEvents.value.data ?? [];
-    if (events.isNotEmpty &&
-        events[0].videoReel != null &&
-        events[0].videoReel!.isNotEmpty) {
-      eventController.initVideoPlayer(events[0].videoReel!);
+    final url = eventController.reelUrlFor(
+      events.isNotEmpty ? events[0] : null,
+    );
+    if (url != null) {
+      eventController.initVideoPlayer(url);
     }
   }
 
