@@ -372,6 +372,26 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                                   ),
                                   Spacer(),
                                   GestureDetector(
+                                    onTap: () => myShare(
+                                      message:
+                                          '${event.name?.capitalize ?? 'VybzzZ'} — ${APIs.mainIP}',
+                                    ),
+                                    child: Container(
+                                      width: 40,
+                                      height: 40,
+                                      margin: const EdgeInsets.only(right: 10),
+                                      decoration: BoxDecoration(
+                                        color: whiteColor.withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(50),
+                                      ),
+                                      child: const Icon(
+                                        Icons.ios_share_rounded,
+                                        color: whiteColor,
+                                        size: 22,
+                                      ),
+                                    ),
+                                  ),
+                                  GestureDetector(
                                     onTap: controller.toggleMute,
                                     child: Container(
                                       width: 40,
