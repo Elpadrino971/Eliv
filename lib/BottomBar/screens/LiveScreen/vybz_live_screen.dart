@@ -9,6 +9,7 @@ import 'package:artist/BottomBar/screens/LiveScreen/artist_detail.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/create_short_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Models/event_model.dart';
+import 'package:artist/widgets/replay_player_screen.dart';
 import 'package:artist/ZegoCloud/join_stream.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:artist/widgets/my_button.dart';
@@ -588,6 +589,46 @@ class _NoLiveState extends StatelessWidget {
               fontSize: 14,
             ),
           ),
+
+          // Accès discret au concert PRO (Mux Live) si configuré
+          if (APIs.muxLivePlaybackId.isNotEmpty) ...[
+            height(0.03),
+            GestureDetector(
+              onTap: () => Get.to(
+                () => const ReplayPlayerScreen(
+                  playbackId: APIs.muxLivePlaybackId,
+                  isLive: true,
+                  title: 'Live',
+                ),
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: liveRed.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: liveRed),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.sensors_rounded, color: liveRed, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Concert pro en direct',
+                      style: TextStyle(
+                        color: whiteColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
