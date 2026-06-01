@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:artist/Controllers/controller.dart';
+import 'package:artist/Global/app_date.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/widgets/widget.dart';
@@ -577,10 +578,16 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                       artistController.createEvent(
                         name: titleController.text,
                         description: descriptionController.text,
-                        startDateTime:
-                            '${startDateController.text} ${startTimeController.text}',
-                        endDateTime:
-                            '${startDateController.text} ${endTimeController.text}',
+                        // Envoye en UTC (avec 'Z') pour que chaque spectateur
+                        // voie l'heure dans son propre fuseau.
+                        startDateTime: AppDate.localPartsToUtcIso(
+                          startDateController.text,
+                          startTimeController.text,
+                        ),
+                        endDateTime: AppDate.localPartsToUtcIso(
+                          startDateController.text,
+                          endTimeController.text,
+                        ),
                         ticketPrice: standardController.text,
                         genreId: selectedGenreId?.toString() ?? '',
                         hasLiveChat: liveValue ? '1' : '0',

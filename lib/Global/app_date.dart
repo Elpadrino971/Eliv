@@ -51,4 +51,20 @@ class AppDate {
     if (dt == null) return '';
     return '${time(dt)} (${gmtLabel(dt)})';
   }
+
+  /// COTE EMISSION (creation d'event) : prend une date "yyyy-MM-dd" et une heure
+  /// "HH:mm:ss" saisies dans le fuseau LOCAL de l'artiste, et renvoie une chaine
+  /// ISO8601 en UTC avec 'Z' (ex: "2026-07-26T18:00:00Z" pour 20h a Paris).
+  /// C'est ce 'Z' qui permet ensuite a chaque spectateur de voir l'heure dans
+  /// SON fuseau via .toLocal(). Si la saisie est invalide, on retombe sur
+  /// l'ancien format "date heure" (aucune casse).
+  static String localPartsToUtcIso(String date, String time) {
+    if (date.isEmpty || time.isEmpty) return '$date $time'.trim();
+    try {
+      final utc = DateTime.parse('$date $time').toUtc();
+      return DateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(utc);
+    } catch (_) {
+      return '$date $time';
+    }
+  }
 }
