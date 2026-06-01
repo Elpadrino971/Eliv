@@ -11,14 +11,14 @@ class APIs {
   static const String baseAPI = '$mainIP/api';
 
   // ───────────────────────────────────────────────────────────────────────
-  // ABONNEMENT WEB (Stripe) — modele HYBRIDE.
+  // ABONNEMENT WEB (Stripe) — abos ARTISTES, modele hybride (IAP + Web).
   //
-  // [A BRANCHER PAR LE DEV BACKEND] : page web qui lance le Stripe Checkout.
-  // L'app y ajoutera ?user_id=...&subscription_id=... pour relier le paiement.
-  // Tant que cette valeur est VIDE, l'app affiche "bientot disponible" (aucune
-  // casse). Exemple attendu : '$mainIP/subscribe'
+  // Page generique vybzzz.com qui gere les 3 paliers fondateurs (1->200) ET le
+  // Pro (200+) via current_founder_plan() cote Supabase, puis lance le Stripe
+  // Checkout avec le bon price_id. L'app y ajoute ?user_id=... (a mapper en
+  // client_reference_id cote web -> webhook). Voir docs/STRIPE_HYBRID_SETUP.md
   // ───────────────────────────────────────────────────────────────────────
-  static const String webSubscribeUrl = '';
+  static const String webSubscribeUrl = 'https://vybzzz.com/subscribe';
 
   //Auth
   static const String loginAPI = '$baseAPI/login';
