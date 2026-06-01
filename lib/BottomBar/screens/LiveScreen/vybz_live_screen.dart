@@ -6,6 +6,7 @@ import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/artist_detail.dart';
+import 'package:artist/BottomBar/screens/LiveScreen/create_short_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/ZegoCloud/join_stream.dart';
@@ -215,6 +216,28 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                                       color: mainThemeColor,
                                     ),
                                   ),
+                          ),
+                        ),
+                        // Bouton "+" (créer un short) - toujours visible
+                        Positioned(
+                          top: MediaQuery.of(context).padding.top + 10,
+                          right: 12,
+                          child: GestureDetector(
+                            onTap: () =>
+                                Get.to(() => const CreateShortScreen()),
+                            child: Container(
+                              width: 38,
+                              height: 38,
+                              decoration: const BoxDecoration(
+                                color: goldPrimary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.add_rounded,
+                                color: midnightPrimary,
+                                size: 24,
+                              ),
+                            ),
                           ),
                         ),
                         // Bouton fermer (toujours visible) -> sortie du live

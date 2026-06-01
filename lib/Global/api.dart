@@ -37,6 +37,15 @@ class APIs {
     'MW3Ts7Jng66mhzjyUg4AGqQ9ow9yqjgwUI003lSPRLag', // YTDown
   ];
 
+  // ───────────────────────────────────────────────────────────────────────
+  // SHORTS UGC (upload vidéo utilisateur via Mux Direct Upload).
+  // [A IMPLEMENTER PAR LE DEV] Le backend cree un "direct upload" Mux
+  // (POST https://api.mux.com/video/v1/uploads avec le token secret) et
+  // renvoie { "upload_url": "https://storage.googleapis.com/..." }.
+  // L'app PUT ensuite la video sur cette URL. Voir docs/MUX_SHORTS_UGC.md
+  // ───────────────────────────────────────────────────────────────────────
+  static const String createShortUploadAPI = '$baseAPI/shorts/create-upload';
+
   //Auth
   static const String loginAPI = '$baseAPI/login';
   static const String signupAPI = '$baseAPI/sign-up';
