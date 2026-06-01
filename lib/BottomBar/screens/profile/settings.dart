@@ -1,6 +1,5 @@
 import 'package:artist/BottomBar/screens/profile/faq_screen.dart';
 import 'package:artist/Controllers/auth_controller.dart';
-import 'package:artist/Controllers/theme_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/BottomBar/screens/profile/alerts_screen.dart';
@@ -68,12 +67,6 @@ class _SettingsState extends State<Settings> {
     },
   ];
 
-  var swichValue = true;
-  @override
-  void initState() {
-    super.initState();
-    swichValue = box.read(themeKey) ?? true;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -317,44 +310,6 @@ class _SettingsState extends State<Settings> {
                       size: 12,
                       color: greyColor,
                     ),
-                  ),
-                ),
-              ),
-
-              height(0.01),
-              MyContainer(
-                widget: ListTile(
-                  minTileHeight: 50,
-                  contentPadding: EdgeInsets.all(0),
-
-                  leading: Image.asset(
-                    'assets/icon14.png',
-                    width: 40,
-                    height: 40,
-                  ),
-
-                  title: Text(
-                    'Switch to Dark Mode',
-                    style: TextStyle(
-                      color: Get.isDarkMode ? whiteColor : blackColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-
-                  trailing: Switch(
-                    value: swichValue,
-                    onChanged: (value) async {
-                      await box.write(themeKey, value);
-                      Get.find<ThemeController>().toggleTheme(value);
-                      swichValue = value;
-                      await Future.delayed(Duration(milliseconds: 100));
-                      setState(() {});
-                    },
-                    inactiveThumbColor: whiteColor,
-                    inactiveTrackColor: greyColor,
-                    activeTrackColor: goldPrimary,
-                    activeThumbColor: whiteColor,
                   ),
                 ),
               ),
