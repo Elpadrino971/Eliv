@@ -188,19 +188,19 @@ Future<String?> pickTime(BuildContext context) async {
       return Theme(
         data: Theme.of(context).copyWith(
           timePickerTheme: TimePickerThemeData(
-            hourMinuteColor: mainThemeColor,
-            dayPeriodColor: mainThemeColor,
-            backgroundColor: whiteColor,
-            hourMinuteTextColor: whiteColor,
-            dialHandColor: mainThemeColor,
-            dialBackgroundColor: blackColor.withValues(alpha: 0.1),
-            dayPeriodTextColor: blackColor,
-            entryModeIconColor: blackColor,
-
-            helpTextStyle: TextStyle(color: blackColor),
+            backgroundColor: midnightSecondary,
+            hourMinuteColor: cardDeep,
+            hourMinuteTextColor: ivory,
+            dayPeriodColor: cardDeep,
+            dayPeriodTextColor: ivory,
+            dialHandColor: goldPrimary,
+            dialBackgroundColor: cardDeep,
+            dialTextColor: ivory,
+            entryModeIconColor: goldPrimary,
+            helpTextStyle: TextStyle(color: ivory),
           ),
           textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(foregroundColor: blackColor),
+            style: TextButton.styleFrom(foregroundColor: goldPrimary),
           ),
         ),
         child: child!,
@@ -237,13 +237,16 @@ Future<dynamic> myAlertDialog({
     context: Get.context!,
     builder: (context) {
       return AlertDialog(
-        backgroundColor: Get.isDarkMode ? Colors.black : whiteColor,
+        backgroundColor: midnightSecondary,
         elevation: 0,
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.w600)),
-        content: Text(content),
+        title: Text(
+          title,
+          style: TextStyle(fontWeight: FontWeight.w600, color: ivory),
+        ),
+        content: Text(content, style: TextStyle(color: textMuted)),
         actions: [
           TextButton(
-            child: Text('No'),
+            child: Text('No', style: TextStyle(color: greyColor)),
             onPressed: () {
               Get.back();
             },
