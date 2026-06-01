@@ -293,7 +293,7 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
             actions: [
               TextButton(
                 onPressed: () => Get.back(),
-                child: const Text('Cancel', style: TextStyle(color: greyColor)),
+                child: Text('common_cancel'.tr, style: TextStyle(color: greyColor)),
               ),
               TextButton(
                 onPressed: () async {

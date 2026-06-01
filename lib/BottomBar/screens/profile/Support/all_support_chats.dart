@@ -125,8 +125,8 @@ class _AllSupportChatsState extends State<AllSupportChats> {
                                       ),
                                     ),
                                     const Spacer(),
-                                    const Text(
-                                      'View Details',
+                                    Text(
+                                      'common_view_details'.tr,
                                       style: TextStyle(
                                         color: mainThemeColor,
                                         fontWeight: FontWeight.bold,
