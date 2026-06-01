@@ -102,3 +102,104 @@ paiement** → l'abo semble s'activer **gratuitement**.
 | Webhook Laravel (activation abo) | **Dev** |
 | Vérifier/fermer la fuite Android | **Dev** |
 | Passage Test → Live | Toi + Dev |
+
+---
+
+# Partie 5 — CODE PRÊT À DÉPOSER (pour le dev)
+
+## 5.A — La page `vybzzz.com/subscribe` (Supabase Edge Function)
+
+> Rôle : lire `user_id` → demander le palier courant à Supabase
+> (`current_founder_plan()`) → créer un Stripe Checkout avec le bon `price_id`
+> → rediriger l'artiste vers le paiement. Le `user_id` part en
+> `client_reference_id` (le webhook s'en sert pour activer l'abo).
+
+`supabase/functions/subscribe/index.ts`
+```ts
+import Stripe from "https://esm.sh/stripe@16?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
+  apiVersion: "2024-06-20",
+});
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+);
+
+// Palier -> Stripe price_id (LIVE). TODO: remplacer le price_id Pro.
+const PRICE_BY_PLAN: Record<string, string> = {
+  founder_t1: "price_1TajbvHfGnA3ljfTyRCpfKvX", // 79 €
+  founder_t2: "price_1Tajc5HfGnA3ljfTqXyJ9kIZ", // 99 €
+  founder_t3: "price_1TajcGHfGnA3ljfTYWvJHbhO", // 129 €
+  pro:        "price_PRO_199_A_REMPLACER",       // 199 € (à renseigner)
+};
+
+Deno.serve(async (req) => {
+  const url = new URL(req.url);
+  const userId = url.searchParams.get("user_id");
+  if (!userId) return new Response("missing user_id", { status: 400 });
+
+  // 1) Palier courant. TODO: aligner sur le vrai retour de current_founder_plan()
+  const { data, error } = await supabase.rpc("current_founder_plan");
+  if (error) return new Response("plan error", { status: 500 });
+  const plan = typeof data === "string" ? data : (data?.plan ?? "pro");
+  const price = PRICE_BY_PLAN[plan] ?? PRICE_BY_PLAN.pro;
+
+  // 2) Session Checkout (abonnement) reliée à l'utilisateur
+  const session = await stripe.checkout.sessions.create({
+    mode: "subscription",
+    line_items: [{ price, quantity: 1 }],
+    client_reference_id: userId,
+    metadata: { user_id: userId, plan },
+    success_url: "https://vybzzz.com/merci?session_id={CHECKOUT_SESSION_ID}",
+    cancel_url: "https://vybzzz.com/subscribe",
+  });
+
+  // 3) Redirection vers la page de paiement Stripe
+  return Response.redirect(session.url!, 302);
+});
+```
+Déploiement : `supabase functions deploy subscribe --no-verify-jwt`
+Secrets : `supabase secrets set STRIPE_SECRET_KEY=sk_live_...`
+Router `vybzzz.com/subscribe` → cette fonction (ou appeler l'URL de la fonction
+directement depuis le bouton — dans ce cas mettre cette URL dans
+`APIs.webSubscribeUrl`).
+
+## 5.B — Webhook (déjà décrit Partie 3.A) — squelette
+`supabase/functions/stripe-webhook/index.ts` → écouter
+`checkout.session.completed`, lire `session.client_reference_id` (= user_id),
+passer l'artiste **premium** + stocker `stripe_customer_id` /
+`stripe_subscription_id`. Sur `customer.subscription.deleted` → retirer premium.
+
+---
+
+# Partie 6 — RevenueCat / IAP iOS (les "modifs" à faire)
+
+> Pour que le **bouton IAP** vende les paliers, il faut les produits côté Apple.
+> Sur Stripe le "prix gelé à vie" est trivial ; sur Apple, ça passe par le
+> **grandfathering** (un abonné garde son prix tant qu'on ne l'augmente pas).
+
+**À créer dans App Store Connect** (groupe d'abonnement unique, auto-renouvelable) :
+| Produit | Prix cible | Palier Apple à choisir |
+|---|---|---|
+| `vybzzz_founder_t1` | 79 € | le plus proche |
+| `vybzzz_founder_t2` | 99 € | le plus proche |
+| `vybzzz_founder_t3` | 129 € | le plus proche |
+| `vybzzz_pro` | 199 € | le plus proche |
+
+**Dans RevenueCat** :
+1. Ajouter ces 4 produits + une **entitlement** `premium`.
+2. Créer une **offering** par palier (ou 1 offering et l'app choisit le package).
+3. L'app doit présenter **uniquement le produit du palier courant**
+   (via `current_founder_plan()` exposé par une petite API). Les abonnés
+   existants restent sur leur produit → **prix gelé** (grandfathering Apple).
+
+**Côté app (je m'en charge quand RevenueCat sera prêt)** : aujourd'hui
+`fetchOffers` filtre par `storeProduct.title == title`. Je l'alignerai pour
+sélectionner le package du **palier courant** au lieu du titre.
+
+> 💡 Reco honnête : le "gelé à vie" fondateur est **simple sur le web**, **fiddly
+> sur Apple**. Si tu veux simplifier, l'IAP pourrait ne vendre que le **Pro
+> 199 €** (1 seul produit), et réserver les **tarifs fondateurs au web**. À toi
+> de voir — mais le web reste le chemin "marge" de toute façon.
