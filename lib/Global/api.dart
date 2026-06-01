@@ -20,6 +20,15 @@ class APIs {
   // ───────────────────────────────────────────────────────────────────────
   static const String webSubscribeUrl = 'https://vybzzz.com/subscribe';
 
+  // ───────────────────────────────────────────────────────────────────────
+  // MUX — REPLAY (VOD). Le PLAYBACK ID est PUBLIC (pas un secret).
+  // Pour tester un replay Mux dans l'app : colle ici un Playback ID d'un de
+  // tes assets Mux (dashboard Mux > Assets > Playback ID). Le bouton
+  // "Regarder le replay" apparait alors sur la fiche event.
+  // En prod, ce champ viendra du backend par event (signed playback id).
+  // ───────────────────────────────────────────────────────────────────────
+  static const String muxDemoPlaybackId = '';
+
   //Auth
   static const String loginAPI = '$baseAPI/login';
   static const String signupAPI = '$baseAPI/sign-up';

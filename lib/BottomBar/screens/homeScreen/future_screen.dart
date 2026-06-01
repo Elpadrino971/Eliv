@@ -12,6 +12,7 @@ import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:artist/Global/app_date.dart';
+import 'package:artist/widgets/replay_player_screen.dart';
 
 class FutureScreen extends StatefulWidget {
   const FutureScreen({super.key, required this.event});
@@ -166,6 +167,22 @@ class _FutureScreenState extends State<FutureScreen> {
                               size: 18,
                             ),
                           ),
+                          if (APIs.muxDemoPlaybackId.isNotEmpty) ...[
+                            width(0.02),
+                            _glassButton(
+                              onTap: () => Get.to(
+                                () => ReplayPlayerScreen(
+                                  playbackId: APIs.muxDemoPlaybackId,
+                                  title: event.name,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.smart_display_rounded,
+                                color: goldPrimary,
+                                size: 18,
+                              ),
+                            ),
+                          ],
                           const Spacer(),
                           _glassButton(
                             onTap: () => setState(() => like = !like),
