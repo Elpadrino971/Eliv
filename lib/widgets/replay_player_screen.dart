@@ -7,11 +7,19 @@ import 'package:video_player/video_player.dart';
 /// Lecteur de REPLAY (VOD) — joue un flux HLS Mux a partir d'un playback id.
 /// Plein ecran noir, play/pause, jauge scrubbable, bouton fermer.
 class ReplayPlayerScreen extends StatefulWidget {
-  const ReplayPlayerScreen({super.key, required this.playbackId, this.title});
+  const ReplayPlayerScreen({
+    super.key,
+    required this.playbackId,
+    this.title,
+    this.isLive = false,
+  });
 
   /// Playback ID Mux (public). On en derive l'URL HLS.
   final String playbackId;
   final String? title;
+
+  /// true = flux LIVE (concert pro Mux Live) : pas de boucle, badge EN DIRECT.
+  final bool isLive;
 
   @override
   State<ReplayPlayerScreen> createState() => _ReplayPlayerScreenState();
@@ -35,7 +43,7 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
         Uri.parse(Mux.hlsUrl(widget.playbackId)),
       );
       await c.initialize();
-      await c.setLooping(true);
+      if (!widget.isLive) await c.setLooping(true);
       c.play();
       setState(() {
         _controller = c;
@@ -109,6 +117,42 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
                 ),
               ),
             ),
+
+            // Badge EN DIRECT (flux live pro)
+            if (widget.isLive)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 12,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: liveRed,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.circle, color: Colors.white, size: 7),
+                        SizedBox(width: 5),
+                        Text(
+                          'EN DIRECT',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
 
             // Contrôles + jauge (au tap)
             if (_ready && c != null && _showControls) ...[
