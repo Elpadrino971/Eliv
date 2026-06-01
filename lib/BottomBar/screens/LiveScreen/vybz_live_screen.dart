@@ -77,7 +77,11 @@ class _VybzLiveScreenState extends State<VybzLiveScreen> {
             top: MediaQuery.of(context).padding.top + 14,
             left: 0,
             right: 0,
-            child: Center(
+            child: Obx(() {
+              if (_page == 0 && !eventController.showVideoControls.value) {
+                return const SizedBox.shrink();
+              }
+              return Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
                 decoration: BoxDecoration(
@@ -93,7 +97,8 @@ class _VybzLiveScreenState extends State<VybzLiveScreen> {
                   ],
                 ),
               ),
-            ),
+            );
+            }),
           ),
         ],
       ),
@@ -218,8 +223,9 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                                   ),
                           ),
                         ),
-                        // Bouton "+" (créer un short) - toujours visible
-                        Positioned(
+                        // Bouton "+" (créer un short) — visible au tap
+                        if (controller.showVideoControls.value)
+                          Positioned(
                           top: MediaQuery.of(context).padding.top + 10,
                           right: 12,
                           child: GestureDetector(
@@ -240,28 +246,24 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                             ),
                           ),
                         ),
-                        // Bouton fermer (toujours visible) -> sortie du live
-                        Positioned(
-                          top: MediaQuery.of(context).padding.top + 10,
-                          left: 12,
-                          child: GestureDetector(
-                            onTap: () =>
-                                Get.offAll(() => const MyBottomBar()),
-                            child: Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: blackColor.withValues(alpha: 0.4),
-                                shape: BoxShape.circle,
-                              ),
+                        // Bouton fermer (croix nue) — visible au tap
+                        if (controller.showVideoControls.value)
+                          Positioned(
+                            top: MediaQuery.of(context).padding.top + 10,
+                            left: 12,
+                            child: GestureDetector(
+                              onTap: () =>
+                                  Get.offAll(() => const MyBottomBar()),
                               child: const Icon(
                                 Icons.close_rounded,
                                 color: whiteColor,
-                                size: 22,
+                                size: 30,
+                                shadows: [
+                                  Shadow(color: Colors.black54, blurRadius: 8),
+                                ],
                               ),
                             ),
                           ),
-                        ),
 
                         if (controller.showVideoControls.value &&
                             videoController != null)
