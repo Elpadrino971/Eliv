@@ -204,7 +204,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
               price: '+\$650',
               date: 'FEB 18',
               subTitle: 'Limited Edition T-Shirts',
-              name: 'Merchandise',
+              name: 'rev_merchandise'.tr,
             ),
             height(0.01),
 
@@ -214,7 +214,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
               price: '-\$5,000',
               date: 'FEB 15',
               subTitle: 'Chase Business Account',
-              name: 'Withdrawal',
+              name: 'art_withdrawal'.tr,
             ),
           ],
         ),

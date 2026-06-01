@@ -85,7 +85,7 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'History'),
+      appBar: MyAppbar(title: 'common_history'.tr),
       body: GetBuilder<ArtistController>(
         builder: (controller) {
           final events = controller.eventStats.value.data;
@@ -123,7 +123,7 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                   Row(
                     children: [
                       Text(
-                        ' Volume History',
+                        'art_volume_history'.tr,
                         style: TextStyle(
                           color: Get.isDarkMode ? whiteColor : blackColor,
                           fontWeight: FontWeight.bold,
@@ -198,16 +198,16 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                                   ),
                                 ),
                                 const Spacer(),
-                                const Text(
-                                  'Growth Goal',
-                                  style: TextStyle(
+                                Text(
+                                  'rev_growth_goal'.tr,
+                                  style: const TextStyle(
                                     color: Color(0xffFFE4E6),
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 Text(
-                                  '$currentShows/$growthGoal Shows',
+                                  '$currentShows/$growthGoal ${'art_shows'.tr}',
                                   style: const TextStyle(
                                     color: whiteColor,
                                     fontSize: 16,
@@ -251,9 +251,9 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                                   ),
                                 ),
                                 const Spacer(),
-                                const Text(
-                                  'Avg Session',
-                                  style: TextStyle(
+                                Text(
+                                  'rev_avg_session'.tr,
+                                  style: const TextStyle(
                                     color: Color(0xffA1A1A1),
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
@@ -280,7 +280,7 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                   Row(
                     children: [
                       Text(
-                        ' Performance Log',
+                        'art_performance_log'.tr,
                         style: TextStyle(
                           color: Get.isDarkMode ? whiteColor : blackColor,
                           fontWeight: FontWeight.bold,
@@ -289,7 +289,7 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                       ),
                       const Spacer(),
                       Text(
-                        '${events.length} Recorded',
+                        '${events.length} ${'art_recorded'.tr}',
                         style: const TextStyle(
                           color: Color(0xffD4D4D4),
                           fontWeight: FontWeight.bold,
@@ -332,7 +332,7 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                             ),
                           ),
                           title: Text(
-                            event.name ?? 'Untitled Show',
+                            event.name ?? 'art_untitled_show'.tr,
                             style: TextStyle(
                               color: Get.isDarkMode ? whiteColor : blackColor,
                               fontWeight: FontWeight.bold,
@@ -348,7 +348,7 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                               ),
                               width(0.01),
                               Text(
-                                '${event.likesCount ?? 0} Likes',
+                                '${event.likesCount ?? 0} ${'art_likes'.tr}',
                                 style: const TextStyle(
                                   color: Color(0xffA1A1A1),
                                   fontSize: 12,
@@ -363,7 +363,7 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                               ),
                               width(0.01),
                               Text(
-                                '${event.joinedUsersCount ?? 0} Fans',
+                                '${event.joinedUsersCount ?? 0} ${'art_fans'.tr}',
                                 style: const TextStyle(
                                   color: Color(0xffA1A1A1),
                                   fontSize: 12,

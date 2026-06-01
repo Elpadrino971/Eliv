@@ -73,7 +73,7 @@ class _StatsScreenState extends State<StatsScreen> {
             child: Image.asset('assets/cros_icon.png', width: 20),
           ),
           title: Text(
-            widget.event.name ?? 'Live Event',
+            widget.event.name ?? 'ev_live_event'.tr,
             style: TextStyle(
               color: Get.isDarkMode ? whiteColor : blackColor,
               fontSize: 18,
@@ -105,10 +105,10 @@ class _StatsScreenState extends State<StatsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Center(
+            Center(
               child: Text(
-                'Event Stats',
-                style: TextStyle(
+                'ev_event_stats'.tr,
+                style: const TextStyle(
                   color: mainThemeColor,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -121,7 +121,7 @@ class _StatsScreenState extends State<StatsScreen> {
               widget: SfCartesianChart(
                 primaryXAxis: DateTimeAxis(),
                 title: ChartTitle(
-                  text: 'Earnings Over Time',
+                  text: 'rev_earnings_over_time'.tr,
                   textStyle: const TextStyle(fontSize: 12),
                 ),
                 tooltipBehavior: TooltipBehavior(enable: true),
@@ -133,7 +133,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     color: mainThemeColor.withValues(alpha: 0.3),
                     borderColor: mainThemeColor,
                     borderWidth: 2,
-                    name: 'Earnings',
+                    name: 'rev_earnings'.tr,
                   ),
                 ],
               ),
@@ -146,9 +146,9 @@ class _StatsScreenState extends State<StatsScreen> {
                     widget: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Total Points',
-                          style: TextStyle(
+                        Text(
+                          'art_total_points'.tr,
+                          style: const TextStyle(
                             color: greyColor,
                             fontWeight: FontWeight.w500,
                             fontSize: 15,
@@ -172,9 +172,9 @@ class _StatsScreenState extends State<StatsScreen> {
                     widget: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'All Users',
-                          style: TextStyle(
+                        Text(
+                          'art_all_users'.tr,
+                          style: const TextStyle(
                             color: greyColor,
                             fontWeight: FontWeight.w500,
                             fontSize: 15,
@@ -195,9 +195,9 @@ class _StatsScreenState extends State<StatsScreen> {
               ],
             ),
             height(0.03),
-            const Text(
-              'Participants',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            Text(
+              'ev_participants'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             height(0.01),
             ListView.separated(
@@ -217,8 +217,8 @@ class _StatsScreenState extends State<StatsScreen> {
                         : const AssetImage('assets/artist_image1.png')
                               as ImageProvider,
                   ),
-                  title: Text(user.fullName ?? 'hidden name'),
-                  subtitle: Text(user.artistName ?? 'Fan'),
+                  title: Text(user.fullName ?? 'art_hidden_name'.tr),
+                  subtitle: Text(user.artistName ?? 'art_fan'.tr),
                   // trailing: const Icon(Icons.chevron_right, color: greyColor),
                 );
               },

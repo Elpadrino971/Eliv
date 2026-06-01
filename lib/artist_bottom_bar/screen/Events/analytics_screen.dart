@@ -57,32 +57,32 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: MyAppbar(title: 'Analytics'),
+        appBar: MyAppbar(title: 'ev_analytics'.tr),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (!isStarted) {
       return Scaffold(
-        appBar: MyAppbar(title: 'Analytics'),
+        appBar: MyAppbar(title: 'ev_analytics'.tr),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.timer_outlined, size: 80, color: greyColor),
               height(0.02),
-              const Text(
-                'Event hasn\'t started yet!',
-                style: TextStyle(
+              Text(
+                'art_event_not_started'.tr,
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: greyColor,
                 ),
               ),
               height(0.01),
-              const Text(
-                'Analytics will be available once the live begins.',
-                style: TextStyle(color: greyColor),
+              Text(
+                'ev_analytics_after'.tr,
+                style: const TextStyle(color: greyColor),
               ),
             ],
           ),
@@ -115,19 +115,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     List<Map<String, dynamic>> analyticsData = [
       {
         'image': 'assets/analytics_image1.png',
-        'subTitle': 'Tickets Sold',
+        'subTitle': 'art_tickets_sold'.tr,
         'title': '$ticketsSold',
         'percentage': '+${(ticketsSold * 0.1).toStringAsFixed(0)}',
       },
       {
         'image': 'assets/analytics_image2.png',
-        'subTitle': 'Total Revenue',
+        'subTitle': 'art_total_revenue'.tr,
         'title': '\$${totalRevenue.toStringAsFixed(2)}',
         'percentage': 'LIVE',
       },
       {
         'image': 'assets/analytics_image3.png',
-        'subTitle': 'Attendees',
+        'subTitle': 'ev_attendees'.tr,
         'title': '$attendeeCount',
         'percentage': '$conversion%',
       },
@@ -154,7 +154,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     }
 
     return Scaffold(
-      appBar: MyAppbar(title: 'Analytics'),
+      appBar: MyAppbar(title: 'ev_analytics'.tr),
       body: SingleChildScrollView(
         padding: myPadding,
         child: Column(
@@ -164,7 +164,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    widget.event.name ?? 'Event Analytics',
+                    widget.event.name ?? 'ev_event_analytics'.tr,
                     style: TextStyle(
                       color: Get.isDarkMode ? whiteColor : blackColor,
                       fontWeight: FontWeight.bold,
@@ -175,9 +175,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 Image.asset('assets/button_image4.png', width: 40, height: 40),
               ],
             ),
-            const Text(
-              'Sales Performance',
-              style: TextStyle(
+            Text(
+              'rev_sales_perf'.tr,
+              style: const TextStyle(
                 color: greyColor,
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
@@ -236,9 +236,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               itemCount: analyticsData.length,
             ),
             height(0.02),
-            const Text(
-              'Revenue Growth',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            Text(
+              'rev_revenue_growth'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             height(0.01),
             MyContainer(

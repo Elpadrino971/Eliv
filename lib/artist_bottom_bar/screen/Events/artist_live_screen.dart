@@ -48,7 +48,7 @@ class _ArtistLiveScreenState extends State<ArtistLiveScreen> {
                   ),
 
                   subtitle: Text(
-                    '1.2M followers',
+                    '1.2M ${'art_followers'.tr}',
                     style: TextStyle(
                       color: whiteColor,
                       fontSize: 14,
