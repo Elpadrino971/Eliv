@@ -63,7 +63,14 @@ class EventController extends GetxController {
 
   void onPageChanged(int index) {
     currentVideoIndex.value = index;
-    final url = reelUrlFor(allEvents.value.data?[index]);
+    final ids = APIs.muxDemoPlaybackIds;
+    String? url;
+    if (ids.isNotEmpty) {
+      url = Mux.hlsUrl(ids[index % ids.length]);
+    } else {
+      final reel = allEvents.value.data?[index]?.videoReel;
+      url = (reel != null && reel.isNotEmpty) ? reel : null;
+    }
     if (url != null) {
       initVideoPlayer(url);
     } else {
@@ -73,12 +80,11 @@ class EventController extends GetxController {
     update();
   }
 
-  /// URL du reel a jouer dans le feed "Pour toi".
-  /// Priorite a Mux (id de demo aujourd'hui ; id par event quand le backend
-  /// le fournira) ; sinon la video uploadee sur le backend.
+  /// URL du 1er reel (init du feed). Priorite a Mux (demos aujourd'hui ;
+  /// id par event/short quand le backend le fournira) ; sinon video backend.
   String? reelUrlFor(Event? event) {
-    if (APIs.muxDemoPlaybackId.isNotEmpty) {
-      return Mux.hlsUrl(APIs.muxDemoPlaybackId);
+    if (APIs.muxDemoPlaybackIds.isNotEmpty) {
+      return Mux.hlsUrl(APIs.muxDemoPlaybackIds.first);
     }
     final reel = event?.videoReel;
     return (reel != null && reel.isNotEmpty) ? reel : null;

@@ -183,9 +183,11 @@ class _ForYouFeedState extends State<_ForYouFeed> {
           : PageView.builder(
               scrollDirection: Axis.vertical,
               onPageChanged: eventController.onPageChanged,
-              itemCount: events.length,
+              itemCount: APIs.muxDemoPlaybackIds.isNotEmpty
+                  ? APIs.muxDemoPlaybackIds.length
+                  : events.length,
               itemBuilder: (context, index) {
-                final event = events[index];
+                final event = events[index % events.length];
                 return GetBuilder<EventController>(
                   builder: (controller) {
                     final videoController = controller.currentController.value;

@@ -30,6 +30,13 @@ class APIs {
   static const String muxDemoPlaybackId =
       'sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU';
 
+  /// Plusieurs assets de demo pour valider le defilement du feed "Pour toi".
+  /// (En prod : un playback id par event/short, fourni par le backend.)
+  static const List<String> muxDemoPlaybackIds = [
+    'sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU', // KRYS
+    'MW3Ts7Jng66mhzjyUg4AGqQ9ow9yqjgwUI003lSPRLag', // YTDown
+  ];
+
   //Auth
   static const String loginAPI = '$baseAPI/login';
   static const String signupAPI = '$baseAPI/sign-up';
