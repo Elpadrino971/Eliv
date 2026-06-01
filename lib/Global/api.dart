@@ -33,7 +33,8 @@ class APIs {
   /// CONCERT PRO (Mux Live) : playback id d'un flux LIVE (regie -> encodeur
   /// RTMP/SRT -> Mux Live -> HLS). Vide = pas de live pro en cours.
   /// En prod : un mux_live_playback_id par event, fourni par le backend.
-  static const String muxLivePlaybackId = '';
+  static const String muxLivePlaybackId =
+      '801JS1xqX3AfFn8nWo3ISZUUdeW01402569WQXowjZojYg';
 
   /// Plusieurs assets de demo pour valider le defilement du feed "Pour toi".
   /// (En prod : un playback id par event/short, fourni par le backend.)

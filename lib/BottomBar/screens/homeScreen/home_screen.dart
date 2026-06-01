@@ -2,7 +2,9 @@ import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
 import 'package:artist/BottomBar/screens/homeScreen/live_performance_screen.dart';
 import 'package:artist/BottomBar/screens/homeScreen/performances_screen.dart';
 import 'package:artist/Controllers/controller.dart';
+import 'package:artist/Global/api.dart';
 import 'package:artist/Global/app_fonts.dart';
+import 'package:artist/widgets/replay_player_screen.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/widgets/widget.dart';
@@ -75,6 +77,27 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: midnightPrimary,
+      floatingActionButton: APIs.muxLivePlaybackId.isEmpty
+          ? null
+          : FloatingActionButton.extended(
+              backgroundColor: liveRed,
+              icon: const Icon(Icons.sensors_rounded, color: Colors.white),
+              label: const Text(
+                'LIVE PRO',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
+                ),
+              ),
+              onPressed: () => Get.to(
+                () => const ReplayPlayerScreen(
+                  playbackId: APIs.muxLivePlaybackId,
+                  isLive: true,
+                  title: 'Live',
+                ),
+              ),
+            ),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
