@@ -7,8 +7,7 @@ import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:artist/widgets/my_appBar.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_utils/src/extensions/string_extensions.dart';
-import 'package:get/route_manager.dart';
+import 'package:get/get.dart';
 
 class LivePerformanceScreen extends StatefulWidget {
   const LivePerformanceScreen({super.key, required this.events});
