@@ -5,7 +5,7 @@ import 'package:artist/widgets/my_container.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:artist/Global/app_date.dart';
 
 class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key, required this.events});
@@ -141,8 +141,9 @@ class _EventsScreenState extends State<EventsScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  DateFormat('MMM').format(
+                                  AppDate.format(
                                     event.startDateTime ?? DateTime.now(),
+                                    'MMM',
                                   ),
                                   style: TextStyle(
                                     color: goldPrimary,
@@ -151,8 +152,9 @@ class _EventsScreenState extends State<EventsScreen> {
                                   ),
                                 ),
                                 Text(
-                                  DateFormat('dd').format(
+                                  AppDate.format(
                                     event.startDateTime ?? DateTime.now(),
+                                    'dd',
                                   ),
                                   style: TextStyle(
                                     color: blackColor.withValues(alpha: 0.5),

@@ -11,7 +11,7 @@ import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:artist/Global/app_date.dart';
 
 class FutureScreen extends StatefulWidget {
   const FutureScreen({super.key, required this.event});
@@ -63,15 +63,8 @@ class _FutureScreenState extends State<FutureScreen> {
     );
   }
 
-  /// Heure lisible "2:41 PM (GMT+2)" (12h + fuseau) au lieu du "14:41 PM" casse.
-  String _timeLabel(DateTime dt) {
-    final off = dt.timeZoneOffset;
-    final sign = off.isNegative ? '-' : '+';
-    final h = off.inHours.abs();
-    final m = off.inMinutes.abs() % 60;
-    final gmt = m == 0 ? 'GMT$sign$h' : 'GMT$sign$h:${m.toString().padLeft(2, '0')}';
-    return '${DateFormat('h:mm a').format(dt)} ($gmt)';
-  }
+  /// Heure lisible "2:41 PM (GMT+2)" dans le fuseau du SPECTATEUR (via AppDate).
+  String _timeLabel(DateTime dt) => AppDate.timeWithZone(dt);
 
   /// Petite info compacte (icone or + texte).
   Widget _metaItem(IconData icon, String text) {
@@ -293,7 +286,7 @@ class _FutureScreenState extends State<FutureScreen> {
                     children: [
                       _metaItem(
                         Icons.calendar_month_rounded,
-                        DateFormat('MMM dd, yyyy').format(event.startDateTime!),
+                        AppDate.fullDate(event.startDateTime),
                       ),
                       _metaDivider(),
                       _metaItem(

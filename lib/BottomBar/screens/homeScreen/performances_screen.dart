@@ -11,7 +11,7 @@ import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:artist/Global/app_date.dart';
 
 class PerformancesScreen extends StatefulWidget {
   const PerformancesScreen({
@@ -123,9 +123,10 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                             ),
                                             width(0.01),
                                             Text(
-                                              DateFormat(
+                                              AppDate.format(
+                                                event.startDateTime,
                                                 'hh:mm a',
-                                              ).format(event.startDateTime!),
+                                              ),
                                               style: TextStyle(
                                                 color: textXolor,
                                                 fontSize: 13,

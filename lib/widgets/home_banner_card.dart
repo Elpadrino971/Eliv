@@ -5,7 +5,7 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:artist/Global/app_date.dart';
 
 class HomeBannerCard extends StatelessWidget {
   const HomeBannerCard({super.key, required this.event});
@@ -240,7 +240,7 @@ class HomeBannerCard extends StatelessWidget {
                   color: goldPrimary, size: 14),
               const SizedBox(width: 6),
               Text(
-                DateFormat('EEE, MMM dd').format(dt).toUpperCase(),
+                AppDate.dayDate(dt).toUpperCase(),
                 style: const TextStyle(
                   color: ivory,
                   fontWeight: FontWeight.w600,
@@ -253,7 +253,7 @@ class HomeBannerCard extends StatelessWidget {
                   color: goldPrimary, size: 14),
               const SizedBox(width: 6),
               Text(
-                DateFormat('h:mm a').format(dt),
+                AppDate.time(dt),
                 style: const TextStyle(
                   color: ivory,
                   fontWeight: FontWeight.w600,
