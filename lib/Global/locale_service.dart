@@ -31,9 +31,16 @@ class LocaleService {
     AppLanguage('zh', '中文', '🇨🇳'),
     AppLanguage('ko', '한국어', '🇰🇷'),
     AppLanguage('ja', '日本語', '🇯🇵'),
+    AppLanguage('ar', 'العربية', '🇸🇦'),
+    AppLanguage('hi', 'हिन्दी', '🇮🇳'),
+    AppLanguage('ru', 'Русский', '🇷🇺'),
   ];
 
   static const Locale fallback = Locale('en');
+
+  /// Locales a passer a MaterialApp.supportedLocales.
+  static List<Locale> get supportedLocales =>
+      supported.map((l) => Locale(l.code)).toList();
 
   static bool _isSupported(String code) =>
       supported.any((l) => l.code == code);

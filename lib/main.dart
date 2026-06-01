@@ -10,6 +10,7 @@ import 'package:artist/services/push_notification.dart';
 import 'package:artist/spalash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
@@ -40,6 +41,14 @@ class MyApp extends StatelessWidget {
         translations: AppTranslations(),
         locale: LocaleService.initialLocale,
         fallbackLocale: LocaleService.fallback,
+        // Delegues officiels Flutter : RTL automatique (arabe) + labels
+        // Material/Cupertino localises (date pickers, etc.).
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: LocaleService.supportedLocales,
         // Le meme theme pour light/dark + themeMode force => une seule
         // identite visuelle, quel que soit le reglage systeme ou stocke.
         theme: premiumTheme,
