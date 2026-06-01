@@ -34,7 +34,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Tickets'),
+      appBar: MyAppbar(title: 'tk_tickets'.tr),
       body: Padding(
         padding: myPadding,
         child: Column(
@@ -43,7 +43,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
             height(0.01),
 
             Text(
-              'MY TICKETS',
+              'my_tickets_title'.tr.toUpperCase(),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -55,8 +55,8 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
 
             MyTabBar(
               tabController: tabController,
-              tabOne: 'UPCOMING',
-              tabTwo: 'PAST EVENTS',
+              tabOne: 'tk_upcoming'.tr,
+              tabTwo: 'tk_past_events'.tr,
             ),
 
             height(0.01),
@@ -81,7 +81,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
                     children: [
                       /// Upcoming Events
                       upcomingEvents.isEmpty
-                          ? Center(child: Text('No Upcoming Events'))
+                          ? Center(child: Text('tk_no_upcoming_events'.tr))
                           : ListView.separated(
                               separatorBuilder: (context, index) {
                                 return height(0.01);
@@ -108,7 +108,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
 
                       /// Past Events
                       pastEvents.isEmpty
-                          ? Center(child: Text('No Past Events'))
+                          ? Center(child: Text('tk_no_past_events'.tr))
                           : ListView.separated(
                               separatorBuilder: (context, index) {
                                 return height(0.01);

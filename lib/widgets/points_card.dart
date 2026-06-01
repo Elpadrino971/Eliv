@@ -55,7 +55,7 @@ class PointsCard extends StatelessWidget {
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             Text(
-              'ARENA POINTS',
+              'home_arena_points'.tr,
               style: TextStyle(
                 color: greyColor,
                 fontSize: 10,

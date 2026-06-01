@@ -3,8 +3,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 
 class LiveTicketsVideoScreen extends StatefulWidget {
   const LiveTicketsVideoScreen({super.key});
@@ -81,7 +80,7 @@ class _LiveTicketsVideoScreenState extends State<LiveTicketsVideoScreen> {
                             ),
                             child: Text(
                               textAlign: TextAlign.center,
-                              'Follow',
+                              'tk_follow'.tr,
                               style: TextStyle(
                                 color: whiteColor,
                                 fontSize: 14,
@@ -125,7 +124,7 @@ class _LiveTicketsVideoScreenState extends State<LiveTicketsVideoScreen> {
                         ),
                       ),
                       child: Text(
-                        'Live: Neon Nights Tour',
+                        'tk_live_tour'.tr,
                         style: TextStyle(
                           color: whiteColor,
                           fontWeight: FontWeight.bold,
@@ -397,7 +396,7 @@ class _LiveTicketsVideoScreenState extends State<LiveTicketsVideoScreen> {
                     width: Get.width * 0.75,
                     child: MyTextField(
                       fillColor: whiteColor.withValues(alpha: 0.2),
-                      hintText: 'Add comment...',
+                      hintText: 'tk_add_comment'.tr,
                       controller: commentController,
                       borderRadius: 50,
 

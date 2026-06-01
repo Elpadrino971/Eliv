@@ -37,7 +37,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
         child: Column(
           children: [
             widget.events.isEmpty
-                ? Center(child: Text('No Next Events Available'))
+                ? Center(child: Text('home_no_next_events'.tr))
                 : Expanded(
                     child: ListView.separated(
                       separatorBuilder: (context, index) => height(0.01),
@@ -80,7 +80,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                           noWidth: true,
                                           widget: Text(
                                             event.genre?.genre?.capitalize ??
-                                                'No Genre',
+                                                'home_no_genre'.tr,
                                             style: TextStyle(
                                               color: greyColor,
                                               fontWeight: FontWeight.w400,
@@ -92,7 +92,8 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                         SizedBox(
                                           width: Get.width * 0.5,
                                           child: Text(
-                                            event.name?.capitalize ?? 'No Name',
+                                            event.name?.capitalize ??
+                                                'home_no_name'.tr,
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
@@ -108,7 +109,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                                   .artist
                                                   ?.artistName
                                                   ?.capitalize ??
-                                              'No Artist',
+                                              'home_no_artist'.tr,
                                           style: TextStyle(
                                             color: greyColor,
                                             fontWeight: FontWeight.w400,
@@ -148,7 +149,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                             width(0.01),
                                             Text(
                                               event.artist?.address ??
-                                                  'No Address',
+                                                  'home_no_address'.tr,
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
@@ -192,7 +193,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                     SizedBox(
                                       width: Get.width * 0.4,
                                       child: MyButton(
-                                        label: 'Get Tickets',
+                                        label: 'home_get_tickets'.tr,
                                         onTap: () {
                                           Get.to(
                                             () => CheckOutScreen(event: event),

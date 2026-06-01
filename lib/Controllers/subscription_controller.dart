@@ -50,8 +50,8 @@ class SubscriptionController extends GetxController {
         userModel.value = userModelFromJson(value);
         Get.back();
         mySuccessDialog(
-          title: 'Subscription Purchased Successfully!',
-          subtitle: 'Now you can avail premium features',
+          title: 'sub_purchased_title'.tr,
+          subtitle: 'sub_purchased_sub'.tr,
           ontap: () {
             if (fromArtist) {
               Get.offAll(() => ArtistBottomBar());
@@ -63,7 +63,7 @@ class SubscriptionController extends GetxController {
       } else {
         final data = jsonDecode(value.split("error ").last);
 
-        myWarningDialog(title: 'Error', subtitle: data['message']);
+        myWarningDialog(title: 'common_error'.tr, subtitle: data['message']);
       }
     });
   }

@@ -64,7 +64,7 @@ class _MyCardState extends State<MyCard> {
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: Text(
-                            'PURCHASED',
+                            'tk_purchased'.tr,
                             style: TextStyle(
                               color: whiteColor,
                               fontSize: 13,
@@ -85,7 +85,7 @@ class _MyCardState extends State<MyCard> {
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: Text(
-                            'LIVE NOW',
+                            'live_now'.tr,
                             style: TextStyle(
                               color: whiteColor,
                               fontSize: 13,
@@ -144,7 +144,7 @@ class _MyCardState extends State<MyCard> {
                       Row(
                         children: [
                           Text(
-                            'Today',
+                            'home_today'.tr,
                             style: TextStyle(
                               color: whiteColor,
                               fontWeight: FontWeight.w400,
@@ -201,7 +201,7 @@ class _MyCardState extends State<MyCard> {
                               Image.asset('assets/play.png'),
                               width(0.01),
                               Text(
-                                'Join Arena',
+                                'tk_join_arena'.tr,
                                 style: TextStyle(
                                   color: midnightPrimary,
                                   fontSize: 13,
