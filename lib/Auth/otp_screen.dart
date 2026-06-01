@@ -82,7 +82,7 @@ class _OtpScreenState extends State<OtpScreen> {
             children: [
               height(0.04),
               Text(
-                'Verify Email',
+                'auth_verify_email'.tr,
                 style: TextStyle(
                   color: ivory,
                   fontWeight: FontWeight.bold,
@@ -128,7 +128,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   ? Container()
                   : Center(
                       child: Text(
-                        'Resend Code in',
+                        'auth_resend_code_in'.tr,
                         style: TextStyle(
                           color: textXolor,
                           fontWeight: FontWeight.bold,
@@ -163,7 +163,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     width(0.01),
 
                     Text(
-                      'Resend Code',
+                      'auth_resend_code'.tr,
                       style: TextStyle(
                         color: timer == 1 ? blackColor : textXolor,
                         fontWeight: FontWeight.bold,
@@ -176,7 +176,7 @@ class _OtpScreenState extends State<OtpScreen> {
               height(0.02),
 
               MyButton(
-                label: 'Verify Code',
+                label: 'auth_verify_code'.tr,
                 onTap: () async {
                   if (formKey.currentState!.validate()) {
                     await authController.verifyOtp(

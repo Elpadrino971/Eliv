@@ -55,8 +55,8 @@ class _CompleteProfileState extends State<CompleteProfile> {
                 GestureDetector(
                   onTap: () {
                     myAlertDialog(
-                      title: 'Skip',
-                      content: 'Are you sure you want to skip?',
+                      title: 'common_skip'.tr,
+                      content: 'auth_skip_confirm'.tr,
                       onTap: () {
                         Get.offAll(() => LoginScreen());
                       },
@@ -64,7 +64,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
                     // myPrint(userModel);
                   },
                   child: Text(
-                    "Skip",
+                    'common_skip'.tr,
                     style: TextStyle(
                       color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                       fontWeight: FontWeight.bold,
@@ -78,7 +78,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
             height(0.035),
 
             Text(
-              'Complete Profile',
+              'auth_complete_profile'.tr,
               style: TextStyle(
                 color: ivory,
                 fontWeight: FontWeight.bold,
@@ -153,7 +153,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
 
                     Center(
                       child: Text(
-                        'Upload Photo',
+                        'auth_upload_photo'.tr,
                         style: TextStyle(
                           color: Color(0xffA1A1A1),
 
@@ -166,7 +166,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
                     height(0.02),
 
                     MyTextField(
-                      hintText: 'Date of Birth',
+                      hintText: 'auth_date_of_birth'.tr,
                       controller: birthController,
                       keyboardType: TextInputType.datetime,
 
@@ -203,7 +203,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
                     ),
 
                     MyTextField(
-                      hintText: 'Tell us about your musical taste...',
+                      hintText: 'auth_taste_hint'.tr,
                       controller: cboutController,
                       keyboardType: TextInputType.emailAddress,
 
@@ -295,7 +295,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
 
                     // height(0.02),
                     MyButton(
-                      label: 'Complete Account',
+                      label: 'auth_complete_account'.tr,
                       onTap: () async {
                         List values = selectedIndex.map((e) => e.id).toList();
                         await authController.updateProfile(

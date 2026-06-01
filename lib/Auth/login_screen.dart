@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: Get.width * 0.7,
                   child: Text(
                     textAlign: TextAlign.center,
-                    'Your front row seat to the future of music.',
+                    'auth_tagline'.tr,
                     style: TextStyle(
                       color: greyColor,
                       fontWeight: FontWeight.w400,
@@ -110,13 +110,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       children: [
                         MyTextField(
-                          hintText: 'Email Address',
+                          hintText: 'auth_email_address'.tr,
                           controller: emailController,
                           validation: (val) {
                             if (val == null || val.isEmpty) {
-                              return 'Please enter your email';
+                              return 'val_enter_email'.tr;
                             } else if (!GetUtils.isEmail(val)) {
-                              return 'Please enter a valid email';
+                              return 'val_valid_email'.tr;
                             }
                             return null;
                           },
@@ -131,11 +131,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         MyTextField(
                           isObscure: hiddinPassword,
-                          hintText: 'Password',
+                          hintText: 'auth_password'.tr,
                           controller: passwordController,
                           validation: (val) {
                             if (val == null || val.isEmpty) {
-                              return 'Please enter your password';
+                              return 'val_enter_password'.tr;
                             }
                             return null;
                           },
@@ -183,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 );
                               },
                               child: Text(
-                                'Forgot Password?',
+                                'auth_forgot_password_q'.tr,
                                 style: TextStyle(
                                   color: Get.isDarkMode
                                       ? goldPrimary
@@ -198,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         height(0.02),
 
                         MyButton(
-                          label: 'Sign In  ',
+                          label: 'auth_sign_in'.tr,
                           onTap: () async {
                             if (formKey.currentState?.validate() ?? false) {
                               // Get.to(() => BottomBar());
@@ -224,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
 
                             Text(
-                              'OR CONTINUE WITH',
+                              'auth_or_continue_with'.tr,
                               style: TextStyle(
                                 color: textXolor,
                                 fontWeight: FontWeight.bold,
@@ -252,7 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     );
                                   } else {
                                     myWarningDialog(
-                                      subtitle: 'Please try again later',
+                                      subtitle: 'error_try_again'.tr,
                                     );
                                   }
                                 },

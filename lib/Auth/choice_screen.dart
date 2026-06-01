@@ -4,6 +4,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/get_core/get_core.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 
@@ -69,7 +70,7 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
               width: Get.width * 0.7,
               child: Text(
                 textAlign: TextAlign.center,
-                'Please Select Your Account Type',
+                'auth_select_account_type'.tr,
                 style: TextStyle(
                   color: greyColor,
                   fontWeight: FontWeight.w400,
@@ -145,7 +146,7 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
             ),
             Spacer(),
             MyButton(
-              label: 'Continue',
+              label: 'common_continue'.tr,
               onTap: () {
                 Get.to(() => LoginScreen());
               },

@@ -51,7 +51,7 @@ class _IntroScreenState extends State<IntroScreen> {
             ),
             Spacer(),
             MyButton(
-              label: 'Enter the Experience',
+              label: 'auth_enter_experience'.tr,
               onTap: () {
                 Get.to(() => MyBottomBar());
               },

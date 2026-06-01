@@ -40,7 +40,7 @@ class _CreateAcountState extends State<CreateAcount> {
               height(0.035),
 
               Text(
-                'Create Account',
+                'auth_create_account'.tr,
                 style: TextStyle(
                   color: ivory,
                   fontWeight: FontWeight.bold,
@@ -68,7 +68,7 @@ class _CreateAcountState extends State<CreateAcount> {
                         keyboardType: TextInputType.text,
                         validation: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your name';
+                            return 'val_enter_name'.tr;
                           }
                           return null;
                         },
@@ -85,10 +85,10 @@ class _CreateAcountState extends State<CreateAcount> {
                         keyboardType: TextInputType.emailAddress,
                         validation: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
+                            return 'val_enter_email'.tr;
                           }
                           if (!GetUtils.isEmail(value)) {
-                            return 'Please enter a valid email';
+                            return 'val_valid_email'.tr;
                           }
                           return null;
                         },
@@ -101,7 +101,7 @@ class _CreateAcountState extends State<CreateAcount> {
 
                       MyTextField(
                         isObscure: hiddinPassword,
-                        hintText: 'Password',
+                        hintText: 'auth_password'.tr,
                         controller: passwordController,
                         keyboardType: TextInputType.visiblePassword,
                         onChanged: (value) {
@@ -109,7 +109,7 @@ class _CreateAcountState extends State<CreateAcount> {
                         },
                         validation: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your password';
+                            return 'val_enter_password'.tr;
                           }
                           if (value.length < 8) {
                             return 'Password must be at least 8 characters';
@@ -147,7 +147,7 @@ class _CreateAcountState extends State<CreateAcount> {
                           width(0.02),
 
                           Text(
-                            'UNLIMITED CONCERT STREAMING',
+                            'auth_feat_streaming'.tr,
                             style: TextStyle(
                               color: Color(0xff737373),
                               fontWeight: FontWeight.bold,
@@ -164,7 +164,7 @@ class _CreateAcountState extends State<CreateAcount> {
                           width(0.02),
 
                           Text(
-                            'EXCLUSIVE ARTIST UPDATES',
+                            'auth_feat_updates'.tr,
                             style: TextStyle(
                               color: Color(0xff737373),
                               fontWeight: FontWeight.bold,
@@ -181,7 +181,7 @@ class _CreateAcountState extends State<CreateAcount> {
                           width(0.02),
 
                           Text(
-                            'SECURE TICKET STORAGE',
+                            'auth_feat_tickets'.tr,
                             style: TextStyle(
                               color: Color(0xff737373),
                               fontWeight: FontWeight.bold,
@@ -194,7 +194,7 @@ class _CreateAcountState extends State<CreateAcount> {
                       height(0.02),
 
                       MyButton(
-                        label: 'Send Code',
+                        label: 'auth_send_code'.tr,
                         onTap: () async {
                           if (formKey.currentState!.validate()) {
                             await authController.signupUser(
