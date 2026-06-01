@@ -224,48 +224,6 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                                   ),
                           ),
                         ),
-                        // Bouton "+" (créer un short) — visible au tap
-                        if (controller.showVideoControls.value)
-                          Positioned(
-                          top: MediaQuery.of(context).padding.top + 10,
-                          right: 12,
-                          child: GestureDetector(
-                            onTap: () =>
-                                Get.to(() => const CreateShortScreen()),
-                            child: Container(
-                              width: 38,
-                              height: 38,
-                              decoration: const BoxDecoration(
-                                color: goldPrimary,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.add_rounded,
-                                color: midnightPrimary,
-                                size: 24,
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Bouton fermer (croix nue) — visible au tap
-                        if (controller.showVideoControls.value)
-                          Positioned(
-                            top: MediaQuery.of(context).padding.top + 10,
-                            left: 12,
-                            child: GestureDetector(
-                              onTap: () =>
-                                  Get.offAll(() => const MyBottomBar()),
-                              child: const Icon(
-                                Icons.close_rounded,
-                                color: whiteColor,
-                                size: 30,
-                                shadows: [
-                                  Shadow(color: Colors.black54, blurRadius: 8),
-                                ],
-                              ),
-                            ),
-                          ),
-
                         if (controller.showVideoControls.value &&
                             videoController != null)
                           Positioned.fill(
@@ -513,6 +471,49 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                             ),
                           ),
                         ),
+
+                        // Boutons "+" (créer un short) et fermer (X) — placés en
+                        // dernier dans le Stack pour rester AU-DESSUS du voile de
+                        // contrôles (sinon le Positioned.fill avale leurs taps).
+                        if (controller.showVideoControls.value)
+                          Positioned(
+                            top: MediaQuery.of(context).padding.top + 10,
+                            right: 12,
+                            child: GestureDetector(
+                              onTap: () =>
+                                  Get.to(() => const CreateShortScreen()),
+                              child: Container(
+                                width: 38,
+                                height: 38,
+                                decoration: const BoxDecoration(
+                                  color: goldPrimary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.add_rounded,
+                                  color: midnightPrimary,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (controller.showVideoControls.value)
+                          Positioned(
+                            top: MediaQuery.of(context).padding.top + 10,
+                            left: 12,
+                            child: GestureDetector(
+                              onTap: () =>
+                                  Get.offAll(() => const MyBottomBar()),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                color: whiteColor,
+                                size: 30,
+                                shadows: [
+                                  Shadow(color: Colors.black54, blurRadius: 8),
+                                ],
+                              ),
+                            ),
+                          ),
                       ],
                     );
                   },
