@@ -1,33 +1,50 @@
 import 'package:get/get.dart';
 
+import 'zone_home_tickets.dart';
+import 'zone_live.dart';
+import 'zone_studio_extra.dart';
+
 /// ────────────────────────────────────────────────────────────────────────
 /// VybzzZ — Internationalisation (i18n)
 ///
 /// Source de verite des textes traduisibles de l'app.
 /// Usage dans l'UI :  Text('featured_artists'.tr)
 ///
-/// Ajouter une LANGUE  -> ajouter une Map<String,String> ci-dessous + une
-///                        entree dans `keys` + une entree dans
-///                        LocaleService.supported.
-/// Ajouter une CLE     -> l'ajouter dans CHAQUE map (l'anglais 'en' sert de
-///                        reference / fallback).
+/// Le dictionnaire principal (maps _en.._ru) est complete par des
+/// dictionnaires PARTIELS par zone (zone_live, zone_home_tickets,
+/// zone_studio_extra) pour permettre un travail parallele sans conflit.
+/// Tout est fusionne ici.
 /// ────────────────────────────────────────────────────────────────────────
 class AppTranslations extends Translations {
+  static const List<Map<String, Map<String, String>>> _zones = [
+    liveTranslations,
+    homeTicketsTranslations,
+    studioExtraTranslations,
+  ];
+
   @override
-  Map<String, Map<String, String>> get keys => {
-    'en': _en,
-    'fr': _fr,
-    'es': _es,
-    'it': _it,
-    'de': _de,
-    'pt': _pt,
-    'zh': _zh,
-    'ko': _ko,
-    'ja': _ja,
-    'ar': _ar,
-    'hi': _hi,
-    'ru': _ru,
-  };
+  Map<String, Map<String, String>> get keys {
+    final merged = <String, Map<String, String>>{
+      'en': {..._en},
+      'fr': {..._fr},
+      'es': {..._es},
+      'it': {..._it},
+      'de': {..._de},
+      'pt': {..._pt},
+      'zh': {..._zh},
+      'ko': {..._ko},
+      'ja': {..._ja},
+      'ar': {..._ar},
+      'hi': {..._hi},
+      'ru': {..._ru},
+    };
+    for (final zone in _zones) {
+      zone.forEach((locale, map) {
+        merged.putIfAbsent(locale, () => <String, String>{}).addAll(map);
+      });
+    }
+    return merged;
+  }
 }
 
 // ─────────────────────────────── English (reference) ──────────────────────
