@@ -88,7 +88,7 @@ class _StartStreamState extends State<StartStream> {
     if (comment.isEmpty) return;
 
     if (eventController.hasAbusiveWords(comment)) {
-      myWarningDialog(subtitle: 'Your comment contains restricted words.');
+      myWarningDialog(subtitle: 'live_restricted_words'.tr);
       return;
     }
 

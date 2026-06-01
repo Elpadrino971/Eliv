@@ -103,7 +103,7 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
 
   void _onTimeUp() {
     mySuccessDialog(
-      subtitle: 'The event has started! Redirecting to joining screen.',
+      subtitle: 'live_event_started'.tr,
       ontap: () {
         Get.back(); // close dialog
         Get.back(); // Leave pre-stream screen
@@ -139,7 +139,7 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
     if (comment.isEmpty) return;
 
     if (eventController.hasAbusiveWords(comment)) {
-      myWarningDialog(subtitle: 'Your comment contains restricted words.');
+      myWarningDialog(subtitle: 'live_restricted_words'.tr);
       return;
     }
 
@@ -225,9 +225,9 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text(
-              "STREAM STARTS IN",
-              style: TextStyle(
+            Text(
+              'live_stream_starts_in'.tr,
+              style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 16,
                 letterSpacing: 2,
@@ -251,9 +251,9 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
                 color: mainThemeColor,
                 borderRadius: BorderRadius.circular(30),
               ),
-              child: const Text(
-                "Waiting Room",
-                style: TextStyle(
+              child: Text(
+                'live_waiting_room'.tr,
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),

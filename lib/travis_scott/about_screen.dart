@@ -43,7 +43,7 @@ class _AboutScreenState extends State<AboutScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hometown',
+                          'live_hometown'.tr,
                           style: TextStyle(
                             color: Get.isDarkMode ? whiteColor : blackColor,
                             fontSize: 15,
@@ -68,7 +68,7 @@ class _AboutScreenState extends State<AboutScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Genre',
+                          'live_genre'.tr,
                           style: TextStyle(
                             color: Get.isDarkMode ? whiteColor : blackColor,
                             fontSize: 15,
@@ -104,7 +104,7 @@ class _AboutScreenState extends State<AboutScreen> {
           height(0.01),
 
           Text(
-            'Digital Links',
+            'live_digital_links'.tr,
             style: TextStyle(
               color: Get.isDarkMode ? whiteColor : blackColor,
               fontSize: 15,

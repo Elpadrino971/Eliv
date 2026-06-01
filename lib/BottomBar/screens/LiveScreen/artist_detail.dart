@@ -119,7 +119,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       }),
 
                       Text(
-                        'Followers',
+                        'live_followers'.tr,
                         style: TextStyle(
                           color: Color(0xff737373),
                           fontSize: 15,
@@ -205,7 +205,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                                 children: [
                                   Text(
                                     textAlign: TextAlign.center,
-                                    'Loading...',
+                                    'live_loading'.tr,
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -225,8 +225,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             : Text(
                                 textAlign: TextAlign.center,
                                 followers.contains(userModel.value.user?.id)
-                                    ? 'Following'
-                                    : 'Follow Artist',
+                                    ? 'live_following'.tr
+                                    : 'live_follow_artist'.tr,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -283,8 +283,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   indicatorColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   unselectedLabelColor: Color(0xff737373),
                   tabs: [
-                    Tab(text: 'Events'),
-                    Tab(text: 'About'),
+                    Tab(text: 'live_tab_events'.tr),
+                    Tab(text: 'live_tab_about'.tr),
                   ],
                 ),
               ),

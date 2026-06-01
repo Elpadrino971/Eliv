@@ -104,7 +104,7 @@ class _EventsScreenState extends State<EventsScreen> {
           //   trailing: Image.asset('assets/stop.png', width: 30, height: 30),
           // ),
           Text(
-            'Events Schedule',
+            'live_events_schedule'.tr,
             style: TextStyle(
               color: ivory,
               fontWeight: FontWeight.bold,
@@ -115,7 +115,7 @@ class _EventsScreenState extends State<EventsScreen> {
           height(0.01),
 
           widget.events.isEmpty
-              ? Center(child: Text('No Events Found'))
+              ? Center(child: Text('live_no_events'.tr))
               : Expanded(
                   child: ListView.separated(
                     separatorBuilder: (context, index) => height(0.01),
@@ -206,7 +206,7 @@ class _EventsScreenState extends State<EventsScreen> {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
-                                'Tickets',
+                                'live_tickets'.tr,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: whiteColor,

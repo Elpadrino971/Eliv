@@ -30,7 +30,7 @@ class _AddAcountState extends State<AddAcount> {
     final routing = routingController.text.trim();
 
     if (accHolder.isEmpty || bankName.isEmpty || accNum.isEmpty) {
-      myWarningDialog(subtitle: 'Please fill in all core bank details.');
+      myWarningDialog(subtitle: 'art_val_bank_details'.tr);
       return;
     }
 
@@ -46,7 +46,7 @@ class _AddAcountState extends State<AddAcount> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Withdraw'),
+      appBar: MyAppbar(title: 'art_withdraw'.tr),
       body: Column(
         children: [
           Container(
@@ -61,9 +61,9 @@ class _AddAcountState extends State<AddAcount> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Secure & Protected',
-                      style: TextStyle(
+                    Text(
+                      'sec_protected'.tr,
+                      style: const TextStyle(
                         color: ivory,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -71,9 +71,9 @@ class _AddAcountState extends State<AddAcount> {
                     ),
                     SizedBox(
                       width: Get.width * 0.7,
-                      child: const Text(
-                        'Your banking information is encrypted and stored securely. We never share your details.',
-                        style: TextStyle(
+                      child: Text(
+                        'art_secure_desc'.tr,
+                        style: const TextStyle(
                           color: Color(0xff4A5565),
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
@@ -93,21 +93,21 @@ class _AddAcountState extends State<AddAcount> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Account Holder Name',
-                      style: TextStyle(
+                    Text(
+                      'bank_holder'.tr,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Color(0xff364153),
                       ),
                     ),
                     MyTextField(
-                      hintText: 'John Doe',
+                      hintText: 'art_hint_holder_name'.tr,
                       controller: accountController,
                     ),
-                    const Text(
-                      'Bank Name',
-                      style: TextStyle(
+                    Text(
+                      'bank_name'.tr,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Color(0xff364153),
@@ -117,9 +117,9 @@ class _AddAcountState extends State<AddAcount> {
                       hintText: 'Chase Bank',
                       controller: nameController,
                     ),
-                    const Text(
-                      'Account Number',
-                      style: TextStyle(
+                    Text(
+                      'bank_account_num'.tr,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Color(0xff364153),
@@ -131,9 +131,9 @@ class _AddAcountState extends State<AddAcount> {
                       isObscure: true,
                       keyboardType: TextInputType.number,
                     ),
-                    const Text(
-                      'Swift Number',
-                      style: TextStyle(
+                    Text(
+                      'bank_swift'.tr,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Color(0xff364153),
@@ -145,9 +145,9 @@ class _AddAcountState extends State<AddAcount> {
                       isObscure: true,
                       keyboardType: TextInputType.number,
                     ),
-                    const Text(
-                      'Routing Number',
-                      style: TextStyle(
+                    Text(
+                      'bank_routing'.tr,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Color(0xff364153),
@@ -161,7 +161,7 @@ class _AddAcountState extends State<AddAcount> {
                     ),
                     height(0.02),
                     MyButton(
-                      label: 'Add Account',
+                      label: 'art_add_account'.tr,
                       onTap: _onAddAccount,
                       labelColor: whiteColor,
                     ),

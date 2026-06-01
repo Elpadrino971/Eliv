@@ -78,8 +78,8 @@ class _VybzLiveScreenState extends State<VybzLiveScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _tab('Pour toi', 0),
-                    _tab('En direct', 1, live: true),
+                    _tab('live_tab_for_you'.tr, 0),
+                    _tab('live_tab_live'.tr, 1, live: true),
                   ],
                 ),
               ),
@@ -164,9 +164,9 @@ class _ForYouFeedState extends State<_ForYouFeed> {
     return Obx(() {
       final events = eventController.allEvents.value.data ?? [];
       return events.isEmpty
-          ? const Center(
+          ? Center(
               child: Text(
-                'No Reel Available',
+                'live_no_reel'.tr,
                 style: TextStyle(color: whiteColor),
               ),
             )
@@ -352,7 +352,7 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                                 SizedBox(
                                   width: Get.width * 0.6,
                                   child: MyButton(
-                                    label: 'Join Live ',
+                                    label: 'join_live'.tr,
                                     onTap: () {
                                       Get.to(() => FutureScreen(event: event));
                                     },
@@ -422,8 +422,8 @@ class _NoLiveState extends StatelessWidget {
           Icon(Icons.sensors_off_rounded,
               color: whiteColor.withValues(alpha: 0.4), size: 56),
           height(0.02),
-          const Text(
-            'Aucun live en ce moment',
+          Text(
+            'live_no_live_title'.tr,
             style: TextStyle(
               color: whiteColor,
               fontSize: 18,
@@ -432,7 +432,7 @@ class _NoLiveState extends StatelessWidget {
           ),
           height(0.01),
           Text(
-            'Reviens vite — les artistes passent en direct ici.',
+            'live_no_live_subtitle'.tr,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: whiteColor.withValues(alpha: 0.6),
@@ -546,12 +546,12 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.circle, color: Colors.white, size: 7),
-                    SizedBox(width: 5),
+                  children: [
+                    const Icon(Icons.circle, color: Colors.white, size: 7),
+                    const SizedBox(width: 5),
                     Text(
-                      'LIVE',
-                      style: TextStyle(
+                      'live_badge'.tr,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
@@ -581,7 +581,7 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
                       ? () => Get.to(() => ArtistDetailScreen(artist: e.artist!))
                       : null,
                   child: Text(
-                    '@${e.artist?.artistName?.capitalize ?? 'Artist'}',
+                    '@${e.artist?.artistName?.capitalize ?? 'live_artist_name_fallback'.tr}',
                     style: const TextStyle(
                       color: whiteColor,
                       fontSize: 16,
@@ -591,7 +591,7 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
                 ),
                 height(0.008),
                 Text(
-                  e.name?.capitalize ?? 'Live',
+                  e.name?.capitalize ?? 'live_event_fallback'.tr,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -610,7 +610,9 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
                           color: goldPrimary, size: 15),
                       const SizedBox(width: 6),
                       Text(
-                        'Aperçu gratuit · ${_remaining}s',
+                        'live_free_preview'.trParams({
+                          'seconds': '$_remaining',
+                        }),
                         style: const TextStyle(
                           color: ivory,
                           fontSize: 12,
@@ -634,7 +636,9 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
                 ],
 
                 MyButton(
-                  label: _hasAccess ? 'Entrer dans le live' : 'Rejoindre le live',
+                  label: _hasAccess
+                      ? 'live_enter_live'.tr
+                      : 'live_join_the_live'.tr,
                   image: 'assets/arrow.png',
                   imageColor: midnightPrimary,
                   labelColor: midnightPrimary,
@@ -670,8 +674,8 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
                         color: goldPrimary, size: 34),
                   ),
                   height(0.025),
-                  const Text(
-                    'Aperçu terminé',
+                  Text(
+                    'live_preview_ended'.tr,
                     style: TextStyle(
                       color: whiteColor,
                       fontSize: 22,
@@ -680,7 +684,10 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
                   ),
                   height(0.012),
                   Text(
-                    'Rejoins le live de ${e.artist?.artistName?.capitalize ?? "l'artiste"} pour continuer à regarder.',
+                    'live_preview_ended_desc'.trParams({
+                      'artist': e.artist?.artistName?.capitalize ??
+                          'live_artist_name_fallback'.tr,
+                    }),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: whiteColor.withValues(alpha: 0.7),
@@ -690,7 +697,7 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
                   ),
                   height(0.03),
                   MyButton(
-                    label: 'Acheter le billet',
+                    label: 'live_buy_ticket'.tr,
                     image: 'assets/arrow.png',
                     imageColor: midnightPrimary,
                     labelColor: midnightPrimary,

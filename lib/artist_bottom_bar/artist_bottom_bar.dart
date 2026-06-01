@@ -5,8 +5,7 @@ import 'package:artist/artist_bottom_bar/screen/Status/artist_histroy_screen.dar
 import 'package:artist/artist_bottom_bar/screen/Studio/studio_screen.dart';
 
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 
 class ArtistBottomBar extends StatefulWidget {
   const ArtistBottomBar({super.key});
@@ -72,7 +71,7 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
             items: [
               /// STUDIO
               BottomNavigationBarItem(
-                label: 'Studio',
+                label: 'studio_title'.tr,
                 icon: Container(
                   padding: EdgeInsets.all(8),
                   decoration: currentIndex == 0
@@ -99,7 +98,7 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
 
               /// EVENTS
               BottomNavigationBarItem(
-                label: 'Events',
+                label: 'art_events'.tr,
                 icon: Container(
                   padding: EdgeInsets.all(8),
                   decoration: currentIndex == 1
@@ -126,7 +125,7 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
 
               /// STATUS
               BottomNavigationBarItem(
-                label: 'Status',
+                label: 'studio_status'.tr,
                 icon: Container(
                   padding: EdgeInsets.all(8),
                   decoration: currentIndex == 2
@@ -153,7 +152,7 @@ class _ArtistBottomBarState extends State<ArtistBottomBar> {
 
               /// PROFILE
               BottomNavigationBarItem(
-                label: 'Profile',
+                label: 'nav_profile'.tr,
                 icon: Container(
                   padding: EdgeInsets.all(8),
                   decoration: currentIndex == 3

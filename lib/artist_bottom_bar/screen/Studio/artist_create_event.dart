@@ -102,7 +102,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Create Event'),
+      appBar: MyAppbar(title: 'ev_create_event'.tr),
 
       body: Form(
         key: formKey,
@@ -113,7 +113,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Create',
+                  'ev_create'.tr,
                   style: TextStyle(
                     color: ivory,
 
@@ -123,7 +123,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                 ),
 
                 Text(
-                  'New Performance',
+                  'ev_new_performance'.tr,
                   style: TextStyle(
                     color: Color(0xff737373),
 
@@ -135,7 +135,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                 height(0.02),
 
                 Text(
-                  ' Event Details',
+                  'art_event_details'.tr,
                   style: TextStyle(
                     color: ivory,
 
@@ -146,7 +146,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
 
                 height(0.01),
                 Text(
-                  'Title *',
+                  'art_title_req'.tr,
                   style: TextStyle(
                     color: Color(0xff737373),
 
@@ -156,11 +156,11 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                 ),
 
                 MyTextField(
-                  hintText: 'e.g. Neon Nights Live',
+                  hintText: 'art_hint_event_title'.tr,
                   controller: titleController,
                   validation: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a title';
+                      return 'art_val_title'.tr;
                     }
                     return null;
                   },
@@ -171,7 +171,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
 
                   children: [
                     Text(
-                      'Genre *',
+                      'art_genre_req'.tr,
                       style: TextStyle(
                         color: Color(0xff737373),
 
@@ -184,14 +184,14 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                       final genre = artistController.genres.value.genre ?? [];
                       return MyDropDown(
                         dropdownvalue: selectedGenre,
-                        hintText: 'Select Genre',
+                        hintText: 'ev_select_genre'.tr,
                         items: genre.map((e) => e.genre ?? '').toList(),
                         onChanged: (value) {
                           selectedGenre = value;
                         },
                         validation: (value) {
                           if (value == null) {
-                            return 'Please select a genre';
+                            return 'art_val_genre'.tr;
                           }
                           return null;
                         },
@@ -202,7 +202,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
 
                 height(0.01),
                 Text(
-                  'Description *',
+                  'art_description_req'.tr,
                   style: TextStyle(
                     color: Color(0xff737373),
 
@@ -212,12 +212,12 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                 ),
 
                 MyTextField(
-                  hintText: 'Share more about your show...',
+                  hintText: 'chat_share_show'.tr,
                   controller: descriptionController,
                   maxLines: 4,
                   validation: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a description';
+                      return 'art_val_description'.tr;
                     }
                     return null;
                   },
@@ -225,7 +225,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
 
                 height(0.01),
                 Text(
-                  ' Cover Image *',
+                  'art_cover_image_req'.tr,
                   style: TextStyle(
                     color: ivory,
 
@@ -260,7 +260,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                               Image.asset('assets/upload4.png', width: 20),
 
                               Text(
-                                'Upload Cover',
+                                'art_upload_cover'.tr,
                                 style: TextStyle(
                                   color: Color(0xffA1A1A1),
 
@@ -277,7 +277,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
 
                 height(0.01),
                 Text(
-                  ' Visuals * (Video Only)',
+                  'art_visuals_req'.tr,
                   style: TextStyle(
                     color: ivory,
 
@@ -307,7 +307,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                         Text(
                           visualVideo != null
                               ? visualVideo!.name
-                              : 'Upload Visual',
+                              : 'art_upload_visual'.tr,
                           style: TextStyle(
                             color: Color(0xffA1A1A1),
 
@@ -331,7 +331,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Start Date *',
+                          'art_start_date_req'.tr,
                           style: TextStyle(
                             color: Color(0xff737373),
                             fontWeight: FontWeight.bold,
@@ -352,7 +352,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                                 _pickDate(context, startDateController),
                             validation: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Required';
+                                return 'art_required'.tr;
                               }
                               return null;
                             },
@@ -365,7 +365,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Start Time *',
+                          'art_start_time_req'.tr,
                           style: TextStyle(
                             color: Color(0xff737373),
                             fontWeight: FontWeight.bold,
@@ -387,7 +387,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                                 _pickTime(context, startTimeController),
                             validation: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Required';
+                                return 'art_required'.tr;
                               }
                               return null;
                             },
@@ -406,7 +406,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'End Date *',
+                          'art_end_date_req'.tr,
                           style: TextStyle(
                             color: Color(0xff737373),
                             fontWeight: FontWeight.bold,
@@ -427,7 +427,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                                 _pickDate(context, startDateController),
                             validation: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Required';
+                                return 'art_required'.tr;
                               }
                               return null;
                             },
@@ -440,7 +440,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'End Time *',
+                          'art_end_time_req'.tr,
                           style: TextStyle(
                             color: Color(0xff737373),
                             fontWeight: FontWeight.bold,
@@ -461,7 +461,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                             onTap: () => _pickTime(context, endTimeController),
                             validation: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Required';
+                                return 'art_required'.tr;
                               }
                               return null;
                             },
@@ -476,7 +476,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                 height(0.01),
 
                 Text(
-                  'Standard (\$) *',
+                  'art_standard_price_req'.tr,
                   style: TextStyle(
                     color: Color(0xff737373),
 
@@ -496,7 +496,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                   ),
                   validation: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter ticket price';
+                      return 'art_val_ticket_price'.tr;
                     }
                     return null;
                   },
@@ -505,7 +505,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                 height(0.01),
 
                 Text(
-                  'Settings',
+                  'common_settings'.tr,
                   style: TextStyle(
                     color: Get.isDarkMode ? whiteColor : blackColor,
 
@@ -527,7 +527,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                         width(0.02),
 
                         Text(
-                          'Live Chat',
+                          'live_chat'.tr,
                           style: TextStyle(
                             color: Get.isDarkMode ? whiteColor : blackColor,
                             fontWeight: FontWeight.bold,
@@ -555,15 +555,15 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                 ),
                 height(0.02),
                 MyButton(
-                  label: 'Publish Event',
+                  label: 'ev_publish'.tr,
                   onTap: () {
                     if (formKey.currentState!.validate()) {
                       if (coverImage == null) {
-                        Get.snackbar('Error', 'Please upload a cover image');
+                        Get.snackbar('art_error'.tr, 'art_err_cover'.tr);
                         return;
                       }
                       if (visualVideo == null) {
-                        Get.snackbar('Error', 'Please upload a visual video');
+                        Get.snackbar('art_error'.tr, 'art_err_visual'.tr);
                         return;
                       }
 

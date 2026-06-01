@@ -37,9 +37,12 @@ class _ZegoGiftsState extends State<ZegoGifts> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Send Gift',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                'live_send_gift'.tr,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               IconButton(
                 onPressed: () => Get.back(),
@@ -52,7 +55,7 @@ class _ZegoGiftsState extends State<ZegoGifts> {
             child: Obx(() {
               final gifts = eventController.gifts.value.data ?? [];
               if (gifts.isEmpty) {
-                return const Center(child: Text('No gifts available'));
+                return Center(child: Text('live_no_gifts'.tr));
               }
               return GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -83,14 +86,14 @@ class _ZegoGiftsState extends State<ZegoGifts> {
 
     if (userPoints < giftCost) {
       myWarningDialog(
-        subtitle: 'You do not have enough coins to send this gift.',
+        subtitle: 'live_not_enough_coins'.tr,
       );
       return;
     }
 
     await myAlertDialog(
-      title: 'Send ${gift.name}',
-      content: 'Spend ${gift.coins} coins to send this gift?',
+      title: 'live_send_x'.trParams({'name': '${gift.name}'}),
+      content: 'live_spend_coins'.trParams({'coins': '${gift.coins}'}),
       onTap: () async {
         Get.back(); // close dialog
         Get.back(); // close bottom sheet
@@ -162,7 +165,7 @@ class GiftSelectionCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${gift.coins} Coins',
+                  'live_coins'.trParams({'coins': '${gift.coins}'}),
                   style: const TextStyle(
                     color: goldPrimary,
                     fontSize: 12,

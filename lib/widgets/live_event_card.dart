@@ -114,9 +114,9 @@ class LiveEventsCards extends StatelessWidget {
                               gradient: kGoldGradient,
                               borderRadius: BorderRadius.circular(30),
                             ),
-                            child: const Text(
-                              'JOIN LIVE',
-                              style: TextStyle(
+                            child: Text(
+                              'join_live'.tr,
+                              style: const TextStyle(
                                 fontFamily: AppFonts.ui,
                                 color: midnightPrimary,
                                 fontWeight: FontWeight.w700,
@@ -145,14 +145,14 @@ class LiveEventsCards extends StatelessWidget {
         color: liveRed,
         borderRadius: BorderRadius.circular(30),
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.circle, color: Colors.white, size: 7),
-          SizedBox(width: 5),
+          const Icon(Icons.circle, color: Colors.white, size: 7),
+          const SizedBox(width: 5),
           Text(
-            'LIVE',
-            style: TextStyle(
+            'live_badge'.tr,
+            style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w700,
               fontSize: 11,

@@ -34,7 +34,9 @@ class LiveStreamTopBar extends StatelessWidget {
                   ),
           ),
           title: Text(
-            event.artist?.artistName ?? event.artist?.fullName ?? 'Artist Name',
+            event.artist?.artistName ??
+                event.artist?.fullName ??
+                'live_artist_name_fallback'.tr,
             style: const TextStyle(
               color: whiteColor,
               fontSize: 16,
@@ -42,7 +44,9 @@ class LiveStreamTopBar extends StatelessWidget {
             ),
           ),
           subtitle: Text(
-            '${event.artist?.experience ?? "0"} followers',
+            'live_followers_count'.trParams({
+              'count': '${event.artist?.experience ?? "0"}',
+            }),
             style: const TextStyle(
               color: whiteColor,
               fontSize: 14,
@@ -58,7 +62,7 @@ class LiveStreamTopBar extends StatelessWidget {
           ],
         ),
         height(0.01),
-        LiveStreamEventInfo(eventName: event.name ?? "Live Event"),
+        LiveStreamEventInfo(eventName: event.name ?? 'live_event_fallback'.tr),
       ],
     );
   }
@@ -81,10 +85,10 @@ class LiveStatusBadge extends StatelessWidget {
         children: [
           Image.asset('assets/dots.png'),
           width(0.02),
-          const Text(
-            'LIVE',
+          Text(
+            'live_badge'.tr,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: whiteColor,
               fontWeight: FontWeight.bold,
               fontSize: 15,
@@ -157,7 +161,7 @@ class LiveStreamEventInfo extends StatelessWidget {
             ),
           ),
           child: Text(
-            'Live: $eventName',
+            'live_prefix'.trParams({'name': eventName}),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
