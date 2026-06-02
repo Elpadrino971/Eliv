@@ -374,24 +374,12 @@
         ${videoTag}
         <div class="feed__overlay"></div>
         <div class="feed__content">
-          <div class="feed__meta">
-            ${ev.live ? liveBadge : `<span class="badge-soon">${ev.scheduled}</span>`}
-            <span class="feed__cat">${ev.genre}</span>
-          </div>
-          <h2 class="feed__title">${ev.name}</h2>
-          <a class="feed__artist" href="#">
-            <span class="av-mini">${(ev.artist.name || "V").charAt(0)}</span>
-            <span>@${ev.artist.name.replace(/\s+/g, "").toLowerCase()} ${ev.artist.verified ? verified : ""}</span>
-            <button class="feed__follow" data-cursor="hover">Suivre</button>
-          </a>
-          <a class="btn btn--gold feed__ticket magnetic" href="checkout.html?event=${ev.id}" data-cursor="hover">
-            <span>${ev.price === 0 ? "Rejoindre gratuitement" : "Get Ticket · $" + ev.price.toFixed(2)}</span>
-          </a>
+          <div class="feed__meta">${liveBadge}</div>
+          ${ev.name ? `<h2 class="feed__title">${ev.name}</h2>` : ""}
         </div>
         <aside class="feed__actions">
-          <button class="fa-btn" data-act="like" data-cursor="hover"><span>♥</span><i>${H.nb(ev.likes)}</i></button>
+          <button class="fa-btn" data-act="like" data-cursor="hover"><span>♥</span></button>
           <button class="fa-btn" data-act="gift" data-cursor="hover"><span>🎁</span><i>Cadeau</i></button>
-          <button class="fa-btn" data-act="chat" data-cursor="hover"><span>💬</span><i>${H.nb(Math.round(ev.likes / 7))}</i></button>
           <button class="fa-btn" data-act="share" data-cursor="hover"><span>↗</span><i>Partager</i></button>
         </aside>
       </section>`;
@@ -432,41 +420,25 @@
     }, { threshold: 0.55 });
     vids.forEach(v => vio.observe(v));
   }
-  // ---- Montage d'un feed avec filtres de catégorie + bouton son ----
+  // ---- Montage du feed : uniquement les vraies vidéos Mux + bouton son ----
   function setupFeed(feedEl, catsEl, soundEl) {
     if (!feedEl) return;
-    const pool = D.events.filter(e => e.video);   // uniquement les vidéos Mux
-    const genres = ["Tous"].concat(Array.from(new Set(pool.map(e => e.genre))));
-    let active = "Tous", soundOn = false;
+    if (catsEl) catsEl.style.display = "none";   // pas de catégories factices pour l'instant
+    let soundOn = false;
     function applySound() { feedEl.querySelectorAll(".feed__video").forEach(v => { v.muted = !soundOn; }); }
-    function render() {
-      const items = (active === "Tous" ? pool : pool.filter(e => e.genre === active))
-        .slice().sort((a, b) => b.live - a.live);
-      feedEl.innerHTML = items.length ? items.map(feedItemHTML).join("")
-        : `<section class="feed__item feed__empty"><div class="feed__overlay"></div><div class="feed__content"><h2 class="feed__title">Bientôt en ${active}</h2><p style="color:var(--muted)">Aucun live dans cette catégorie pour l'instant.</p></div></section>`;
-      bindFeed(feedEl);
-      applySound();
-    }
-    if (catsEl) {
-      catsEl.innerHTML = genres.map((g, i) => `<button class="fchip ${i === 0 ? "on" : ""}" data-cursor="hover">${g}</button>`).join("");
-      catsEl.addEventListener("click", e => {
-        const b = e.target.closest(".fchip"); if (!b) return;
-        catsEl.querySelectorAll(".fchip").forEach(x => x.classList.remove("on"));
-        b.classList.add("on"); active = b.textContent.trim(); render();
-      });
-    }
+    feedEl.innerHTML = D.events.map(feedItemHTML).join("");
+    bindFeed(feedEl);
+    applySound();
     if (soundEl) {
       soundEl.addEventListener("click", () => {
         soundOn = !soundOn;
         soundEl.textContent = soundOn ? "🔊" : "🔇";
         soundEl.classList.toggle("on", soundOn);
         applySound();
-        // relance la lecture de la vidéo visible avec le son
         feedEl.querySelectorAll(".feed__video").forEach(v => { if (!v.paused) { const p = v.play(); if (p && p.catch) p.catch(() => {}); } });
         toast(soundOn ? "🔊 Son activé" : "🔇 Son coupé");
       });
     }
-    render();
   }
   function renderFeed() {
     setupFeed(document.getElementById("feed"), document.getElementById("feedCatsFull"), document.getElementById("feedSoundFull"));

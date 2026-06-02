@@ -22,20 +22,14 @@ window.VYBZZZ = (function () {
     { id: 6, name: "Selene", genre: "Pop", avatar: IMG("artist_image1.png"), followers: "1,5M", verified: true },
   ];
 
-  // Événements / lives (cf. /lib/Models/event_model.dart : name, artist, genre, ticketPrice, coverImage, viewers, startDateTime)
+  // Feed = UNIQUEMENT de vraies vidéos Mux (pas de noms/données factices)
   const events = [
-    { id: 101, name: "Afro Night — Live depuis Lagos", artist: artists[0], genre: "Afrobeats", thumb: IMG("artist_image2.png"), live: true,  viewers: 8243,  price: 4.99,  likes: 12480, ago: "en direct", video: "lnjLfyBrq4FcCpawY1pYXx5B5k02N004xz6CuAkymVRx8" },
-    { id: 102, name: "Midnight Soul Session",          artist: artists[1], genre: "R&B / Soul", thumb: IMG("artist_image3.png"), live: true,  viewers: 5712,  price: 0,     likes: 9320,  ago: "en direct" },
-    { id: 103, name: "Cypher 16 — Freestyle Arena",    artist: artists[2], genre: "Hip-Hop",   thumb: IMG("artist_image4.png"), live: true,  viewers: 12044, price: 6.99,  likes: 23110, ago: "en direct", video: "Vkj8t5Hpg302epwqxak7r4zMbO2kjBTDWRjGitlmTMPo" },
-    { id: 104, name: "KRYS — Warehouse Rave",          artist: artists[4], genre: "House",      thumb: IMG("artist_image5.png"), live: true,  viewers: 9410,  price: 3.49,  likes: 15890, ago: "en direct", video: "sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU" },
-    { id: 105, name: "Synthwave Dreams",               artist: artists[3], genre: "Électro",    thumb: IMG("background5.png"),    live: false, viewers: 0,     price: 2.99,  likes: 4120,  scheduled: "Ce soir · 21:00" },
-    { id: 106, name: "Acoustic Pop Unplugged",         artist: artists[5], genre: "Pop",        thumb: IMG("artist_image1.png"), live: false, viewers: 0,     price: 0,     likes: 6850,  scheduled: "Demain · 18:30" },
-    { id: 107, name: "Amapiano Sunset",                artist: artists[0], genre: "Amapiano",   thumb: IMG("artist_image3.png"), live: false, viewers: 0,     price: 1.99,  likes: 5300,  scheduled: "Sam. · 20:00" },
-    { id: 108, name: "Late Night Jazz Trio",           artist: artists[1], genre: "Jazz",       thumb: IMG("artist_image5.png"), live: false, viewers: 0,     price: 5.99,  likes: 2980,  scheduled: "Dim. · 19:00" },
-    { id: 109, name: "Gospel Praise Live",             artist: artists[5], genre: "Gospel",     thumb: IMG("artist_image2.png"), live: false, viewers: 0,     price: 0,     likes: 7640,  scheduled: "Dim. · 11:00" },
-    { id: 110, name: "Roots & Culture Reggae",         artist: artists[2], genre: "Reggae",     thumb: IMG("artist_image4.png"), live: false, viewers: 0,     price: 3.99,  likes: 4410,  scheduled: "Lun. · 22:00" },
-    { id: 111, name: "Deep House Marathon",            artist: artists[4], genre: "House",      thumb: IMG("artist_image1.png"), live: true,  viewers: 3120,  price: 0,     likes: 3340,  ago: "en direct" },
-    { id: 112, name: "R&B Slow Jams",                  artist: artists[1], genre: "R&B / Soul", thumb: IMG("background5.png"),    live: false, viewers: 0,     price: 2.49,  likes: 5120,  scheduled: "Mar. · 21:30" },
+    { id: 1, video: "EcO013Q00m3BON019ydIrEUd3YaAES4J9nx02arl7U862P4", name: "Prince &amp; The Revolution — Purple Rain (Live)", live: true, price: 0 },
+    { id: 2, video: "ZIAVh2AYyALPoxxrRW01wIqPDzX5eO1vYx1XSOSbj39o", name: "I Wasn't Expecting Her To Rap Like This", live: true, price: 0 },
+    { id: 3, video: "sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU", name: "KRYS — Live", live: true, price: 0 },
+    { id: 4, video: "BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g", name: "", live: true, price: 0 },
+    { id: 5, video: "lnjLfyBrq4FcCpawY1pYXx5B5k02N004xz6CuAkymVRx8", name: "", live: true, price: 0 },
+    { id: 6, video: "Vkj8t5Hpg302epwqxak7r4zMbO2kjBTDWRjGitlmTMPo", name: "", live: true, price: 0 },
   ];
 
   // Packs d'Arena Points (cf. /api/packages/list : title, points, price)

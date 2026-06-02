@@ -75,7 +75,7 @@
   var order = { title:"Pass découverte", sub:"Accès à la communauté Vybzzz", img:"assets/logo.svg", amount:0, lines:[] };
   if (params.get("event")) {
     var ev = D.events.find(function(e){return e.id == params.get("event")});
-    if (ev) order = { title:ev.name, sub:ev.artist.name+" · "+ev.genre+(ev.live?" · LIVE":" · "+ev.scheduled), img:(ev.video?("https://image.mux.com/"+ev.video+"/thumbnail.jpg?width=320"):"assets/logo.svg"), amount:ev.price, lines:[["Ticket",ev.price],["Replay HD inclus",0]] };
+    if (ev) order = { title:(ev.name||"Live Vybzzz"), sub:(ev.live?"En direct · Vybzzz":"Vybzzz"), img:(ev.video?("https://image.mux.com/"+ev.video+"/thumbnail.jpg?width=320"):"assets/logo.svg"), amount:(ev.price||0), lines:[["Ticket",(ev.price||0)],["Replay HD inclus",0]] };
   } else if (params.get("pack")) {
     var p = D.packages.find(function(x){return x.id == params.get("pack")});
     if (p){ var total=p.points+Math.round(p.points*p.bonus/100); order = { title:p.title+" · "+total.toLocaleString("fr-FR")+" PTS", sub:(p.bonus?"+"+p.bonus+"% bonus inclus":"Pack d'Arena Points"), img:"assets/logo.svg", amount:p.price, lines:[["Arena Points",p.price]] }; }
