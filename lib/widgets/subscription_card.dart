@@ -82,6 +82,18 @@ class SubscriptionCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    // Ancrage prix public (ex: 199) barré au-dessus du prix Founder
+                    if (subscription.publicPrice != null &&
+                        subscription.publicPrice!.isNotEmpty)
+                      Text(
+                        '\$${subscription.publicPrice}',
+                        style: TextStyle(
+                          color: whiteColor.withValues(alpha: 0.7),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
                     Text(
                       '\$${subscription.price ?? '0'}',
                       style: const TextStyle(
@@ -137,6 +149,53 @@ class SubscriptionCard extends StatelessWidget {
                     ),
                   ],
                 ),
+
+                // ── Founder launch: badge + live seat counter (only when the
+                //    backend marks the plan as Founder; otherwise no-op) ──────
+                if (subscription.badge != null &&
+                    subscription.badge!.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: accentColor),
+                    ),
+                    child: Text(
+                      subscription.badge!,
+                      style: TextStyle(
+                        color: accentColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+                if ((subscription.isFounder ?? false) &&
+                    subscription.seatsRemaining != null) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Text('🔥', style: TextStyle(fontSize: 14)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          _founderCounterLabel(subscription),
+                          style: TextStyle(
+                            color: isDark ? whiteColor : blackColor,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
 
                 purchasedDate != null
                     ? SizedBox(
@@ -213,6 +272,17 @@ class SubscriptionCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// "63/200 places restantes · +\$149 dans 13"
+  String _founderCounterLabel(Subscription s) {
+    final remaining = s.seatsRemaining ?? 0;
+    final total = s.seatsTotal ?? 200;
+    var label = '$remaining/$total places restantes';
+    if (s.nextPrice != null && s.nextPriceInSeats != null) {
+      label += ' · +\$${s.nextPrice} dans ${s.nextPriceInSeats}';
+    }
+    return label;
   }
 
   String _billingLabel(String? priceType) {
