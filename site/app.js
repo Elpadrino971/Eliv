@@ -199,10 +199,9 @@
 
   // ---- Plan créateur card ----
   function planCard(p) {
-    const meta = { Starter: { ic: "🚀", bg: "assets/artist_image1.png" }, Growth: { ic: "📈", bg: "assets/artist_image3.png" }, Elite: { ic: "🏆", bg: "assets/artist_image5.png" } }[p.name] || { ic: "★", bg: "assets/artist_image2.png" };
+    const meta = { Starter: { ic: "🚀" }, Growth: { ic: "📈" }, Elite: { ic: "🏆" } }[p.name] || { ic: "★" };
     return `
     <article class="plan glass reveal tilt ${p.highlight ? "plan--feat" : ""}" data-cursor="hover">
-      <div class="plan__bg" style="background-image:url('${meta.bg}')"></div>
       ${p.tag ? `<span class="plan__tag">${p.tag}</span>` : ""}
       <div class="plan__icon">${meta.ic}</div>
       <h3>${p.name}</h3>
@@ -233,10 +232,8 @@
     const done = !fi.closed && i < fi.tierIndex;
     const cur = !fi.closed && i === fi.tierIndex;
     const tagTxt = cur ? "En cours" : done ? "Complet ✓" : "À venir";
-    const bg = ["assets/artist_image2.png", "assets/artist_image3.png", "assets/artist_image4.png"][i] || "assets/artist_image2.png";
     return `
     <article class="plan glass reveal tilt ${cur ? "plan--feat" : ""} ${done ? "plan--done" : ""}" data-cursor="hover">
-      <div class="plan__bg" style="background-image:url('${bg}')"></div>
       <span class="plan__tag">${tagTxt}</span>
       <div class="plan__icon">★</div>
       <h3>Founder · Vague ${i + 1}</h3>
@@ -256,7 +253,6 @@
     const e = D.elite;
     return `
     <article class="plan glass reveal tilt" data-cursor="hover">
-      <div class="plan__bg" style="background-image:url('assets/artist_image5.png')"></div>
       <span class="plan__tag">${e.tag}</span>
       <div class="plan__icon">🏆</div>
       <h3>${e.name}</h3>
@@ -379,7 +375,7 @@
           </div>
           <h2 class="feed__title">${ev.name}</h2>
           <a class="feed__artist" href="#">
-            <img src="${ev.artist.avatar}" alt="" />
+            <span class="av-mini">${(ev.artist.name || "V").charAt(0)}</span>
             <span>@${ev.artist.name.replace(/\s+/g, "").toLowerCase()} ${ev.artist.verified ? verified : ""}</span>
             <button class="feed__follow" data-cursor="hover">Suivre</button>
           </a>
@@ -434,11 +430,12 @@
   // ---- Montage d'un feed avec filtres de catégorie + bouton son ----
   function setupFeed(feedEl, catsEl, soundEl) {
     if (!feedEl) return;
-    const genres = ["Tous"].concat(Array.from(new Set(D.events.map(e => e.genre))));
+    const pool = D.events.filter(e => e.video);   // uniquement les vidéos Mux
+    const genres = ["Tous"].concat(Array.from(new Set(pool.map(e => e.genre))));
     let active = "Tous", soundOn = false;
     function applySound() { feedEl.querySelectorAll(".feed__video").forEach(v => { v.muted = !soundOn; }); }
     function render() {
-      const items = (active === "Tous" ? D.events : D.events.filter(e => e.genre === active))
+      const items = (active === "Tous" ? pool : pool.filter(e => e.genre === active))
         .slice().sort((a, b) => b.live - a.live);
       feedEl.innerHTML = items.length ? items.map(feedItemHTML).join("")
         : `<section class="feed__item feed__empty"><div class="feed__overlay"></div><div class="feed__content"><h2 class="feed__title">Bientôt en ${active}</h2><p style="color:var(--muted)">Aucun live dans cette catégorie pour l'instant.</p></div></section>`;

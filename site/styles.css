@@ -489,6 +489,10 @@ body{background:radial-gradient(120% 80% at 50% -10%,#0e2438 0%,var(--bg) 55%) f
 .story__col p{color:var(--muted)}
 .story__close{font-family:var(--serif);font-size:clamp(1.3rem,2.4vw,1.9rem);line-height:1.35}
 @media(max-width:760px){.story__cols{grid-template-columns:1fr}}
+/* Avatars générés (initiale) — remplacent les images placeholder */
+.av-mini{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-family:var(--serif);font-weight:800;font-size:1.2rem;color:#0a1828;background:linear-gradient(135deg,var(--gold-2),var(--gold));flex:0 0 auto}
+.side__av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-family:var(--serif);font-weight:800;font-size:1.3rem;color:#0a1828;background:linear-gradient(135deg,var(--gold-2),var(--gold));border:2px solid var(--gold);flex:0 0 auto}
+.ev-card__top{background:linear-gradient(135deg,rgba(200,168,94,.28),var(--bg-2))}
 
 /* Escalier de prix (urgence par paliers) */
 .tier-ladder{display:flex;align-items:stretch;gap:10px;margin:6px 0 22px;flex-wrap:wrap}
