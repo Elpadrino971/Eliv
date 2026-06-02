@@ -254,8 +254,13 @@
 
   // ---- Feed item (réutilisé par feed.html ET le split-screen de l'accueil) ----
   function feedItemHTML(ev) {
+    const bg = ev.video ? `https://image.mux.com/${ev.video}/thumbnail.jpg?width=720` : ev.thumb;
+    const videoTag = ev.video
+      ? `<video class="feed__video" data-src="https://stream.mux.com/${ev.video}.m3u8" poster="${bg}" muted loop playsinline preload="none"></video>`
+      : "";
     return `
-      <section class="feed__item" style="--bg:url('${ev.thumb}')">
+      <section class="feed__item" style="--bg:url('${bg}')">
+        ${videoTag}
         <div class="feed__overlay"></div>
         <div class="feed__content">
           <div class="feed__meta">
@@ -293,7 +298,28 @@
       ev.preventDefault(); b.classList.toggle("on");
       b.textContent = b.classList.contains("on") ? "Suivi ✓" : "Suivre";
     }));
+    initFeedVideos(container);
     bindMicro(container);
+  }
+  // ---- Lecture des vidéos Mux (autoplay muet quand visible, pause sinon) ----
+  function attachHls(video, src) {
+    if (video.canPlayType("application/vnd.apple.mpegurl")) { video.src = src; }      // Safari
+    else if (window.Hls && window.Hls.isSupported()) { const h = new Hls({ capLevelToPlayerSize: true }); h.loadSource(src); h.attachMedia(video); }
+    else { video.src = src; }
+  }
+  function initFeedVideos(container) {
+    const vids = container.querySelectorAll(".feed__video");
+    if (!vids.length) return;
+    const vio = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        const v = e.target;
+        if (e.isIntersecting) {
+          if (!v.dataset.loaded) { attachHls(v, v.dataset.src); v.dataset.loaded = "1"; }
+          const p = v.play(); if (p && p.catch) p.catch(() => {});
+        } else { v.pause(); }
+      });
+    }, { threshold: 0.55 });
+    vids.forEach(v => vio.observe(v));
   }
   function renderFeed() {
     const feed = document.getElementById("feed");

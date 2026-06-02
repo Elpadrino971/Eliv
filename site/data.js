@@ -24,10 +24,10 @@ window.VYBZZZ = (function () {
 
   // Événements / lives (cf. /lib/Models/event_model.dart : name, artist, genre, ticketPrice, coverImage, viewers, startDateTime)
   const events = [
-    { id: 101, name: "Afro Night — Live depuis Lagos", artist: artists[0], genre: "Afrobeats", thumb: IMG("artist_image2.png"), live: true,  viewers: 8243,  price: 4.99,  likes: 12480, ago: "en direct" },
+    { id: 101, name: "Afro Night — Live depuis Lagos", artist: artists[0], genre: "Afrobeats", thumb: IMG("artist_image2.png"), live: true,  viewers: 8243,  price: 4.99,  likes: 12480, ago: "en direct", video: "lnjLfyBrq4FcCpawY1pYXx5B5k02N004xz6CuAkymVRx8" },
     { id: 102, name: "Midnight Soul Session",          artist: artists[1], genre: "R&B / Soul", thumb: IMG("artist_image3.png"), live: true,  viewers: 5712,  price: 0,     likes: 9320,  ago: "en direct" },
-    { id: 103, name: "Cypher 16 — Freestyle Arena",    artist: artists[2], genre: "Hip-Hop",   thumb: IMG("artist_image4.png"), live: true,  viewers: 12044, price: 6.99,  likes: 23110, ago: "en direct" },
-    { id: 104, name: "Warehouse Rave",                 artist: artists[4], genre: "House",      thumb: IMG("artist_image5.png"), live: true,  viewers: 9410,  price: 3.49,  likes: 15890, ago: "en direct" },
+    { id: 103, name: "Cypher 16 — Freestyle Arena",    artist: artists[2], genre: "Hip-Hop",   thumb: IMG("artist_image4.png"), live: true,  viewers: 12044, price: 6.99,  likes: 23110, ago: "en direct", video: "Vkj8t5Hpg302epwqxak7r4zMbO2kjBTDWRjGitlmTMPo" },
+    { id: 104, name: "KRYS — Warehouse Rave",          artist: artists[4], genre: "House",      thumb: IMG("artist_image5.png"), live: true,  viewers: 9410,  price: 3.49,  likes: 15890, ago: "en direct", video: "sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU" },
     { id: 105, name: "Synthwave Dreams",               artist: artists[3], genre: "Électro",    thumb: IMG("background5.png"),    live: false, viewers: 0,     price: 2.99,  likes: 4120,  scheduled: "Ce soir · 21:00" },
     { id: 106, name: "Acoustic Pop Unplugged",         artist: artists[5], genre: "Pop",        thumb: IMG("artist_image1.png"), live: false, viewers: 0,     price: 0,     likes: 6850,  scheduled: "Demain · 18:30" },
     { id: 107, name: "Amapiano Sunset",                artist: artists[0], genre: "Amapiano",   thumb: IMG("artist_image3.png"), live: false, viewers: 0,     price: 1.99,  likes: 5300,  scheduled: "Sam. · 20:00" },
