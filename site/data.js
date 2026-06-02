@@ -49,15 +49,16 @@ window.VYBZZZ = (function () {
   ];
 
   // Cadeaux virtuels (cf. /api/gifts : name, coins, price) — coût en Arena Points
+  // anim = fichier vidéo dans assets/gifts/ (fond noir → rendu transparent via mix-blend screen)
   const gifts = [
-    { name: "Rose",    emoji: "🌹", coins: 5 },
-    { name: "Cœur",    emoji: "❤️", coins: 10 },
-    { name: "Étoile",  emoji: "🌟", coins: 50 },
-    { name: "Diamant", emoji: "💎", coins: 100 },
-    { name: "Feu",     emoji: "🔥", coins: 250 },
-    { name: "Couronne", emoji: "👑", coins: 500 },
-    { name: "Fusée",   emoji: "🚀", coins: 1000 },
-    { name: "Château", emoji: "🏰", coins: 5000 },
+    { name: "Rose",    emoji: "🌹", coins: 5,    anim: "rose.mp4" },
+    { name: "Cœur",    emoji: "❤️", coins: 10,   anim: "coeur.mp4" },
+    { name: "Étoile",  emoji: "🌟", coins: 50,   anim: "etoile.mp4" },
+    { name: "Diamant", emoji: "💎", coins: 100,  anim: "diamant.mp4" },
+    { name: "Feu",     emoji: "🔥", coins: 250,  anim: "feu.mp4" },
+    { name: "Couronne", emoji: "👑", coins: 500, anim: "couronne.mp4" },
+    { name: "Fusée",   emoji: "🚀", coins: 1000, anim: "fusee.mp4" },
+    { name: "Château", emoji: "🏰", coins: 5000, anim: "chateau.mp4" },
   ];
 
   // Programme Founder = offre de lancement, prix par PALIERS selon l'ordre

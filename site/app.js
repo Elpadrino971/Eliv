@@ -481,7 +481,7 @@
         <div class="gift-panel__sheet">
           <div class="gift-panel__head"><b>Envoyer un cadeau</b><span class="gift-panel__bal">Solde : <em>2 850 PTS</em></span><button class="gift-panel__x" aria-label="Fermer">✕</button></div>
           <div class="gift-panel__grid">
-            ${D.gifts.map(g => `<button class="giftc" data-coins="${g.coins}"><span>${g.emoji}</span><strong>${g.name}</strong><small>★ ${g.coins}</small></button>`).join("")}
+            ${D.gifts.map(g => `<button class="giftc" data-coins="${g.coins}" data-anim="${g.anim || ""}"><span>${g.emoji}</span><strong>${g.name}</strong><small>★ ${g.coins}</small></button>`).join("")}
           </div>
           <a href="store.html" class="btn btn--gold gift-panel__topup"><span>Recharger des Arena Points</span></a>
         </div>`;
@@ -489,18 +489,30 @@
       p.querySelector(".gift-panel__x").addEventListener("click", () => p.classList.remove("open"));
       p.addEventListener("click", e => { if (e.target === p) p.classList.remove("open"); });
       p.querySelectorAll(".giftc").forEach(g => g.addEventListener("click", () => {
-        flyGift(g.querySelector("span").textContent);
+        flyGift(g.dataset.anim, g.querySelector("span").textContent);
         toast(`Cadeau envoyé · −${g.dataset.coins} PTS 🎉`);
       }));
     }
     requestAnimationFrame(() => p.classList.add("open"));
   }
-  function flyGift(emoji) {
+  function flyEmoji(emoji) {
     const s = document.createElement("div");
-    s.className = "fly-gift"; s.textContent = emoji;
+    s.className = "fly-gift"; s.textContent = emoji || "🎁";
     s.style.left = (20 + Math.random() * 60) + "vw";
     document.body.appendChild(s);
     setTimeout(() => s.remove(), 2600);
+  }
+  function flyGift(anim, emoji) {
+    if (!anim) { flyEmoji(emoji); return; }
+    const v = document.createElement("video");
+    v.className = "gift-anim";
+    v.src = "assets/gifts/" + anim;
+    v.muted = true; v.autoplay = true; v.setAttribute("playsinline", "");
+    v.onended = () => v.remove();
+    v.onerror = () => { v.remove(); flyEmoji(emoji); };  // si le fichier manque → emoji
+    document.body.appendChild(v);
+    const p = v.play(); if (p && p.catch) p.catch(() => {});
+    setTimeout(() => { if (v.parentNode) v.remove(); }, 9000);
   }
 
   function renderStore() {
