@@ -44,6 +44,8 @@
   /* ---------- Chrome : header + footer injectés ---------- */
   const NAV = [
     { href: "index.html",            key: "nav_home",   id: "home" },
+    { href: "feed.html",             key: "nav_feed",   id: "feed" },
+    { href: "store.html",            key: "nav_store",  id: "store" },
     { href: "index.html#avantages",  key: "nav_deal",   id: "_deal" },
     { href: "dashboard.html",        key: "nav_studio", id: "dashboard" },
     { href: "faq.html",              key: "nav_faq",    id: "faq" },
@@ -504,15 +506,18 @@
   }
   function flyGift(anim, emoji) {
     if (!anim) { flyEmoji(emoji); return; }
+    const wrap = document.createElement("div");
+    wrap.className = "gift-anim-wrap";
     const v = document.createElement("video");
     v.className = "gift-anim";
     v.src = "assets/gifts/" + anim;
     v.muted = true; v.autoplay = true; v.setAttribute("playsinline", "");
-    v.onended = () => v.remove();
-    v.onerror = () => { v.remove(); flyEmoji(emoji); };  // si le fichier manque → emoji
-    document.body.appendChild(v);
+    v.onended = () => wrap.remove();
+    v.onerror = () => { wrap.remove(); flyEmoji(emoji); };  // si le fichier manque → emoji
+    wrap.appendChild(v);
+    document.body.appendChild(wrap);
     const p = v.play(); if (p && p.catch) p.catch(() => {});
-    setTimeout(() => { if (v.parentNode) v.remove(); }, 9000);
+    setTimeout(() => { if (wrap.parentNode) wrap.remove(); }, 9000);
   }
 
   function renderStore() {

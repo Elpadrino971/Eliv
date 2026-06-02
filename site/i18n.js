@@ -9,7 +9,7 @@ window.I18N = window.I18N || {};
 window.I18N.fr = {
   // Nav
   nav_home: "Accueil", nav_deal: "Le deal", nav_studio: "Studio Pro", nav_faq: "FAQ",
-  nav_login: "Se connecter", nav_apply: "Postuler", lang_label: "Langue",
+  nav_login: "Se connecter", nav_apply: "Postuler", lang_label: "Langue", nav_feed: "Feed", nav_store: "Boutique",
   // Hero
   hero_badge: "✦ Offre de lancement · le prix monte à chaque vague",
   hero_title_html: 'Sois créateur <span class="grad">Founder</span> avant que le prix monte.',
@@ -94,7 +94,7 @@ window.I18N.fr = {
 
 window.I18N.en = {
   nav_home: "Home", nav_deal: "The deal", nav_studio: "Pro Studio", nav_faq: "FAQ",
-  nav_login: "Log in", nav_apply: "Apply", lang_label: "Language",
+  nav_login: "Log in", nav_apply: "Apply", lang_label: "Language", nav_feed: "Feed", nav_store: "Store",
   hero_badge: "✦ Launch offer · the price rises with every wave",
   hero_title_html: 'Become a <span class="grad">Founder</span> creator before the price goes up.',
   hero_lead_html: 'The <strong>first 24 spots</strong> are <strong>$79/mo</strong>, the next 76 at $99, the last 100 at $149. <strong>You keep 60%</strong> of your revenue, <strong>for life</strong> as long as your subscription stays active.',
