@@ -10,11 +10,10 @@
 
   /* ---------- Chrome : header + footer injectés ---------- */
   const NAV = [
-    { href: "index.html",     label: "Accueil",  id: "home" },
-    { href: "feed.html",      label: "Feed",     id: "feed" },
-    { href: "store.html",     label: "Boutique", id: "store" },
-    { href: "dashboard.html", label: "Studio Pro", id: "dashboard" },
-    { href: "faq.html",       label: "FAQ",      id: "faq" },
+    { href: "index.html",            label: "Accueil",   id: "home" },
+    { href: "index.html#avantages",  label: "Le deal",   id: "_deal" },
+    { href: "dashboard.html",        label: "Studio Pro", id: "dashboard" },
+    { href: "faq.html",              label: "FAQ",       id: "faq" },
   ];
 
   function renderHeader() {
@@ -27,14 +26,10 @@
         <img src="assets/logo.png" alt="Vybzzz" class="nav__logo" />
         <span>Vybzzz</span>
       </a>
-      <button class="nav__search" data-cursor="hover" aria-label="Rechercher">
-        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="none" stroke="currentColor" stroke-width="2" d="M21 21l-4.3-4.3M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"/></svg>
-        <input placeholder="Rechercher un artiste, un live…" />
-      </button>
-      <nav class="nav__links">${links}</nav>
+      <nav class="nav__links" style="margin-left:auto">${links}</nav>
       <div class="nav__cta">
-        <a href="artist.html" class="btn btn--ghost" data-cursor="hover">Devenir artiste</a>
-        <a href="checkout.html" class="btn btn--gold magnetic" data-cursor="hover"><span>Rejoindre</span></a>
+        <a href="dashboard.html" class="btn btn--ghost" data-cursor="hover">Se connecter</a>
+        <a href="artist.html" class="btn btn--gold magnetic" data-cursor="hover"><span>Postuler</span></a>
       </div>
       <button class="nav__burger" id="burger" aria-label="Menu"><i></i><i></i><i></i></button>
     </header>`;

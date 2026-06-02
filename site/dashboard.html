@@ -17,70 +17,101 @@
 <div class="scroll-progress" id="scrollProgress"></div>
 <div id="site-header"></div>
 
-<main class="page">
-  <div class="page__head reveal" style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap">
-    <div>
-      <span class="eyebrow">Studio Pro</span>
-      <h1>Bonsoir, <span class="grad">NOVA</span> 🎤</h1>
-      <p>Voici tes performances des 7 derniers jours.</p>
+<div class="dash-layout">
+  <!-- Sidebar -->
+  <aside class="side glass">
+    <div class="side__profile">
+      <img src="assets/artist_image1.png" alt="" />
+      <div><b>NOVA <svg class="verif" viewBox="0 0 24 24" width="13" height="13"><path fill="#c6a75e" d="M12 1l2.6 1.9 3.2-.3 1 3 2.7 1.8-1 3 1 3-2.7 1.8-1 3-3.2-.3L12 23l-2.6-1.9-3.2.3-1-3L2.5 14.6l1-3-1-3 2.7-1.8 1-3 3.2.3L12 1z"/><path fill="#0b0e14" d="M10.6 14.6l-2-2-1.2 1.2 3.2 3.2 5.4-5.4-1.2-1.2z"/></svg></b><small>★ Artiste Fondateur</small></div>
     </div>
-    <a href="#withdraw" class="btn btn--gold magnetic" data-cursor="hover"><span>Retirer mes gains</span></a>
-  </div>
+    <nav class="side__nav" id="sideNav">
+      <button class="on" data-p="overview"><span class="ic">📊</span> Vue d'ensemble</button>
+      <button data-p="events"><span class="ic">🎫</span> Mes événements</button>
+      <button data-p="create"><span class="ic">➕</span> Créer un live</button>
+      <button data-p="revenue"><span class="ic">💰</span> Revenus</button>
+      <button data-p="withdraw"><span class="ic">🏦</span> Retraits</button>
+      <button data-p="profile"><span class="ic">👤</span> Profil</button>
+    </nav>
+    <a href="#" class="btn btn--gold side__live" id="goLive" data-cursor="hover"><span>🔴 Passer en live</span></a>
+  </aside>
 
-  <!-- KPIs -->
-  <div class="dash-grid">
-    <div class="kpi glass reveal">
-      <div class="kpi__label"><span class="kpi__icon">🎟️</span> Tickets vendus</div>
-      <div class="kpi__val" data-count="1284">0</div>
-      <div class="kpi__delta up">▲ 18% vs sem. dern.</div>
-    </div>
-    <div class="kpi glass reveal">
-      <div class="kpi__label"><span class="kpi__icon">💰</span> Revenu total</div>
-      <div class="kpi__val" data-count="8140" data-prefix="$">0</div>
-      <div class="kpi__delta up">▲ 32% vs sem. dern.</div>
-    </div>
-    <div class="kpi glass reveal">
-      <div class="kpi__label"><span class="kpi__icon">👁</span> Spectateurs</div>
-      <div class="kpi__val" data-count="46200">0</div>
-      <div class="kpi__delta up">▲ 9% vs sem. dern.</div>
-    </div>
-    <div class="kpi glass reveal">
-      <div class="kpi__label"><span class="kpi__icon">🪙</span> Arena Points gagnés</div>
-      <div class="kpi__val" data-count="312500">0</div>
-      <div class="kpi__delta down">▼ 3% vs sem. dern.</div>
-    </div>
-  </div>
-
-  <div class="dash-cols">
-    <!-- Revenue chart + transactions -->
-    <div>
-      <div class="panel glass reveal">
+  <!-- Panels -->
+  <main>
+    <!-- Vue d'ensemble -->
+    <section class="dpanel active" data-panel="overview">
+      <div class="dpanel__head"><h2>Bonsoir, NOVA 🎤</h2><span style="color:var(--muted);font-size:.88rem">7 derniers jours</span></div>
+      <div class="dash-grid">
+        <div class="kpi glass"><div class="kpi__label"><span class="kpi__icon">🎫</span> Tickets vendus</div><div class="kpi__val" data-count="1284">0</div><div class="kpi__delta up">▲ 18%</div></div>
+        <div class="kpi glass"><div class="kpi__label"><span class="kpi__icon">💰</span> Revenu total</div><div class="kpi__val" data-count="8140" data-prefix="$">0</div><div class="kpi__delta up">▲ 32%</div></div>
+        <div class="kpi glass"><div class="kpi__label"><span class="kpi__icon">👁</span> Spectateurs</div><div class="kpi__val" data-count="46200">0</div><div class="kpi__delta up">▲ 9%</div></div>
+        <div class="kpi glass"><div class="kpi__label"><span class="kpi__icon">🪙</span> Arena Points</div><div class="kpi__val" data-count="312500">0</div><div class="kpi__delta down">▼ 3%</div></div>
+      </div>
+      <div class="panel glass">
         <div class="panel__head"><h3>Croissance des revenus</h3><span class="kpi__delta up">▲ 32%</span></div>
-        <div class="chart">
-          <svg viewBox="0 0 600 200" preserveAspectRatio="none">
-            <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6a75e" stop-opacity=".5"/><stop offset="1" stop-color="#c6a75e" stop-opacity="0"/></linearGradient></defs>
-            <path class="area" fill="url(#ga)" d="M0,170 C70,150 110,120 170,130 C240,142 280,80 350,70 C420,60 470,30 540,40 L600,30 L600,200 L0,200 Z"/>
-            <path class="line" fill="none" stroke="#e9cf8f" stroke-width="3" stroke-linecap="round" d="M0,170 C70,150 110,120 170,130 C240,142 280,80 350,70 C420,60 470,30 540,40 L600,30"/>
-          </svg>
-        </div>
+        <div class="chart"><svg viewBox="0 0 600 200" preserveAspectRatio="none"><defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6a75e" stop-opacity=".5"/><stop offset="1" stop-color="#c6a75e" stop-opacity="0"/></linearGradient></defs><path class="area" fill="url(#ga)" d="M0,170 C70,150 110,120 170,130 C240,142 280,80 350,70 C420,60 470,30 540,40 L600,30 L600,200 L0,200 Z"/><path class="line" fill="none" stroke="#e9cf8f" stroke-width="3" stroke-linecap="round" d="M0,170 C70,150 110,120 170,130 C240,142 280,80 350,70 C420,60 470,30 540,40 L600,30"/></svg></div>
         <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:.78rem;margin-top:6px"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
       </div>
+    </section>
 
-      <div class="panel glass reveal" style="margin-top:18px">
-        <div class="panel__head"><h3>Transactions récentes</h3><a href="#" style="color:var(--gold-2);font-size:.85rem" data-cursor="hover">Tout voir</a></div>
-        <div class="txn"><div class="txn__ic">🎟️</div><div class="txn__t"><b>Ventes de tickets — Afro Night</b><small>2 fév. · 312 tickets</small></div><div class="txn__amt plus">+$1 240</div></div>
+    <!-- Mes événements -->
+    <section class="dpanel" data-panel="events">
+      <div class="dpanel__head"><h2>Mes événements</h2><button class="btn btn--gold" data-goto="create" data-cursor="hover"><span>➕ Nouveau live</span></button></div>
+      <div class="ev-list">
+        <article class="ev-card"><div class="ev-card__top"><img src="assets/artist_image2.png" alt=""><span class="ev-card__st badge-live"><span class="pulse-dot"></span>LIVE</span></div><div class="ev-card__b"><h4>Afro Night — Lagos</h4><small>En direct · 8 243 spectateurs</small><div class="ev-card__row"><b>$4.99</b><span style="color:var(--muted);font-size:.8rem">312 tickets</span></div></div></article>
+        <article class="ev-card"><div class="ev-card__top"><img src="assets/background5.png" alt=""><span class="ev-card__st badge-soon">Ce soir 21:00</span></div><div class="ev-card__b"><h4>Acoustic Session</h4><small>Programmé · Afrobeats</small><div class="ev-card__row"><b>Gratuit</b><span style="color:var(--muted);font-size:.8rem">0 ticket</span></div></div></article>
+        <article class="ev-card"><div class="ev-card__top"><img src="assets/artist_image3.png" alt=""><span class="ev-card__st badge-soon">Sam. 20:00</span></div><div class="ev-card__b"><h4>Amapiano Sunset</h4><small>Programmé · Amapiano</small><div class="ev-card__row"><b>$1.99</b><span style="color:var(--muted);font-size:.8rem">54 tickets</span></div></div></article>
+        <article class="ev-card" style="opacity:.6"><div class="ev-card__top"><img src="assets/artist_image4.png" alt=""><span class="ev-card__st badge-soon" style="background:rgba(0,0,0,.7)">Terminé</span></div><div class="ev-card__b"><h4>Launch Party</h4><small>28 janv. · 12 480 vues</small><div class="ev-card__row"><b>$2.99</b><span style="color:var(--muted);font-size:.8rem">920 tickets</span></div></div></article>
+      </div>
+    </section>
+
+    <!-- Créer un live -->
+    <section class="dpanel" data-panel="create">
+      <div class="dpanel__head"><h2>Créer un live</h2></div>
+      <div class="panel glass" style="max-width:620px">
+        <div class="field"><label>Nom de l'événement</label><input id="cName" placeholder="Ex. Afro Night — Live depuis Lagos" /></div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap">
+          <div class="field" style="flex:1;min-width:160px"><label>Genre</label><select><option>Afrobeats</option><option>Hip-Hop</option><option>R&B / Soul</option><option>Amapiano</option><option>Électro</option><option>House</option><option>Pop</option><option>Jazz</option></select></div>
+          <div class="field" style="flex:1;min-width:160px"><label>Date & heure</label><input type="datetime-local" /></div>
+        </div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap">
+          <div class="field" style="flex:1;min-width:160px"><label>Prix du ticket ($)</label><input inputmode="decimal" placeholder="0.00 = gratuit" /></div>
+          <div class="field" style="flex:1;min-width:160px"><label>Capacité max</label><input inputmode="numeric" placeholder="Illimité" /></div>
+        </div>
+        <div class="field"><label>Description</label><textarea rows="3" placeholder="Présente ton show…"></textarea></div>
+        <div class="toggle-row"><div><b>Live privé</b><small>Sur invitation uniquement</small></div><label class="switch"><input type="checkbox"><span></span></label></div>
+        <div class="toggle-row"><div><b>Chat en direct</b><small>Les spectateurs peuvent écrire</small></div><label class="switch"><input type="checkbox" checked><span></span></label></div>
+        <button class="btn btn--gold" id="publishEvent" data-cursor="hover" style="width:100%;margin-top:16px"><span>Publier l'événement</span></button>
+      </div>
+    </section>
+
+    <!-- Revenus -->
+    <section class="dpanel" data-panel="revenue">
+      <div class="dpanel__head"><h2>Revenus</h2></div>
+      <div class="dash-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+        <div class="kpi glass"><div class="kpi__label">Solde disponible</div><div class="kpi__val grad" data-count="6720" data-prefix="$">$0</div><small style="color:var(--muted)">Prêt pour versement</small></div>
+        <div class="kpi glass"><div class="kpi__label">Cadeaux reçus (mois)</div><div class="kpi__val" data-count="2410" data-prefix="$">$0</div></div>
+        <div class="kpi glass"><div class="kpi__label">Billets (mois)</div><div class="kpi__val" data-count="1240" data-prefix="$">$0</div></div>
+      </div>
+      <div class="panel glass" style="margin-top:18px">
+        <div class="panel__head"><h3>Transactions</h3></div>
+        <div class="txn"><div class="txn__ic">🎫</div><div class="txn__t"><b>Ventes de tickets — Afro Night</b><small>2 fév. · 312 tickets</small></div><div class="txn__amt plus">+$1 240</div></div>
         <div class="txn"><div class="txn__ic">🎁</div><div class="txn__t"><b>Cadeaux reçus</b><small>1 fév. · 48 200 PTS</small></div><div class="txn__amt plus">+$2 410</div></div>
         <div class="txn"><div class="txn__ic">🏦</div><div class="txn__t"><b>Versement bancaire</b><small>28 janv. · Chase Business</small></div><div class="txn__amt minus">−$5 000</div></div>
         <div class="txn"><div class="txn__ic">🎁</div><div class="txn__t"><b>Pourboires en direct</b><small>27 janv.</small></div><div class="txn__amt plus">+$980</div></div>
       </div>
-    </div>
+      <div class="panel glass" style="margin-top:18px">
+        <div class="panel__head"><h3>Méthodes de versement</h3></div>
+        <div class="payout"><span class="pico">🏦</span><div><b>Chase Business</b><small>Compte •••• 4291</small></div><span class="pill">Principal</span></div>
+        <button class="stripe-btn" id="stripeConnect" data-cursor="hover"><span class="stripe-logo">stripe</span> Connecter Stripe pour des versements instantanés →</button>
+      </div>
+    </section>
 
-    <!-- Withdraw + payouts -->
-    <div>
-      <div class="panel glass reveal" id="withdraw">
-        <div class="panel__head"><h3>Solde disponible</h3></div>
+    <!-- Retraits -->
+    <section class="dpanel" data-panel="withdraw">
+      <div class="dpanel__head"><h2>Retirer mes gains</h2></div>
+      <div class="panel glass" style="max-width:520px">
+        <div class="kpi__label">Solde disponible</div>
         <div style="font-family:'Sora';font-weight:800;font-size:2.4rem" class="grad" data-count="6720" data-prefix="$">$0</div>
-        <small style="color:var(--muted)">Prêt pour versement</small>
         <div class="withdraw-pills" id="wpills">
           <button data-v="100" data-cursor="hover">$100</button>
           <button data-v="500" data-cursor="hover">$500</button>
@@ -88,40 +119,49 @@
           <button data-v="6720" data-cursor="hover">Tout</button>
         </div>
         <div class="field"><label>Montant du retrait</label><input id="wamount" type="text" value="$500" /></div>
-        <div class="field"><label>Méthode de versement</label>
-          <select><option>Chase Business · •••• 4291 (Principal)</option><option>Stripe · connecté</option></select>
-        </div>
+        <div class="field"><label>Méthode</label><select><option>Chase Business · •••• 4291 (Principal)</option><option>Stripe · connecté</option></select></div>
         <button class="btn btn--gold" id="wconfirm" data-cursor="hover" style="width:100%"><span>Confirmer le retrait</span></button>
       </div>
+    </section>
 
-      <div class="panel glass reveal" style="margin-top:18px">
-        <div class="panel__head"><h3>Méthodes de versement</h3></div>
-        <div class="payout"><span class="pico">🏦</span><div><b>Chase Business</b><small>Compte •••• 4291</small></div><span class="pill">Principal</span></div>
-        <button class="stripe-btn" id="stripeConnect" data-cursor="hover"><span class="stripe-logo">stripe</span> Connecter Stripe pour des versements instantanés →</button>
+    <!-- Profil -->
+    <section class="dpanel" data-panel="profile">
+      <div class="dpanel__head"><h2>Profil artiste</h2></div>
+      <div class="panel glass" style="max-width:560px">
+        <div class="field"><label>Nom de scène</label><input value="NOVA" /></div>
+        <div class="field"><label>Genre principal</label><select><option>Afrobeats</option><option>Hip-Hop</option><option>R&B / Soul</option><option>Pop</option></select></div>
+        <div class="field"><label>Bio</label><textarea rows="3">Artiste afrobeats basé à Lagos. Live energy, every night.</textarea></div>
+        <div class="field"><label>Réseaux</label><input value="@nova" /></div>
+        <button class="btn btn--gold" id="saveProfile" data-cursor="hover"><span>Enregistrer</span></button>
       </div>
-    </div>
-  </div>
-</main>
+    </section>
+  </main>
+</div>
 
 <div id="site-footer"></div>
 <script src="data.js"></script>
 <script src="app.js"></script>
 <script>
-  (function(){
-    var UI = window.VYBZZZ_UI || {toast:function(m){alert(m)}};
-    var pills = document.getElementById("wpills");
-    var amount = document.getElementById("wamount");
-    pills && pills.addEventListener("click", function(e){
-      var b = e.target.closest("button"); if(!b) return;
-      pills.querySelectorAll("button").forEach(function(x){x.classList.remove("on")});
-      b.classList.add("on");
-      amount.value = "$" + Number(b.dataset.v).toLocaleString("fr-FR");
-    });
-    var conf = document.getElementById("wconfirm");
-    conf && conf.addEventListener("click", function(){ UI.toast("Retrait de "+amount.value+" demandé · versement sous 24h ✓"); });
-    var stripe = document.getElementById("stripeConnect");
-    stripe && stripe.addEventListener("click", function(){ UI.toast("Redirection vers Stripe Connect… (maquette)"); });
-  })();
+(function(){
+  var UI = window.VYBZZZ_UI || {toast:function(m){alert(m)}};
+  var nav = document.getElementById("sideNav");
+  var panels = document.querySelectorAll(".dpanel");
+  function show(p){
+    panels.forEach(function(x){ x.classList.toggle("active", x.dataset.panel===p); });
+    nav.querySelectorAll("button").forEach(function(b){ b.classList.toggle("on", b.dataset.p===p); });
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+  nav.addEventListener("click", function(e){ var b=e.target.closest("button[data-p]"); if(b) show(b.dataset.p); });
+  document.querySelectorAll("[data-goto]").forEach(function(el){ el.addEventListener("click", function(){ show(el.dataset.goto); }); });
+
+  var pills=document.getElementById("wpills"), amount=document.getElementById("wamount");
+  pills && pills.addEventListener("click", function(e){ var b=e.target.closest("button"); if(!b)return; pills.querySelectorAll("button").forEach(function(x){x.classList.remove("on")}); b.classList.add("on"); amount.value="$"+Number(b.dataset.v).toLocaleString("fr-FR"); });
+  var c=document.getElementById("wconfirm"); c && c.addEventListener("click", function(){ UI.toast("Retrait de "+amount.value+" demandé · versement sous 24h ✓"); });
+  var s=document.getElementById("stripeConnect"); s && s.addEventListener("click", function(){ UI.toast("Redirection vers Stripe Connect… (maquette)"); });
+  var p=document.getElementById("publishEvent"); p && p.addEventListener("click", function(){ var n=document.getElementById("cName").value||"Ton événement"; UI.toast("« "+n+" » publié 🎉"); });
+  var sp=document.getElementById("saveProfile"); sp && sp.addEventListener("click", function(){ UI.toast("Profil enregistré ✓"); });
+  var gl=document.getElementById("goLive"); gl && gl.addEventListener("click", function(e){ e.preventDefault(); UI.toast("Lancement du live… ouvre l'app pour diffuser 📱"); });
+})();
 </script>
 </body>
 </html>

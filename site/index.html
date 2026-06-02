@@ -4,8 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0b0e14" />
-<title>Vybzzz — Concerts en direct, cadeaux & billetterie</title>
-<meta name="description" content="Vybzzz : la scène live qui ne dort jamais. Regarde des concerts en direct, envoie des cadeaux, achète tes tickets." />
+<title>Vybzzz — Programme Artistes Fondateurs</title>
+<meta name="description" content="Deviens l'un des 24 artistes fondateurs de Vybzzz : studio pro, revenus, mise en avant prioritaire. Candidate et signe ton contrat." />
 <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
 <link rel="icon" type="image/png" href="assets/logo.png" />
@@ -18,41 +18,96 @@
 <div class="scroll-progress" id="scrollProgress"></div>
 <div id="site-header"></div>
 
-<!-- Hero compact -->
-<section class="home-hero">
+<!-- ===== Hero recrutement ===== -->
+<section class="rec-hero">
   <div class="reveal">
-    <span class="home-hero__badge"><span class="pulse-dot"></span> 12 480 personnes en live maintenant</span>
-    <h1>La scène qui ne dort <span class="grad">jamais.</span></h1>
-    <p>Regarde des concerts en direct, envoie des cadeaux pendant le show et revis tout en replay. La home, comme un fil vidéo — découvre ou plonge dans le feed.</p>
-    <div class="home-hero__actions">
-      <a href="feed.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span>▶ Ouvrir le feed</span></a>
-      <a href="store.html" class="btn btn--outline btn--lg magnetic" data-cursor="hover"><span>Recharger des Arena Points</span></a>
+    <span class="rec-hero__badge">✦ Programme Fondateurs · Lancement 2026</span>
+    <h1>Deviens l'un des <span class="grad">24 artistes fondateurs</span> de Vybzzz.</h1>
+    <p class="lead">Avant le lancement public de l'app, on sélectionne <strong>24 artistes</strong> pour bâtir le contenu des premiers lives. Studio pro, revenus dès le jour 1, et une mise en avant qu'aucun artiste arrivé plus tard n'aura.</p>
+    <div class="rec-hero__actions">
+      <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span>Postuler maintenant</span></a>
+      <a href="dashboard.html" class="btn btn--outline btn--lg magnetic" data-cursor="hover"><span>Voir le Studio Pro</span></a>
+    </div>
+    <div class="spots">
+      <div class="spots__row"><b><em id="spotsTaken">7</em> / 24 places prises</b><small id="spotsLeft">17 places restantes</small></div>
+      <div class="spots__bar"><i class="spots__fill" id="spotsFill"></i></div>
     </div>
   </div>
-  <div class="home-hero__media reveal" data-cursor="hover">
-    <img src="assets/artist_image3.png" alt="Live en cours" />
-    <a href="feed.html" class="feed-cta badge-live"><span class="pulse-dot"></span>LIVE</a>
-    <div class="home-hero__tag">
-      <img src="assets/artist_image1.png" alt="" />
-      <div><b>Kairo · Cypher 16</b><small>12K spectateurs · Hip-Hop</small></div>
+
+  <div class="rec-hero__visual reveal">
+    <div class="rec-hero__card glass">
+      <div class="founder-grid" id="founderGrid"></div>
+      <p class="rec-hero__cap">Les 24 sièges fondateurs — chaque place signée crée du contenu pour l'app.</p>
     </div>
   </div>
 </section>
 
-<main class="page" style="padding-top:14px">
-  <!-- Featured artists -->
-  <h2 class="section-title">Artistes vedettes</h2>
-  <div class="artists-row" id="artistsRow"></div>
+<main class="page" style="padding-top:30px">
+  <!-- ===== Avantages ===== -->
+  <div class="page__head reveal" id="avantages">
+    <span class="eyebrow">Ce que tu obtiens</span>
+    <h1>Le deal <span class="grad">fondateur</span>.</h1>
+    <p>Des avantages réservés aux 24 premiers, pensés pour te faire gagner de l'argent et de la visibilité dès le départ.</p>
+  </div>
+  <div class="benefits">
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">💰</div><h3>Revenus dès le live 1</h3><p>Cadeaux virtuels, billetterie et pourboires reversés à ton wallet. Conditions préférentielles fondateur sur la commission.</p></article>
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🎛️</div><h3>Studio Pro complet</h3><p>Crée tes événements, passe en live, modère le chat et suis tes stats — depuis le web ou l'app.</p></article>
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🚀</div><h3>Mise en avant prioritaire</h3><p>Page d'accueil, notifications de lancement et badge « Artiste Fondateur » à vie sur ton profil.</p></article>
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🏦</div><h3>Retraits simples</h3><p>Versements via Stripe ou compte bancaire, paliers flexibles, délai moyen 24h.</p></article>
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🤝</div><h3>Accompagnement dédié</h3><p>Un interlocuteur t'aide à préparer tes premiers lives et à grandir ton audience.</p></article>
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">👑</div><h3>Statut Fondateur à vie</h3><p>Tu fais partie des 24 qui ont lancé Vybzzz. Ça ne se reprend pas.</p></article>
+  </div>
 
-  <!-- Category chips -->
-  <div class="chips" id="cats"></div>
+  <!-- ===== Studio preview ===== -->
+  <h2 class="section-title" style="margin-top:60px">Ton tableau de bord artiste</h2>
+  <div class="studio-preview">
+    <div class="reveal">
+      <p style="color:var(--muted);max-width:420px;margin-bottom:18px">Tout est déjà là : revenus en temps réel, ventes de tickets, cadeaux reçus, et retraits. Le même outil que tu utiliseras au quotidien.</p>
+      <a href="dashboard.html" class="btn btn--gold magnetic" data-cursor="hover"><span>Explorer le Studio Pro →</span></a>
+    </div>
+    <div class="studio-preview__frame reveal tilt" data-cursor="hover">
+      <div class="studio-preview__bar"><span></span><span></span><span></span></div>
+      <div class="studio-preview__body">
+        <div class="mini-kpis">
+          <div class="mini-kpi"><b>$8 140</b><small>Revenu 7j</small></div>
+          <div class="mini-kpi"><b>1 284</b><small>Tickets</small></div>
+          <div class="mini-kpi"><b>312K</b><small>Arena Points</small></div>
+        </div>
+        <div class="mini-chart"><i style="height:35%"></i><i style="height:55%"></i><i style="height:42%"></i><i style="height:70%"></i><i style="height:60%"></i><i style="height:85%"></i><i style="height:100%"></i></div>
+      </div>
+    </div>
+  </div>
 
-  <!-- Video grid -->
-  <div class="video-grid" id="videoGrid"></div>
+  <!-- ===== How it works ===== -->
+  <h2 class="section-title" style="margin-top:64px">Comment rejoindre les 24</h2>
+  <div class="steps">
+    <div class="step reveal"><span class="step__n">01</span><h3>Candidate</h3><p>Remplis le formulaire artiste (2 min) : nom de scène, genre, expérience.</p></div>
+    <div class="step reveal"><span class="step__n">02</span><h3>Signe le contrat</h3><p>Télécharge le contrat fondateur en PDF, signe-le et accepte les conditions.</p></div>
+    <div class="step reveal"><span class="step__n">03</span><h3>Passe en live</h3><p>On valide ton profil, on configure ton studio, et tu crées ton premier événement.</p></div>
+  </div>
 </main>
+
+<!-- ===== CTA ===== -->
+<section class="cta-band">
+  <div class="cta-band__inner reveal">
+    <h2>Il reste <span class="grad" id="ctaLeft">17</span> places.</h2>
+    <p>Une fois les 24 signés, le programme fondateur ferme. On lance l'app, et le site complet ouvre au public.</p>
+    <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span>Réserver ma place fondateur</span></a>
+  </div>
+</section>
 
 <div id="site-footer"></div>
 <script src="data.js"></script>
 <script src="app.js"></script>
+<script>
+  (function(){
+    var taken = 7, total = 24, left = total - taken;
+    var g = document.getElementById("founderGrid");
+    if (g){ var h=""; for(var i=1;i<=total;i++){ h += '<div class="founder-slot '+(i<=taken?"taken":"free")+'">'+(i<=taken?"★":i)+'</div>'; } g.innerHTML = h; }
+    var sl=document.getElementById("spotsLeft"); if(sl) sl.textContent = left+" places restantes";
+    var cl=document.getElementById("ctaLeft"); if(cl) cl.textContent = left;
+    var fill=document.getElementById("spotsFill"); if(fill){ setTimeout(function(){ fill.style.width = (taken/total*100)+"%"; }, 400); }
+  })();
+</script>
 </body>
 </html>
