@@ -1,11 +1,16 @@
 import 'package:artist/Global/colors.dart';
-import 'package:artist/Global/global.dart';
 import 'package:artist/Models/susbcription_model.dart';
-import 'package:artist/widgets/my_button.dart';
-import 'package:artist/widgets/my_default_text.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
+/// Bright blue used for the featured (Founder) glow + "BEST VALUE" ribbon.
+const Color _featuredBlue = Color(0xff2E9BFF);
+
+/// Premium subscription card (VYBZZZ "Choose your plan" style).
+///
+/// Per-plan background image (assets/plan_<key>.png) under a dark gradient for
+/// legibility; falls back to a clean gradient if the asset is missing. Founder
+/// gets a blue glow + diagonal "BEST VALUE" ribbon, plus the live seat counter
+/// and struck-through public price anchor sent by the backend.
 class SubscriptionCard extends StatelessWidget {
   final Subscription subscription;
   final bool showButton;
@@ -20,258 +25,351 @@ class SubscriptionCard extends StatelessWidget {
     this.purchasedDate,
   });
 
+  bool get _featured =>
+      (subscription.isFounder ?? false) ||
+      (subscription.badge != null && subscription.badge!.isNotEmpty);
+
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Get.isDarkMode;
-    final Color accentColor = isDark ? goldPrimary : mainThemeColor;
+    final key = _planKey(subscription.title);
+    final Color border = _featured ? _featuredBlue : goldSecondary;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
-        color: isDark ? darkmodeColor : whiteColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: accentColor.withValues(alpha: 0.25),
-          width: 1.2,
-        ),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withValues(alpha: 0.08),
-            blurRadius: 16,
+            color: (_featured ? _featuredBlue : goldPrimary).withValues(
+              alpha: _featured ? 0.35 : 0.12,
+            ),
+            blurRadius: _featured ? 22 : 14,
+            spreadRadius: _featured ? 1 : 0,
             offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header gradient strip ──────────────────────────────────
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [accentColor, accentColor.withValues(alpha: 0.75)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(19),
-              ),
-              border: Border.all(
-                color: Get.isDarkMode ? goldPrimary : mainThemeColor,
-                width: 1.5,
-              ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          decoration: BoxDecoration(
+            color: midnightSecondary,
+            border: Border.all(
+              color: border.withValues(alpha: _featured ? 0.9 : 0.45),
+              width: _featured ? 2 : 1.2,
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title
-                Expanded(
-                  child: Text(
-                    subscription.title ?? 'N/A',
-                    style: const TextStyle(
-                      color: whiteColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ),
-                // Price + billing cycle column
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // Ancrage prix public (ex: 199) barré au-dessus du prix Founder
-                    if (subscription.publicPrice != null &&
-                        subscription.publicPrice!.isNotEmpty)
-                      Text(
-                        '\$${subscription.publicPrice}',
-                        style: TextStyle(
-                          color: whiteColor.withValues(alpha: 0.7),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.lineThrough,
-                        ),
-                      ),
-                    Text(
-                      '\$${subscription.price ?? '0'}',
-                      style: const TextStyle(
-                        color: whiteColor,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 22,
-                      ),
-                    ),
-                    Text(
-                      _billingLabel(subscription.priceType),
-                      style: TextStyle(
-                        color: whiteColor.withValues(alpha: 0.85),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            borderRadius: BorderRadius.circular(22),
           ),
-
-          // ── Body ──────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Commission row
-                Row(
-                  children: [
-                    Icon(Icons.percent_rounded, size: 16, color: accentColor),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: TextStyle(
-                            color: isDark ? whiteColor : blackColor,
-                            fontSize: 13.5,
-                          ),
-                          children: [
-                            const TextSpan(
-                              text: 'Commission: ',
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                            TextSpan(
-                              text:
-                                  '${subscription.commission ?? '0'}% ${_commissionTypeLabel(subscription.commissionType)} commission on every transaction',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+          child: Stack(
+            children: [
+              // ── Background image (right-weighted) + dark gradient overlay ──
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/plan_$key.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.centerRight,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 ),
-
-                // ── Founder launch: badge + live seat counter (only when the
-                //    backend marks the plan as Founder; otherwise no-op) ──────
-                if (subscription.badge != null &&
-                    subscription.badge!.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: accentColor),
-                    ),
-                    child: Text(
-                      subscription.badge!,
-                      style: TextStyle(
-                        color: accentColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                      ),
+              ),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        midnightSecondary.withValues(alpha: 0.97),
+                        midnightSecondary.withValues(alpha: 0.62),
+                      ],
                     ),
                   ),
-                ],
-                if ((subscription.isFounder ?? false) &&
-                    subscription.seatsRemaining != null) ...[
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      const Text('🔥', style: TextStyle(fontSize: 14)),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          _founderCounterLabel(subscription),
-                          style: TextStyle(
-                            color: isDark ? whiteColor : blackColor,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                ),
+              ),
+
+              // ── Content ──
+              Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _headerRow(key),
+                    const SizedBox(height: 14),
+                    _commissionRow(),
+                    if (_featured) ...[
+                      const SizedBox(height: 10),
+                      _seatCounter(),
                     ],
-                  ),
-                ],
+                    if (purchasedDate != null) ...[
+                      const SizedBox(height: 10),
+                      _purchasedRow(),
+                    ],
+                    if (showButton) ...[
+                      const SizedBox(height: 16),
+                      _chooseButton(),
+                    ],
+                  ],
+                ),
+              ),
 
-                purchasedDate != null
-                    ? SizedBox(
-                        child: Column(
-                          mainAxisSize: .min,
-                          children: [
-                            height(0.01),
-
-                            Row(
-                              mainAxisAlignment: .spaceBetween,
-                              children: [
-                                MyDefaultText(
-                                  text: 'Purchased On:',
-                                  color: Get.isDarkMode
-                                      ? whiteColor
-                                      : blackColor,
-                                ),
-                                MyDefaultText(
-                                  text: purchasedDate!,
-                                  color: Get.isDarkMode
-                                      ? whiteColor
-                                      : blackColor,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      )
-                    : SizedBox.shrink(),
-
-                if (showButton) const SizedBox(height: 8),
-
-                // Artists count row
-                // if (subscription.artistsCount != null &&
-                //     subscription.artistsCount!.isNotEmpty) ...[
-                //   Row(
-                //     children: [
-                //       Icon(Icons.people_outline, size: 16, color: accentColor),
-                //       const SizedBox(width: 6),
-                //       Text(
-                //         'Up to ${subscription.artistsCount} artists',
-                //         style: TextStyle(
-                //           color: isDark
-                //               ? whiteColor.withValues(alpha: 0.75)
-                //               : const Color(0xff555555),
-                //           fontSize: 13,
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                //   const SizedBox(height: 8),
-                // ],
-
-                // Divider
-                // if (showButton)
-                //   Divider(
-                //     color: Get.isDarkMode
-                //         ? whiteColor.withValues(alpha: 0.5)
-                //         : blackColor.withValues(alpha: 0.5),
-                //     thickness: 1,
-                //   ),
-                const SizedBox(height: 8),
-
-                // Purchase button
-                if (showButton)
-                  MyButton(
-                    label: 'Continue',
-                    onTap: onPurchaseTap ?? () {},
-                    buttonHeight: Get.height * 0.05,
-                  ),
-              ],
-            ),
+              // ── Diagonal "BEST VALUE" ribbon ──
+              if (subscription.badge != null &&
+                  subscription.badge!.isNotEmpty)
+                _ribbon(subscription.badge!),
+            ],
           ),
-        ],
+        ),
       ),
     );
+  }
+
+  Widget _headerRow(String key) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Plan icon hexure
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: goldPrimary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: goldSecondary.withValues(alpha: 0.7)),
+          ),
+          child: Icon(_planIcon(key), color: goldPrimary, size: 26),
+        ),
+        const SizedBox(width: 12),
+        // Title + subtitle
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                subscription.title ?? 'N/A',
+                style: const TextStyle(
+                  color: ivory,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _planSubtitle(key),
+                style: TextStyle(
+                  color: goldPrimary.withValues(alpha: 0.9),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Price
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (subscription.publicPrice != null &&
+                subscription.publicPrice!.isNotEmpty)
+              Text(
+                '\$${subscription.publicPrice}',
+                style: TextStyle(
+                  color: textMuted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  decoration: TextDecoration.lineThrough,
+                ),
+              ),
+            Text(
+              '\$${subscription.price ?? '0'}',
+              style: const TextStyle(
+                color: whiteColor,
+                fontWeight: FontWeight.w900,
+                fontSize: 26,
+              ),
+            ),
+            Text(
+              _billingLabel(subscription.priceType),
+              style: TextStyle(
+                color: textMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _commissionRow() {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: goldPrimary.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(Icons.percent_rounded, size: 14, color: goldPrimary),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(color: ivory, fontSize: 13.5),
+              children: [
+                TextSpan(
+                  text: '${subscription.commission ?? '0'}% commission',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                TextSpan(
+                  text: ' on every transaction',
+                  style: TextStyle(color: textMuted),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _seatCounter() {
+    if (subscription.seatsRemaining == null) return const SizedBox.shrink();
+    return Row(
+      children: [
+        const Text('🔥', style: TextStyle(fontSize: 14)),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            _founderCounterLabel(subscription),
+            style: TextStyle(
+              color: _featuredBlue,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _purchasedRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text('Purchased on', style: TextStyle(color: textMuted, fontSize: 13)),
+        Text(
+          purchasedDate!,
+          style: const TextStyle(
+            color: ivory,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _chooseButton() {
+    return GestureDetector(
+      onTap: onPurchaseTap ?? () {},
+      child: Container(
+        width: double.infinity,
+        height: 50,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [goldPrimary, goldSecondary],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            const Text(
+              'CHOOSE PLAN',
+              style: TextStyle(
+                color: midnightPrimary,
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                letterSpacing: 0.8,
+              ),
+            ),
+            Positioned(
+              right: 16,
+              child: Icon(
+                Icons.arrow_forward_rounded,
+                color: midnightPrimary,
+                size: 20,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _ribbon(String text) {
+    return Positioned(
+      top: 16,
+      right: -34,
+      child: Transform.rotate(
+        angle: 0.7853981, // 45°
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 5),
+          color: _featuredBlue,
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: whiteColor,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  String _planKey(String? title) {
+    final t = (title ?? '').toLowerCase();
+    if (t.contains('founder')) return 'founder';
+    if (t.contains('growth')) return 'growth';
+    if (t.contains('elite')) return 'elite';
+    return 'starter';
+  }
+
+  IconData _planIcon(String key) {
+    switch (key) {
+      case 'founder':
+        return Icons.star_rounded;
+      case 'growth':
+        return Icons.trending_up_rounded;
+      case 'elite':
+        return Icons.workspace_premium_rounded;
+      default:
+        return Icons.bolt_rounded;
+    }
+  }
+
+  String _planSubtitle(String key) {
+    switch (key) {
+      case 'founder':
+        return 'LIMITED TIME OFFER';
+      case 'growth':
+        return 'GROW YOUR AUDIENCE';
+      case 'elite':
+        return 'BEST FOR SCALING';
+      default:
+        return 'START EASILY';
+    }
   }
 
   /// "63/200 places restantes · +\$149 dans 13"
@@ -287,25 +385,12 @@ class SubscriptionCard extends StatelessWidget {
 
   String _billingLabel(String? priceType) {
     switch (priceType?.toLowerCase()) {
-      case 'monthly':
-        return '/ month';
       case 'yearly':
         return '/ year';
       case 'weekly':
         return '/ week';
       default:
         return '/ month';
-    }
-  }
-
-  String _commissionTypeLabel(String? type) {
-    switch (type?.toLowerCase()) {
-      case 'fixed':
-        return 'fixed';
-      case 'percentage':
-        return '';
-      default:
-        return '';
     }
   }
 }

@@ -274,17 +274,15 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Get.isDarkMode;
-
     return Scaffold(
-      backgroundColor: isDark ? darkmodeColor : const Color(0xffF8F8F8),
+      backgroundColor: midnightPrimary,
       appBar: MyAppbar(title: 'subs_title'.tr),
       body: Obx(() {
         final list = subscriptionController.subscriptionModel.value.list;
 
         if (list == null) {
           return Center(
-            child: CircularProgressIndicator(color: mainThemeColor),
+            child: CircularProgressIndicator(color: goldPrimary),
           );
         }
 
@@ -293,9 +291,7 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
             child: Text(
               'empty_no_subscriptions'.tr,
               style: TextStyle(
-                color: isDark
-                    ? whiteColor.withValues(alpha: 0.6)
-                    : const Color(0xff888888),
+                color: whiteColor.withValues(alpha: 0.6),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
@@ -303,43 +299,120 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          itemCount: list.length + 1,
-          itemBuilder: (context, index) {
-            // Bannière "s'abonner sur le web" masquée sur iOS : pointer vers un
-            // paiement web externe enfreint l'anti-steering d'Apple (3.1.1) et
-            // risque le rejet. Conservée sur Android (plus permissif).
-            if (index == list.length) {
-              return Platform.isIOS
-                  ? const SizedBox.shrink()
-                  : _webSaveBanner();
-            }
-            final sub = list[index];
-            return SubscriptionCard(
-              subscription: sub,
-              showButton: true,
-              onPurchaseTap: () async {
-                await fetchOffers(id: sub.id.toString(), title: sub.title!);
-                // await myAlertDialog(
-                //   title: 'Purchase Subscription',
-                //   content: 'Are you sure you want to purchase "${sub.title}"?',
-                //   onTap: () async {
-                //     Get.back();
-
-                //     await fetchOffers(id: sub.id.toString(), title: sub.title!);
-
-                //     // await subscriptionController.buySubscription(
-                //     //   fromArtist: widget.fromArtist,
-                //     //   subscriptionId: '${sub.id}',
-                //     // );
-                //   },
-                // );
-              },
-            );
-          },
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          children: [
+            _header(),
+            const SizedBox(height: 18),
+            ...list.map(
+              (sub) => SubscriptionCard(
+                subscription: sub,
+                showButton: true,
+                onPurchaseTap: () async {
+                  await fetchOffers(id: sub.id.toString(), title: sub.title!);
+                },
+              ),
+            ),
+            // Bannière "s'abonner sur le web" masquée sur iOS (anti-steering
+            // Apple 3.1.1 = risque de rejet). Conservée sur Android.
+            if (!Platform.isIOS) _webSaveBanner(),
+            const SizedBox(height: 18),
+            _footer(),
+          ],
         );
       }),
+    );
+  }
+
+  /// En-tête "CHOOSE YOUR PLAN" (style mockup VYBZZZ).
+  Widget _header() {
+    return Column(
+      children: [
+        RichText(
+          textAlign: TextAlign.center,
+          text: const TextSpan(
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.5,
+            ),
+            children: [
+              TextSpan(text: 'CHOOSE ', style: TextStyle(color: ivory)),
+              TextSpan(text: 'YOUR ', style: TextStyle(color: goldPrimary)),
+              TextSpan(text: 'PLAN', style: TextStyle(color: ivory)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'UNLOCK MORE · EARN MORE · LIVE MORE',
+          style: TextStyle(
+            color: textMuted,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Pied "Secure checkout · Cancel anytime".
+  Widget _footer() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: midnightSecondary,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: goldSecondary.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _footerItem(
+              Icons.lock_outline_rounded,
+              'Secure checkout',
+              'Your data is encrypted',
+            ),
+          ),
+          Container(width: 1, height: 34, color: goldSecondary.withValues(alpha: 0.2)),
+          Expanded(
+            child: _footerItem(
+              Icons.autorenew_rounded,
+              'Cancel anytime',
+              'No contracts',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _footerItem(IconData icon, String title, String subtitle) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, color: goldPrimary, size: 20),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: ivory,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: TextStyle(color: textMuted, fontSize: 10),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
