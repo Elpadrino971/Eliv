@@ -90,6 +90,15 @@ window.I18N.fr = {
   // Studio Pro — barre latérale
   dash_overview: "Vue d'ensemble", dash_events: "Mes événements", dash_create: "Créer un live",
   dash_revenue: "Revenus", dash_withdraw: "Retraits", dash_profile: "Profil", dash_golive: "🔴 Passer en live",
+  // Storytelling de marque
+  story_eyebrow: "Pourquoi Vybzzz",
+  story_title_html: 'La scène live, <span class="grad">rendue</span> à ceux qui la font vivre.',
+  story_lead: "Aujourd'hui, pour monter sur scène il faut une salle, un label, un algorithme. Et un fan qui adore un artiste ne le voit presque jamais en vrai. Vybzzz casse ça : n'importe quel artiste, n'importe où, passe en live — et n'importe quel fan est au premier rang, depuis sa poche. La salle de concert, dans ton téléphone.",
+  story_artists_t: "Pour les artistes",
+  story_artists_p: "Ta scène, ton public, tes revenus — sans salle, sans intermédiaire. Tu passes en live, tes fans envoient des cadeaux et achètent leur place, et tu es payé en direct.",
+  story_fans_t: "Pour les fans",
+  story_fans_p: "Sois au premier rang de tes artistes préférés, soutiens-les vraiment avec des cadeaux en live, et ne rate plus jamais un concert — où que tu sois.",
+  story_close_html: "Le prochain grand concert n'est pas à l'autre bout du monde. Il commence <strong>maintenant</strong>, dans ta poche. <span class=\"grad\">Télécharge Vybzzz.</span>",
 };
 
 window.I18N.en = {
@@ -164,6 +173,14 @@ window.I18N.en = {
   art_dl: "⬇ Download the contract (PDF)",
   dash_overview: "Overview", dash_events: "My events", dash_create: "Create a live",
   dash_revenue: "Revenue", dash_withdraw: "Payouts", dash_profile: "Profile", dash_golive: "🔴 Go live",
+  story_eyebrow: "Why Vybzzz",
+  story_title_html: 'The live stage, <span class="grad">given back</span> to those who bring it to life.',
+  story_lead: "Today, getting on stage means a venue, a label, an algorithm. And a fan who loves an artist almost never sees them for real. Vybzzz breaks that: any artist, anywhere, goes live — and any fan is in the front row, from their pocket. The concert hall, in your phone.",
+  story_artists_t: "For artists",
+  story_artists_p: "Your stage, your audience, your income — no venue, no middleman. You go live, your fans send gifts and buy their spot, and you get paid in real time.",
+  story_fans_t: "For fans",
+  story_fans_p: "Be in the front row of your favorite artists, truly support them with live gifts, and never miss a concert again — wherever you are.",
+  story_close_html: "The next big concert isn't on the other side of the world. It's starting <strong>now</strong>, in your pocket. <span class=\"grad\">Download Vybzzz.</span>",
 };
 
 window.I18N.es = {

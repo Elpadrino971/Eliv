@@ -473,6 +473,19 @@ body{background:radial-gradient(120% 80% at 50% -10%,#0e2438 0%,var(--bg) 55%) f
 .hero-perks li::before{content:"✦";position:absolute;left:0;top:1px;color:var(--gold)}
 .hero-perks b{color:var(--text);font-weight:600}
 .hero-reassure{margin-top:20px;color:var(--muted);font-size:.82rem}
+
+/* ===== Storytelling de marque ===== */
+.story{max-width:var(--maxw);margin:0 auto;padding:clamp(64px,9vw,120px) clamp(16px,4vw,46px)}
+.story__inner{max-width:880px}
+.story__title{font-family:var(--serif);font-size:clamp(2rem,4.6vw,3.3rem);line-height:1.08;margin:14px 0 20px}
+.story__lead{font-size:clamp(1.05rem,1.5vw,1.25rem);color:var(--muted);max-width:760px;margin-bottom:36px}
+.story__cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:34px}
+.story__col{padding:28px;border-radius:var(--radius);border:1px solid var(--panel-line);background:linear-gradient(160deg,rgba(120,160,210,.08),transparent)}
+.story__col h3{font-family:var(--serif);font-size:1.4rem;margin-bottom:10px}
+.story__col p{color:var(--muted)}
+.story__close{font-family:var(--serif);font-size:clamp(1.3rem,2.4vw,1.9rem);line-height:1.35}
+@media(max-width:760px){.story__cols{grid-template-columns:1fr}}
+
 /* Escalier de prix (urgence par paliers) */
 .tier-ladder{display:flex;align-items:stretch;gap:10px;margin:6px 0 22px;flex-wrap:wrap}
 .tier{flex:1;min-width:88px;text-align:center;padding:13px 8px;border-radius:13px;border:1px solid var(--panel-line);background:var(--panel);opacity:.5;transition:.35s var(--ease)}
