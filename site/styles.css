@@ -478,7 +478,10 @@ body{background:radial-gradient(120% 80% at 50% -10%,#0e2438 0%,var(--bg) 55%) f
 .story{max-width:var(--maxw);margin:0 auto;padding:clamp(64px,9vw,120px) clamp(16px,4vw,46px)}
 .story__inner{max-width:880px}
 .story__title{font-family:var(--serif);font-size:clamp(2rem,4.6vw,3.3rem);line-height:1.08;margin:14px 0 20px}
-.story__lead{font-size:clamp(1.05rem,1.5vw,1.25rem);color:var(--muted);max-width:760px;margin-bottom:36px}
+.story__lead{font-size:clamp(1.05rem,1.5vw,1.25rem);color:var(--muted);max-width:760px;margin-bottom:24px}
+.story__mission{font-family:var(--serif);font-size:clamp(1.2rem,2vw,1.6rem);line-height:1.4;color:var(--text);border-left:3px solid var(--gold);padding-left:20px;margin:0 0 36px;max-width:780px}
+.story__mission strong{color:var(--gold-2)}
+.story__col:first-child{border-color:rgba(200,168,94,.45);background:linear-gradient(160deg,rgba(200,168,94,.12),transparent)}
 .story__cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:34px}
 .story__col{padding:28px;border-radius:var(--radius);border:1px solid var(--panel-line);background:linear-gradient(160deg,rgba(120,160,210,.08),transparent)}
 .story__col h3{font-family:var(--serif);font-size:1.4rem;margin-bottom:10px}
