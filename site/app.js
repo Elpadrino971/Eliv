@@ -387,19 +387,46 @@
     }, { threshold: 0.55 });
     vids.forEach(v => vio.observe(v));
   }
+  // ---- Montage d'un feed avec filtres de catégorie + bouton son ----
+  function setupFeed(feedEl, catsEl, soundEl) {
+    if (!feedEl) return;
+    const genres = ["Tous"].concat(Array.from(new Set(D.events.map(e => e.genre))));
+    let active = "Tous", soundOn = false;
+    function applySound() { feedEl.querySelectorAll(".feed__video").forEach(v => { v.muted = !soundOn; }); }
+    function render() {
+      const items = (active === "Tous" ? D.events : D.events.filter(e => e.genre === active))
+        .slice().sort((a, b) => b.live - a.live);
+      feedEl.innerHTML = items.length ? items.map(feedItemHTML).join("")
+        : `<section class="feed__item feed__empty"><div class="feed__overlay"></div><div class="feed__content"><h2 class="feed__title">Bientôt en ${active}</h2><p style="color:var(--muted)">Aucun live dans cette catégorie pour l'instant.</p></div></section>`;
+      bindFeed(feedEl);
+      applySound();
+    }
+    if (catsEl) {
+      catsEl.innerHTML = genres.map((g, i) => `<button class="fchip ${i === 0 ? "on" : ""}" data-cursor="hover">${g}</button>`).join("");
+      catsEl.addEventListener("click", e => {
+        const b = e.target.closest(".fchip"); if (!b) return;
+        catsEl.querySelectorAll(".fchip").forEach(x => x.classList.remove("on"));
+        b.classList.add("on"); active = b.textContent.trim(); render();
+      });
+    }
+    if (soundEl) {
+      soundEl.addEventListener("click", () => {
+        soundOn = !soundOn;
+        soundEl.textContent = soundOn ? "🔊" : "🔇";
+        soundEl.classList.toggle("on", soundOn);
+        applySound();
+        // relance la lecture de la vidéo visible avec le son
+        feedEl.querySelectorAll(".feed__video").forEach(v => { if (!v.paused) { const p = v.play(); if (p && p.catch) p.catch(() => {}); } });
+        toast(soundOn ? "🔊 Son activé" : "🔇 Son coupé");
+      });
+    }
+    render();
+  }
   function renderFeed() {
-    const feed = document.getElementById("feed");
-    if (!feed) return;
-    const items = D.events.slice().sort((a, b) => b.live - a.live);
-    feed.innerHTML = items.map(feedItemHTML).join("");
-    bindFeed(feed);
+    setupFeed(document.getElementById("feed"), document.getElementById("feedCatsFull"), document.getElementById("feedSoundFull"));
   }
   function renderHomeFeed() {
-    const el = document.getElementById("homeFeed");
-    if (!el) return;
-    const items = D.events.slice().sort((a, b) => b.live - a.live);
-    el.innerHTML = items.map(feedItemHTML).join("");
-    bindFeed(el);
+    setupFeed(document.getElementById("homeFeed"), document.getElementById("feedCats"), document.getElementById("feedSound"));
   }
 
   // ---- Gift panel (used by feed + store demo) ----

@@ -54,7 +54,10 @@
   </div>
 
   <div class="split-home__feed">
-    <span class="split-home__live">Aperçu live · ce que tu rejoins</span>
+    <div class="feed-controls">
+      <div class="feed-cats" id="feedCats"></div>
+      <button class="feed-sound" id="feedSound" aria-label="Activer le son" data-cursor="hover">🔇</button>
+    </div>
     <div class="feed feed--embed" id="homeFeed"></div>
     <span class="split-home__hint">défile ↑</span>
   </div>
@@ -111,6 +114,28 @@
     <div class="step reveal"><span class="step__n">02</span><h3>Signe le contrat</h3><p>Télécharge le contrat Founder en PDF, signe-le et accepte les conditions.</p></div>
     <div class="step reveal"><span class="step__n">03</span><h3>Passe en live</h3><p>On valide ton profil, on configure ton studio, et tu crées ton premier événement.</p></div>
   </div>
+
+  <!-- ===== Parrainage ===== -->
+  <h2 class="section-title">Parraine tes artistes</h2>
+  <div class="referral glass reveal">
+    <div class="referral__txt">
+      <p>Tu connais l'artiste parfait pour Vybzzz ? <strong>Amène-le</strong> et gagne <strong>−10% sur ton abonnement par artiste</strong> qui rejoint — jusqu'à <strong>10 artistes = abonnement gratuit à vie</strong>.</p>
+      <div class="referral__field">
+        <input id="refArtist" placeholder="@pseudo ou nom de l'artiste à inviter" />
+        <button class="btn btn--gold" id="refBtn" data-cursor="hover"><span>Inviter</span></button>
+      </div>
+      <small style="color:var(--muted)">Ton lien de parrainage : <b style="color:var(--gold-2)">vybzzz.com/r/nova</b> · <span id="refStatus">0 invité · −0%</span></small>
+    </div>
+    <div class="referral__ladder" id="refLadder"></div>
+  </div>
+
+  <!-- ===== Boîte à idées ===== -->
+  <h2 class="section-title">Boîte à idées</h2>
+  <div class="ideabox glass reveal">
+    <p style="color:var(--muted);margin-bottom:14px">Une fonctionnalité qui te manque ? Dis-nous tout — les fondateurs façonnent Vybzzz.</p>
+    <textarea id="ideaText" rows="3" placeholder="Ton idée pour améliorer Vybzzz…"></textarea>
+    <button class="btn btn--gold" id="ideaBtn" data-cursor="hover" style="margin-top:12px"><span>Envoyer mon idée</span></button>
+  </div>
 </main>
 
 <!-- ===== CTA ===== -->
@@ -126,5 +151,33 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
+<script>
+  // Parrainage (-10% par artiste, 10 = gratuit) + boîte à idées
+  (function () {
+    var UI = window.VYBZZZ_UI || { toast: function (m) { alert(m); } };
+    var ladder = document.getElementById("refLadder"), invited = 0;
+    function renderLadder() {
+      if (!ladder) return;
+      var h = "";
+      for (var i = 1; i <= 10; i++) h += '<span class="refslot ' + (i <= invited ? "on" : "") + '">' + (i === 10 ? "🎁 Gratuit" : "−" + (i * 10) + "%") + "</span>";
+      ladder.innerHTML = h;
+    }
+    renderLadder();
+    var refBtn = document.getElementById("refBtn"), refArtist = document.getElementById("refArtist"), refStatus = document.getElementById("refStatus");
+    refBtn && refBtn.addEventListener("click", function () {
+      if (invited >= 10) { UI.toast("Maximum atteint — abonnement gratuit à vie 🎉"); return; }
+      invited++; renderLadder();
+      if (refStatus) refStatus.textContent = invited + " invité" + (invited > 1 ? "s" : "") + " · −" + (invited * 10) + "%";
+      UI.toast(invited >= 10 ? "10 artistes ! Abonnement GRATUIT à vie 🎉" : "Artiste invité · −" + (invited * 10) + "% sur ton abonnement");
+      if (refArtist) refArtist.value = "";
+    });
+    var ideaBtn = document.getElementById("ideaBtn");
+    ideaBtn && ideaBtn.addEventListener("click", function () {
+      var t = document.getElementById("ideaText");
+      if (t && t.value.trim()) { UI.toast("Merci ! Idée envoyée 💡"); t.value = ""; }
+      else { UI.toast("Écris ton idée d'abord 🙂"); }
+    });
+  })();
+</script>
 </body>
 </html>
