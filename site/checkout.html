@@ -7,7 +7,7 @@
 <title>Vybzzz — Paiement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
-<link rel="icon" type="image/png" href="assets/logo.png" />
+<link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body data-page="checkout">
@@ -77,7 +77,7 @@
     if (ev) order = { title:ev.name, sub:ev.artist.name+" · "+ev.genre+(ev.live?" · LIVE":" · "+ev.scheduled), img:ev.thumb, amount:ev.price, lines:[["Ticket",ev.price],["Replay HD inclus",0]] };
   } else if (params.get("pack")) {
     var p = D.packages.find(function(x){return x.id == params.get("pack")});
-    if (p){ var total=p.points+Math.round(p.points*p.bonus/100); order = { title:p.title+" · "+total.toLocaleString("fr-FR")+" PTS", sub:(p.bonus?"+"+p.bonus+"% bonus inclus":"Pack d'Arena Points"), img:"assets/logo.png", amount:p.price, lines:[["Arena Points",p.price]] }; }
+    if (p){ var total=p.points+Math.round(p.points*p.bonus/100); order = { title:p.title+" · "+total.toLocaleString("fr-FR")+" PTS", sub:(p.bonus?"+"+p.bonus+"% bonus inclus":"Pack d'Arena Points"), img:"assets/logo.svg", amount:p.price, lines:[["Arena Points",p.price]] }; }
   }
   var fee = order.amount>0 ? Math.round(order.amount*0.05*100)/100 : 0;
   var tot = Math.round((order.amount+fee)*100)/100;

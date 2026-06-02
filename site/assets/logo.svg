@@ -1,0 +1,21 @@
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vybzzz">
+  <defs>
+    <linearGradient id="vt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a9aa0"/><stop offset="1" stop-color="#0b3a43"/>
+    </linearGradient>
+    <linearGradient id="vg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3e4b8"/><stop offset="1" stop-color="#c8a85e"/>
+    </linearGradient>
+  </defs>
+  <!-- V mark -->
+  <path d="M8 10 L24 41 L40 10" fill="none" stroke="url(#vt)" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M8 10 L24 41 L40 10" fill="none" stroke="url(#vg)" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>
+  <!-- star -->
+  <path d="M24 3.2 l1.35 3.5 3.75.3-2.85 2.5.9 3.65-3.15-2-3.15 2 .9-3.65-2.85-2.5 3.75-.3z" fill="url(#vg)"/>
+  <!-- audio bars -->
+  <g fill="url(#vg)">
+    <rect x="19.2" y="24" width="2" height="7" rx="1"/>
+    <rect x="23" y="19.5" width="2" height="11.5" rx="1"/>
+    <rect x="26.8" y="22.5" width="2" height="8.5" rx="1"/>
+  </g>
+</svg>

@@ -420,6 +420,8 @@ body>*:not(.grain):not(.aurora){position:relative;z-index:2}
    ============================================================ */
 body{background:radial-gradient(120% 80% at 50% -10%,#0e2438 0%,var(--bg) 55%) fixed}
 .brand{font-family:var(--serif);font-weight:800;font-size:1.5rem;letter-spacing:.14em;text-transform:uppercase;background:linear-gradient(120deg,var(--gold-soft),var(--gold) 60%,#a8843f);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
+.brand-logo{width:34px;height:34px;flex:0 0 auto;filter:drop-shadow(0 0 8px rgba(200,168,94,.35))}
+.nav__brand{display:flex;align-items:center;gap:10px}
 .eyebrow{font-family:var(--serif);font-style:italic;text-transform:none;letter-spacing:.04em;font-weight:600;font-size:.95rem}
 .section-title{font-family:var(--serif)}
 .glass{background:linear-gradient(160deg,rgba(120,160,210,.10),rgba(120,160,210,.02))}

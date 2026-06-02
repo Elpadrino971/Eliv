@@ -23,6 +23,7 @@
     return `
     <header class="nav" id="nav">
       <a href="index.html" class="nav__brand" data-cursor="hover">
+        <img src="assets/logo.svg" alt="" class="brand-logo" />
         <span class="brand">Vybzzz</span>
       </a>
       <nav class="nav__links" style="margin-left:auto">${links}</nav>
@@ -39,7 +40,7 @@
     <footer class="footer">
       <div class="footer__top">
         <div class="footer__brand">
-          <a href="index.html" class="nav__brand"><span class="brand">Vybzzz</span></a>
+          <a href="index.html" class="nav__brand"><img src="assets/logo.svg" alt="" class="brand-logo" /><span class="brand">Vybzzz</span></a>
           <p>La scène live qui ne dort jamais.</p>
         </div>
         <div class="footer__cols">
