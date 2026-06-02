@@ -67,6 +67,7 @@ window.VYBZZZ = (function () {
   const founder = {
     taken: 0,
     total: 200,
+    quorum: 24,                // nombre d'artistes signés pour DÉMARRER l'app
     commission: 60,            // % gardé par le créateur sur l'offre Founder
     upgradeCommission: 70,     // option 70%
     upgradePrice: 299,         // = plan Elite

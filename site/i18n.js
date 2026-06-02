@@ -90,6 +90,13 @@ window.I18N.fr = {
   // Studio Pro — barre latérale
   dash_overview: "Vue d'ensemble", dash_events: "Mes événements", dash_create: "Créer un live",
   dash_revenue: "Revenus", dash_withdraw: "Retraits", dash_profile: "Profil", dash_golive: "🔴 Passer en live",
+  // Lancement / quorum
+  nav_launch: "Lancement", launch_eyebrow: "Le démarrage",
+  launch_title_html: 'On démarre dès <span class="grad">24 artistes</span> signés.',
+  launch_p: "Vybzzz se lance dès qu'on atteint le quorum de démarrage : une fois les 24 premiers artistes signés, on lance l'application. Tu reçois un e-mail pour le grand jour.",
+  launch_signed: "artistes signés", launch_remaining: "avant le démarrage",
+  launch_prep_html: "En attendant, <strong>prépare ton entrée</strong> : chauffe ta fan zone, prépare tes shorts d'ouverture et <strong>ton premier concert</strong>, et tiens-toi prêt pour lancer l'aventure Vybzzz.",
+  launch_email: "📧 Tu seras prévenu par e-mail dès qu'on atteint le quorum et qu'on démarre.",
   // Storytelling de marque
   story_eyebrow: "Notre histoire",
   story_title_html: 'Créée pour ne plus jamais <span class="grad">manquer</span> un artiste.',
@@ -174,6 +181,12 @@ window.I18N.en = {
   art_dl: "⬇ Download the contract (PDF)",
   dash_overview: "Overview", dash_events: "My events", dash_create: "Create a live",
   dash_revenue: "Revenue", dash_withdraw: "Payouts", dash_profile: "Profile", dash_golive: "🔴 Go live",
+  nav_launch: "Launch", launch_eyebrow: "The launch",
+  launch_title_html: 'We start at <span class="grad">24 signed artists</span>.',
+  launch_p: "Vybzzz goes live as soon as we hit the launch quorum: once the first 24 artists are signed, we launch the app. You'll get an email for the big day.",
+  launch_signed: "signed artists", launch_remaining: "before launch",
+  launch_prep_html: "Meanwhile, <strong>get ready</strong>: warm up your fan zone, prepare your opening shorts and <strong>your first concert</strong>, and be ready to kick off the Vybzzz adventure.",
+  launch_email: "📧 You'll be notified by email the moment we reach quorum and go live.",
   story_eyebrow: "Our story",
   story_title_html: 'Built so you never <span class="grad">miss</span> an artist again.',
   story_lead: "In 2009, I had a ticket for “This Is It.” I never went — the artist passed before the show. Since then, the same ache returns: Prince, Dolores O'Riordan, Chester Bennington, Peetah Morgan… artists I dreamed of seeing live, gone too soon. Too many artists are never truly seen or heard, and a live moment, once gone, never comes back.",

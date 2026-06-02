@@ -47,6 +47,7 @@
     { href: "feed.html",             key: "nav_feed",   id: "feed" },
     { href: "store.html",            key: "nav_store",  id: "store" },
     { href: "index.html#avantages",  key: "nav_deal",   id: "_deal" },
+    { href: "index.html#lancement",  key: "nav_launch", id: "_launch" },
     { href: "dashboard.html",        key: "nav_studio", id: "dashboard" },
     { href: "faq.html",              key: "nav_faq",    id: "faq" },
   ];
@@ -274,6 +275,10 @@
   function renderSeats() {
     const fi = founderInfo();
     const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    // Jauge de démarrage (quorum)
+    set("quorumTaken", D.founder.taken); set("quorumTotal", D.founder.quorum);
+    const qf = document.getElementById("quorumFill");
+    if (qf) setTimeout(() => qf.style.width = Math.min(100, D.founder.taken / D.founder.quorum * 100) + "%", 450);
     document.querySelectorAll(".tier-ladder .tier").forEach(el => {
       const idx = +el.dataset.tier;
       el.classList.toggle("current", !fi.closed && idx === fi.tierIndex);
