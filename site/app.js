@@ -8,17 +8,50 @@
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const page = document.body.dataset.page || "home";
 
+  /* ---------- i18n (12 langues) ---------- */
+  const LANGS = [
+    { code: "fr", name: "Français" }, { code: "en", name: "English" }, { code: "es", name: "Español" },
+    { code: "it", name: "Italiano" }, { code: "de", name: "Deutsch" }, { code: "pt", name: "Português" },
+    { code: "zh", name: "中文" }, { code: "ko", name: "한국어" }, { code: "ja", name: "日本語" },
+    { code: "ar", name: "العربية" }, { code: "hi", name: "हिन्दी" }, { code: "ru", name: "Русский" },
+  ];
+  let LANG = localStorage.getItem("vyb_lang") || "fr";
+  function dict() { return (window.I18N && (window.I18N[LANG] || window.I18N.fr)) || {}; }
+  function t(k) { const d = dict(), f = (window.I18N && window.I18N.fr) || {}; return d[k] != null ? d[k] : (f[k] != null ? f[k] : k); }
+  function applyI18n(root) {
+    root = root || document;
+    root.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.getAttribute("data-i18n")); });
+    root.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = t(el.getAttribute("data-i18n-html")); });
+    root.querySelectorAll("[data-i18n-ph]").forEach(el => { el.setAttribute("placeholder", t(el.getAttribute("data-i18n-ph"))); });
+    document.documentElement.lang = LANG;
+    document.documentElement.dir = LANG === "ar" ? "rtl" : "ltr";
+  }
+  function openLangSheet() {
+    let s = document.getElementById("langSheet");
+    if (!s) {
+      s = document.createElement("div"); s.id = "langSheet"; s.className = "lang-sheet";
+      s.innerHTML = '<div class="lang-sheet__box"><div class="lang-sheet__head"><b>' + t("lang_label") + '</b><button class="lang-sheet__x" aria-label="Fermer">✕</button></div>' +
+        LANGS.map(l => '<button class="lang-opt ' + (l.code === LANG ? "on" : "") + '" data-code="' + l.code + '"><span class="code">' + l.code.toUpperCase() + '</span>' + l.name + (l.code === LANG ? '<span class="chk">✓</span>' : '') + '</button>').join("") + '</div>';
+      document.body.appendChild(s);
+      s.querySelector(".lang-sheet__x").addEventListener("click", () => s.classList.remove("open"));
+      s.addEventListener("click", e => { if (e.target === s) s.classList.remove("open"); });
+      s.querySelectorAll(".lang-opt").forEach(b => b.addEventListener("click", () => { localStorage.setItem("vyb_lang", b.dataset.code); location.reload(); }));
+    }
+    requestAnimationFrame(() => s.classList.add("open"));
+  }
+  window.__vybLang = openLangSheet;
+
   /* ---------- Chrome : header + footer injectés ---------- */
   const NAV = [
-    { href: "index.html",            label: "Accueil",   id: "home" },
-    { href: "index.html#avantages",  label: "Le deal",   id: "_deal" },
-    { href: "dashboard.html",        label: "Studio Pro", id: "dashboard" },
-    { href: "faq.html",              label: "FAQ",       id: "faq" },
+    { href: "index.html",            key: "nav_home",   id: "home" },
+    { href: "index.html#avantages",  key: "nav_deal",   id: "_deal" },
+    { href: "dashboard.html",        key: "nav_studio", id: "dashboard" },
+    { href: "faq.html",              key: "nav_faq",    id: "faq" },
   ];
 
   function renderHeader() {
     const links = NAV.map(n =>
-      `<a href="${n.href}" class="${n.id === page ? "active" : ""}" data-cursor="hover">${n.label}</a>`
+      `<a href="${n.href}" class="${n.id === page ? "active" : ""}" data-cursor="hover">${t(n.key)}</a>`
     ).join("");
     return `
     <header class="nav" id="nav">
@@ -28,8 +61,9 @@
       </a>
       <nav class="nav__links" style="margin-left:auto">${links}</nav>
       <div class="nav__cta">
-        <a href="dashboard.html" class="btn btn--ghost" data-cursor="hover">Se connecter</a>
-        <a href="artist.html" class="btn btn--gold magnetic" data-cursor="hover"><span>Postuler</span></a>
+        <button class="lang-btn" data-cursor="hover" onclick="window.__vybLang&&window.__vybLang()">🌐 ${LANG.toUpperCase()}</button>
+        <a href="dashboard.html" class="btn btn--ghost" data-cursor="hover">${t("nav_login")}</a>
+        <a href="artist.html" class="btn btn--gold magnetic" data-cursor="hover"><span>${t("nav_apply")}</span></a>
       </div>
       <button class="nav__burger" id="burger" aria-label="Menu"><i></i><i></i><i></i></button>
     </header>`;
@@ -41,17 +75,17 @@
       <div class="footer__top">
         <div class="footer__brand">
           <a href="index.html" class="nav__brand"><img src="assets/logo.svg" alt="" class="brand-logo" /><span class="brand">Vybzzz</span></a>
-          <p>La scène live qui ne dort jamais.</p>
+          <p>${t("foot_tagline")}</p>
         </div>
         <div class="footer__cols">
-          <div><h4>Découvrir</h4><a href="index.html">Accueil</a><a href="feed.html">Feed</a><a href="store.html">Boutique</a></div>
-          <div><h4>Artistes</h4><a href="dashboard.html">Studio Pro</a><a href="artist.html">Devenir artiste</a><a href="artist.html#contrat">Contrat</a></div>
-          <div><h4>Aide</h4><a href="faq.html">FAQ</a><a href="checkout.html">Paiement</a><a href="#">Contact</a></div>
+          <div><h4>${t("foot_discover")}</h4><a href="index.html">${t("nav_home")}</a><a href="feed.html">Feed</a><a href="store.html">Boutique</a></div>
+          <div><h4>${t("foot_artists")}</h4><a href="dashboard.html">${t("nav_studio")}</a><a href="artist.html">${t("nav_apply")}</a><a href="artist.html#contrat">Contrat</a></div>
+          <div><h4>${t("foot_help")}</h4><a href="faq.html">${t("nav_faq")}</a><a href="checkout.html">Paiement</a><a href="#">Contact</a></div>
         </div>
       </div>
       <div class="footer__bottom">
-        <span>© 2026 Vybzzz. Tous droits réservés.</span>
-        <span class="footer__made">Paiements sécurisés · VyBzzZ Pay · SSL 256-bit</span>
+        <span>${t("foot_rights")}</span>
+        <span class="footer__made">${t("foot_secure")}</span>
       </div>
     </footer>`;
   }
@@ -163,9 +197,12 @@
 
   // ---- Plan créateur card ----
   function planCard(p) {
+    const meta = { Starter: { ic: "🚀", bg: "assets/artist_image1.png" }, Growth: { ic: "📈", bg: "assets/artist_image3.png" }, Elite: { ic: "🏆", bg: "assets/artist_image5.png" } }[p.name] || { ic: "★", bg: "assets/artist_image2.png" };
     return `
     <article class="plan glass reveal tilt ${p.highlight ? "plan--feat" : ""}" data-cursor="hover">
+      <div class="plan__bg" style="background-image:url('${meta.bg}')"></div>
       ${p.tag ? `<span class="plan__tag">${p.tag}</span>` : ""}
+      <div class="plan__icon">${meta.ic}</div>
       <h3>${p.name}</h3>
       <div class="plan__price">$${p.price}<i>/mois</i></div>
       <div class="plan__comm">Tu gardes <b>${p.commission}%</b> de tes revenus</div>
@@ -194,9 +231,12 @@
     const done = !fi.closed && i < fi.tierIndex;
     const cur = !fi.closed && i === fi.tierIndex;
     const tagTxt = cur ? "En cours" : done ? "Complet ✓" : "À venir";
+    const bg = ["assets/artist_image2.png", "assets/artist_image3.png", "assets/artist_image4.png"][i] || "assets/artist_image2.png";
     return `
     <article class="plan glass reveal tilt ${cur ? "plan--feat" : ""} ${done ? "plan--done" : ""}" data-cursor="hover">
+      <div class="plan__bg" style="background-image:url('${bg}')"></div>
       <span class="plan__tag">${tagTxt}</span>
+      <div class="plan__icon">★</div>
       <h3>Founder · Vague ${i + 1}</h3>
       <div class="plan__price">$${t.price}<i>/mois à vie</i></div>
       <div class="plan__comm">Tu gardes <b>60%</b> de tes revenus</div>
@@ -214,7 +254,9 @@
     const e = D.elite;
     return `
     <article class="plan glass reveal tilt" data-cursor="hover">
+      <div class="plan__bg" style="background-image:url('assets/artist_image5.png')"></div>
       <span class="plan__tag">${e.tag}</span>
+      <div class="plan__icon">🏆</div>
       <h3>${e.name}</h3>
       <div class="plan__price">$${e.price}<i>/mois</i></div>
       <div class="plan__comm">Tu gardes <b>${e.commission}%</b> de tes revenus</div>
@@ -505,6 +547,7 @@
 
   /* ---------- Dispatch ---------- */
   const routes = { home: renderHome, feed: renderFeed, store: renderStore, faq: renderFaq };
+  applyI18n();
   (routes[page] || function () {})();
   refresh();
 

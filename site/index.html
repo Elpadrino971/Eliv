@@ -22,14 +22,14 @@
 <section class="split-home">
   <div class="split-home__pitch">
     <div class="reveal">
-      <span class="rec-hero__badge">✦ Offre de lancement · le prix monte à chaque vague</span>
-      <h1>Sois créateur <span class="grad">Founder</span> avant que le prix monte.</h1>
-      <p class="lead">Les <strong>24 premières places</strong> sont à <strong>$79/mois</strong>, les 76 suivantes à $99, les 100 dernières à $149. <strong>Tu gardes 60%</strong> de tes revenus, <strong>à vie</strong> tant que ton abonnement reste actif.</p>
+      <span class="rec-hero__badge" data-i18n="hero_badge">✦ Offre de lancement · le prix monte à chaque vague</span>
+      <h1 data-i18n-html="hero_title_html">Sois créateur <span class="grad">Founder</span> avant que le prix monte.</h1>
+      <p class="lead" data-i18n-html="hero_lead_html">Les <strong>24 premières places</strong> sont à <strong>$79/mois</strong>, les 76 suivantes à $99, les 100 dernières à $149. <strong>Tu gardes 60%</strong> de tes revenus, <strong>à vie</strong> tant que ton abonnement reste actif.</p>
       <ul class="hero-perks">
-        <li>Tu gardes <b>60%</b> de tes revenus, dès le 1ᵉʳ live</li>
-        <li>Tarif <b>bloqué à vie</b> tant que ton abonnement reste actif</li>
-        <li><b>Studio Pro</b> complet : lives, billetterie, cadeaux</li>
-        <li>Passe à <b>70%</b> quand tu veux (Elite $299)</li>
+        <li data-i18n-html="perk1_html">Tu gardes <b>60%</b> de tes revenus, dès le 1ᵉʳ live</li>
+        <li data-i18n-html="perk2_html">Tarif <b>bloqué à vie</b> tant que ton abonnement reste actif</li>
+        <li data-i18n-html="perk3_html"><b>Studio Pro</b> complet : lives, billetterie, cadeaux</li>
+        <li data-i18n-html="perk4_html">Passe à <b>70%</b> quand tu veux (Elite $299)</li>
       </ul>
 
       <div class="tier-ladder" id="tierLadder">
@@ -42,14 +42,14 @@
 
       <div class="urgency"><span class="urgency__dot"></span><span id="urgencyMsg">Plus que 24 places à $79/mois.</span></div>
       <div class="rec-hero__actions">
-        <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span>Réserver ma place Founder</span></a>
-        <a href="dashboard.html" class="btn btn--outline btn--lg magnetic" data-cursor="hover"><span>Voir le Studio Pro</span></a>
+        <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_reserve">Réserver ma place Founder</span></a>
+        <a href="dashboard.html" class="btn btn--outline btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_studio">Voir le Studio Pro</span></a>
       </div>
       <div class="spots">
         <div class="spots__row"><b><em id="spotsTaken">0</em> / <span id="spotsTotal">24</span> places à <span id="spotsPrice">$79</span> prises</b><small id="spotsLeft">places restantes</small></div>
         <div class="spots__bar"><i class="spots__fill" id="spotsFill"></i></div>
       </div>
-      <p class="hero-reassure">🔒 Paiement sécurisé · Sans engagement · Annulable à tout moment</p>
+      <p class="hero-reassure" data-i18n="reassure">🔒 Paiement sécurisé · Sans engagement · Annulable à tout moment</p>
     </div>
   </div>
 
@@ -66,9 +66,9 @@
 <main class="page" style="padding-top:74px">
   <!-- ===== Avantages ===== -->
   <div class="page__head reveal" id="avantages">
-    <span class="eyebrow">Ce que tu obtiens</span>
-    <h1>Le deal <span class="grad">Founder</span>.</h1>
-    <p>Des avantages réservés aux 200 créateurs fondateurs, pensés pour te faire gagner de l'argent et de la visibilité dès le lancement. Plus tu t'inscris tôt, moins tu paies — à vie.</p>
+    <span class="eyebrow" data-i18n="av_eyebrow">Ce que tu obtiens</span>
+    <h1 data-i18n-html="av_title_html">Le deal <span class="grad">Founder</span>.</h1>
+    <p data-i18n="av_p">Des avantages réservés aux 200 créateurs fondateurs, pensés pour te faire gagner de l'argent et de la visibilité dès le lancement. Plus tu t'inscris tôt, moins tu paies — à vie.</p>
   </div>
   <div class="benefits">
     <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">💰</div><h3>Tu gardes 60%</h3><p>60% de commission sur tes revenus (billets, cadeaux, pourboires), quel que soit ton palier d'entrée. Passe à 70% avec Elite quand tu veux.</p></article>
@@ -81,18 +81,18 @@
 
   <!-- ===== Tarifs ===== -->
   <div class="page__head reveal" id="pricing">
-    <span class="eyebrow">Tarifs créateur</span>
-    <h1>Choisis ton <span class="grad">plan</span>.</h1>
-    <p>Pendant le lancement, le tarif Founder monte par paliers selon l'ordre d'inscription ($79 → $99 → $149, toujours 60% gardés). Dès la 201ᵉ inscription, on passe aux plans normaux (Starter $99 · Growth $199 · Elite $299).</p>
+    <span class="eyebrow" data-i18n="pricing_eyebrow">Tarifs créateur</span>
+    <h1 data-i18n-html="pricing_title_html">Choisis ton <span class="grad">plan</span>.</h1>
+    <p data-i18n="pricing_p">Pendant le lancement, le tarif Founder monte par paliers selon l'ordre d'inscription ($79 → $99 → $149, toujours 60% gardés). Dès la 201ᵉ inscription, on passe aux plans normaux (Starter $99 · Growth $199 · Elite $299).</p>
   </div>
   <div class="plans" id="planGrid"></div>
 
   <!-- ===== Studio preview ===== -->
-  <h2 class="section-title">Ton tableau de bord créateur</h2>
+  <h2 class="section-title" data-i18n="studio_title">Ton tableau de bord créateur</h2>
   <div class="studio-preview">
     <div class="reveal">
-      <p style="color:var(--muted);max-width:420px;margin-bottom:18px">Revenus en temps réel, ventes de tickets, cadeaux reçus, retraits Stripe. Le même outil que tu utiliseras au quotidien.</p>
-      <a href="dashboard.html" class="btn btn--gold magnetic" data-cursor="hover"><span>Explorer le Studio Pro →</span></a>
+      <p style="color:var(--muted);max-width:420px;margin-bottom:18px" data-i18n="studio_p">Revenus en temps réel, ventes de tickets, cadeaux reçus, retraits Stripe. Le même outil que tu utiliseras au quotidien.</p>
+      <a href="dashboard.html" class="btn btn--gold magnetic" data-cursor="hover"><span data-i18n="studio_cta">Explorer le Studio Pro →</span></a>
     </div>
     <div class="studio-preview__frame reveal tilt" data-cursor="hover">
       <div class="studio-preview__bar"><span></span><span></span><span></span></div>
@@ -108,21 +108,21 @@
   </div>
 
   <!-- ===== How it works ===== -->
-  <h2 class="section-title">Rejoindre les fondateurs</h2>
+  <h2 class="section-title" data-i18n="steps_title">Rejoindre les fondateurs</h2>
   <div class="steps">
-    <div class="step reveal"><span class="step__n">01</span><h3>Candidate</h3><p>Remplis le formulaire créateur (2 min) : nom de scène, genre, expérience.</p></div>
-    <div class="step reveal"><span class="step__n">02</span><h3>Signe le contrat</h3><p>Télécharge le contrat Founder en PDF, signe-le et accepte les conditions.</p></div>
-    <div class="step reveal"><span class="step__n">03</span><h3>Passe en live</h3><p>On valide ton profil, on configure ton studio, et tu crées ton premier événement.</p></div>
+    <div class="step reveal"><span class="step__n">01</span><h3 data-i18n="step1_t">Candidate</h3><p data-i18n="step1_p">Remplis le formulaire créateur (2 min) : nom de scène, genre, expérience.</p></div>
+    <div class="step reveal"><span class="step__n">02</span><h3 data-i18n="step2_t">Signe le contrat</h3><p data-i18n="step2_p">Télécharge le contrat Founder en PDF, signe-le et accepte les conditions.</p></div>
+    <div class="step reveal"><span class="step__n">03</span><h3 data-i18n="step3_t">Passe en live</h3><p data-i18n="step3_p">On valide ton profil, on configure ton studio, et tu crées ton premier événement.</p></div>
   </div>
 
   <!-- ===== Parrainage ===== -->
-  <h2 class="section-title">Parraine tes artistes</h2>
+  <h2 class="section-title" data-i18n="ref_title">Parraine tes artistes</h2>
   <div class="referral glass reveal">
     <div class="referral__txt">
-      <p>Tu connais l'artiste parfait pour Vybzzz ? <strong>Amène-le</strong> et gagne <strong>−10% sur ton abonnement par artiste</strong> qui rejoint — jusqu'à <strong>10 artistes = abonnement gratuit à vie</strong>.</p>
+      <p data-i18n-html="ref_p_html">Tu connais l'artiste parfait pour Vybzzz ? <strong>Amène-le</strong> et gagne <strong>−10% sur ton abonnement par artiste</strong> qui rejoint — jusqu'à <strong>10 artistes = abonnement gratuit à vie</strong>.</p>
       <div class="referral__field">
-        <input id="refArtist" placeholder="@pseudo ou nom de l'artiste à inviter" />
-        <button class="btn btn--gold" id="refBtn" data-cursor="hover"><span>Inviter</span></button>
+        <input id="refArtist" data-i18n-ph="ref_ph" placeholder="@pseudo ou nom de l'artiste à inviter" />
+        <button class="btn btn--gold" id="refBtn" data-cursor="hover"><span data-i18n="ref_invite">Inviter</span></button>
       </div>
       <small style="color:var(--muted)">Ton lien de parrainage : <b style="color:var(--gold-2)">vybzzz.com/r/nova</b> · <span id="refStatus">0 invité · −0%</span></small>
     </div>
@@ -130,26 +130,27 @@
   </div>
 
   <!-- ===== Boîte à idées ===== -->
-  <h2 class="section-title">Boîte à idées</h2>
+  <h2 class="section-title" data-i18n="idea_title">Boîte à idées</h2>
   <div class="ideabox glass reveal">
-    <p style="color:var(--muted);margin-bottom:14px">Une fonctionnalité qui te manque ? Dis-nous tout — les fondateurs façonnent Vybzzz.</p>
-    <textarea id="ideaText" rows="3" placeholder="Ton idée pour améliorer Vybzzz…"></textarea>
-    <button class="btn btn--gold" id="ideaBtn" data-cursor="hover" style="margin-top:12px"><span>Envoyer mon idée</span></button>
+    <p style="color:var(--muted);margin-bottom:14px" data-i18n="idea_p">Une fonctionnalité qui te manque ? Dis-nous tout — les fondateurs façonnent Vybzzz.</p>
+    <textarea id="ideaText" rows="3" data-i18n-ph="idea_ph" placeholder="Ton idée pour améliorer Vybzzz…"></textarea>
+    <button class="btn btn--gold" id="ideaBtn" data-cursor="hover" style="margin-top:12px"><span data-i18n="idea_send">Envoyer mon idée</span></button>
   </div>
 </main>
 
 <!-- ===== CTA ===== -->
 <section class="cta-band">
   <div class="cta-band__inner reveal">
-    <h2>Plus que <span class="grad" id="ctaLeft">—</span> places au tarif actuel.</h2>
-    <p>Le prix monte à chaque vague ($79 → $99 → $149), puis l'offre Founder ferme à la 201ᵉ inscription. Bloque ton tarif maintenant — à vie.</p>
-    <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span>Réserver ma place Founder</span></a>
+    <h2 data-i18n-html="cta_title_html">Plus que <span class="grad" id="ctaLeft">—</span> places au tarif actuel.</h2>
+    <p data-i18n="cta_p">Le prix monte à chaque vague ($79 → $99 → $149), puis l'offre Founder ferme à la 201ᵉ inscription. Bloque ton tarif maintenant — à vie.</p>
+    <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_btn">Réserver ma place Founder</span></a>
   </div>
 </section>
 
 <div id="site-footer"></div>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <script src="data.js"></script>
+<script src="i18n.js"></script>
 <script src="app.js"></script>
 <script>
   // Parrainage (-10% par artiste, 10 = gratuit) + boîte à idées
