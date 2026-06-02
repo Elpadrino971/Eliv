@@ -152,7 +152,14 @@
         <input id="refArtist" data-i18n-ph="ref_ph" placeholder="@pseudo ou nom de l'artiste à inviter" />
         <button class="btn btn--gold" id="refBtn" data-cursor="hover"><span data-i18n="ref_invite">Inviter</span></button>
       </div>
-      <small style="color:var(--muted)">Ton lien de parrainage : <b style="color:var(--gold-2)">vybzzz.com/r/nova</b> · <span id="refStatus">0 invité · −0%</span></small>
+      <div class="referral__share">
+        <input id="refLink" readonly value="https://vybzzz.com/?ref=nova" />
+        <button class="btn btn--outline" id="refCopy" data-cursor="hover">Copier le lien</button>
+        <a class="ref-share" id="refWa" target="_blank" rel="noopener" aria-label="WhatsApp">WhatsApp</a>
+        <a class="ref-share" id="refX" target="_blank" rel="noopener" aria-label="X">X</a>
+        <a class="ref-share" id="refMail" aria-label="E-mail">E-mail</a>
+      </div>
+      <small style="color:var(--muted)"><span id="refStatus">0 invité · −0%</span></small>
     </div>
     <div class="referral__ladder" id="refLadder"></div>
   </div>
@@ -199,6 +206,20 @@
       if (refStatus) refStatus.textContent = invited + " invité" + (invited > 1 ? "s" : "") + " · −" + (invited * 10) + "%";
       UI.toast(invited >= 10 ? "10 artistes ! Abonnement GRATUIT à vie 🎉" : "Artiste invité · −" + (invited * 10) + "% sur ton abonnement");
       if (refArtist) refArtist.value = "";
+    });
+    // Lien de parrainage : copier + partager
+    var link = document.getElementById("refLink");
+    var url = link ? link.value : "https://vybzzz.com/?ref=nova";
+    var msg = "Rejoins-moi sur Vybzzz, la scène live des artistes 🎤 " + url;
+    var wa = document.getElementById("refWa"); if (wa) wa.href = "https://wa.me/?text=" + encodeURIComponent(msg);
+    var x = document.getElementById("refX"); if (x) x.href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent("Rejoins-moi sur Vybzzz 🎤") + "&url=" + encodeURIComponent(url);
+    var mail = document.getElementById("refMail"); if (mail) mail.href = "mailto:?subject=" + encodeURIComponent("Rejoins-moi sur Vybzzz") + "&body=" + encodeURIComponent(msg);
+    var copy = document.getElementById("refCopy");
+    copy && copy.addEventListener("click", function () {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () { UI.toast("Lien de parrainage copié ✓"); }, function () { fallbackCopy(); });
+      } else { fallbackCopy(); }
+      function fallbackCopy() { if (link) { link.removeAttribute("readonly"); link.select(); try { document.execCommand("copy"); } catch (e) {} link.setAttribute("readonly", ""); } UI.toast("Lien de parrainage copié ✓"); }
     });
     var ideaBtn = document.getElementById("ideaBtn");
     ideaBtn && ideaBtn.addEventListener("click", function () {
