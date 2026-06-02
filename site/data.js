@@ -60,24 +60,51 @@ window.VYBZZZ = (function () {
     { name: "Château", emoji: "🏰", coins: 5000 },
   ];
 
-  // Abonnements (cf. /api/subscription/get : title, priceType, price, commissionType, commission)
-  const plans = [
+  // Programme Founder (offre de lancement) — cf. spec produit
+  const founder = { taken: 47, total: 200, price: 79, commission: 60 };
+
+  // Plans CRÉATEUR (l'artiste s'abonne et garde un % de ses revenus = "commission")
+  const plansLaunch = [
     {
-      name: "Fan", price: "Gratuit", cycle: "", highlight: false,
-      features: ["Lives publics illimités", "Chat en direct", "Cadeaux à l'unité", "Suivi de tes artistes"],
-      cta: "Commencer",
+      name: "Founder", price: 79, commission: 60, highlight: true, tag: "Offre de lancement",
+      note: "Limité aux 200 premiers créateurs",
+      features: ["Tu gardes 60% de tes revenus", "Prix bloqué à $79/mois tant que ton abonnement reste actif", "Studio Pro complet", "Mise en avant prioritaire au lancement", "Badge « Artiste Fondateur » à vie"],
+      cta: "Devenir Fondateur",
     },
     {
-      name: "VIP", price: "$9.99", cycle: "/mois", highlight: true, tag: "Populaire",
-      features: ["Replays HD illimités", "Badges & émotes exclusifs", "+500 Arena Points offerts / mois", "Accès anticipé aux tickets", "Zéro pub"],
-      cta: "Passer VIP",
+      name: "Starter", price: 99, commission: 50, highlight: false,
+      features: ["Tu gardes 50% de tes revenus", "Studio Pro complet", "Billetterie & cadeaux virtuels", "Retraits Stripe / banque"],
+      cta: "Choisir Starter",
     },
     {
-      name: "Artiste Pro", price: "5%", cycle: "/transaction", highlight: false, note: "Commission fixe — cf. modèle de l'app",
-      features: ["Studio & analytics complets", "Retraits prioritaires (Stripe/banque)", "Mise en avant éditoriale", "Billetterie & cadeaux activés"],
-      cta: "Postuler",
+      name: "Elite", price: 299, commission: 70, highlight: false, tag: "Premium",
+      features: ["Tu gardes 70% de tes revenus", "Tout le plan Starter", "Mise en avant premium", "Support prioritaire 24/7", "Analytics avancées"],
+      cta: "Choisir Elite",
     },
   ];
+
+  // Plans normaux (après que les 200 places Founder soient prises)
+  const plansNormal = [
+    {
+      name: "Starter", price: 99, commission: 50, highlight: false,
+      features: ["Tu gardes 50% de tes revenus", "Studio Pro complet", "Billetterie & cadeaux virtuels", "Retraits Stripe / banque"],
+      cta: "Choisir Starter",
+    },
+    {
+      name: "Growth", price: 199, commission: 60, highlight: true, tag: "Populaire",
+      note: "Remplace l'offre Founder",
+      features: ["Tu gardes 60% de tes revenus", "Tout le plan Starter", "Mise en avant prioritaire", "Retraits prioritaires"],
+      cta: "Choisir Growth",
+    },
+    {
+      name: "Elite", price: 299, commission: 70, highlight: false, tag: "Premium",
+      features: ["Tu gardes 70% de tes revenus", "Tout le plan Growth", "Mise en avant premium", "Support prioritaire 24/7", "Analytics avancées"],
+      cta: "Choisir Elite",
+    },
+  ];
+
+  // En phase de lancement tant que les places Founder ne sont pas toutes prises
+  const plans = founder.taken < founder.total ? plansLaunch : plansNormal;
 
   // FAQ (cf. /api/settings/get-management — ici en dur, réaliste)
   const faq = [
@@ -97,5 +124,5 @@ window.VYBZZZ = (function () {
     nb: (v) => v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1).replace(".", ",") + "K" : String(v),
   };
 
-  return { categories, artists, events, packages, gifts, plans, faq, helpers };
+  return { categories, artists, events, packages, gifts, plans, founder, faq, helpers };
 })();

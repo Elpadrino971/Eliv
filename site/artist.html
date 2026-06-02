@@ -18,7 +18,7 @@
 <div id="site-header"></div>
 
 <main class="page">
-  <div class="page__head reveal"><span class="eyebrow">Pour les artistes</span><h1>Monte sur <span class="grad">scène</span>.</h1><p>Diffuse tes concerts en direct, reçois des cadeaux et vends tes tickets. Commission fixe de 5% par transaction, retraits via Stripe ou compte bancaire.</p></div>
+  <div class="page__head reveal"><span class="eyebrow">Programme Founder</span><h1>Deviens créateur <span class="grad">Founder</span>.</h1><p>$79/mois et tu gardes <strong>60% de tes revenus</strong> (billets, cadeaux, pourboires). Réservé aux 200 premiers créateurs, tarif bloqué tant que ton abonnement reste actif. Retraits via Stripe ou compte bancaire.</p></div>
 
   <div class="artist-split">
     <!-- Application form -->
@@ -43,19 +43,21 @@
       <h3>Contrat artiste</h3>
       <p style="color:var(--muted);font-size:.9rem">Aperçu du contrat d'engagement. Télécharge-le en PDF, signe-le, puis coche la case et envoie ta candidature.</p>
       <div class="contract__doc" id="contractDoc">
-        <h4>CONTRAT D'ENGAGEMENT ARTISTE — VYBZZZ</h4>
-        <p>Le présent contrat est conclu entre <b>Vybzzz</b> (« la Plateforme ») et l'artiste signataire (« l'Artiste »).</p>
+        <h4>CONTRAT CRÉATEUR FOUNDER — VYBZZZ</h4>
+        <p>Le présent contrat est conclu entre <b>Vybzzz</b> (« la Plateforme ») et le créateur signataire (« le Créateur »).</p>
         <h4>1. Objet</h4>
-        <p>L'Artiste est autorisé à diffuser des concerts en direct, recevoir des cadeaux virtuels (Arena Points) et vendre des billets via la Plateforme.</p>
-        <h4>2. Rémunération & commission</h4>
-        <p>La Plateforme prélève une commission fixe de <b>5%</b> sur chaque transaction (tickets, cadeaux, pourboires). Le solde net est crédité au portefeuille de l'Artiste.</p>
-        <h4>3. Versements</h4>
+        <p>Le Créateur est autorisé à diffuser des concerts en direct, recevoir des cadeaux virtuels (Arena Points) et vendre des billets via la Plateforme.</p>
+        <h4>2. Abonnement Founder</h4>
+        <p>Le Créateur souscrit au plan <b>Founder</b> au prix de <b>$79/mois</b>, offre de lancement limitée aux 200 premiers créateurs. Ce tarif reste bloqué tant que l'abonnement demeure actif sans interruption.</p>
+        <h4>3. Rémunération</h4>
+        <p>Le Créateur conserve <b>60%</b> de ses revenus (billets, cadeaux, pourboires) ; la Plateforme retient 40%. Les montants nets sont crédités au portefeuille du Créateur, exprimés en USD.</p>
+        <h4>4. Versements</h4>
         <p>Les retraits s'effectuent via Stripe ou compte bancaire, par paliers ($100 / $500 / $1000 / total), avec un délai moyen de versement de 24 heures.</p>
-        <h4>4. Contenu & conduite</h4>
-        <p>L'Artiste garantit détenir les droits sur les œuvres diffusées et s'engage à respecter la charte de la communauté.</p>
-        <h4>5. Durée & résiliation</h4>
-        <p>Le contrat est conclu pour une durée indéterminée et peut être résilié par l'une ou l'autre des parties avec un préavis de 30 jours.</p>
-        <p style="margin-top:14px">Fait à ____________, le ____________.<br/>Signature de l'Artiste : ____________________</p>
+        <h4>5. Contenu & conduite</h4>
+        <p>Le Créateur garantit détenir les droits sur les œuvres diffusées et s'engage à respecter la charte de la communauté.</p>
+        <h4>6. Durée & résiliation</h4>
+        <p>Le contrat est conclu pour une durée indéterminée et peut être résilié par l'une ou l'autre des parties avec un préavis de 30 jours. En cas de résiliation, le tarif Founder est définitivement perdu.</p>
+        <p style="margin-top:14px">Fait à ____________, le ____________.<br/>Signature du Créateur : ____________________</p>
       </div>
       <button class="btn btn--gold magnetic" id="dlContract" data-cursor="hover" style="width:100%"><span>⬇ Télécharger le contrat (PDF)</span></button>
     </div>
@@ -81,23 +83,24 @@
     function h(t){ doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.setTextColor(20); doc.text(t,M,y); y+=18; }
     function p(t){ doc.setFont("helvetica","normal"); doc.setFontSize(10.5); doc.setTextColor(60); var lines=doc.splitTextToSize(t,W); doc.text(lines,M,y); y+=lines.length*15+8; }
 
-    doc.setFillColor(11,14,20); doc.rect(0,0,595,46,"F");
-    doc.setFont("helvetica","bold"); doc.setFontSize(16); doc.setTextColor(198,167,94); doc.text("VYBZZZ",M,30);
-    doc.setFontSize(9); doc.setTextColor(220); doc.text("Contrat d'engagement artiste",595-M,30,{align:"right"});
+    doc.setFillColor(10,24,40); doc.rect(0,0,595,46,"F");
+    doc.setFont("helvetica","bold"); doc.setFontSize(16); doc.setTextColor(200,168,94); doc.text("VYBZZZ",M,30);
+    doc.setFontSize(9); doc.setTextColor(220); doc.text("Contrat créateur Founder",595-M,30,{align:"right"});
 
     doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(20);
-    doc.text("CONTRAT D'ENGAGEMENT ARTISTE",M,y); y+=26;
-    p("Entre VYBZZZ (« la Plateforme ») et "+name+" (« l'Artiste »), e-mail : "+email+".");
-    h("1. Objet"); p("L'Artiste est autorisé à diffuser des concerts en direct, recevoir des cadeaux virtuels (Arena Points) et vendre des billets via la Plateforme.");
-    h("2. Rémunération & commission"); p("La Plateforme prélève une commission fixe de 5% sur chaque transaction (tickets, cadeaux, pourboires). Le solde net est crédité au portefeuille de l'Artiste, exprimé en USD.");
-    h("3. Versements"); p("Les retraits s'effectuent via Stripe ou compte bancaire, par paliers ($100 / $500 / $1000 / total), avec un délai moyen de versement de 24 heures.");
-    h("4. Contenu & conduite"); p("L'Artiste garantit détenir les droits sur les œuvres diffusées et s'engage à respecter la charte de la communauté Vybzzz.");
-    h("5. Durée & résiliation"); p("Le contrat est conclu pour une durée indéterminée et peut être résilié par l'une ou l'autre des parties avec un préavis de 30 jours.");
+    doc.text("CONTRAT CREATEUR FOUNDER",M,y); y+=26;
+    p("Entre VYBZZZ (« la Plateforme ») et "+name+" (« le Createur »), e-mail : "+email+".");
+    h("1. Objet"); p("Le Createur est autorise a diffuser des concerts en direct, recevoir des cadeaux virtuels (Arena Points) et vendre des billets via la Plateforme.");
+    h("2. Abonnement Founder"); p("Le Createur souscrit au plan Founder au prix de $79/mois, offre de lancement limitee aux 200 premiers createurs. Ce tarif reste bloque tant que l'abonnement demeure actif sans interruption.");
+    h("3. Remuneration"); p("Le Createur conserve 60% de ses revenus (billets, cadeaux, pourboires) ; la Plateforme retient 40%. Les montants nets sont credites au portefeuille du Createur, exprimes en USD.");
+    h("4. Versements"); p("Les retraits s'effectuent via Stripe ou compte bancaire, par paliers ($100 / $500 / $1000 / total), avec un delai moyen de versement de 24 heures.");
+    h("5. Contenu & conduite"); p("Le Createur garantit detenir les droits sur les oeuvres diffusees et s'engage a respecter la charte de la communaute Vybzzz.");
+    h("6. Duree & resiliation"); p("Le contrat est conclu pour une duree indeterminee et peut etre resilie par l'une ou l'autre des parties avec un preavis de 30 jours. En cas de resiliation, le tarif Founder est definitivement perdu.");
     y+=18; p("Fait le "+date+".");
-    y+=10; doc.setTextColor(60); doc.text("Signature de l'Artiste :",M,y); doc.line(M+130,y,M+330,y);
+    y+=10; doc.setTextColor(60); doc.text("Signature du Createur :",M,y); doc.line(M+135,y,M+335,y);
     y+=40; doc.text("Pour Vybzzz :",M,y); doc.line(M+90,y,M+290,y);
 
-    doc.save("Contrat-artiste-Vybzzz.pdf");
+    doc.save("Contrat-Founder-Vybzzz.pdf");
     UI.toast("Contrat téléchargé ✓");
   });
 

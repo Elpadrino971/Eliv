@@ -23,8 +23,7 @@
     return `
     <header class="nav" id="nav">
       <a href="index.html" class="nav__brand" data-cursor="hover">
-        <img src="assets/logo.png" alt="Vybzzz" class="nav__logo" />
-        <span>Vybzzz</span>
+        <span class="brand">Vybzzz</span>
       </a>
       <nav class="nav__links" style="margin-left:auto">${links}</nav>
       <div class="nav__cta">
@@ -40,7 +39,7 @@
     <footer class="footer">
       <div class="footer__top">
         <div class="footer__brand">
-          <a href="index.html" class="nav__brand"><img src="assets/logo.png" alt="" class="nav__logo" /><span>Vybzzz</span></a>
+          <a href="index.html" class="nav__brand"><span class="brand">Vybzzz</span></a>
           <p>La scène live qui ne dort jamais.</p>
         </div>
         <div class="footer__cols">
@@ -161,6 +160,36 @@
   const liveBadge = `<span class="badge-live"><span class="pulse-dot"></span>LIVE</span>`;
   const verified = `<svg class="verif" viewBox="0 0 24 24" width="14" height="14"><path fill="#c6a75e" d="M12 1l2.6 1.9 3.2-.3 1 3 2.7 1.8-1 3 1 3-2.7 1.8-1 3-3.2-.3L12 23l-2.6-1.9-3.2.3-1-3L2.5 14.6l1-3-1-3 2.7-1.8 1-3 3.2.3L12 1z"/><path fill="#0b0e14" d="M10.6 14.6l-2-2-1.2 1.2 3.2 3.2 5.4-5.4-1.2-1.2z"/></svg>`;
 
+  // ---- Plan créateur card ----
+  function planCard(p) {
+    return `
+    <article class="plan glass reveal tilt ${p.highlight ? "plan--feat" : ""}" data-cursor="hover">
+      ${p.tag ? `<span class="plan__tag">${p.tag}</span>` : ""}
+      <h3>${p.name}</h3>
+      <div class="plan__price">$${p.price}<i>/mois</i></div>
+      <div class="plan__comm">Tu gardes <b>${p.commission}%</b> de tes revenus</div>
+      ${p.note ? `<p class="plan__note">${p.note}</p>` : ""}
+      <ul>${p.features.map(f => `<li>${f}</li>`).join("")}</ul>
+      <a href="artist.html" class="btn ${p.highlight ? "btn--gold" : "btn--outline"}" data-cursor="hover"><span>${p.cta}</span></a>
+    </article>`;
+  }
+  function renderPlans() {
+    const el = document.getElementById("planGrid");
+    if (el) el.innerHTML = D.plans.map(planCard).join("");
+  }
+  // ---- Founder seats counter ----
+  function renderSeats() {
+    const f = D.founder, left = f.total - f.taken;
+    const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    set("spotsTaken", f.taken);
+    set("spotsTotal", f.total);
+    set("spotsLeft", left + " places restantes");
+    set("seatsLeftBig", left);
+    set("ctaLeft", left);
+    const fill = document.getElementById("spotsFill");
+    if (fill) setTimeout(() => fill.style.width = (f.taken / f.total * 100) + "%", 400);
+  }
+
   // ---- YouTube-style video card ----
   function videoCard(ev) {
     const meta = ev.live
@@ -213,9 +242,12 @@
           <small>${a.followers} abonnés</small>
         </a>`).join("");
     }
-    // main grid
+    // main grid (si présent)
     const grid = document.getElementById("videoGrid");
     if (grid) grid.innerHTML = D.events.map(videoCard).join("");
+    // recrutement : plans + jauge de places fondateur
+    renderPlans();
+    renderSeats();
     refresh();
   }
 
@@ -315,17 +347,8 @@
     const gg = document.getElementById("giftGrid");
     if (gg) gg.innerHTML = D.gifts.map(g =>
       `<div class="giftc giftc--lg reveal" data-cursor="hover"><span>${g.emoji}</span><strong>${g.name}</strong><small>★ ${g.coins} PTS</small></div>`).join("");
-    // plans
-    const pl = document.getElementById("planGrid");
-    if (pl) pl.innerHTML = D.plans.map(p => `
-      <article class="plan glass reveal tilt ${p.highlight ? "plan--feat" : ""}" data-cursor="hover">
-        ${p.tag ? `<span class="plan__tag">${p.tag}</span>` : ""}
-        <h3>${p.name}</h3>
-        <div class="plan__price">${p.price}<i>${p.cycle}</i></div>
-        ${p.note ? `<p class="plan__note">${p.note}</p>` : ""}
-        <ul>${p.features.map(f => `<li>${f}</li>`).join("")}</ul>
-        <a href="${p.name === "Artiste Pro" ? "artist.html" : "checkout.html"}" class="btn ${p.highlight ? "btn--gold" : "btn--outline"}" data-cursor="hover"><span>${p.cta}</span></a>
-      </article>`).join("");
+    // plans (créateur — Founder/Starter/Elite ou Growth après)
+    renderPlans();
     // try gift demo button
     const demo = document.getElementById("giftDemo");
     demo && demo.addEventListener("click", openGiftPanel);
