@@ -257,6 +257,16 @@ window.I18N.es = {
   art_dl: "⬇ Descargar el contrato (PDF)",
   dash_overview: "Resumen", dash_events: "Mis eventos", dash_create: "Crear un live",
   dash_revenue: "Ingresos", dash_withdraw: "Pagos", dash_profile: "Perfil", dash_golive: "🔴 Emitir en directo",
+  nav_feed: "Feed", nav_store: "Tienda",
+  story_eyebrow: "Nuestra historia",
+  story_title_html: 'Creada para no <span class="grad">perderte</span> nunca más a un artista.',
+  story_lead: "En 2009 tenía una entrada para “This Is It.” Nunca fui — el artista se nos fue antes del show. Desde entonces vuelve la misma herida: Prince, Dolores O'Riordan, Chester Bennington, Peetah Morgan… artistas que soñaba con ver en directo, idos demasiado pronto. A demasiados artistas nunca se les ve ni se les escucha de verdad, y un instante en vivo, una vez pasado, no vuelve jamás.",
+  story_mission_html: "Por eso existe Vybzzz: <strong>para no volver a perder esos momentos</strong> — para que cada artista sea visto y escuchado, y ningún fan se pierda su oportunidad de estar allí.",
+  story_artists_t: "Para los artistas",
+  story_artists_p: "Tu escenario, tu público, tus ingresos — sin sala, sin intermediarios. Sales en directo, tus fans envían regalos y compran su entrada, y cobras al instante.",
+  story_fans_t: "Para los fans",
+  story_fans_p: "Vive en primera fila a tus artistas favoritos, apóyalos de verdad con regalos en directo y no te pierdas nunca más un concierto — estés donde estés.",
+  story_close_html: "El próximo gran concierto no está al otro lado del mundo. Empieza <strong>ahora</strong>, en tu bolsillo. <span class=\"grad\">Descarga Vybzzz.</span>",
 };
 
 window.I18N.it = {
@@ -331,6 +341,16 @@ window.I18N.it = {
   art_dl: "⬇ Scarica il contratto (PDF)",
   dash_overview: "Panoramica", dash_events: "I miei eventi", dash_create: "Crea un live",
   dash_revenue: "Ricavi", dash_withdraw: "Pagamenti", dash_profile: "Profilo", dash_golive: "🔴 Vai in diretta",
+  nav_feed: "Feed", nav_store: "Negozio",
+  story_eyebrow: "La nostra storia",
+  story_title_html: 'Nata per non <span class="grad">perdere</span> mai più un artista.',
+  story_lead: "Nel 2009 avevo un biglietto per “This Is It.” Non ci sono mai andato — l'artista se n'è andato prima dello show. Da allora torna la stessa ferita: Prince, Dolores O'Riordan, Chester Bennington, Peetah Morgan… artisti che sognavo di vedere dal vivo, andati via troppo presto. Troppi artisti non vengono mai davvero visti né ascoltati, e un istante dal vivo, una volta passato, non torna più.",
+  story_mission_html: "Ecco perché esiste Vybzzz: <strong>per non perdere mai più quei momenti</strong> — perché ogni artista sia visto e ascoltato, e nessun fan perda la sua occasione di esserci.",
+  story_artists_t: "Per gli artisti",
+  story_artists_p: "Il tuo palco, il tuo pubblico, i tuoi ricavi — senza sala, senza intermediari. Vai in diretta, i tuoi fan inviano regali e comprano il loro posto, e vieni pagato in tempo reale.",
+  story_fans_t: "Per i fan",
+  story_fans_p: "Sii in prima fila per i tuoi artisti preferiti, sostienili davvero con regali in diretta e non perdere mai più un concerto — ovunque tu sia.",
+  story_close_html: "Il prossimo grande concerto non è dall'altra parte del mondo. Comincia <strong>adesso</strong>, nella tua tasca. <span class=\"grad\">Scarica Vybzzz.</span>",
 };
 
 window.I18N.de = {
@@ -405,6 +425,16 @@ window.I18N.de = {
   art_dl: "⬇ Vertrag herunterladen (PDF)",
   dash_overview: "Übersicht", dash_events: "Meine Events", dash_create: "Live erstellen",
   dash_revenue: "Einnahmen", dash_withdraw: "Auszahlungen", dash_profile: "Profil", dash_golive: "🔴 Live gehen",
+  nav_feed: "Feed", nav_store: "Shop",
+  story_eyebrow: "Unsere Geschichte",
+  story_title_html: 'Gebaut, damit du nie wieder einen Künstler <span class="grad">verpasst</span>.',
+  story_lead: "2009 hatte ich ein Ticket für „This Is It.“ Ich war nie dort — der Künstler ging von uns, bevor die Show begann. Seitdem kehrt derselbe Schmerz zurück: Prince, Dolores O'Riordan, Chester Bennington, Peetah Morgan… Künstler, von denen ich träumte, sie live zu sehen, zu früh gegangen. Zu viele Künstler werden nie wirklich gesehen oder gehört, und ein Live-Moment kommt, einmal vorbei, nie wieder zurück.",
+  story_mission_html: "Genau dafür gibt es Vybzzz: <strong>damit wir diese Momente nie wieder verlieren</strong> — damit jeder Künstler gesehen und gehört wird und kein Fan seine Chance verpasst, dabei zu sein.",
+  story_artists_t: "Für Künstler",
+  story_artists_p: "Deine Bühne, dein Publikum, deine Einnahmen — ohne Venue, ohne Zwischenhändler. Du gehst live, deine Fans senden Geschenke und kaufen ihren Platz, und du wirst in Echtzeit bezahlt.",
+  story_fans_t: "Für Fans",
+  story_fans_p: "Sei in der ersten Reihe deiner Lieblingskünstler, unterstütze sie wirklich mit Live-Geschenken und verpasse nie wieder ein Konzert — wo auch immer du bist.",
+  story_close_html: "Das nächste große Konzert ist nicht am anderen Ende der Welt. Es beginnt <strong>jetzt</strong>, in deiner Tasche. <span class=\"grad\">Lade Vybzzz herunter.</span>",
 };
 
 window.I18N.pt = {
@@ -479,6 +509,16 @@ window.I18N.pt = {
   art_dl: "⬇ Descarregar o contrato (PDF)",
   dash_overview: "Visão geral", dash_events: "Os meus eventos", dash_create: "Criar um live",
   dash_revenue: "Receitas", dash_withdraw: "Pagamentos", dash_profile: "Perfil", dash_golive: "🔴 Entrar em direto",
+  nav_feed: "Feed", nav_store: "Loja",
+  story_eyebrow: "A nossa história",
+  story_title_html: 'Criada para nunca mais <span class="grad">perderes</span> um artista.',
+  story_lead: "Em 2009 eu tinha um bilhete para “This Is It.” Nunca fui — o artista partiu antes do espetáculo. Desde então, a mesma dor regressa: Prince, Dolores O'Riordan, Chester Bennington, Peetah Morgan… artistas que sonhava ver ao vivo, partidos cedo demais. Há artistas a mais que nunca são verdadeiramente vistos nem ouvidos, e um momento ao vivo, uma vez passado, nunca mais volta.",
+  story_mission_html: "É por isso que o Vybzzz existe: <strong>para nunca mais perdermos esses momentos</strong> — para que cada artista seja visto e ouvido, e nenhum fã perca a sua hipótese de estar lá.",
+  story_artists_t: "Para os artistas",
+  story_artists_p: "O teu palco, o teu público, as tuas receitas — sem sala, sem intermediários. Entras em direto, os teus fãs enviam presentes e compram o seu lugar, e recebes em tempo real.",
+  story_fans_t: "Para os fãs",
+  story_fans_p: "Fica na primeira fila dos teus artistas favoritos, apoia-os a sério com presentes em direto e nunca mais percas um concerto — onde quer que estejas.",
+  story_close_html: "O próximo grande concerto não está do outro lado do mundo. Começa <strong>agora</strong>, no teu bolso. <span class=\"grad\">Descarrega o Vybzzz.</span>",
 };
 
 window.I18N.zh = {
@@ -553,6 +593,16 @@ window.I18N.zh = {
   art_dl: "⬇ 下载合约（PDF）",
   dash_overview: "概览", dash_events: "我的活动", dash_create: "创建直播",
   dash_revenue: "收入", dash_withdraw: "结算", dash_profile: "个人资料", dash_golive: "🔴 开始直播",
+  nav_feed: "动态", nav_store: "商店",
+  story_eyebrow: "我们的故事",
+  story_title_html: '为了让你再也不<span class="grad">错过</span>任何一位艺人而生。',
+  story_lead: "2009 年，我手握一张 “This Is It” 的门票。我却从未去成——演出还没开始，那位艺人就离开了我们。从那以后，同样的痛一次次袭来：Prince、Dolores O'Riordan、Chester Bennington、Peetah Morgan……这些我梦想着亲眼看到的艺人，都走得太早。太多艺人从未被真正看见、被真正听见，而现场的那一刻，一旦逝去，便再也不会回来。",
+  story_mission_html: "Vybzzz 因此而生：<strong>只为不再失去那些时刻</strong>——让每一位艺人都被看见、被听见，也让每一位粉丝都不再错过亲临现场的机会。",
+  story_artists_t: "为艺人",
+  story_artists_p: "你的舞台、你的观众、你的收入——无需场地，无需中间人。你开启直播，粉丝送出礼物、买下他们的位置，而你即时收款。",
+  story_fans_t: "为粉丝",
+  story_fans_p: "坐在你最爱艺人的第一排，用直播礼物真正支持他们，从此无论身在何处，都不再错过一场演出。",
+  story_close_html: "下一场盛大的演出并不在世界的另一端。它<strong>此刻</strong>就在你的口袋里开始。<span class=\"grad\">下载 Vybzzz。</span>",
 };
 
 window.I18N.ko = {
@@ -627,6 +677,16 @@ window.I18N.ko = {
   art_dl: "⬇ 계약서 다운로드 (PDF)",
   dash_overview: "개요", dash_events: "내 이벤트", dash_create: "라이브 만들기",
   dash_revenue: "수익", dash_withdraw: "정산", dash_profile: "프로필", dash_golive: "🔴 라이브 시작",
+  nav_feed: "피드", nav_store: "스토어",
+  story_eyebrow: "우리의 이야기",
+  story_title_html: '다시는 아티스트를 <span class="grad">놓치지</span> 않도록 만들었습니다.',
+  story_lead: "2009년, 저는 “This Is It” 티켓을 가지고 있었습니다. 끝내 가지 못했죠 — 공연 전에 그 아티스트가 우리 곁을 떠났으니까요. 그 후로 같은 아픔이 되풀이됩니다. Prince, Dolores O'Riordan, Chester Bennington, Peetah Morgan… 무대에서 보길 꿈꿨던 아티스트들이 너무 일찍 떠났습니다. 너무 많은 아티스트가 진정으로 보이지도 들리지도 못하고, 한번 지나간 라이브의 순간은 결코 다시 돌아오지 않습니다.",
+  story_mission_html: "그래서 Vybzzz가 존재합니다. <strong>다시는 그 순간들을 잃지 않기 위해</strong> — 모든 아티스트가 보이고 들리도록, 그리고 어떤 팬도 그 자리에 함께할 기회를 놓치지 않도록.",
+  story_artists_t: "아티스트를 위해",
+  story_artists_p: "당신의 무대, 당신의 관객, 당신의 수익 — 공연장도, 중간 상인도 없이. 라이브를 시작하면 팬들이 선물을 보내고 자리를 구매하며, 당신은 실시간으로 정산받습니다.",
+  story_fans_t: "팬을 위해",
+  story_fans_p: "좋아하는 아티스트의 맨 앞줄에서, 라이브 선물로 진심을 다해 응원하고, 어디에 있든 다시는 콘서트를 놓치지 마세요.",
+  story_close_html: "다음 큰 콘서트는 지구 반대편에 있지 않습니다. 바로 <strong>지금</strong>, 당신의 주머니 속에서 시작됩니다. <span class=\"grad\">Vybzzz를 다운로드하세요.</span>",
 };
 
 window.I18N.ja = {
@@ -701,6 +761,16 @@ window.I18N.ja = {
   art_dl: "⬇ 契約書をダウンロード（PDF）",
   dash_overview: "概要", dash_events: "マイイベント", dash_create: "ライブを作成",
   dash_revenue: "収益", dash_withdraw: "支払い", dash_profile: "プロフィール", dash_golive: "🔴 ライブ開始",
+  nav_feed: "フィード", nav_store: "ストア",
+  story_eyebrow: "私たちの物語",
+  story_title_html: '二度とアーティストを<span class="grad">見逃さない</span>ために生まれました。',
+  story_lead: "2009年、私は「This Is It」のチケットを持っていました。けれど一度も行けませんでした — 公演の前に、そのアーティストが旅立ってしまったのです。それ以来、同じ痛みが何度も戻ってきます。Prince、Dolores O'Riordan、Chester Bennington、Peetah Morgan… ステージで見ることを夢見たアーティストたちが、あまりにも早く去っていきました。あまりに多くのアーティストが本当に見られも聴かれもせず、そして一度過ぎ去ったライブの瞬間は、二度と戻ってきません。",
+  story_mission_html: "だからこそ Vybzzz は存在します。<strong>二度とあの瞬間を失わないために</strong> — すべてのアーティストが見られ、聴かれ、どんなファンもその場に立ち会う機会を逃さないように。",
+  story_artists_t: "アーティストのために",
+  story_artists_p: "あなたのステージ、あなたの観客、あなたの収入 — 会場も仲介者もなしに。ライブを始めれば、ファンがギフトを贈り、席を購入し、あなたはリアルタイムで報酬を受け取ります。",
+  story_fans_t: "ファンのために",
+  story_fans_p: "大好きなアーティストの最前列で、ライブギフトで本気で応援し、どこにいても二度とコンサートを見逃さないでください。",
+  story_close_html: "次の大きなコンサートは、地球の裏側にあるのではありません。<strong>今</strong>、あなたのポケットの中で始まります。<span class=\"grad\">Vybzzz をダウンロード。</span>",
 };
 
 window.I18N.ar = {
@@ -775,6 +845,16 @@ window.I18N.ar = {
   art_dl: "⬇ تحميل العقد (PDF)",
   dash_overview: "نظرة عامة", dash_events: "أحداثي", dash_create: "إنشاء بث مباشر",
   dash_revenue: "الأرباح", dash_withdraw: "السحوبات", dash_profile: "الملف الشخصي", dash_golive: "🔴 ابدأ البث",
+  nav_feed: "الموجز", nav_store: "المتجر",
+  story_eyebrow: "قصتنا",
+  story_title_html: 'صُنعت كي لا <span class="grad">تفوتك</span> رؤية فنان مرة أخرى أبدًا.',
+  story_lead: "في 2009، كانت بحوزتي تذكرة لحفل “This Is It”. لكنني لم أذهب قط — فقد رحل الفنان قبل العرض. ومنذ ذلك الحين يعود الألم نفسه: Prince، Dolores O'Riordan، Chester Bennington، Peetah Morgan… فنانون حلمت برؤيتهم على المسرح، رحلوا باكرًا جدًا. كثير من الفنانين لا يُرَون ولا يُسمَعون حقًا أبدًا، ولحظة حية، متى مضت، لا تعود أبدًا.",
+  story_mission_html: "لهذا وُجدت Vybzzz: <strong>كي لا نفقد تلك اللحظات مرة أخرى أبدًا</strong> — كي يُرى كل فنان ويُسمَع، وكي لا يفوّت أي معجب فرصته في أن يكون هناك.",
+  story_artists_t: "للفنانين",
+  story_artists_p: "مسرحك، جمهورك، دخلك — بلا قاعة، بلا وسيط. تبدأ البث، فيرسل معجبوك الهدايا ويشترون مقاعدهم، وتُدفع لك أرباحك فورًا.",
+  story_fans_t: "للمعجبين",
+  story_fans_p: "كن في الصف الأول أمام فنانيك المفضلين، وادعمهم بصدق بالهدايا الحية، ولا يفوتك حفل بعد اليوم — أينما كنت.",
+  story_close_html: "الحفل الكبير القادم ليس في الطرف الآخر من العالم. إنه يبدأ <strong>الآن</strong>، في جيبك. <span class=\"grad\">حمّل Vybzzz.</span>",
 };
 
 window.I18N.hi = {
@@ -849,6 +929,16 @@ window.I18N.hi = {
   art_dl: "⬇ अनुबंध डाउनलोड करें (PDF)",
   dash_overview: "अवलोकन", dash_events: "मेरे इवेंट", dash_create: "लाइव बनाएँ",
   dash_revenue: "कमाई", dash_withdraw: "निकासी", dash_profile: "प्रोफ़ाइल", dash_golive: "🔴 लाइव जाएँ",
+  nav_feed: "फ़ीड", nav_store: "स्टोर",
+  story_eyebrow: "हमारी कहानी",
+  story_title_html: 'इसलिए बनाई गई कि आप फिर कभी किसी कलाकार को <span class="grad">मिस</span> न करें।',
+  story_lead: "2009 में, मेरे पास “This Is It” का टिकट था। मैं कभी गया ही नहीं — शो से पहले ही वह कलाकार हमें छोड़कर चला गया। तब से वही टीस बार-बार लौट आती है: Prince, Dolores O'Riordan, Chester Bennington, Peetah Morgan… जिन कलाकारों को मंच पर देखने का मैंने सपना देखा था, वे बहुत जल्दी चले गए। बहुत से कलाकार कभी सच में न देखे जाते हैं, न सुने जाते हैं, और लाइव का एक पल, एक बार बीत जाने पर, फिर कभी नहीं लौटता।",
+  story_mission_html: "इसीलिए Vybzzz है: <strong>ताकि हम वे पल फिर कभी न खोएँ</strong> — ताकि हर कलाकार देखा और सुना जाए, और कोई भी फ़ैन वहाँ मौजूद रहने का अपना मौका न चूके।",
+  story_artists_t: "कलाकारों के लिए",
+  story_artists_p: "आपका मंच, आपके दर्शक, आपकी कमाई — न कोई हॉल, न कोई बिचौलिया। आप लाइव जाते हैं, आपके फ़ैन तोहफ़े भेजते हैं और अपनी जगह खरीदते हैं, और आपको रियल-टाइम में भुगतान मिलता है।",
+  story_fans_t: "फ़ैन्स के लिए",
+  story_fans_p: "अपने पसंदीदा कलाकारों की सबसे अगली कतार में रहें, लाइव तोहफ़ों से सच्चे दिल से उनका साथ दें, और फिर कभी कोई कॉन्सर्ट न चूकें — आप चाहे कहीं भी हों।",
+  story_close_html: "अगला बड़ा कॉन्सर्ट दुनिया के दूसरे छोर पर नहीं है। यह <strong>अभी</strong> शुरू हो रहा है, आपकी जेब में। <span class=\"grad\">Vybzzz डाउनलोड करें।</span>",
 };
 
 window.I18N.ru = {
@@ -923,4 +1013,14 @@ window.I18N.ru = {
   art_dl: "⬇ Скачать договор (PDF)",
   dash_overview: "Обзор", dash_events: "Мои события", dash_create: "Создать эфир",
   dash_revenue: "Доход", dash_withdraw: "Выплаты", dash_profile: "Профиль", dash_golive: "🔴 В эфир",
+  nav_feed: "Лента", nav_store: "Магазин",
+  story_eyebrow: "Наша история",
+  story_title_html: 'Создано, чтобы вы больше никогда не <span class="grad">пропустили</span> любимого артиста.',
+  story_lead: "В 2009 году у меня был билет на «This Is It». Я так и не пошёл — артист ушёл от нас ещё до концерта. С тех пор возвращается та же боль: Prince, Dolores O'Riordan, Chester Bennington, Peetah Morgan… артисты, которых я мечтал увидеть на сцене, ушли слишком рано. Слишком многих артистов так по-настоящему и не увидели и не услышали, а живой миг, однажды пройдя, не возвращается никогда.",
+  story_mission_html: "Именно поэтому существует Vybzzz: <strong>чтобы мы больше никогда не теряли эти мгновения</strong> — чтобы каждого артиста увидели и услышали, и ни один фанат не упустил свой шанс быть там.",
+  story_artists_t: "Для артистов",
+  story_artists_p: "Твоя сцена, твоя публика, твой доход — без зала, без посредников. Ты выходишь в эфир, фанаты шлют подарки и покупают свои места, а ты получаешь выплаты в реальном времени.",
+  story_fans_t: "Для фанатов",
+  story_fans_p: "Будь в первом ряду у любимых артистов, по-настоящему поддерживай их подарками в прямом эфире и больше никогда не пропускай концерт — где бы ты ни был.",
+  story_close_html: "Следующий большой концерт не на другом конце света. Он начинается <strong>прямо сейчас</strong>, у тебя в кармане. <span class=\"grad\">Скачай Vybzzz.</span>",
 };
