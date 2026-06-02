@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/api.dart';
+import 'package:artist/Global/mux.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/artist_detail.dart';
@@ -25,9 +26,10 @@ String _fmtDur(Duration d) {
   return d.inHours > 0 ? '${d.inHours}:$m:$s' : '$m:$s';
 }
 
-/// Onglet Live = 2 pages en swipe horizontal :
+/// Onglet Live = 3 pages en swipe horizontal :
 ///  - Page 0 "Pour toi" : feed vertical de reels (VybzzZ Originals)
 ///  - Page 1 "En direct" : lives en cours, apercu gratuit 60s puis gate opaque
+///  - Page 2 "Clips" : feed vertical des shorts UGC (uploadés via Mux)
 class VybzLiveScreen extends StatefulWidget {
   const VybzLiveScreen({super.key});
 
@@ -70,7 +72,11 @@ class _VybzLiveScreenState extends State<VybzLiveScreen> {
                 i == 0 ? c.play() : c.pause();
               }
             },
-            children: const [_ForYouFeed(), _LivesFeed()],
+            children: [
+              const _ForYouFeed(),
+              const _LivesFeed(),
+              _ClipsFeed(isActive: _page == 2),
+            ],
           ),
 
           // Pastille de navigation centrale (Pour toi · En direct)
@@ -95,6 +101,7 @@ class _VybzLiveScreenState extends State<VybzLiveScreen> {
                   children: [
                     _tab('live_tab_for_you'.tr, 0),
                     _tab('live_tab_live'.tr, 1, live: true),
+                    _tab('Clips', 2),
                   ],
                 ),
               ),
@@ -102,9 +109,10 @@ class _VybzLiveScreenState extends State<VybzLiveScreen> {
             }),
           ),
 
-          // X de sortie sur la page "En direct" : l'onglet Live masque la barre
-          // de nav, donc sans ça on reste coincé. Même action que le X "Pour toi".
-          if (_page == 1)
+          // X de sortie sur les pages "En direct" et "Clips" : l'onglet Live
+          // masque la barre de nav, donc sans ça on reste coincé. Même action
+          // que le X de "Pour toi".
+          if (_page != 0)
             Positioned(
               top: MediaQuery.of(context).padding.top + 10,
               left: 12,
@@ -917,6 +925,220 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
           ),
         ),
       ],
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// PAGE 2 — "Clips" : feed vertical des shorts UGC (uploadés via Mux).
+// Contrôleur vidéo indépendant pour ne pas interférer avec "Pour toi".
+// ───────────────────────────────────────────────────────────────────────────
+class _ClipsFeed extends StatefulWidget {
+  final bool isActive;
+  const _ClipsFeed({required this.isActive});
+
+  @override
+  State<_ClipsFeed> createState() => _ClipsFeedState();
+}
+
+class _ClipsFeedState extends State<_ClipsFeed> {
+  final PageController _pageController = PageController();
+  VideoPlayerController? _controller;
+  int _index = 0;
+
+  List<String> get _ids => APIs.muxShortsPlaybackIds;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isActive && _ids.isNotEmpty) _initVideo(_ids.first);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ClipsFeed old) {
+    super.didUpdateWidget(old);
+    if (widget.isActive && !old.isActive) {
+      if (_controller == null && _ids.isNotEmpty) {
+        _initVideo(_ids[_index]);
+      } else {
+        _controller?.play();
+      }
+    } else if (!widget.isActive && old.isActive) {
+      _controller?.pause();
+    }
+  }
+
+  void _initVideo(String playbackId) {
+    _controller?.dispose();
+    _controller = null;
+    final c = VideoPlayerController.networkUrl(Uri.parse(Mux.hlsUrl(playbackId)))
+      ..initialize().then((_) {
+        if (mounted) setState(() {});
+      });
+    c.setLooping(true);
+    _controller = c;
+    if (widget.isActive) c.play();
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ids = _ids;
+    if (ids.isEmpty) return const _NoClipsState();
+
+    return Stack(
+      children: [
+        PageView.builder(
+          controller: _pageController,
+          scrollDirection: Axis.vertical,
+          itemCount: ids.length,
+          onPageChanged: (i) {
+            _index = i;
+            _initVideo(ids[i]);
+          },
+          itemBuilder: (context, index) {
+            final c = _controller;
+            final ready = c != null && c.value.isInitialized;
+            return GestureDetector(
+              child: Container(
+                width: Get.width,
+                height: Get.height,
+                color: blackColor,
+                child: ready
+                    ? Center(
+                        child: AspectRatio(
+                          aspectRatio: c.value.aspectRatio,
+                          child: VideoPlayer(c),
+                        ),
+                      )
+                    : const Center(
+                        child: CircularProgressIndicator(color: goldPrimary),
+                      ),
+              ),
+            );
+          },
+        ),
+
+        // Libellé "VYBZZZ Clips"
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 56,
+          left: 16,
+          child: Row(
+            children: [
+              const Text(
+                'VYBZZZ',
+                style: TextStyle(
+                  color: whiteColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Clips',
+                style: TextStyle(
+                  color: goldPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Bouton "+" créer un short
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 50,
+          right: 12,
+          child: GestureDetector(
+            onTap: () => Get.to(() => const CreateShortScreen()),
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: const BoxDecoration(
+                color: goldPrimary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.add_rounded,
+                color: midnightPrimary,
+                size: 24,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// État vide de l'onglet Clips : invite à créer un short.
+class _NoClipsState extends StatelessWidget {
+  const _NoClipsState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: midnightPrimary,
+      width: Get.width,
+      height: Get.height,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.video_collection_outlined,
+              color: whiteColor.withValues(alpha: 0.4), size: 56),
+          height(0.02),
+          const Text(
+            'Aucun clip pour l\'instant',
+            style: TextStyle(
+              color: whiteColor,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          height(0.01),
+          Text(
+            'Sois le premier à publier un short',
+            style: TextStyle(
+              color: whiteColor.withValues(alpha: 0.6),
+              fontSize: 14,
+            ),
+          ),
+          height(0.03),
+          GestureDetector(
+            onTap: () => Get.to(() => const CreateShortScreen()),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: goldPrimary,
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add_rounded, color: midnightPrimary, size: 18),
+                  SizedBox(width: 6),
+                  Text(
+                    'Créer un short',
+                    style: TextStyle(
+                      color: midnightPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

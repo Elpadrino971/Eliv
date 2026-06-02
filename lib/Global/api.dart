@@ -44,6 +44,14 @@ class APIs {
     'MW3Ts7Jng66mhzjyUg4AGqQ9ow9yqjgwUI003lSPRLag', // YTDown
   ];
 
+  /// Shorts UGC affichés dans l'onglet "Clips" (3e page du Live).
+  /// Front-end pour l'instant — à remplacer par la liste renvoyée par le backend
+  /// (les shorts uploadés via Mux Direct Upload). Vide = état "Créer un short".
+  static const List<String> muxShortsPlaybackIds = [
+    '01c02msAhj7ug800qbzrvHkTNx4JZn79TBsCC8xtV7tc5k',
+    'sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU',
+  ];
+
   // ───────────────────────────────────────────────────────────────────────
   // SHORTS UGC (upload vidéo utilisateur via Mux Direct Upload).
   // [A IMPLEMENTER PAR LE DEV] Le backend cree un "direct upload" Mux
