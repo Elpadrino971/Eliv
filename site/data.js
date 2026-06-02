@@ -66,9 +66,9 @@ window.VYBZZZ = (function () {
     upgradeCommission: 70,     // option 70%
     upgradePrice: 299,         // = plan Elite
     tiers: [
-      { price: 79,  seats: 24,  label: "Vague 1 — les 24 premières" },
-      { price: 99,  seats: 76,  label: "Vague 2 — les 76 suivantes" },
-      { price: 149, seats: 100, label: "Vague 3 — les 100 dernières" },
+      { price: 79,  seats: 24,  label: "Vague 1 — les 24 premières", link: "https://buy.stripe.com/14AaEX9lB96VgBP8xifMA00" },
+      { price: 99,  seats: 76,  label: "Vague 2 — les 76 suivantes", link: "https://buy.stripe.com/8x25kDdBR96VclzcNyfMA04" },
+      { price: 149, seats: 100, label: "Vague 3 — les 100 dernières", link: "https://buy.stripe.com/cNi8wP69pfvj4T7fZKfMA05" },
     ],
   };
 
@@ -76,14 +76,14 @@ window.VYBZZZ = (function () {
   const elite = {
     name: "Elite", price: 299, commission: 70, tag: "Option 70%",
     features: ["Tu gardes 70% de tes revenus", "Tout le Studio Pro", "Mise en avant premium", "Support prioritaire 24/7", "Analytics avancées"],
-    cta: "Passer à 70%",
+    cta: "Passer à 70%", link: "https://buy.stripe.com/bJe8wPapF1Etbhv4h2fMA03",
   };
 
   // Plans normaux : à partir de la 201ᵉ inscription, l'offre Founder disparaît
   const plansNormal = [
-    { name: "Starter", price: 99,  commission: 50, highlight: false, features: ["Tu gardes 50% de tes revenus", "Studio Pro complet", "Billetterie & cadeaux virtuels", "Retraits Stripe / banque"], cta: "Choisir Starter" },
-    { name: "Growth",  price: 199, commission: 60, highlight: true, tag: "Populaire", note: "Remplace l'offre Founder", features: ["Tu gardes 60% de tes revenus", "Tout le plan Starter", "Mise en avant prioritaire", "Retraits prioritaires"], cta: "Choisir Growth" },
-    { name: "Elite",   price: 299, commission: 70, highlight: false, tag: "Premium", features: ["Tu gardes 70% de tes revenus", "Tout le plan Growth", "Mise en avant premium", "Support prioritaire 24/7", "Analytics avancées"], cta: "Choisir Elite" },
+    { name: "Starter", price: 99,  commission: 50, highlight: false, features: ["Tu gardes 50% de tes revenus", "Studio Pro complet", "Billetterie & cadeaux virtuels", "Retraits Stripe / banque"], cta: "Choisir Starter", link: "https://buy.stripe.com/bJe28r41h6YN3P37tefMA01" },
+    { name: "Growth",  price: 199, commission: 60, highlight: true, tag: "Populaire", note: "Remplace l'offre Founder", features: ["Tu gardes 60% de tes revenus", "Tout le plan Starter", "Mise en avant prioritaire", "Retraits prioritaires"], cta: "Choisir Growth", link: "https://buy.stripe.com/8x29ATdBR3MB71ffZKfMA02" },
+    { name: "Elite",   price: 299, commission: 70, highlight: false, tag: "Premium", features: ["Tu gardes 70% de tes revenus", "Tout le plan Growth", "Mise en avant premium", "Support prioritaire 24/7", "Analytics avancées"], cta: "Choisir Elite", link: "https://buy.stripe.com/bJe8wPapF1Etbhv4h2fMA03" },
   ];
 
   // FAQ (cf. /api/settings/get-management — ici en dur, réaliste)

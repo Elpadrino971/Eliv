@@ -210,7 +210,7 @@
       <div class="plan__comm">Tu gardes <b>${p.commission}%</b> de tes revenus</div>
       ${p.note ? `<p class="plan__note">${p.note}</p>` : ""}
       <ul>${p.features.map(f => `<li>${f}</li>`).join("")}</ul>
-      <a href="artist.html" class="btn ${p.highlight ? "btn--gold" : "btn--outline"}" data-cursor="hover"><span>${p.cta}</span></a>
+      <a href="${p.link || "artist.html"}" ${p.link ? 'target="_blank" rel="noopener"' : ""} class="btn ${p.highlight ? "btn--gold" : "btn--outline"}" data-cursor="hover"><span>${p.cta}</span></a>
     </article>`;
   }
   // ---- État de l'offre Founder (palier courant selon l'ordre d'inscription) ----
@@ -224,6 +224,7 @@
           takenInTier: f.taken - prev, tierSeats: f.tiers[i].seats,
           remaining: cum - f.taken,
           nextPrice: f.tiers[i + 1] ? f.tiers[i + 1].price : null,
+          link: f.tiers[i].link,
         };
       }
     }
@@ -247,7 +248,7 @@
         <li>Mise en avant Fondateur</li>
         ${cur ? `<li><b>${fi.remaining}</b> places restantes à ce tarif</li>` : ""}
       </ul>
-      <a href="artist.html" class="btn ${cur ? "btn--gold" : "btn--outline"}" data-cursor="hover"><span>${cur ? "Réserver à $" + t.price : done ? "Complet" : "Bientôt"}</span></a>
+      <a href="${cur ? t.link : "artist.html"}" ${cur ? 'target="_blank" rel="noopener"' : ""} class="btn ${cur ? "btn--gold" : "btn--outline"}" data-cursor="hover"><span>${cur ? "Réserver à $" + t.price : done ? "Complet" : "Bientôt"}</span></a>
     </article>`;
   }
   function eliteCardHTML() {
@@ -260,7 +261,7 @@
       <div class="plan__price">$${e.price}<i>/mois</i></div>
       <div class="plan__comm">Tu gardes <b>${e.commission}%</b> de tes revenus</div>
       <ul>${e.features.map(f => `<li>${f}</li>`).join("")}</ul>
-      <a href="artist.html" class="btn btn--outline" data-cursor="hover"><span>${e.cta}</span></a>
+      <a href="${e.link}" target="_blank" rel="noopener" class="btn btn--outline" data-cursor="hover"><span>${e.cta}</span></a>
     </article>`;
   }
   function renderPlans() {
