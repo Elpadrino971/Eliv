@@ -70,6 +70,26 @@ window.I18N.fr = {
   faq_q6: "Comment devenir artiste fondateur ?", faq_a6: "Va dans « Devenir artiste », remplis le formulaire (nom de scène, genre, expérience), télécharge et signe le contrat Founder, et notre équipe valide ton profil. Tu accèdes ensuite au Studio Pro.",
   faq_q7: "Comment retirer mes gains (artistes) ?", faq_a7: "Depuis le Studio Pro → Revenus → « Retraits ». Choisis ta méthode (Stripe ou compte bancaire), saisis le montant (paliers $100 / $500 / $1000 / Tout), et confirme. Délai moyen de versement : 24h.",
   faq_q8: "Les lives sont-ils disponibles en replay ?", faq_a8: "Oui. Tout ticket acheté inclut le replay HD, disponible dans « Mes tickets ». Les abonnés ont accès aux replays publics.",
+  // Page artiste
+  art_eyebrow: "Programme Founder",
+  art_title_html: 'Deviens créateur <span class="grad">Founder</span>.',
+  art_p_html: "$79/mois et tu gardes <strong>60% de tes revenus</strong> (billets, cadeaux, pourboires). Réservé aux 200 premiers créateurs, tarif bloqué tant que ton abonnement reste actif. Retraits via Stripe ou compte bancaire.",
+  art_form_title: "Candidature artiste",
+  art_name: "Nom de scène / du groupe *", art_name_ph: "Ex. NOVA",
+  art_email: "E-mail *", art_email_ph: "toi@email.com",
+  art_phone: "Téléphone *", art_phone_ph: "+33 6 …",
+  art_genre: "Genre principal *",
+  art_exp: "Expérience scénique *", art_exp_ph: "Ex. 50+ concerts, 3 ans de live",
+  art_social: "Réseaux sociaux / site", art_social_ph: "@ton_compte",
+  art_about: "Parle-nous de toi", art_about_ph: "Ton univers, ton public…",
+  art_accept_html: 'J\'ai lu et j\'accepte le <b style="color:var(--gold-2)">Contrat artiste Vybzzz</b> (commission, reversements, conditions de diffusion).',
+  art_submit: "Soumettre ma candidature",
+  art_c_title: "Contrat artiste",
+  art_c_intro: "Aperçu du contrat d'engagement. Télécharge-le en PDF, signe-le, puis coche la case et envoie ta candidature.",
+  art_dl: "⬇ Télécharger le contrat (PDF)",
+  // Studio Pro — barre latérale
+  dash_overview: "Vue d'ensemble", dash_events: "Mes événements", dash_create: "Créer un live",
+  dash_revenue: "Revenus", dash_withdraw: "Retraits", dash_profile: "Profil", dash_golive: "🔴 Passer en live",
 };
 
 window.I18N.en = {
@@ -126,6 +146,24 @@ window.I18N.en = {
   faq_q6: "How do I become a Founder creator?", faq_a6: "Go to « Become a creator », fill in the form (stage name, genre, experience), download and sign the Founder contract, and our team reviews your profile. You then get access to the Pro Studio.",
   faq_q7: "How do I withdraw my earnings (artists)?", faq_a7: "From Pro Studio → Revenue → « Payouts ». Pick your method (Stripe or bank account), enter the amount ($100 / $500 / $1000 / All), and confirm. Average payout time: 24h.",
   faq_q8: "Are lives available as replays?", faq_a8: "Yes. Every ticket purchased includes the HD replay, available in « My tickets ». Subscribers get access to public replays.",
+  art_eyebrow: "Founder program",
+  art_title_html: 'Become a <span class="grad">Founder</span> creator.',
+  art_p_html: "$79/mo and you keep <strong>60% of your revenue</strong> (tickets, gifts, tips). Reserved for the first 200 creators, price locked as long as your subscription stays active. Payouts via Stripe or bank account.",
+  art_form_title: "Creator application",
+  art_name: "Stage / band name *", art_name_ph: "e.g. NOVA",
+  art_email: "Email *", art_email_ph: "you@email.com",
+  art_phone: "Phone *", art_phone_ph: "+1 555 …",
+  art_genre: "Main genre *",
+  art_exp: "Stage experience *", art_exp_ph: "e.g. 50+ shows, 3 years live",
+  art_social: "Social / website", art_social_ph: "@your_handle",
+  art_about: "Tell us about you", art_about_ph: "Your style, your audience…",
+  art_accept_html: 'I have read and accept the <b style="color:var(--gold-2)">Vybzzz creator contract</b> (commission, payouts, broadcasting terms).',
+  art_submit: "Submit my application",
+  art_c_title: "Creator contract",
+  art_c_intro: "Preview of the engagement contract. Download it as a PDF, sign it, then tick the box and send your application.",
+  art_dl: "⬇ Download the contract (PDF)",
+  dash_overview: "Overview", dash_events: "My events", dash_create: "Create a live",
+  dash_revenue: "Revenue", dash_withdraw: "Payouts", dash_profile: "Profile", dash_golive: "🔴 Go live",
 };
 
 window.I18N.es = {

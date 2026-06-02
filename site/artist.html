@@ -18,30 +18,30 @@
 <div id="site-header"></div>
 
 <main class="page">
-  <div class="page__head reveal"><span class="eyebrow">Programme Founder</span><h1>Deviens créateur <span class="grad">Founder</span>.</h1><p>$79/mois et tu gardes <strong>60% de tes revenus</strong> (billets, cadeaux, pourboires). Réservé aux 200 premiers créateurs, tarif bloqué tant que ton abonnement reste actif. Retraits via Stripe ou compte bancaire.</p></div>
+  <div class="page__head reveal"><span class="eyebrow" data-i18n="art_eyebrow">Programme Founder</span><h1 data-i18n-html="art_title_html">Deviens créateur <span class="grad">Founder</span>.</h1><p data-i18n-html="art_p_html">$79/mois et tu gardes <strong>60% de tes revenus</strong> (billets, cadeaux, pourboires). Réservé aux 200 premiers créateurs, tarif bloqué tant que ton abonnement reste actif. Retraits via Stripe ou compte bancaire.</p></div>
 
   <div class="artist-split">
     <!-- Application form -->
     <form class="panel glass reveal" id="artistForm">
-      <h3 style="margin-bottom:18px">Candidature artiste</h3>
-      <div class="field"><label>Nom de scène / du groupe *</label><input id="aName" required placeholder="Ex. NOVA" /></div>
-      <div class="field"><label>E-mail *</label><input id="aEmail" type="email" required placeholder="toi@email.com" /></div>
-      <div class="field"><label>Téléphone *</label><input id="aPhone" required placeholder="+33 6 …" /></div>
-      <div class="field"><label>Genre principal *</label>
+      <h3 style="margin-bottom:18px" data-i18n="art_form_title">Candidature artiste</h3>
+      <div class="field"><label data-i18n="art_name">Nom de scène / du groupe *</label><input id="aName" required data-i18n-ph="art_name_ph" placeholder="Ex. NOVA" /></div>
+      <div class="field"><label data-i18n="art_email">E-mail *</label><input id="aEmail" type="email" required data-i18n-ph="art_email_ph" placeholder="toi@email.com" /></div>
+      <div class="field"><label data-i18n="art_phone">Téléphone *</label><input id="aPhone" required data-i18n-ph="art_phone_ph" placeholder="+33 6 …" /></div>
+      <div class="field"><label data-i18n="art_genre">Genre principal *</label>
         <select id="aGenre"><option>Afrobeats</option><option>Hip-Hop</option><option>R&B / Soul</option><option>Amapiano</option><option>Électro</option><option>House</option><option>Pop</option><option>Jazz</option><option>Reggae</option><option>Gospel</option></select>
       </div>
-      <div class="field"><label>Expérience scénique *</label><input id="aExp" required placeholder="Ex. 50+ concerts, 3 ans de live" /></div>
-      <div class="field"><label>Réseaux sociaux / site</label><input id="aSocial" placeholder="@ton_compte" /></div>
-      <div class="field"><label>Parle-nous de toi</label><textarea id="aAbout" rows="4" placeholder="Ton univers, ton public…"></textarea></div>
+      <div class="field"><label data-i18n="art_exp">Expérience scénique *</label><input id="aExp" required data-i18n-ph="art_exp_ph" placeholder="Ex. 50+ concerts, 3 ans de live" /></div>
+      <div class="field"><label data-i18n="art_social">Réseaux sociaux / site</label><input id="aSocial" data-i18n-ph="art_social_ph" placeholder="@ton_compte" /></div>
+      <div class="field"><label data-i18n="art_about">Parle-nous de toi</label><textarea id="aAbout" rows="4" data-i18n-ph="art_about_ph" placeholder="Ton univers, ton public…"></textarea></div>
 
-      <label class="check-row"><input type="checkbox" id="aAccept" /> <span>J'ai lu et j'accepte le <b style="color:var(--gold-2)">Contrat artiste Vybzzz</b> (commission, reversements, conditions de diffusion).</span></label>
-      <button class="btn btn--gold" type="submit" data-cursor="hover" style="width:100%"><span>Soumettre ma candidature</span></button>
+      <label class="check-row"><input type="checkbox" id="aAccept" /> <span data-i18n-html="art_accept_html">J'ai lu et j'accepte le <b style="color:var(--gold-2)">Contrat artiste Vybzzz</b> (commission, reversements, conditions de diffusion).</span></label>
+      <button class="btn btn--gold" type="submit" data-cursor="hover" style="width:100%"><span data-i18n="art_submit">Soumettre ma candidature</span></button>
     </form>
 
     <!-- Contract -->
     <div class="contract glass reveal" id="contrat">
-      <h3>Contrat artiste</h3>
-      <p style="color:var(--muted);font-size:.9rem">Aperçu du contrat d'engagement. Télécharge-le en PDF, signe-le, puis coche la case et envoie ta candidature.</p>
+      <h3 data-i18n="art_c_title">Contrat artiste</h3>
+      <p style="color:var(--muted);font-size:.9rem" data-i18n="art_c_intro">Aperçu du contrat d'engagement. Télécharge-le en PDF, signe-le, puis coche la case et envoie ta candidature.</p>
       <div class="contract__doc" id="contractDoc">
         <h4>CONTRAT CRÉATEUR FOUNDER — VYBZZZ</h4>
         <p>Le présent contrat est conclu entre <b>Vybzzz</b> (« la Plateforme ») et le créateur signataire (« le Créateur »).</p>
@@ -59,7 +59,7 @@
         <p>Le contrat est conclu pour une durée indéterminée et peut être résilié par l'une ou l'autre des parties avec un préavis de 30 jours. En cas de résiliation, le tarif Founder est définitivement perdu.</p>
         <p style="margin-top:14px">Fait à ____________, le ____________.<br/>Signature du Créateur : ____________________</p>
       </div>
-      <button class="btn btn--gold magnetic" id="dlContract" data-cursor="hover" style="width:100%"><span>⬇ Télécharger le contrat (PDF)</span></button>
+      <button class="btn btn--gold magnetic" id="dlContract" data-cursor="hover" style="width:100%"><span data-i18n="art_dl">⬇ Télécharger le contrat (PDF)</span></button>
     </div>
   </div>
 </main>
