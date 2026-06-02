@@ -51,6 +51,25 @@ window.I18N.fr = {
   foot_discover: "Découvrir", foot_artists: "Artistes", foot_help: "Aide",
   foot_rights: "© 2026 Vybzzz. Tous droits réservés.",
   foot_secure: "Paiements sécurisés · VyBzzZ Pay · SSL 256-bit",
+  // Avantages (cartes)
+  ben1_t: "Tu gardes 60%", ben1_p: "60% de commission sur tes revenus (billets, cadeaux, pourboires), quel que soit ton palier d'entrée. Passe à 70% avec Elite quand tu veux.",
+  ben2_t: "Prix bloqué à vie", ben2_p: "Ton tarif Founder ($79, $99 ou $149 selon ta vague) ne bouge plus tant que ton abonnement reste actif. Les retardataires paieront le plein tarif.",
+  ben3_t: "Studio Pro complet", ben3_p: "Crée tes événements, passe en live, modère le chat et suis tes revenus — depuis le web ou l'app.",
+  ben4_t: "Mise en avant prioritaire", ben4_p: "Page d'accueil, notifications de lancement et badge « Founder » à vie sur ton profil.",
+  ben5_t: "Retraits simples", ben5_p: "Versements via Stripe ou compte bancaire, paliers flexibles, délai moyen 24h.",
+  ben6_t: "Statut Fondateur", ben6_p: "Tu fais partie des 200 qui ont lancé Vybzzz. Dès la 201ᵉ inscription, l'offre Founder ferme définitivement.",
+  // FAQ
+  faq_eyebrow: "Aide", faq_title_html: 'Questions <span class="grad">fréquentes</span>.',
+  faq_p: "Tout ce qu'il faut savoir sur les lives, les Arena Points, les cadeaux, les tickets et les retraits artistes.",
+  faq_more: "Tu ne trouves pas ta réponse ?", faq_contact: "Contacter le support", faq_become: "Devenir artiste",
+  faq_q1: "C'est quoi Vybzzz ?", faq_a1: "Vybzzz est une plateforme de concerts en direct : tu regardes tes artistes en live HD, tu envoies des cadeaux virtuels, tu achètes des tickets et tu revis les shows en replay. Les artistes diffusent depuis l'appli et sont rémunérés en temps réel.",
+  faq_q2: "Qu'est-ce que les Arena Points ?", faq_a2: "Les ARENA POINTS (PTS) sont la monnaie interne de Vybzzz. Tu les recharges via la boutique, puis tu les utilises pour envoyer des cadeaux pendant les lives. Plus le pack est gros, plus le bonus est élevé.",
+  faq_q3: "Comment envoyer un cadeau pendant un live ?", faq_a3: "Pendant un concert, ouvre le panneau cadeaux, choisis ton cadeau (Rose 5 PTS, Diamant 100 PTS, Château 5000 PTS…), confirme, et l'animation se déclenche en direct à l'écran. Le montant est reversé à l'artiste.",
+  faq_q4: "Comment acheter un ticket de concert ?", faq_a4: "Sur la page d'un événement payant, clique sur « Get Ticket », passe au paiement (carte, Apple Pay, Google Pay ou VyBzzZ Pay), et ton ticket apparaît dans « Mes tickets ». Le replay est inclus.",
+  faq_q5: "Quels moyens de paiement sont acceptés ?", faq_a5: "Carte bancaire, Apple Pay, Google Pay et VyBzzZ Pay. Tous les paiements sont chiffrés en SSL 256-bit. Les artistes peuvent connecter Stripe ou un compte bancaire pour leurs retraits.",
+  faq_q6: "Comment devenir artiste fondateur ?", faq_a6: "Va dans « Devenir artiste », remplis le formulaire (nom de scène, genre, expérience), télécharge et signe le contrat Founder, et notre équipe valide ton profil. Tu accèdes ensuite au Studio Pro.",
+  faq_q7: "Comment retirer mes gains (artistes) ?", faq_a7: "Depuis le Studio Pro → Revenus → « Retraits ». Choisis ta méthode (Stripe ou compte bancaire), saisis le montant (paliers $100 / $500 / $1000 / Tout), et confirme. Délai moyen de versement : 24h.",
+  faq_q8: "Les lives sont-ils disponibles en replay ?", faq_a8: "Oui. Tout ticket acheté inclut le replay HD, disponible dans « Mes tickets ». Les abonnés ont accès aux replays publics.",
 };
 
 window.I18N.en = {
@@ -90,6 +109,23 @@ window.I18N.en = {
   foot_discover: "Discover", foot_artists: "Artists", foot_help: "Help",
   foot_rights: "© 2026 Vybzzz. All rights reserved.",
   foot_secure: "Secure payments · VyBzzZ Pay · SSL 256-bit",
+  ben1_t: "You keep 60%", ben1_p: "60% commission on your revenue (tickets, gifts, tips), whatever your entry wave. Upgrade to 70% with Elite anytime.",
+  ben2_t: "Price locked for life", ben2_p: "Your Founder price ($79, $99 or $149 depending on your wave) never changes as long as your subscription stays active. Latecomers pay full price.",
+  ben3_t: "Full Pro Studio", ben3_p: "Create your events, go live, moderate the chat and track your revenue — from web or app.",
+  ben4_t: "Priority spotlight", ben4_p: "Home page, launch notifications and a lifetime « Founder » badge on your profile.",
+  ben5_t: "Easy payouts", ben5_p: "Payouts via Stripe or bank account, flexible thresholds, 24h average delay.",
+  ben6_t: "Founder status", ben6_p: "You're one of the 200 who launched Vybzzz. From the 201st signup, the Founder offer closes for good.",
+  faq_eyebrow: "Help", faq_title_html: 'Frequently asked <span class="grad">questions</span>.',
+  faq_p: "Everything you need to know about lives, Arena Points, gifts, tickets and creator payouts.",
+  faq_more: "Can't find your answer?", faq_contact: "Contact support", faq_become: "Become a creator",
+  faq_q1: "What is Vybzzz?", faq_a1: "Vybzzz is a live concert platform: watch your artists live in HD, send virtual gifts, buy tickets and rewatch shows as replays. Artists stream from the app and get paid in real time.",
+  faq_q2: "What are Arena Points?", faq_a2: "ARENA POINTS (PTS) are Vybzzz's in-app currency. You top them up in the store, then use them to send gifts during lives. The bigger the pack, the higher the bonus.",
+  faq_q3: "How do I send a gift during a live?", faq_a3: "During a concert, open the gifts panel, pick your gift (Rose 5 PTS, Diamond 100 PTS, Castle 5000 PTS…), confirm, and the animation plays live on screen. The amount goes to the artist.",
+  faq_q4: "How do I buy a concert ticket?", faq_a4: "On a paid event page, tap « Get Ticket », go through checkout (card, Apple Pay, Google Pay or VyBzzZ Pay), and your ticket appears in « My tickets ». The replay is included.",
+  faq_q5: "Which payment methods are accepted?", faq_a5: "Credit card, Apple Pay, Google Pay and VyBzzZ Pay. All payments are SSL 256-bit encrypted. Artists can connect Stripe or a bank account for payouts.",
+  faq_q6: "How do I become a Founder creator?", faq_a6: "Go to « Become a creator », fill in the form (stage name, genre, experience), download and sign the Founder contract, and our team reviews your profile. You then get access to the Pro Studio.",
+  faq_q7: "How do I withdraw my earnings (artists)?", faq_a7: "From Pro Studio → Revenue → « Payouts ». Pick your method (Stripe or bank account), enter the amount ($100 / $500 / $1000 / All), and confirm. Average payout time: 24h.",
+  faq_q8: "Are lives available as replays?", faq_a8: "Yes. Every ticket purchased includes the HD replay, available in « My tickets ». Subscribers get access to public replays.",
 };
 
 window.I18N.es = {

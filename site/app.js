@@ -533,11 +533,9 @@
   function renderFaq() {
     const wrap = document.getElementById("faqList");
     if (!wrap) return;
-    wrap.innerHTML = D.faq.map((f, i) => `
-      <div class="faq-item reveal ${i === 0 ? "open" : ""}" data-cursor="hover">
-        <button class="faq-q">${f.q}<i>+</i></button>
-        <div class="faq-a"><p>${f.a}</p></div>
-      </div>`).join("");
+    let h = "";
+    for (let i = 1; i <= 8; i++) h += `<div class="faq-item reveal ${i === 1 ? "open" : ""}" data-cursor="hover"><button class="faq-q">${t("faq_q" + i)}<i>+</i></button><div class="faq-a"><p>${t("faq_a" + i)}</p></div></div>`;
+    wrap.innerHTML = h;
     wrap.addEventListener("click", e => {
       const item = e.target.closest(".faq-item"); if (!item) return;
       item.classList.toggle("open");
