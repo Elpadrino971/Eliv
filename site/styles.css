@@ -461,6 +461,11 @@ body{background:radial-gradient(120% 80% at 50% -10%,#0e2438 0%,var(--bg) 55%) f
 .split-home__hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:6;color:var(--muted);font-size:.72rem;background:rgba(10,24,40,.6);backdrop-filter:blur(8px);padding:6px 13px;border-radius:99px;animation:bobV 1.8s var(--ease) infinite}
 @keyframes bobV{50%{transform:translate(-50%,-6px)}}
 
+.hero-perks{list-style:none;display:grid;gap:11px;margin:0 0 26px}
+.hero-perks li{position:relative;padding-left:28px;color:var(--muted);font-size:.98rem}
+.hero-perks li::before{content:"✦";position:absolute;left:0;top:1px;color:var(--gold)}
+.hero-perks b{color:var(--text);font-weight:600}
+.hero-reassure{margin-top:20px;color:var(--muted);font-size:.82rem}
 .founder-mini{display:flex;align-items:center;gap:22px;margin:6px 0 26px}
 .founder-mini>div{display:flex;flex-direction:column}
 .founder-mini b{font-family:var(--serif);font-weight:800;font-size:2rem;line-height:1}

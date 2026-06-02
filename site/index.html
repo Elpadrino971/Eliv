@@ -24,7 +24,13 @@
     <div class="reveal">
       <span class="rec-hero__badge">✦ Offre de lancement · 24 places seulement</span>
       <h1>Deviens créateur <span class="grad">Founder</span> de Vybzzz.</h1>
-      <p class="lead">$79/mois et <strong>tu gardes 60% de tes revenus</strong> — le taux du plan Growth à $199, pour bien moins cher. Réservé aux <strong>24 premiers créateurs fondateurs</strong>, à vie tant que ton abonnement reste actif.</p>
+      <p class="lead">$79/mois et <strong>tu gardes 60% de tes revenus</strong> — le taux du plan Growth à $199, pour bien moins cher. Réservé aux <strong>24 premiers créateurs fondateurs</strong>.</p>
+      <ul class="hero-perks">
+        <li>Tu gardes <b>60%</b> de tes revenus, dès le 1ᵉʳ live</li>
+        <li>Tarif <b>bloqué à vie</b> tant que ton abonnement reste actif</li>
+        <li><b>Studio Pro</b> complet : lives, billetterie, cadeaux</li>
+        <li><b>Mise en avant</b> prioritaire + badge Fondateur</li>
+      </ul>
       <div class="founder-mini">
         <div><b class="grad">$79</b><small>/mois</small></div>
         <div class="founder-mini__sep"></div>
@@ -32,7 +38,7 @@
         <div class="founder-mini__sep"></div>
         <div><b class="grad" id="seatsLeftBig">—</b><small>places restantes</small></div>
       </div>
-      <div class="urgency"><span class="urgency__dot"></span><span>Clôture de l'offre Founder dans</span> <b id="countdown">—</b></div>
+      <div class="urgency"><span class="urgency__dot"></span><span>Offre limitée : <b>24 places</b>. Une fois prises, le tarif passe à <b>$199/mois</b> (Growth).</span></div>
       <div class="rec-hero__actions">
         <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span>Réserver ma place Founder</span></a>
         <a href="dashboard.html" class="btn btn--outline btn--lg magnetic" data-cursor="hover"><span>Voir le Studio Pro</span></a>
@@ -41,6 +47,7 @@
         <div class="spots__row"><b><em id="spotsTaken">0</em> / <span id="spotsTotal">24</span> places fondateur prises</b><small id="spotsLeft">places restantes</small></div>
         <div class="spots__bar"><i class="spots__fill" id="spotsFill"></i></div>
       </div>
+      <p class="hero-reassure">🔒 Paiement sécurisé · Sans engagement · Annulable à tout moment</p>
     </div>
   </div>
 
@@ -117,20 +124,5 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
-<script>
-  // Compte à rebours d'urgence (clôture de l'offre Founder)
-  (function(){
-    var f = (window.VYBZZZ && window.VYBZZZ.founder) || {};
-    var t = new Date(f.deadline || "2026-06-16T20:00:00").getTime();
-    var el = document.getElementById("countdown");
-    function p(n){ return ("0"+n).slice(-2); }
-    function tick(){
-      var d = t - Date.now(); if (d < 0) d = 0;
-      var j = Math.floor(d/864e5), h = Math.floor(d%864e5/36e5), m = Math.floor(d%36e5/6e4), s = Math.floor(d%6e4/1e3);
-      if (el) el.textContent = j + "j " + p(h) + "h " + p(m) + "m " + p(s) + "s";
-    }
-    tick(); setInterval(tick, 1000);
-  })();
-</script>
 </body>
 </html>
