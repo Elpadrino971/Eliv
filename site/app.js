@@ -245,17 +245,16 @@
     // main grid (si présent)
     const grid = document.getElementById("videoGrid");
     if (grid) grid.innerHTML = D.events.map(videoCard).join("");
-    // recrutement : plans + jauge de places fondateur
+    // recrutement : plans + jauge de places fondateur + feed live (split-screen)
     renderPlans();
     renderSeats();
+    renderHomeFeed();
     refresh();
   }
 
-  function renderFeed() {
-    const feed = document.getElementById("feed");
-    if (!feed) return;
-    const items = D.events.slice().sort((a, b) => b.live - a.live);
-    feed.innerHTML = items.map(ev => `
+  // ---- Feed item (réutilisé par feed.html ET le split-screen de l'accueil) ----
+  function feedItemHTML(ev) {
+    return `
       <section class="feed__item" style="--bg:url('${ev.thumb}')">
         <div class="feed__overlay"></div>
         <div class="feed__content">
@@ -279,9 +278,10 @@
           <button class="fa-btn" data-act="chat" data-cursor="hover"><span>💬</span><i>${H.nb(Math.round(ev.likes / 7))}</i></button>
           <button class="fa-btn" data-act="share" data-cursor="hover"><span>↗</span><i>Partager</i></button>
         </aside>
-      </section>`).join("");
-
-    feed.addEventListener("click", e => {
+      </section>`;
+  }
+  function bindFeed(container) {
+    container.addEventListener("click", e => {
       const b = e.target.closest(".fa-btn"); if (!b) return;
       const act = b.dataset.act;
       if (act === "like") { b.classList.toggle("liked"); }
@@ -289,11 +289,25 @@
       else if (act === "share") { toast("Lien copié dans le presse-papier ✓"); }
       else if (act === "chat") { toast("Le chat en direct est disponible dans l'app 📱"); }
     });
-    feed.querySelectorAll(".feed__follow").forEach(b => b.addEventListener("click", ev => {
+    container.querySelectorAll(".feed__follow").forEach(b => b.addEventListener("click", ev => {
       ev.preventDefault(); b.classList.toggle("on");
       b.textContent = b.classList.contains("on") ? "Suivi ✓" : "Suivre";
     }));
-    bindMicro(feed);
+    bindMicro(container);
+  }
+  function renderFeed() {
+    const feed = document.getElementById("feed");
+    if (!feed) return;
+    const items = D.events.slice().sort((a, b) => b.live - a.live);
+    feed.innerHTML = items.map(feedItemHTML).join("");
+    bindFeed(feed);
+  }
+  function renderHomeFeed() {
+    const el = document.getElementById("homeFeed");
+    if (!el) return;
+    const items = D.events.slice().sort((a, b) => b.live - a.live);
+    el.innerHTML = items.map(feedItemHTML).join("");
+    bindFeed(el);
   }
 
   // ---- Gift panel (used by feed + store demo) ----

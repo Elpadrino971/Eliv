@@ -61,13 +61,14 @@ window.VYBZZZ = (function () {
   ];
 
   // Programme Founder (offre de lancement) — cf. spec produit
-  const founder = { taken: 47, total: 200, price: 79, commission: 60 };
+  // taken/total = jauge des places fondateur affichée sur l'accueil
+  const founder = { taken: 0, total: 24, price: 79, commission: 60, deadline: "2026-06-16T20:00:00" };
 
   // Plans CRÉATEUR (l'artiste s'abonne et garde un % de ses revenus = "commission")
   const plansLaunch = [
     {
       name: "Founder", price: 79, commission: 60, highlight: true, tag: "Offre de lancement",
-      note: "Limité aux 200 premiers créateurs",
+      note: "Limité aux 24 premiers créateurs fondateurs",
       features: ["Tu gardes 60% de tes revenus", "Prix bloqué à $79/mois tant que ton abonnement reste actif", "Studio Pro complet", "Mise en avant prioritaire au lancement", "Badge « Artiste Fondateur » à vie"],
       cta: "Devenir Fondateur",
     },
