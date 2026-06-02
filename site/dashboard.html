@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0b0e14" />
+<title>Vybzzz — Studio Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
+<link rel="icon" type="image/png" href="assets/logo.png" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body data-page="dashboard">
+<div class="grain" aria-hidden="true"></div>
+<div class="aurora" aria-hidden="true"><span class="aurora__blob a1"></span><span class="aurora__blob a2"></span><span class="aurora__blob a3"></span></div>
+<div class="cursor" id="cursor"></div><div class="cursor-dot" id="cursorDot"></div>
+<div class="scroll-progress" id="scrollProgress"></div>
+<div id="site-header"></div>
+
+<main class="page">
+  <div class="page__head reveal" style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap">
+    <div>
+      <span class="eyebrow">Studio Pro</span>
+      <h1>Bonsoir, <span class="grad">NOVA</span> 🎤</h1>
+      <p>Voici tes performances des 7 derniers jours.</p>
+    </div>
+    <a href="#withdraw" class="btn btn--gold magnetic" data-cursor="hover"><span>Retirer mes gains</span></a>
+  </div>
+
+  <!-- KPIs -->
+  <div class="dash-grid">
+    <div class="kpi glass reveal">
+      <div class="kpi__label"><span class="kpi__icon">🎟️</span> Tickets vendus</div>
+      <div class="kpi__val" data-count="1284">0</div>
+      <div class="kpi__delta up">▲ 18% vs sem. dern.</div>
+    </div>
+    <div class="kpi glass reveal">
+      <div class="kpi__label"><span class="kpi__icon">💰</span> Revenu total</div>
+      <div class="kpi__val" data-count="8140" data-prefix="$">0</div>
+      <div class="kpi__delta up">▲ 32% vs sem. dern.</div>
+    </div>
+    <div class="kpi glass reveal">
+      <div class="kpi__label"><span class="kpi__icon">👁</span> Spectateurs</div>
+      <div class="kpi__val" data-count="46200">0</div>
+      <div class="kpi__delta up">▲ 9% vs sem. dern.</div>
+    </div>
+    <div class="kpi glass reveal">
+      <div class="kpi__label"><span class="kpi__icon">🪙</span> Arena Points gagnés</div>
+      <div class="kpi__val" data-count="312500">0</div>
+      <div class="kpi__delta down">▼ 3% vs sem. dern.</div>
+    </div>
+  </div>
+
+  <div class="dash-cols">
+    <!-- Revenue chart + transactions -->
+    <div>
+      <div class="panel glass reveal">
+        <div class="panel__head"><h3>Croissance des revenus</h3><span class="kpi__delta up">▲ 32%</span></div>
+        <div class="chart">
+          <svg viewBox="0 0 600 200" preserveAspectRatio="none">
+            <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6a75e" stop-opacity=".5"/><stop offset="1" stop-color="#c6a75e" stop-opacity="0"/></linearGradient></defs>
+            <path class="area" fill="url(#ga)" d="M0,170 C70,150 110,120 170,130 C240,142 280,80 350,70 C420,60 470,30 540,40 L600,30 L600,200 L0,200 Z"/>
+            <path class="line" fill="none" stroke="#e9cf8f" stroke-width="3" stroke-linecap="round" d="M0,170 C70,150 110,120 170,130 C240,142 280,80 350,70 C420,60 470,30 540,40 L600,30"/>
+          </svg>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:.78rem;margin-top:6px"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
+      </div>
+
+      <div class="panel glass reveal" style="margin-top:18px">
+        <div class="panel__head"><h3>Transactions récentes</h3><a href="#" style="color:var(--gold-2);font-size:.85rem" data-cursor="hover">Tout voir</a></div>
+        <div class="txn"><div class="txn__ic">🎟️</div><div class="txn__t"><b>Ventes de tickets — Afro Night</b><small>2 fév. · 312 tickets</small></div><div class="txn__amt plus">+$1 240</div></div>
+        <div class="txn"><div class="txn__ic">🎁</div><div class="txn__t"><b>Cadeaux reçus</b><small>1 fév. · 48 200 PTS</small></div><div class="txn__amt plus">+$2 410</div></div>
+        <div class="txn"><div class="txn__ic">🏦</div><div class="txn__t"><b>Versement bancaire</b><small>28 janv. · Chase Business</small></div><div class="txn__amt minus">−$5 000</div></div>
+        <div class="txn"><div class="txn__ic">🎁</div><div class="txn__t"><b>Pourboires en direct</b><small>27 janv.</small></div><div class="txn__amt plus">+$980</div></div>
+      </div>
+    </div>
+
+    <!-- Withdraw + payouts -->
+    <div>
+      <div class="panel glass reveal" id="withdraw">
+        <div class="panel__head"><h3>Solde disponible</h3></div>
+        <div style="font-family:'Sora';font-weight:800;font-size:2.4rem" class="grad" data-count="6720" data-prefix="$">$0</div>
+        <small style="color:var(--muted)">Prêt pour versement</small>
+        <div class="withdraw-pills" id="wpills">
+          <button data-v="100" data-cursor="hover">$100</button>
+          <button data-v="500" data-cursor="hover">$500</button>
+          <button data-v="1000" data-cursor="hover">$1000</button>
+          <button data-v="6720" data-cursor="hover">Tout</button>
+        </div>
+        <div class="field"><label>Montant du retrait</label><input id="wamount" type="text" value="$500" /></div>
+        <div class="field"><label>Méthode de versement</label>
+          <select><option>Chase Business · •••• 4291 (Principal)</option><option>Stripe · connecté</option></select>
+        </div>
+        <button class="btn btn--gold" id="wconfirm" data-cursor="hover" style="width:100%"><span>Confirmer le retrait</span></button>
+      </div>
+
+      <div class="panel glass reveal" style="margin-top:18px">
+        <div class="panel__head"><h3>Méthodes de versement</h3></div>
+        <div class="payout"><span class="pico">🏦</span><div><b>Chase Business</b><small>Compte •••• 4291</small></div><span class="pill">Principal</span></div>
+        <button class="stripe-btn" id="stripeConnect" data-cursor="hover"><span class="stripe-logo">stripe</span> Connecter Stripe pour des versements instantanés →</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="site-footer"></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+  (function(){
+    var UI = window.VYBZZZ_UI || {toast:function(m){alert(m)}};
+    var pills = document.getElementById("wpills");
+    var amount = document.getElementById("wamount");
+    pills && pills.addEventListener("click", function(e){
+      var b = e.target.closest("button"); if(!b) return;
+      pills.querySelectorAll("button").forEach(function(x){x.classList.remove("on")});
+      b.classList.add("on");
+      amount.value = "$" + Number(b.dataset.v).toLocaleString("fr-FR");
+    });
+    var conf = document.getElementById("wconfirm");
+    conf && conf.addEventListener("click", function(){ UI.toast("Retrait de "+amount.value+" demandé · versement sous 24h ✓"); });
+    var stripe = document.getElementById("stripeConnect");
+    stripe && stripe.addEventListener("click", function(){ UI.toast("Redirection vers Stripe Connect… (maquette)"); });
+  })();
+</script>
+</body>
+</html>

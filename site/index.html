@@ -1,331 +1,58 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Vybzzz — La scène live qui ne dort jamais. Concerts en direct, cadeaux virtuels, billetterie et studio artiste. Vibre avec tes artistes préférés." />
-  <meta name="theme-color" content="#0b0e14" />
-  <title>Vybzzz — Live. Vibrate. Repeat.</title>
-
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
-
-  <link rel="icon" type="image/png" href="assets/logo.png" />
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0b0e14" />
+<title>Vybzzz — Concerts en direct, cadeaux & billetterie</title>
+<meta name="description" content="Vybzzz : la scène live qui ne dort jamais. Regarde des concerts en direct, envoie des cadeaux, achète tes tickets." />
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
+<link rel="icon" type="image/png" href="assets/logo.png" />
+<link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body data-page="home">
+<div class="grain" aria-hidden="true"></div>
+<div class="aurora" aria-hidden="true"><span class="aurora__blob a1"></span><span class="aurora__blob a2"></span><span class="aurora__blob a3"></span></div>
+<div class="cursor" id="cursor"></div><div class="cursor-dot" id="cursorDot"></div>
+<div class="scroll-progress" id="scrollProgress"></div>
+<div id="site-header"></div>
 
-  <!-- ===== Preloader ===== -->
-  <div class="preloader" id="preloader">
-    <div class="preloader__inner">
-      <div class="preloader__logo">
-        <span>V</span><span>Y</span><span>B</span><span>Z</span><span>Z</span><span>Z</span>
-      </div>
-      <div class="preloader__bar"><i></i></div>
+<!-- Hero compact -->
+<section class="home-hero">
+  <div class="reveal">
+    <span class="home-hero__badge"><span class="pulse-dot"></span> 12 480 personnes en live maintenant</span>
+    <h1>La scène qui ne dort <span class="grad">jamais.</span></h1>
+    <p>Regarde des concerts en direct, envoie des cadeaux pendant le show et revis tout en replay. La home, comme un fil vidéo — découvre ou plonge dans le feed.</p>
+    <div class="home-hero__actions">
+      <a href="feed.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span>▶ Ouvrir le feed</span></a>
+      <a href="store.html" class="btn btn--outline btn--lg magnetic" data-cursor="hover"><span>Recharger des Arena Points</span></a>
     </div>
   </div>
-
-  <!-- ===== Decorative layers ===== -->
-  <div class="grain" aria-hidden="true"></div>
-  <div class="aurora" aria-hidden="true">
-    <span class="aurora__blob a1"></span>
-    <span class="aurora__blob a2"></span>
-    <span class="aurora__blob a3"></span>
+  <div class="home-hero__media reveal" data-cursor="hover">
+    <img src="assets/artist_image3.png" alt="Live en cours" />
+    <a href="feed.html" class="feed-cta badge-live"><span class="pulse-dot"></span>LIVE</a>
+    <div class="home-hero__tag">
+      <img src="assets/artist_image1.png" alt="" />
+      <div><b>Kairo · Cypher 16</b><small>12K spectateurs · Hip-Hop</small></div>
+    </div>
   </div>
-  <div class="cursor" id="cursor"></div>
-  <div class="cursor-dot" id="cursorDot"></div>
-  <div class="scroll-progress" id="scrollProgress"></div>
+</section>
 
-  <!-- ===== Navbar ===== -->
-  <header class="nav" id="nav">
-    <a href="#hero" class="nav__brand" data-cursor="hover">
-      <img src="assets/logo.png" alt="Vybzzz" class="nav__logo" />
-      <span>Vybzzz</span>
-    </a>
-    <nav class="nav__links">
-      <a href="#live" data-cursor="hover">Live</a>
-      <a href="#artists" data-cursor="hover">Artistes</a>
-      <a href="#gifts" data-cursor="hover">Cadeaux</a>
-      <a href="#studio" data-cursor="hover">Studio</a>
-      <a href="#pricing" data-cursor="hover">Tarifs</a>
-    </nav>
-    <div class="nav__cta">
-      <a href="#download" class="btn btn--ghost" data-cursor="hover">Se connecter</a>
-      <a href="#download" class="btn btn--gold magnetic" data-cursor="hover"><span>Rejoindre</span></a>
-    </div>
-    <button class="nav__burger" id="burger" aria-label="Menu"><i></i><i></i><i></i></button>
-  </header>
+<main class="page" style="padding-top:14px">
+  <!-- Featured artists -->
+  <h2 class="section-title">Artistes vedettes</h2>
+  <div class="artists-row" id="artistsRow"></div>
 
-  <!-- ===== Hero ===== -->
-  <section class="hero" id="hero">
-    <div class="hero__bg" data-parallax="0.2"></div>
+  <!-- Category chips -->
+  <div class="chips" id="cats"></div>
 
-    <div class="hero__content">
-      <div class="hero__badge reveal" data-cursor="hover">
-        <span class="pulse-dot"></span> 12 480 personnes en live maintenant
-      </div>
+  <!-- Video grid -->
+  <div class="video-grid" id="videoGrid"></div>
+</main>
 
-      <h1 class="hero__title">
-        <span class="line"><span>La scène</span></span>
-        <span class="line"><span>qui ne dort <em>jamais.</em></span></span>
-      </h1>
-
-      <p class="hero__sub reveal">
-        Concerts en direct, cadeaux virtuels, billetterie instantanée et un studio
-        complet pour les artistes. <strong>Vybzzz</strong> connecte la scène à ta poche.
-      </p>
-
-      <div class="hero__actions reveal">
-        <a href="#download" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span>▶ Regarder un live</span></a>
-        <a href="#studio" class="btn btn--outline btn--lg magnetic" data-cursor="hover"><span>Devenir artiste</span></a>
-      </div>
-
-      <div class="hero__stats reveal">
-        <div><b data-count="92">0</b><i>K+</i><p>Artistes</p></div>
-        <div class="sep"></div>
-        <div><b data-count="4">0</b><i>.9★</i><p>Note moyenne</p></div>
-        <div class="sep"></div>
-        <div><b data-count="180">0</b><i>+</i><p>Pays</p></div>
-      </div>
-    </div>
-
-    <!-- Floating live card -->
-    <div class="hero__phone" data-parallax="-0.15">
-      <div class="live-card glass tilt" data-cursor="hover">
-        <div class="live-card__top">
-          <span class="live-tag"><span class="pulse-dot"></span> LIVE</span>
-          <span class="live-card__viewers">🔥 8.2K</span>
-        </div>
-        <div class="live-card__media">
-          <img src="assets/artist_image2.png" alt="Artiste en live" />
-          <div class="live-card__gifts">
-            <span class="float-gift" style="--d:0s">🎁</span>
-            <span class="float-gift" style="--d:.8s">💎</span>
-            <span class="float-gift" style="--d:1.6s">👑</span>
-            <span class="float-gift" style="--d:2.2s">🌟</span>
-          </div>
-        </div>
-        <div class="live-card__info">
-          <img src="assets/artist_image1.png" alt="" class="live-card__avatar" />
-          <div>
-            <strong>NOVA &middot; Afro Night</strong>
-            <small>Mixe en direct depuis Lagos</small>
-          </div>
-          <button class="live-card__heart" data-cursor="hover">♥</button>
-        </div>
-      </div>
-    </div>
-
-    <a href="#marquee" class="hero__scroll" data-cursor="hover">
-      <span></span> Défile
-    </a>
-  </section>
-
-  <!-- ===== Marquee ===== -->
-  <section class="marquee" id="marquee" aria-hidden="true">
-    <div class="marquee__track">
-      <span>LIVE STREAMING</span><i>✦</i>
-      <span>CADEAUX VIRTUELS</span><i>✦</i>
-      <span>BILLETTERIE</span><i>✦</i>
-      <span>STUDIO ARTISTE</span><i>✦</i>
-      <span>WALLET</span><i>✦</i>
-      <span>LIVE STREAMING</span><i>✦</i>
-      <span>CADEAUX VIRTUELS</span><i>✦</i>
-      <span>BILLETTERIE</span><i>✦</i>
-      <span>STUDIO ARTISTE</span><i>✦</i>
-      <span>WALLET</span><i>✦</i>
-    </div>
-  </section>
-
-  <!-- ===== Features / Live ===== -->
-  <section class="section" id="live">
-    <div class="section__head">
-      <span class="eyebrow reveal">Pourquoi Vybzzz</span>
-      <h2 class="reveal">Tout le frisson du <span class="grad">live</span>, sans la file d'attente.</h2>
-    </div>
-
-    <div class="features">
-      <article class="feature glass reveal tilt" data-cursor="hover">
-        <div class="feature__icon">🎤</div>
-        <h3>Concerts en direct HD</h3>
-        <p>Du salon à la fosse en un tap. Streaming basse latence, chat en temps réel, et l'ambiance d'une vraie salle.</p>
-      </article>
-      <article class="feature glass reveal tilt" data-cursor="hover">
-        <div class="feature__icon">🎁</div>
-        <h3>Cadeaux virtuels</h3>
-        <p>Envoie des diamants, couronnes et étoiles. Soutiens tes artistes en direct et fais grimper le classement.</p>
-      </article>
-      <article class="feature glass reveal tilt" data-cursor="hover">
-        <div class="feature__icon">🎟️</div>
-        <h3>Billetterie instantanée</h3>
-        <p>Achète, range et accède à tes tickets en quelques secondes. Replays inclus pour ne rien rater.</p>
-      </article>
-      <article class="feature glass reveal tilt" data-cursor="hover">
-        <div class="feature__icon">💳</div>
-        <h3>Wallet intégré</h3>
-        <p>Recharge, dépense, retire. Un portefeuille sécurisé pour fans et artistes, avec historique complet.</p>
-      </article>
-    </div>
-  </section>
-
-  <!-- ===== Artists carousel ===== -->
-  <section class="section section--artists" id="artists">
-    <div class="section__head">
-      <span class="eyebrow reveal">À l'affiche</span>
-      <h2 class="reveal">Des artistes <span class="grad">en feu</span> ce soir.</h2>
-    </div>
-
-    <div class="artists-row" id="artistsRow">
-      <!-- cards injected by JS -->
-    </div>
-  </section>
-
-  <!-- ===== Gifts showcase ===== -->
-  <section class="section section--split" id="gifts">
-    <div class="split__media reveal">
-      <div class="gift-stage glass">
-        <div class="gift-orbit">
-          <span style="--i:0">🎁</span>
-          <span style="--i:1">💎</span>
-          <span style="--i:2">👑</span>
-          <span style="--i:3">🌟</span>
-          <span style="--i:4">🔥</span>
-          <span style="--i:5">🚀</span>
-        </div>
-        <div class="gift-core">
-          <b data-count="1240">0</b>
-          <small>cadeaux / min</small>
-        </div>
-      </div>
-    </div>
-    <div class="split__text">
-      <span class="eyebrow reveal">Monétisation</span>
-      <h2 class="reveal">Le public devient <span class="grad">moteur</span>.</h2>
-      <p class="reveal">Chaque cadeau envoyé fait vibrer la scène et récompense l'artiste en temps réel. Animations spectaculaires, combos, et classements live pour transformer chaque concert en événement.</p>
-      <ul class="ticks reveal">
-        <li>Reversement instantané dans le wallet artiste</li>
-        <li>Effets visuels premium par palier de cadeau</li>
-        <li>Classement des top supporters en direct</li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- ===== Studio ===== -->
-  <section class="section section--split reverse" id="studio">
-    <div class="split__text">
-      <span class="eyebrow reveal">Pour les artistes</span>
-      <h2 class="reveal">Ton <span class="grad">studio</span>, dans ta poche.</h2>
-      <p class="reveal">Crée un événement, passe en live, modère le chat et suis tes revenus — tout depuis une seule appli. Analytics détaillées, gestion des pourboires et retraits bancaires en quelques taps.</p>
-      <div class="studio-stats reveal">
-        <div class="glass"><b data-count="68">0</b><i>%</i><p>de revenus reversés</p></div>
-        <div class="glass"><b data-count="24">0</b><i>h</i><p>de retrait moyen</p></div>
-      </div>
-      <a href="#download" class="btn btn--gold magnetic" data-cursor="hover"><span>Ouvrir mon studio</span></a>
-    </div>
-    <div class="split__media reveal">
-      <div class="dash glass tilt" data-cursor="hover">
-        <div class="dash__head">
-          <span>Revenus — 7 jours</span>
-          <em class="up">▲ 32%</em>
-        </div>
-        <div class="dash__chart">
-          <svg viewBox="0 0 320 140" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#c6a75e" stop-opacity=".55"/>
-                <stop offset="1" stop-color="#c6a75e" stop-opacity="0"/>
-              </linearGradient>
-            </defs>
-            <path class="dash__area" d="M0,120 L0,90 C40,70 60,100 90,80 C120,60 150,30 190,45 C230,60 260,20 320,15 L320,140 L0,140 Z" fill="url(#g)"/>
-            <path class="dash__line" d="M0,90 C40,70 60,100 90,80 C120,60 150,30 190,45 C230,60 260,20 320,15" fill="none" stroke="#e9cf8f" stroke-width="3"/>
-          </svg>
-        </div>
-        <div class="dash__row">
-          <div><small>Cadeaux</small><strong>€ 4 820</strong></div>
-          <div><small>Billets</small><strong>€ 2 140</strong></div>
-          <div><small>Pourboires</small><strong>€ 980</strong></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== How it works ===== -->
-  <section class="section" id="how">
-    <div class="section__head">
-      <span class="eyebrow reveal">En 3 étapes</span>
-      <h2 class="reveal">Du téléchargement à la <span class="grad">scène</span>.</h2>
-    </div>
-    <div class="steps">
-      <div class="step reveal"><span class="step__n">01</span><h3>Crée ton compte</h3><p>Inscription en 30 secondes, fan ou artiste. Choisis tes genres préférés.</p></div>
-      <div class="step reveal"><span class="step__n">02</span><h3>Trouve ton live</h3><p>Explore les concerts à venir, achète ton ticket ou rejoins gratuitement.</p></div>
-      <div class="step reveal"><span class="step__n">03</span><h3>Vibre &amp; soutiens</h3><p>Chatte, envoie des cadeaux et fais partie du show en temps réel.</p></div>
-    </div>
-  </section>
-
-  <!-- ===== Pricing ===== -->
-  <section class="section" id="pricing">
-    <div class="section__head">
-      <span class="eyebrow reveal">Abonnements</span>
-      <h2 class="reveal">Choisis ton <span class="grad">niveau</span> de vibe.</h2>
-    </div>
-    <div class="plans">
-      <article class="plan glass reveal tilt" data-cursor="hover">
-        <h3>Fan</h3>
-        <div class="plan__price">Gratuit</div>
-        <ul><li>Lives publics illimités</li><li>Chat en direct</li><li>Cadeaux à l'unité</li></ul>
-        <a href="#download" class="btn btn--outline" data-cursor="hover">Commencer</a>
-      </article>
-      <article class="plan glass plan--feat reveal tilt" data-cursor="hover">
-        <span class="plan__tag">Populaire</span>
-        <h3>VIP</h3>
-        <div class="plan__price">9,99€<i>/mois</i></div>
-        <ul><li>Replays HD illimités</li><li>Badges &amp; émotes exclusifs</li><li>Bonus de cadeaux mensuels</li><li>Accès anticipé aux tickets</li></ul>
-        <a href="#download" class="btn btn--gold" data-cursor="hover"><span>Passer VIP</span></a>
-      </article>
-      <article class="plan glass reveal tilt" data-cursor="hover">
-        <h3>Artiste Pro</h3>
-        <div class="plan__price">5%<i>/show</i></div>
-        <ul><li>Studio &amp; analytics complets</li><li>Retraits prioritaires</li><li>Mise en avant éditoriale</li></ul>
-        <a href="#download" class="btn btn--outline" data-cursor="hover">Postuler</a>
-      </article>
-    </div>
-  </section>
-
-  <!-- ===== CTA / Download ===== -->
-  <section class="cta" id="download">
-    <div class="cta__inner glass reveal">
-      <h2>Prêt à monter sur <span class="grad">scène</span> ?</h2>
-      <p>Télécharge Vybzzz et rejoins la communauté live la plus électrique.</p>
-      <div class="cta__buttons">
-        <a href="#" class="store magnetic" data-cursor="hover"><span class="store__i"></span><span class="store__t"><small>Disponible sur</small><strong>App Store</strong></span></a>
-        <a href="#" class="store magnetic" data-cursor="hover"><span class="store__i play"></span><span class="store__t"><small>Disponible sur</small><strong>Google Play</strong></span></a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== Footer ===== -->
-  <footer class="footer">
-    <div class="footer__top">
-      <div class="footer__brand">
-        <a href="#hero" class="nav__brand"><img src="assets/logo.png" alt="" class="nav__logo" /><span>Vybzzz</span></a>
-        <p>La scène live qui ne dort jamais.</p>
-      </div>
-      <div class="footer__cols">
-        <div><h4>Produit</h4><a href="#live">Live</a><a href="#gifts">Cadeaux</a><a href="#pricing">Tarifs</a></div>
-        <div><h4>Artistes</h4><a href="#studio">Studio</a><a href="#how">Démarrer</a><a href="#pricing">Revenus</a></div>
-        <div><h4>Société</h4><a href="#">À propos</a><a href="#">Carrières</a><a href="#">Contact</a></div>
-      </div>
-    </div>
-    <div class="footer__bottom">
-      <span>© 2026 Vybzzz. Tous droits réservés.</span>
-      <span class="footer__made">Conçu avec ✦ pour la scène</span>
-    </div>
-  </footer>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <script src="app.js"></script>
+<div id="site-footer"></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

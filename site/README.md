@@ -1,43 +1,53 @@
-# Vybzzz — Site web (landing premium)
+# Vybzzz — Site web (style YouTube + TikTok)
 
-Interface web vitrine inspirée de l'application mobile Flutter **Vybzzz**
-(plateforme de live streaming musical : concerts en direct, cadeaux virtuels,
-billetterie, studio artiste, wallet).
+Site web multi-pages inspiré de l'application mobile Flutter **Vybzzz**
+(concerts en direct, cadeaux virtuels en **Arena Points**, billetterie,
+Studio Pro artiste, paiement **VyBzzZ Pay / Stripe**).
 
-Reprend la charte graphique de l'app : **or/bronze `#c6a75e`** sur fond sombre,
-typographies modernes, le tout dans un univers « dark luxe ».
+Charte reprise de l'app : **or/bronze `#c6a75e`** sur fond sombre `#0b0e14`.
+Toutes les données (prix, packs, cadeaux, abonnements) sont en **`$` et ARENA
+POINTS**, cohérentes avec l'app, et centralisées dans `data.js`.
 
-## ✨ Ce qui est inclus
-- Préchargeur animé (révélation du logotype)
-- Curseur personnalisé + traînée, et boutons magnétiques
-- Fond *aurora* animé + grain cinématographique
-- Hero avec carte « live » flottante et cadeaux qui s'envolent
-- Bandeau marquee défilant
-- Cartes features en glassmorphism avec tilt 3D
-- Carrousel d'artistes (données en JS, facile à brancher sur l'API)
-- Section cadeaux avec orbite animée, dashboard studio avec graphe animé
-- Compteurs animés, reveals au scroll (GSAP ScrollTrigger), parallax
-- 100 % responsive + respect de `prefers-reduced-motion`
+## 📄 Pages
+| Fichier | Rôle |
+|---|---|
+| `index.html` | Accueil **grille YouTube** : artistes vedettes, catégories filtrables, grille de lives/vidéos |
+| `feed.html` | **Feed vertical TikTok** plein écran (snap) : like, cadeau, partage, suivre |
+| `store.html` | **Boutique** : packs d'Arena Points (avec bonus), catalogue de cadeaux, abonnements |
+| `dashboard.html` | **Studio Pro** : KPIs (tickets, revenus, spectateurs), courbe de revenus, transactions, retraits + Connect Stripe |
+| `checkout.html` | **Paiement** (maquette) : carte animée, Apple/Google Pay, VyBzzZ Pay, récap dynamique (`?event=` ou `?pack=`) |
+| `faq.html` | **FAQ** en accordéon |
+| `artist.html` | **Devenir artiste** + **contrat PDF téléchargeable** (jsPDF) |
+
+## 🧠 Fichiers communs
+- `data.js` — toutes les données (artistes, events, packs, cadeaux, plans, FAQ) + helpers de format.
+- `app.js` — châssis (header/footer injectés), curseur, reveals, compteurs, boutons magnétiques, tilt, panneau cadeaux, rendu de chaque page.
+- `styles.css` — design system complet.
+
+## ✨ Animations
+Préchargeur de reveals au scroll, curseur custom + boutons magnétiques, fond
+*aurora* animé, grille hover/zoom, feed TikTok snap + actions, animation de
+cadeaux qui s'envolent, compteurs animés, courbe de revenus qui se dessine,
+carte de paiement live, toasts.
 
 ## 🚀 Lancer en local
-Aucune build nécessaire (HTML/CSS/JS pur, GSAP via CDN) :
-
 ```bash
 cd site
 python3 -m http.server 8080
-# puis ouvrir http://localhost:8080
+# ouvrir http://localhost:8080 dans le navigateur
 ```
+Aucune build : HTML/CSS/JS pur. Seule dépendance externe = jsPDF (CDN) pour
+le contrat PDF.
 
-## 🔌 Brancher sur l'API Vybzzz
-- Carrousel artistes : tableau `artists` dans `app.js` → remplacer par un
-  `fetch('https://vybzzz.fryandeatfood.com/api/featured-artists')`.
-- Compteurs / stats : attributs `data-count` dans `index.html`.
+## 🔌 Brancher sur l'API Vybzzz (plus tard)
+Remplacer les tableaux de `data.js` par des `fetch()` vers
+`https://vybzzz.fryandeatfood.com/api` :
+- `events` → `/events`, `/banner-events`
+- `artists` → `/featured-artists`
+- `packages` → `/packages/list`
+- `gifts` → `/gifts`
+- `plans` → `/subscription/get`
+- `faq` → `/settings/get-management`
 
-## 📁 Structure
-```
-site/
-├── index.html     # structure des sections
-├── styles.css     # design system (couleurs, glass, animations)
-├── app.js         # interactions, GSAP, carrousel, compteurs
-└── assets/        # logo + visuels repris de l'app mobile
-```
+> ⚠️ Le paiement est une **maquette UI** (aucun débit réel, aucune clé secrète).
+> Pour un vrai Stripe Checkout, il faut un backend qui crée la session côté serveur.

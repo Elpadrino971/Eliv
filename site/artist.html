@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0b0e14" />
+<title>Vybzzz — Devenir artiste</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
+<link rel="icon" type="image/png" href="assets/logo.png" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body data-page="artist">
+<div class="grain" aria-hidden="true"></div>
+<div class="aurora" aria-hidden="true"><span class="aurora__blob a1"></span><span class="aurora__blob a2"></span><span class="aurora__blob a3"></span></div>
+<div class="cursor" id="cursor"></div><div class="cursor-dot" id="cursorDot"></div>
+<div class="scroll-progress" id="scrollProgress"></div>
+<div id="site-header"></div>
+
+<main class="page">
+  <div class="page__head reveal"><span class="eyebrow">Pour les artistes</span><h1>Monte sur <span class="grad">scène</span>.</h1><p>Diffuse tes concerts en direct, reçois des cadeaux et vends tes tickets. Commission fixe de 5% par transaction, retraits via Stripe ou compte bancaire.</p></div>
+
+  <div class="artist-split">
+    <!-- Application form -->
+    <form class="panel glass reveal" id="artistForm">
+      <h3 style="margin-bottom:18px">Candidature artiste</h3>
+      <div class="field"><label>Nom de scène / du groupe *</label><input id="aName" required placeholder="Ex. NOVA" /></div>
+      <div class="field"><label>E-mail *</label><input id="aEmail" type="email" required placeholder="toi@email.com" /></div>
+      <div class="field"><label>Téléphone *</label><input id="aPhone" required placeholder="+33 6 …" /></div>
+      <div class="field"><label>Genre principal *</label>
+        <select id="aGenre"><option>Afrobeats</option><option>Hip-Hop</option><option>R&B / Soul</option><option>Amapiano</option><option>Électro</option><option>House</option><option>Pop</option><option>Jazz</option><option>Reggae</option><option>Gospel</option></select>
+      </div>
+      <div class="field"><label>Expérience scénique *</label><input id="aExp" required placeholder="Ex. 50+ concerts, 3 ans de live" /></div>
+      <div class="field"><label>Réseaux sociaux / site</label><input id="aSocial" placeholder="@ton_compte" /></div>
+      <div class="field"><label>Parle-nous de toi</label><textarea id="aAbout" rows="4" placeholder="Ton univers, ton public…"></textarea></div>
+
+      <label class="check-row"><input type="checkbox" id="aAccept" /> <span>J'ai lu et j'accepte le <b style="color:var(--gold-2)">Contrat artiste Vybzzz</b> (commission, reversements, conditions de diffusion).</span></label>
+      <button class="btn btn--gold" type="submit" data-cursor="hover" style="width:100%"><span>Soumettre ma candidature</span></button>
+    </form>
+
+    <!-- Contract -->
+    <div class="contract glass reveal" id="contrat">
+      <h3>Contrat artiste</h3>
+      <p style="color:var(--muted);font-size:.9rem">Aperçu du contrat d'engagement. Télécharge-le en PDF, signe-le, puis coche la case et envoie ta candidature.</p>
+      <div class="contract__doc" id="contractDoc">
+        <h4>CONTRAT D'ENGAGEMENT ARTISTE — VYBZZZ</h4>
+        <p>Le présent contrat est conclu entre <b>Vybzzz</b> (« la Plateforme ») et l'artiste signataire (« l'Artiste »).</p>
+        <h4>1. Objet</h4>
+        <p>L'Artiste est autorisé à diffuser des concerts en direct, recevoir des cadeaux virtuels (Arena Points) et vendre des billets via la Plateforme.</p>
+        <h4>2. Rémunération & commission</h4>
+        <p>La Plateforme prélève une commission fixe de <b>5%</b> sur chaque transaction (tickets, cadeaux, pourboires). Le solde net est crédité au portefeuille de l'Artiste.</p>
+        <h4>3. Versements</h4>
+        <p>Les retraits s'effectuent via Stripe ou compte bancaire, par paliers ($100 / $500 / $1000 / total), avec un délai moyen de versement de 24 heures.</p>
+        <h4>4. Contenu & conduite</h4>
+        <p>L'Artiste garantit détenir les droits sur les œuvres diffusées et s'engage à respecter la charte de la communauté.</p>
+        <h4>5. Durée & résiliation</h4>
+        <p>Le contrat est conclu pour une durée indéterminée et peut être résilié par l'une ou l'autre des parties avec un préavis de 30 jours.</p>
+        <p style="margin-top:14px">Fait à ____________, le ____________.<br/>Signature de l'Artiste : ____________________</p>
+      </div>
+      <button class="btn btn--gold magnetic" id="dlContract" data-cursor="hover" style="width:100%"><span>⬇ Télécharger le contrat (PDF)</span></button>
+    </div>
+  </div>
+</main>
+
+<div id="site-footer"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function(){
+  var UI = window.VYBZZZ_UI || {toast:function(m){alert(m)}};
+
+  // ----- generate & download contract PDF -----
+  document.getElementById("dlContract").addEventListener("click", function(){
+    if(!window.jspdf || !window.jspdf.jsPDF){ UI.toast("Génération PDF indisponible (hors ligne)"); return; }
+    var doc = new window.jspdf.jsPDF({unit:"pt",format:"a4"});
+    var name = (document.getElementById("aName").value || "____________________");
+    var email = (document.getElementById("aEmail").value || "____________________");
+    var date = new Date().toLocaleDateString("fr-FR");
+    var M=56, W=595-M*2, y=70;
+    function h(t){ doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.setTextColor(20); doc.text(t,M,y); y+=18; }
+    function p(t){ doc.setFont("helvetica","normal"); doc.setFontSize(10.5); doc.setTextColor(60); var lines=doc.splitTextToSize(t,W); doc.text(lines,M,y); y+=lines.length*15+8; }
+
+    doc.setFillColor(11,14,20); doc.rect(0,0,595,46,"F");
+    doc.setFont("helvetica","bold"); doc.setFontSize(16); doc.setTextColor(198,167,94); doc.text("VYBZZZ",M,30);
+    doc.setFontSize(9); doc.setTextColor(220); doc.text("Contrat d'engagement artiste",595-M,30,{align:"right"});
+
+    doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(20);
+    doc.text("CONTRAT D'ENGAGEMENT ARTISTE",M,y); y+=26;
+    p("Entre VYBZZZ (« la Plateforme ») et "+name+" (« l'Artiste »), e-mail : "+email+".");
+    h("1. Objet"); p("L'Artiste est autorisé à diffuser des concerts en direct, recevoir des cadeaux virtuels (Arena Points) et vendre des billets via la Plateforme.");
+    h("2. Rémunération & commission"); p("La Plateforme prélève une commission fixe de 5% sur chaque transaction (tickets, cadeaux, pourboires). Le solde net est crédité au portefeuille de l'Artiste, exprimé en USD.");
+    h("3. Versements"); p("Les retraits s'effectuent via Stripe ou compte bancaire, par paliers ($100 / $500 / $1000 / total), avec un délai moyen de versement de 24 heures.");
+    h("4. Contenu & conduite"); p("L'Artiste garantit détenir les droits sur les œuvres diffusées et s'engage à respecter la charte de la communauté Vybzzz.");
+    h("5. Durée & résiliation"); p("Le contrat est conclu pour une durée indéterminée et peut être résilié par l'une ou l'autre des parties avec un préavis de 30 jours.");
+    y+=18; p("Fait le "+date+".");
+    y+=10; doc.setTextColor(60); doc.text("Signature de l'Artiste :",M,y); doc.line(M+130,y,M+330,y);
+    y+=40; doc.text("Pour Vybzzz :",M,y); doc.line(M+90,y,M+290,y);
+
+    doc.save("Contrat-artiste-Vybzzz.pdf");
+    UI.toast("Contrat téléchargé ✓");
+  });
+
+  // ----- submit application -----
+  document.getElementById("artistForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    if(!document.getElementById("aAccept").checked){ UI.toast("Merci d'accepter le contrat artiste."); return; }
+    UI.toast("Candidature envoyée ! Notre équipe te recontacte sous 48h 🎉");
+  });
+})();
+</script>
+</body>
+</html>

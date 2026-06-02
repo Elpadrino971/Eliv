@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0b0e14" />
+<title>Vybzzz — Boutique · Arena Points & abonnements</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
+<link rel="icon" type="image/png" href="assets/logo.png" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body data-page="store">
+<div class="grain" aria-hidden="true"></div>
+<div class="aurora" aria-hidden="true"><span class="aurora__blob a1"></span><span class="aurora__blob a2"></span><span class="aurora__blob a3"></span></div>
+<div class="cursor" id="cursor"></div><div class="cursor-dot" id="cursorDot"></div>
+<div class="scroll-progress" id="scrollProgress"></div>
+<div id="site-header"></div>
+
+<main class="page">
+  <div class="page__head reveal">
+    <span class="eyebrow">Boutique</span>
+    <h1>Recharge tes <span class="grad">Arena Points</span>.</h1>
+    <p>Les ARENA POINTS (PTS) servent à envoyer des cadeaux pendant les lives. Plus le pack est gros, plus le bonus grimpe. Paiement sécurisé via VyBzzZ Pay.</p>
+  </div>
+
+  <div class="store-grid" id="packGrid"></div>
+
+  <h2 class="section-title" style="margin-top:48px">Catalogue de cadeaux
+    <button class="btn btn--outline" id="giftDemo" data-cursor="hover" style="margin-left:auto;font-size:.8rem;padding:.55em 1.1em">🎁 Tester l'envoi</button>
+  </h2>
+  <p style="color:var(--muted);margin:-6px 0 18px;max-width:620px">Chaque cadeau coûte un nombre d'Arena Points et déclenche une animation en direct, reversée à l'artiste.</p>
+  <div class="gift-cat" id="giftGrid"></div>
+
+  <h2 class="section-title" style="margin-top:52px">Abonnements</h2>
+  <div class="plans" id="planGrid"></div>
+</main>
+
+<div id="site-footer"></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

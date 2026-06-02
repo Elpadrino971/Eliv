@@ -1,184 +1,362 @@
 /* ============================================================
-   VYBZZZ — Interactions & animations
+   VYBZZZ — Moteur partagé (chrome, animations, rendu des pages)
    ============================================================ */
 (function () {
   "use strict";
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const D = window.VYBZZZ;
+  const H = D.helpers;
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const page = document.body.dataset.page || "home";
 
-  /* ---------- Preloader ---------- */
-  window.addEventListener("load", () => {
-    const pl = document.getElementById("preloader");
-    setTimeout(() => pl && pl.classList.add("done"), 1600);
-    playHeroIntro();
-  });
+  /* ---------- Chrome : header + footer injectés ---------- */
+  const NAV = [
+    { href: "index.html",     label: "Accueil",  id: "home" },
+    { href: "feed.html",      label: "Feed",     id: "feed" },
+    { href: "store.html",     label: "Boutique", id: "store" },
+    { href: "dashboard.html", label: "Studio Pro", id: "dashboard" },
+    { href: "faq.html",       label: "FAQ",      id: "faq" },
+  ];
 
-  /* ---------- Hero intro (GSAP) ---------- */
-  function playHeroIntro() {
-    if (reduceMotion || typeof gsap === "undefined") {
-      document.querySelectorAll(".hero__title .line>span").forEach(s => (s.style.transform = "none"));
-      return;
-    }
-    gsap.to(".hero__title .line>span", {
-      y: 0, duration: 1.1, ease: "power4.out", stagger: 0.12, delay: 1.7,
-    });
-    gsap.fromTo(".hero__badge, .hero__sub, .hero__actions, .hero__stats",
-      { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.9, ease: "power3.out", stagger: 0.12, delay: 2.1 }
-    );
-    gsap.fromTo(".hero__phone",
-      { x: 60, opacity: 0, rotate: 4 },
-      { x: 0, opacity: 1, rotate: 0, duration: 1.2, ease: "power3.out", delay: 2.2 }
-    );
+  function renderHeader() {
+    const links = NAV.map(n =>
+      `<a href="${n.href}" class="${n.id === page ? "active" : ""}" data-cursor="hover">${n.label}</a>`
+    ).join("");
+    return `
+    <header class="nav" id="nav">
+      <a href="index.html" class="nav__brand" data-cursor="hover">
+        <img src="assets/logo.png" alt="Vybzzz" class="nav__logo" />
+        <span>Vybzzz</span>
+      </a>
+      <button class="nav__search" data-cursor="hover" aria-label="Rechercher">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="none" stroke="currentColor" stroke-width="2" d="M21 21l-4.3-4.3M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"/></svg>
+        <input placeholder="Rechercher un artiste, un live…" />
+      </button>
+      <nav class="nav__links">${links}</nav>
+      <div class="nav__cta">
+        <a href="artist.html" class="btn btn--ghost" data-cursor="hover">Devenir artiste</a>
+        <a href="checkout.html" class="btn btn--gold magnetic" data-cursor="hover"><span>Rejoindre</span></a>
+      </div>
+      <button class="nav__burger" id="burger" aria-label="Menu"><i></i><i></i><i></i></button>
+    </header>`;
   }
 
-  /* ---------- Navbar scroll state ---------- */
-  const nav = document.getElementById("nav");
-  const progress = document.getElementById("scrollProgress");
-  const onScroll = () => {
-    nav.classList.toggle("scrolled", window.scrollY > 40);
-    const h = document.documentElement.scrollHeight - window.innerHeight;
-    progress.style.width = (window.scrollY / h) * 100 + "%";
-  };
-  window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
+  function renderFooter() {
+    return `
+    <footer class="footer">
+      <div class="footer__top">
+        <div class="footer__brand">
+          <a href="index.html" class="nav__brand"><img src="assets/logo.png" alt="" class="nav__logo" /><span>Vybzzz</span></a>
+          <p>La scène live qui ne dort jamais.</p>
+        </div>
+        <div class="footer__cols">
+          <div><h4>Découvrir</h4><a href="index.html">Accueil</a><a href="feed.html">Feed</a><a href="store.html">Boutique</a></div>
+          <div><h4>Artistes</h4><a href="dashboard.html">Studio Pro</a><a href="artist.html">Devenir artiste</a><a href="artist.html#contrat">Contrat</a></div>
+          <div><h4>Aide</h4><a href="faq.html">FAQ</a><a href="checkout.html">Paiement</a><a href="#">Contact</a></div>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <span>© 2026 Vybzzz. Tous droits réservés.</span>
+        <span class="footer__made">Paiements sécurisés · VyBzzZ Pay · SSL 256-bit</span>
+      </div>
+    </footer>`;
+  }
 
-  /* ---------- Mobile menu ---------- */
-  const burger = document.getElementById("burger");
-  burger && burger.addEventListener("click", () => nav.classList.toggle("open"));
-  document.querySelectorAll(".nav__links a").forEach(a =>
-    a.addEventListener("click", () => nav.classList.remove("open"))
-  );
+  const headerSlot = document.getElementById("site-header");
+  const footerSlot = document.getElementById("site-footer");
+  if (headerSlot) headerSlot.innerHTML = renderHeader();
+  if (footerSlot) footerSlot.innerHTML = renderFooter();
+
+  /* ---------- Nav behaviour ---------- */
+  const nav = document.getElementById("nav");
+  if (nav) {
+    const onScroll = () => nav.classList.toggle("scrolled", window.scrollY > 30);
+    addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    const burger = document.getElementById("burger");
+    burger && burger.addEventListener("click", () => nav.classList.toggle("open"));
+  }
+
+  /* ---------- Scroll progress ---------- */
+  const prog = document.getElementById("scrollProgress");
+  if (prog) addEventListener("scroll", () => {
+    const h = document.documentElement.scrollHeight - innerHeight;
+    prog.style.width = (scrollY / h) * 100 + "%";
+  }, { passive: true });
 
   /* ---------- Custom cursor ---------- */
-  const cursor = document.getElementById("cursor");
-  const dot = document.getElementById("cursorDot");
-  if (cursor && window.matchMedia("(hover:hover)").matches) {
+  const cursor = document.getElementById("cursor"), dot = document.getElementById("cursorDot");
+  if (cursor && matchMedia("(hover:hover)").matches && !reduceMotion) {
     let cx = 0, cy = 0, tx = 0, ty = 0;
-    window.addEventListener("mousemove", e => {
+    addEventListener("mousemove", e => {
       tx = e.clientX; ty = e.clientY;
       dot.style.transform = `translate(${tx}px,${ty}px) translate(-50%,-50%)`;
     });
     (function loop() {
-      cx += (tx - cx) * 0.18; cy += (ty - cy) * 0.18;
+      cx += (tx - cx) * .18; cy += (ty - cy) * .18;
       cursor.style.transform = `translate(${cx}px,${cy}px) translate(-50%,-50%)`;
       requestAnimationFrame(loop);
     })();
-    document.querySelectorAll('[data-cursor="hover"]').forEach(el => {
-      el.addEventListener("mouseenter", () => cursor.classList.add("is-hover"));
-      el.addEventListener("mouseleave", () => cursor.classList.remove("is-hover"));
+    document.addEventListener("mouseover", e => {
+      if (e.target.closest('[data-cursor="hover"]')) cursor.classList.add("is-hover");
     });
-  }
-
-  /* ---------- Magnetic buttons ---------- */
-  if (!reduceMotion) {
-    document.querySelectorAll(".magnetic").forEach(el => {
-      el.addEventListener("mousemove", e => {
-        const r = el.getBoundingClientRect();
-        const mx = e.clientX - r.left - r.width / 2;
-        const my = e.clientY - r.top - r.height / 2;
-        el.style.transform = `translate(${mx * 0.3}px, ${my * 0.4}px)`;
-      });
-      el.addEventListener("mouseleave", () => (el.style.transform = ""));
-    });
-  }
-
-  /* ---------- 3D tilt cards ---------- */
-  if (!reduceMotion && window.matchMedia("(hover:hover)").matches) {
-    document.querySelectorAll(".tilt").forEach(el => {
-      el.style.transformStyle = "preserve-3d";
-      el.addEventListener("mousemove", e => {
-        const r = el.getBoundingClientRect();
-        const px = (e.clientX - r.left) / r.width - 0.5;
-        const py = (e.clientY - r.top) / r.height - 0.5;
-        el.style.transform = `perspective(900px) rotateY(${px * 9}deg) rotateX(${-py * 9}deg) translateY(-4px)`;
-      });
-      el.addEventListener("mouseleave", () => (el.style.transform = ""));
+    document.addEventListener("mouseout", e => {
+      if (e.target.closest('[data-cursor="hover"]')) cursor.classList.remove("is-hover");
     });
   }
 
   /* ---------- Reveal on scroll ---------- */
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
-    });
-  }, { threshold: 0.15, rootMargin: "0px 0px -8% 0px" });
-  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+  const io = new IntersectionObserver((es) => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+  }), { threshold: .12, rootMargin: "0px 0px -6% 0px" });
+  const observeReveals = (root = document) => root.querySelectorAll(".reveal:not(.in)").forEach(el => io.observe(el));
 
-  /* ---------- Dashboard chart draw ---------- */
-  const dash = document.querySelector(".dash");
-  if (dash) {
-    new IntersectionObserver((entries, obs) => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); obs.disconnect(); } });
-    }, { threshold: 0.4 }).observe(dash);
-  }
-
-  /* ---------- Count-up numbers ---------- */
-  function countUp(el) {
-    const target = parseFloat(el.dataset.count);
-    const dur = 1600, start = performance.now();
-    const isFloat = target % 1 !== 0;
-    function tick(now) {
-      const p = Math.min((now - start) / dur, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      const val = target * eased;
-      el.textContent = isFloat ? val.toFixed(1) : Math.round(val).toLocaleString("fr-FR");
+  /* ---------- Count-up ---------- */
+  const countUp = (el) => {
+    const target = parseFloat(el.dataset.count), dur = 1500, t0 = performance.now();
+    const isF = target % 1 !== 0, pre = el.dataset.prefix || "", suf = el.dataset.suffix || "";
+    (function tick(now) {
+      const p = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3), v = target * e;
+      el.textContent = pre + (isF ? v.toFixed(1) : Math.round(v).toLocaleString("fr-FR")) + suf;
       if (p < 1) requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  }
-  const countIO = new IntersectionObserver((entries, obs) => {
-    entries.forEach(e => { if (e.isIntersecting) { countUp(e.target); obs.unobserve(e.target); } });
-  }, { threshold: 0.6 });
-  document.querySelectorAll("[data-count]").forEach(el => countIO.observe(el));
+    })(performance.now());
+  };
+  const countIO = new IntersectionObserver((es, o) => es.forEach(e => {
+    if (e.isIntersecting) { countUp(e.target); o.unobserve(e.target); }
+  }), { threshold: .6 });
+  const observeCounts = (root = document) => root.querySelectorAll("[data-count]").forEach(el => countIO.observe(el));
 
-  /* ---------- Parallax (GSAP ScrollTrigger) ---------- */
-  if (!reduceMotion && typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined") {
-    gsap.registerPlugin(ScrollTrigger);
-    document.querySelectorAll("[data-parallax]").forEach(el => {
-      const speed = parseFloat(el.dataset.parallax);
-      gsap.to(el, {
-        yPercent: speed * 100,
-        ease: "none",
-        scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true },
+  /* ---------- Magnetic + tilt ---------- */
+  function bindMicro(root = document) {
+    if (reduceMotion) return;
+    root.querySelectorAll(".magnetic:not([data-mg])").forEach(el => {
+      el.dataset.mg = 1;
+      el.addEventListener("mousemove", e => {
+        const r = el.getBoundingClientRect();
+        el.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * .3}px,${(e.clientY - r.top - r.height / 2) * .4}px)`;
       });
+      el.addEventListener("mouseleave", () => el.style.transform = "");
+    });
+    if (matchMedia("(hover:hover)").matches) root.querySelectorAll(".tilt:not([data-tl])").forEach(el => {
+      el.dataset.tl = 1;
+      el.addEventListener("mousemove", e => {
+        const r = el.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5;
+        el.style.transform = `perspective(900px) rotateY(${px * 8}deg) rotateX(${-py * 8}deg) translateY(-4px)`;
+      });
+      el.addEventListener("mouseleave", () => el.style.transform = "");
     });
   }
 
-  /* ---------- Artists carousel (data-driven) ---------- */
-  const artists = [
-    { name: "NOVA", genre: "Afrobeats", img: "assets/artist_image1.png", viewers: "8.2K", live: true },
-    { name: "Layla Skye", genre: "R&B / Soul", img: "assets/artist_image2.png", viewers: "5.7K", live: true },
-    { name: "Kairo", genre: "Hip-Hop", img: "assets/artist_image3.png", viewers: "12K", live: true },
-    { name: "Mira Sound", genre: "Électro", img: "assets/artist_image4.png", viewers: "3.1K", live: false },
-    { name: "DJ Volt", genre: "House", img: "assets/artist_image5.png", viewers: "9.4K", live: true },
-    { name: "Selene", genre: "Pop", img: "assets/artist_image1.png", viewers: "6.8K", live: false },
-  ];
-  const row = document.getElementById("artistsRow");
-  if (row) {
-    row.innerHTML = artists.map(a => `
-      <article class="artist-card reveal" data-cursor="hover">
-        ${a.live ? '<span class="artist-card__live"><span class="pulse-dot"></span> LIVE</span>' : ""}
-        <img src="${a.img}" alt="${a.name}" loading="lazy" />
-        <div class="artist-card__body">
-          <h3>${a.name}</h3>
-          <small>${a.genre}</small>
-          <div class="artist-card__meta">
-            <span>👁 ${a.viewers}</span>
-            <span>${a.live ? "🔴 En direct" : "⏰ Bientôt"}</span>
-          </div>
+  function refresh(root) { observeReveals(root); observeCounts(root); bindMicro(root); }
+  window.__vybRefresh = refresh;
+
+  /* ---------- Toast ---------- */
+  function toast(msg) {
+    let t = document.querySelector(".toast");
+    if (!t) { t = document.createElement("div"); t.className = "toast"; document.body.appendChild(t); }
+    t.textContent = msg; t.classList.add("show");
+    clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 2600);
+  }
+  window.__vybToast = toast;
+
+  /* ============================================================
+     RENDUS DE PAGE
+     ============================================================ */
+
+  const liveBadge = `<span class="badge-live"><span class="pulse-dot"></span>LIVE</span>`;
+  const verified = `<svg class="verif" viewBox="0 0 24 24" width="14" height="14"><path fill="#c6a75e" d="M12 1l2.6 1.9 3.2-.3 1 3 2.7 1.8-1 3 1 3-2.7 1.8-1 3-3.2-.3L12 23l-2.6-1.9-3.2.3-1-3L2.5 14.6l1-3-1-3 2.7-1.8 1-3 3.2.3L12 1z"/><path fill="#0b0e14" d="M10.6 14.6l-2-2-1.2 1.2 3.2 3.2 5.4-5.4-1.2-1.2z"/></svg>`;
+
+  // ---- YouTube-style video card ----
+  function videoCard(ev) {
+    const meta = ev.live
+      ? `${H.nb(ev.viewers)} spectateurs · en direct`
+      : `${H.nb(ev.likes)} j'aime · ${ev.scheduled}`;
+    return `
+    <article class="vcard reveal" data-cursor="hover" data-event="${ev.id}">
+      <a href="checkout.html?event=${ev.id}" class="vcard__thumb">
+        <img src="${ev.thumb}" alt="${ev.name}" loading="lazy" />
+        ${ev.live ? liveBadge : `<span class="badge-soon">${ev.scheduled}</span>`}
+        <span class="vcard__price">${ev.price === 0 ? "Gratuit" : "$" + ev.price.toFixed(2)}</span>
+        <span class="vcard__play">▶</span>
+      </a>
+      <div class="vcard__body">
+        <img class="vcard__avatar" src="${ev.artist.avatar}" alt="" />
+        <div class="vcard__txt">
+          <h3>${ev.name}</h3>
+          <p>${ev.artist.name} ${ev.artist.verified ? verified : ""} · ${ev.genre}</p>
+          <small>${meta}</small>
         </div>
-      </article>`).join("");
-    // re-observe newly injected reveals + tilt + cursor
-    row.querySelectorAll(".reveal").forEach(el => io.observe(el));
+      </div>
+    </article>`;
   }
 
-  /* ---------- Smooth anchor offset ---------- */
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener("click", e => {
-      const id = a.getAttribute("href");
-      if (id.length < 2) return;
-      const t = document.querySelector(id);
-      if (t) { e.preventDefault(); window.scrollTo({ top: t.offsetTop - 70, behavior: "smooth" }); }
+  function renderHome() {
+    // categories
+    const cats = document.getElementById("cats");
+    if (cats) {
+      cats.innerHTML = D.categories.map((c, i) =>
+        `<button class="chip ${i === 0 ? "active" : ""}" data-cursor="hover">${c}</button>`).join("");
+      cats.addEventListener("click", e => {
+        const b = e.target.closest(".chip"); if (!b) return;
+        cats.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
+        b.classList.add("active");
+        const label = b.textContent.trim();
+        let list = D.events;
+        if (label === "🔴 En direct") list = D.events.filter(e => e.live);
+        else if (label !== "Tous") list = D.events.filter(e => e.genre === label);
+        grid.innerHTML = (list.length ? list : D.events).map(videoCard).join("");
+        refresh(grid);
+      });
+    }
+    // featured artists row
+    const ar = document.getElementById("artistsRow");
+    if (ar) {
+      ar.innerHTML = D.artists.map(a => `
+        <a class="achip reveal" data-cursor="hover" href="feed.html">
+          <span class="achip__ring"><img src="${a.avatar}" alt="${a.name}" /></span>
+          <strong>${a.name} ${a.verified ? verified : ""}</strong>
+          <small>${a.followers} abonnés</small>
+        </a>`).join("");
+    }
+    // main grid
+    const grid = document.getElementById("videoGrid");
+    if (grid) grid.innerHTML = D.events.map(videoCard).join("");
+    refresh();
+  }
+
+  function renderFeed() {
+    const feed = document.getElementById("feed");
+    if (!feed) return;
+    const items = D.events.slice().sort((a, b) => b.live - a.live);
+    feed.innerHTML = items.map(ev => `
+      <section class="feed__item" style="--bg:url('${ev.thumb}')">
+        <div class="feed__overlay"></div>
+        <div class="feed__content">
+          <div class="feed__meta">
+            ${ev.live ? liveBadge : `<span class="badge-soon">${ev.scheduled}</span>`}
+            <span class="feed__cat">${ev.genre}</span>
+          </div>
+          <h2 class="feed__title">${ev.name}</h2>
+          <a class="feed__artist" href="#">
+            <img src="${ev.artist.avatar}" alt="" />
+            <span>@${ev.artist.name.replace(/\s+/g, "").toLowerCase()} ${ev.artist.verified ? verified : ""}</span>
+            <button class="feed__follow" data-cursor="hover">Suivre</button>
+          </a>
+          <a class="btn btn--gold feed__ticket magnetic" href="checkout.html?event=${ev.id}" data-cursor="hover">
+            <span>${ev.price === 0 ? "Rejoindre gratuitement" : "Get Ticket · $" + ev.price.toFixed(2)}</span>
+          </a>
+        </div>
+        <aside class="feed__actions">
+          <button class="fa-btn" data-act="like" data-cursor="hover"><span>♥</span><i>${H.nb(ev.likes)}</i></button>
+          <button class="fa-btn" data-act="gift" data-cursor="hover"><span>🎁</span><i>Cadeau</i></button>
+          <button class="fa-btn" data-act="chat" data-cursor="hover"><span>💬</span><i>${H.nb(Math.round(ev.likes / 7))}</i></button>
+          <button class="fa-btn" data-act="share" data-cursor="hover"><span>↗</span><i>Partager</i></button>
+        </aside>
+      </section>`).join("");
+
+    feed.addEventListener("click", e => {
+      const b = e.target.closest(".fa-btn"); if (!b) return;
+      const act = b.dataset.act;
+      if (act === "like") { b.classList.toggle("liked"); }
+      else if (act === "gift") { openGiftPanel(); }
+      else if (act === "share") { toast("Lien copié dans le presse-papier ✓"); }
+      else if (act === "chat") { toast("Le chat en direct est disponible dans l'app 📱"); }
     });
-  });
+    feed.querySelectorAll(".feed__follow").forEach(b => b.addEventListener("click", ev => {
+      ev.preventDefault(); b.classList.toggle("on");
+      b.textContent = b.classList.contains("on") ? "Suivi ✓" : "Suivre";
+    }));
+    bindMicro(feed);
+  }
+
+  // ---- Gift panel (used by feed + store demo) ----
+  function openGiftPanel() {
+    let p = document.getElementById("giftPanel");
+    if (!p) {
+      p = document.createElement("div");
+      p.id = "giftPanel"; p.className = "gift-panel";
+      p.innerHTML = `
+        <div class="gift-panel__sheet">
+          <div class="gift-panel__head"><b>Envoyer un cadeau</b><span class="gift-panel__bal">Solde : <em>2 850 PTS</em></span><button class="gift-panel__x" aria-label="Fermer">✕</button></div>
+          <div class="gift-panel__grid">
+            ${D.gifts.map(g => `<button class="giftc" data-coins="${g.coins}"><span>${g.emoji}</span><strong>${g.name}</strong><small>★ ${g.coins}</small></button>`).join("")}
+          </div>
+          <a href="store.html" class="btn btn--gold gift-panel__topup"><span>Recharger des Arena Points</span></a>
+        </div>`;
+      document.body.appendChild(p);
+      p.querySelector(".gift-panel__x").addEventListener("click", () => p.classList.remove("open"));
+      p.addEventListener("click", e => { if (e.target === p) p.classList.remove("open"); });
+      p.querySelectorAll(".giftc").forEach(g => g.addEventListener("click", () => {
+        flyGift(g.querySelector("span").textContent);
+        toast(`Cadeau envoyé · −${g.dataset.coins} PTS 🎉`);
+      }));
+    }
+    requestAnimationFrame(() => p.classList.add("open"));
+  }
+  function flyGift(emoji) {
+    const s = document.createElement("div");
+    s.className = "fly-gift"; s.textContent = emoji;
+    s.style.left = (20 + Math.random() * 60) + "vw";
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 2600);
+  }
+
+  function renderStore() {
+    // packages
+    const pg = document.getElementById("packGrid");
+    if (pg) pg.innerHTML = D.packages.map(p => {
+      const total = p.points + Math.round(p.points * p.bonus / 100);
+      return `
+      <article class="pack glass reveal tilt ${p.featured ? "pack--feat" : ""}" data-cursor="hover">
+        ${p.featured ? '<span class="pack__tag">Meilleure offre</span>' : ""}
+        ${p.bonus ? `<span class="pack__bonus">+${p.bonus}%</span>` : ""}
+        <div class="pack__coin">🪙</div>
+        <strong class="pack__pts">${total.toLocaleString("fr-FR")}<small>PTS</small></strong>
+        ${p.bonus ? `<small class="pack__base">${p.points.toLocaleString("fr-FR")} + ${(total - p.points).toLocaleString("fr-FR")} bonus</small>` : `<small class="pack__base">${p.title}</small>`}
+        <a href="checkout.html?pack=${p.id}" class="btn ${p.featured ? "btn--gold" : "btn--outline"}" data-cursor="hover"><span>$${p.price.toFixed(2)}</span></a>
+      </article>`;
+    }).join("");
+    // gifts catalogue
+    const gg = document.getElementById("giftGrid");
+    if (gg) gg.innerHTML = D.gifts.map(g =>
+      `<div class="giftc giftc--lg reveal" data-cursor="hover"><span>${g.emoji}</span><strong>${g.name}</strong><small>★ ${g.coins} PTS</small></div>`).join("");
+    // plans
+    const pl = document.getElementById("planGrid");
+    if (pl) pl.innerHTML = D.plans.map(p => `
+      <article class="plan glass reveal tilt ${p.highlight ? "plan--feat" : ""}" data-cursor="hover">
+        ${p.tag ? `<span class="plan__tag">${p.tag}</span>` : ""}
+        <h3>${p.name}</h3>
+        <div class="plan__price">${p.price}<i>${p.cycle}</i></div>
+        ${p.note ? `<p class="plan__note">${p.note}</p>` : ""}
+        <ul>${p.features.map(f => `<li>${f}</li>`).join("")}</ul>
+        <a href="${p.name === "Artiste Pro" ? "artist.html" : "checkout.html"}" class="btn ${p.highlight ? "btn--gold" : "btn--outline"}" data-cursor="hover"><span>${p.cta}</span></a>
+      </article>`).join("");
+    // try gift demo button
+    const demo = document.getElementById("giftDemo");
+    demo && demo.addEventListener("click", openGiftPanel);
+    refresh();
+  }
+
+  function renderFaq() {
+    const wrap = document.getElementById("faqList");
+    if (!wrap) return;
+    wrap.innerHTML = D.faq.map((f, i) => `
+      <div class="faq-item reveal ${i === 0 ? "open" : ""}" data-cursor="hover">
+        <button class="faq-q">${f.q}<i>+</i></button>
+        <div class="faq-a"><p>${f.a}</p></div>
+      </div>`).join("");
+    wrap.addEventListener("click", e => {
+      const item = e.target.closest(".faq-item"); if (!item) return;
+      item.classList.toggle("open");
+    });
+    refresh();
+  }
+
+  /* ---------- Dispatch ---------- */
+  const routes = { home: renderHome, feed: renderFeed, store: renderStore, faq: renderFaq };
+  (routes[page] || function () {})();
+  refresh();
+
+  // expose for inline page scripts (checkout, dashboard, artist)
+  window.VYBZZZ_UI = { toast, refresh, helpers: H };
 })();
