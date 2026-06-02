@@ -1,0 +1,12 @@
+# Déploiement du site vitrine Vybzzz (dossier /site) sur Netlify.
+# Le reste du repo (app Flutter) est ignoré : seul /site est publié.
+# Le code source reste privé (repo privé) ; Netlify ne sert que les fichiers statiques.
+[build]
+  publish = "site"
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
