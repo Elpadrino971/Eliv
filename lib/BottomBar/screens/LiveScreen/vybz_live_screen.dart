@@ -101,6 +101,23 @@ class _VybzLiveScreenState extends State<VybzLiveScreen> {
             );
             }),
           ),
+
+          // X de sortie sur la page "En direct" : l'onglet Live masque la barre
+          // de nav, donc sans ça on reste coincé. Même action que le X "Pour toi".
+          if (_page == 1)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 10,
+              left: 12,
+              child: GestureDetector(
+                onTap: () => Get.offAll(() => const MyBottomBar()),
+                child: const Icon(
+                  Icons.close_rounded,
+                  color: whiteColor,
+                  size: 30,
+                  shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
+                ),
+              ),
+            ),
         ],
       ),
     );

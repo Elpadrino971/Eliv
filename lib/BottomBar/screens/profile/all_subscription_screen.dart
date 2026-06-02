@@ -307,7 +307,14 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           itemCount: list.length + 1,
           itemBuilder: (context, index) {
-            if (index == list.length) return _webSaveBanner();
+            // Bannière "s'abonner sur le web" masquée sur iOS : pointer vers un
+            // paiement web externe enfreint l'anti-steering d'Apple (3.1.1) et
+            // risque le rejet. Conservée sur Android (plus permissif).
+            if (index == list.length) {
+              return Platform.isIOS
+                  ? const SizedBox.shrink()
+                  : _webSaveBanner();
+            }
             final sub = list[index];
             return SubscriptionCard(
               subscription: sub,
