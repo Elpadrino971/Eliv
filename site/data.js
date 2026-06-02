@@ -60,52 +60,35 @@ window.VYBZZZ = (function () {
     { name: "Château", emoji: "🏰", coins: 5000 },
   ];
 
-  // Programme Founder (offre de lancement) — cf. spec produit
-  // taken/total = jauge des places fondateur affichée sur l'accueil
-  const founder = { taken: 0, total: 24, price: 79, commission: 60, deadline: "2026-06-16T20:00:00" };
+  // Programme Founder = offre de lancement, prix par PALIERS selon l'ordre
+  // d'inscription (200 places). À vie tant que l'abonnement reste actif, 60%.
+  // taken = nombre d'artistes déjà inscrits.
+  const founder = {
+    taken: 0,
+    total: 200,
+    commission: 60,            // % gardé par le créateur sur l'offre Founder
+    upgradeCommission: 70,     // option 70%
+    upgradePrice: 299,         // = plan Elite
+    tiers: [
+      { price: 79,  seats: 24,  label: "Vague 1 — les 24 premières" },
+      { price: 99,  seats: 76,  label: "Vague 2 — les 76 suivantes" },
+      { price: 149, seats: 100, label: "Vague 3 — les 100 dernières" },
+    ],
+  };
 
-  // Plans CRÉATEUR (l'artiste s'abonne et garde un % de ses revenus = "commission")
-  const plansLaunch = [
-    {
-      name: "Founder", price: 79, commission: 60, highlight: true, tag: "Offre de lancement",
-      note: "Limité aux 24 premiers créateurs fondateurs",
-      features: ["Tu gardes 60% de tes revenus", "Prix bloqué à $79/mois tant que ton abonnement reste actif", "Studio Pro complet", "Mise en avant prioritaire au lancement", "Badge « Artiste Fondateur » à vie"],
-      cta: "Devenir Fondateur",
-    },
-    {
-      name: "Starter", price: 99, commission: 50, highlight: false,
-      features: ["Tu gardes 50% de tes revenus", "Studio Pro complet", "Billetterie & cadeaux virtuels", "Retraits Stripe / banque"],
-      cta: "Choisir Starter",
-    },
-    {
-      name: "Elite", price: 299, commission: 70, highlight: false, tag: "Premium",
-      features: ["Tu gardes 70% de tes revenus", "Tout le plan Starter", "Mise en avant premium", "Support prioritaire 24/7", "Analytics avancées"],
-      cta: "Choisir Elite",
-    },
-  ];
+  // Plan Elite (option 70%, disponible pendant et après le lancement)
+  const elite = {
+    name: "Elite", price: 299, commission: 70, tag: "Option 70%",
+    features: ["Tu gardes 70% de tes revenus", "Tout le Studio Pro", "Mise en avant premium", "Support prioritaire 24/7", "Analytics avancées"],
+    cta: "Passer à 70%",
+  };
 
-  // Plans normaux (après que les 200 places Founder soient prises)
+  // Plans normaux : à partir de la 201ᵉ inscription, l'offre Founder disparaît
   const plansNormal = [
-    {
-      name: "Starter", price: 99, commission: 50, highlight: false,
-      features: ["Tu gardes 50% de tes revenus", "Studio Pro complet", "Billetterie & cadeaux virtuels", "Retraits Stripe / banque"],
-      cta: "Choisir Starter",
-    },
-    {
-      name: "Growth", price: 199, commission: 60, highlight: true, tag: "Populaire",
-      note: "Remplace l'offre Founder",
-      features: ["Tu gardes 60% de tes revenus", "Tout le plan Starter", "Mise en avant prioritaire", "Retraits prioritaires"],
-      cta: "Choisir Growth",
-    },
-    {
-      name: "Elite", price: 299, commission: 70, highlight: false, tag: "Premium",
-      features: ["Tu gardes 70% de tes revenus", "Tout le plan Growth", "Mise en avant premium", "Support prioritaire 24/7", "Analytics avancées"],
-      cta: "Choisir Elite",
-    },
+    { name: "Starter", price: 99,  commission: 50, highlight: false, features: ["Tu gardes 50% de tes revenus", "Studio Pro complet", "Billetterie & cadeaux virtuels", "Retraits Stripe / banque"], cta: "Choisir Starter" },
+    { name: "Growth",  price: 199, commission: 60, highlight: true, tag: "Populaire", note: "Remplace l'offre Founder", features: ["Tu gardes 60% de tes revenus", "Tout le plan Starter", "Mise en avant prioritaire", "Retraits prioritaires"], cta: "Choisir Growth" },
+    { name: "Elite",   price: 299, commission: 70, highlight: false, tag: "Premium", features: ["Tu gardes 70% de tes revenus", "Tout le plan Growth", "Mise en avant premium", "Support prioritaire 24/7", "Analytics avancées"], cta: "Choisir Elite" },
   ];
-
-  // En phase de lancement tant que les places Founder ne sont pas toutes prises
-  const plans = founder.taken < founder.total ? plansLaunch : plansNormal;
 
   // FAQ (cf. /api/settings/get-management — ici en dur, réaliste)
   const faq = [
@@ -125,5 +108,5 @@ window.VYBZZZ = (function () {
     nb: (v) => v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1).replace(".", ",") + "K" : String(v),
   };
 
-  return { categories, artists, events, packages, gifts, plans, founder, faq, helpers };
+  return { categories, artists, events, packages, gifts, founder, elite, plansNormal, faq, helpers };
 })();

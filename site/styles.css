@@ -466,6 +466,18 @@ body{background:radial-gradient(120% 80% at 50% -10%,#0e2438 0%,var(--bg) 55%) f
 .hero-perks li::before{content:"✦";position:absolute;left:0;top:1px;color:var(--gold)}
 .hero-perks b{color:var(--text);font-weight:600}
 .hero-reassure{margin-top:20px;color:var(--muted);font-size:.82rem}
+/* Escalier de prix (urgence par paliers) */
+.tier-ladder{display:flex;align-items:stretch;gap:10px;margin:6px 0 22px;flex-wrap:wrap}
+.tier{flex:1;min-width:88px;text-align:center;padding:13px 8px;border-radius:13px;border:1px solid var(--panel-line);background:var(--panel);opacity:.5;transition:.35s var(--ease)}
+.tier b{display:block;font-family:var(--serif);font-weight:800;font-size:1.55rem;line-height:1}
+.tier small{color:var(--muted);font-size:.72rem}
+.tier.current{opacity:1;border-color:rgba(200,168,94,.6);background:linear-gradient(160deg,rgba(200,168,94,.2),transparent);box-shadow:0 0 22px -6px rgba(200,168,94,.5)}
+.tier.current b{color:var(--gold-2)}
+.tier.done{opacity:.38}
+.tier.done b{text-decoration:line-through}
+.tier-arrow{align-self:center;color:var(--muted)}
+.plan--done{opacity:.55}
+.plan--done .plan__tag{background:var(--panel);color:var(--muted)}
 .founder-mini{display:flex;align-items:center;gap:22px;margin:6px 0 26px}
 .founder-mini>div{display:flex;flex-direction:column}
 .founder-mini b{font-family:var(--serif);font-weight:800;font-size:2rem;line-height:1}

@@ -173,21 +173,86 @@
       <a href="artist.html" class="btn ${p.highlight ? "btn--gold" : "btn--outline"}" data-cursor="hover"><span>${p.cta}</span></a>
     </article>`;
   }
+  // ---- État de l'offre Founder (palier courant selon l'ordre d'inscription) ----
+  function founderInfo() {
+    const f = D.founder; let cum = 0;
+    for (let i = 0; i < f.tiers.length; i++) {
+      const prev = cum; cum += f.tiers[i].seats;
+      if (f.taken < cum) {
+        return {
+          closed: false, tierIndex: i, price: f.tiers[i].price,
+          takenInTier: f.taken - prev, tierSeats: f.tiers[i].seats,
+          remaining: cum - f.taken,
+          nextPrice: f.tiers[i + 1] ? f.tiers[i + 1].price : null,
+        };
+      }
+    }
+    return { closed: true, tierIndex: -1, price: null, remaining: 0 };
+  }
+  function tierCardHTML(t, i, fi) {
+    const done = !fi.closed && i < fi.tierIndex;
+    const cur = !fi.closed && i === fi.tierIndex;
+    const tagTxt = cur ? "En cours" : done ? "Complet ✓" : "À venir";
+    return `
+    <article class="plan glass reveal tilt ${cur ? "plan--feat" : ""} ${done ? "plan--done" : ""}" data-cursor="hover">
+      <span class="plan__tag">${tagTxt}</span>
+      <h3>Founder · Vague ${i + 1}</h3>
+      <div class="plan__price">$${t.price}<i>/mois à vie</i></div>
+      <div class="plan__comm">Tu gardes <b>60%</b> de tes revenus</div>
+      <p class="plan__note">${t.label}</p>
+      <ul>
+        <li>Prix bloqué à vie (abo actif)</li>
+        <li>Studio Pro complet</li>
+        <li>Mise en avant Fondateur</li>
+        ${cur ? `<li><b>${fi.remaining}</b> places restantes à ce tarif</li>` : ""}
+      </ul>
+      <a href="artist.html" class="btn ${cur ? "btn--gold" : "btn--outline"}" data-cursor="hover"><span>${cur ? "Réserver à $" + t.price : done ? "Complet" : "Bientôt"}</span></a>
+    </article>`;
+  }
+  function eliteCardHTML() {
+    const e = D.elite;
+    return `
+    <article class="plan glass reveal tilt" data-cursor="hover">
+      <span class="plan__tag">${e.tag}</span>
+      <h3>${e.name}</h3>
+      <div class="plan__price">$${e.price}<i>/mois</i></div>
+      <div class="plan__comm">Tu gardes <b>${e.commission}%</b> de tes revenus</div>
+      <ul>${e.features.map(f => `<li>${f}</li>`).join("")}</ul>
+      <a href="artist.html" class="btn btn--outline" data-cursor="hover"><span>${e.cta}</span></a>
+    </article>`;
+  }
   function renderPlans() {
     const el = document.getElementById("planGrid");
-    if (el) el.innerHTML = D.plans.map(planCard).join("");
+    if (!el) return;
+    const fi = founderInfo();
+    el.innerHTML = fi.closed
+      ? D.plansNormal.map(planCard).join("")
+      : D.founder.tiers.map((t, i) => tierCardHTML(t, i, fi)).join("") + eliteCardHTML();
   }
-  // ---- Founder seats counter ----
+  // ---- Hero : escalier de prix + jauge + urgence dynamiques ----
   function renderSeats() {
-    const f = D.founder, left = f.total - f.taken;
+    const fi = founderInfo();
     const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-    set("spotsTaken", f.taken);
-    set("spotsTotal", f.total);
-    set("spotsLeft", left + " places restantes");
-    set("seatsLeftBig", left);
-    set("ctaLeft", left);
+    document.querySelectorAll(".tier-ladder .tier").forEach(el => {
+      const idx = +el.dataset.tier;
+      el.classList.toggle("current", !fi.closed && idx === fi.tierIndex);
+      el.classList.toggle("done", !fi.closed && idx < fi.tierIndex);
+    });
+    if (fi.closed) {
+      set("urgencyMsg", "Offre Founder clôturée — plans normaux disponibles.");
+      set("spotsLeft", "offre terminée"); set("ctaLeft", 0);
+      return;
+    }
+    const next = fi.nextPrice ? `ensuite le tarif passe à $${fi.nextPrice}/mois` : "dernière vague avant la fin de l'offre";
+    set("urgencyMsg", `Plus que ${fi.remaining} places à $${fi.price}/mois — ${next}.`);
+    set("spotsTaken", fi.takenInTier);
+    set("spotsTotal", fi.tierSeats);
+    set("spotsPrice", "$" + fi.price);
+    set("spotsLeft", fi.remaining + " places à $" + fi.price);
+    set("ctaLeft", fi.remaining);
+    set("seatsLeftBig", fi.remaining);
     const fill = document.getElementById("spotsFill");
-    if (fill) setTimeout(() => fill.style.width = (f.taken / f.total * 100) + "%", 400);
+    if (fill) setTimeout(() => fill.style.width = (fi.takenInTier / fi.tierSeats * 100) + "%", 400);
   }
 
   // ---- YouTube-style video card ----

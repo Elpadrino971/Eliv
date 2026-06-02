@@ -22,29 +22,31 @@
 <section class="split-home">
   <div class="split-home__pitch">
     <div class="reveal">
-      <span class="rec-hero__badge">✦ Offre de lancement · 24 places seulement</span>
-      <h1>Deviens créateur <span class="grad">Founder</span> de Vybzzz.</h1>
-      <p class="lead">$79/mois et <strong>tu gardes 60% de tes revenus</strong> — le taux du plan Growth à $199, pour bien moins cher. Réservé aux <strong>24 premiers créateurs fondateurs</strong>.</p>
+      <span class="rec-hero__badge">✦ Offre de lancement · le prix monte à chaque vague</span>
+      <h1>Sois créateur <span class="grad">Founder</span> avant que le prix monte.</h1>
+      <p class="lead">Les <strong>24 premières places</strong> sont à <strong>$79/mois</strong>, les 76 suivantes à $99, les 100 dernières à $149. <strong>Tu gardes 60%</strong> de tes revenus, <strong>à vie</strong> tant que ton abonnement reste actif.</p>
       <ul class="hero-perks">
         <li>Tu gardes <b>60%</b> de tes revenus, dès le 1ᵉʳ live</li>
         <li>Tarif <b>bloqué à vie</b> tant que ton abonnement reste actif</li>
         <li><b>Studio Pro</b> complet : lives, billetterie, cadeaux</li>
-        <li><b>Mise en avant</b> prioritaire + badge Fondateur</li>
+        <li>Passe à <b>70%</b> quand tu veux (Elite $299)</li>
       </ul>
-      <div class="founder-mini">
-        <div><b class="grad">$79</b><small>/mois</small></div>
-        <div class="founder-mini__sep"></div>
-        <div><b class="grad">60%</b><small>tu gardes</small></div>
-        <div class="founder-mini__sep"></div>
-        <div><b class="grad" id="seatsLeftBig">—</b><small>places restantes</small></div>
+
+      <div class="tier-ladder" id="tierLadder">
+        <div class="tier" data-tier="0"><b>$79</b><small>24 places</small></div>
+        <span class="tier-arrow">→</span>
+        <div class="tier" data-tier="1"><b>$99</b><small>76 places</small></div>
+        <span class="tier-arrow">→</span>
+        <div class="tier" data-tier="2"><b>$149</b><small>100 places</small></div>
       </div>
-      <div class="urgency"><span class="urgency__dot"></span><span>Offre limitée : <b>24 places</b>. Une fois prises, le tarif passe à <b>$199/mois</b> (Growth).</span></div>
+
+      <div class="urgency"><span class="urgency__dot"></span><span id="urgencyMsg">Plus que 24 places à $79/mois.</span></div>
       <div class="rec-hero__actions">
         <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span>Réserver ma place Founder</span></a>
         <a href="dashboard.html" class="btn btn--outline btn--lg magnetic" data-cursor="hover"><span>Voir le Studio Pro</span></a>
       </div>
       <div class="spots">
-        <div class="spots__row"><b><em id="spotsTaken">0</em> / <span id="spotsTotal">24</span> places fondateur prises</b><small id="spotsLeft">places restantes</small></div>
+        <div class="spots__row"><b><em id="spotsTaken">0</em> / <span id="spotsTotal">24</span> places à <span id="spotsPrice">$79</span> prises</b><small id="spotsLeft">places restantes</small></div>
         <div class="spots__bar"><i class="spots__fill" id="spotsFill"></i></div>
       </div>
       <p class="hero-reassure">🔒 Paiement sécurisé · Sans engagement · Annulable à tout moment</p>
@@ -63,22 +65,22 @@
   <div class="page__head reveal" id="avantages">
     <span class="eyebrow">Ce que tu obtiens</span>
     <h1>Le deal <span class="grad">Founder</span>.</h1>
-    <p>Des avantages réservés aux 24 premiers créateurs fondateurs, pensés pour te faire gagner de l'argent et de la visibilité dès le lancement.</p>
+    <p>Des avantages réservés aux 200 créateurs fondateurs, pensés pour te faire gagner de l'argent et de la visibilité dès le lancement. Plus tu t'inscris tôt, moins tu paies — à vie.</p>
   </div>
   <div class="benefits">
-    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">💰</div><h3>Tu gardes 60%</h3><p>60% de commission sur tes revenus (billets, cadeaux, pourboires) — le taux du plan Growth, à moins de la moitié du prix.</p></article>
-    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🔒</div><h3>Prix bloqué à vie</h3><p>Ton tarif Founder $79/mois ne bouge pas tant que ton abonnement reste actif. Les arrivants paieront $199 (Growth).</p></article>
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">💰</div><h3>Tu gardes 60%</h3><p>60% de commission sur tes revenus (billets, cadeaux, pourboires), quel que soit ton palier d'entrée. Passe à 70% avec Elite quand tu veux.</p></article>
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🔒</div><h3>Prix bloqué à vie</h3><p>Ton tarif Founder ($79, $99 ou $149 selon ta vague) ne bouge plus tant que ton abonnement reste actif. Les retardataires paieront le plein tarif.</p></article>
     <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🎛️</div><h3>Studio Pro complet</h3><p>Crée tes événements, passe en live, modère le chat et suis tes revenus — depuis le web ou l'app.</p></article>
     <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🚀</div><h3>Mise en avant prioritaire</h3><p>Page d'accueil, notifications de lancement et badge « Founder » à vie sur ton profil.</p></article>
     <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🏦</div><h3>Retraits simples</h3><p>Versements via Stripe ou compte bancaire, paliers flexibles, délai moyen 24h.</p></article>
-    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">👑</div><h3>Statut Fondateur</h3><p>Tu fais partie des 24 qui ont lancé Vybzzz. Une fois les 24 places prises, l'offre ferme définitivement.</p></article>
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">👑</div><h3>Statut Fondateur</h3><p>Tu fais partie des 200 qui ont lancé Vybzzz. Dès la 201ᵉ inscription, l'offre Founder ferme définitivement.</p></article>
   </div>
 
   <!-- ===== Tarifs ===== -->
   <div class="page__head reveal" id="pricing">
     <span class="eyebrow">Tarifs créateur</span>
     <h1>Choisis ton <span class="grad">plan</span>.</h1>
-    <p>Tu t'abonnes, tu diffuses, et tu gardes un pourcentage de tes revenus selon ton plan. L'offre Founder remplace le plan Growth jusqu'à ce que les 24 places fondateur soient prises.</p>
+    <p>Pendant le lancement, le tarif Founder monte par paliers selon l'ordre d'inscription ($79 → $99 → $149, toujours 60% gardés). Dès la 201ᵉ inscription, on passe aux plans normaux (Starter $99 · Growth $199 · Elite $299).</p>
   </div>
   <div class="plans" id="planGrid"></div>
 
@@ -103,7 +105,7 @@
   </div>
 
   <!-- ===== How it works ===== -->
-  <h2 class="section-title">Rejoindre les 24 fondateurs</h2>
+  <h2 class="section-title">Rejoindre les fondateurs</h2>
   <div class="steps">
     <div class="step reveal"><span class="step__n">01</span><h3>Candidate</h3><p>Remplis le formulaire créateur (2 min) : nom de scène, genre, expérience.</p></div>
     <div class="step reveal"><span class="step__n">02</span><h3>Signe le contrat</h3><p>Télécharge le contrat Founder en PDF, signe-le et accepte les conditions.</p></div>
@@ -114,9 +116,9 @@
 <!-- ===== CTA ===== -->
 <section class="cta-band">
   <div class="cta-band__inner reveal">
-    <h2>Il reste <span class="grad" id="ctaLeft">—</span> places fondateur sur 24.</h2>
-    <p>Une fois les 24 prises, l'offre Founder ferme : le plan Growth ($199/mois) prend le relais. Bloque ton tarif à $79 maintenant.</p>
-    <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span>Réserver ma place à $79/mois</span></a>
+    <h2>Plus que <span class="grad" id="ctaLeft">—</span> places au tarif actuel.</h2>
+    <p>Le prix monte à chaque vague ($79 → $99 → $149), puis l'offre Founder ferme à la 201ᵉ inscription. Bloque ton tarif maintenant — à vie.</p>
+    <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span>Réserver ma place Founder</span></a>
   </div>
 </section>
 
