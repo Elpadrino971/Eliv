@@ -4,6 +4,7 @@ import 'package:artist/BottomBar/screens/homeScreen/performances_screen.dart';
 import 'package:artist/Controllers/controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -61,11 +62,39 @@ class _HomeScreenState extends State<HomeScreen> {
     myInitMethod();
   }
 
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: blackColor,
-      body: RefreshIndicator(
+      body: Stack(
+        children: [
+          PageView(
+            controller: _pageController,
+            onPageChanged: (i) => setState(() => _currentPage = i),
+            children: [_buildFeed(), _buildTimeline()],
+          ),
+          Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: HomePageDots(current: _currentPage, count: 2),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Page 1: the existing home feed (hero card + sections).
+  Widget _buildFeed() {
+    return RefreshIndicator(
         onRefresh: myInitMethod,
         child: SingleChildScrollView(
           child: Column(
@@ -377,7 +406,101 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+      );
+  }
+
+  /// Page 2: chronological "timeline" view (date rail + concert cards),
+  /// revealed by swiping the home feed to the left.
+  Widget _buildTimeline() {
+    return SafeArea(
+      bottom: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Row(
+              children: [
+                Text(
+                  'Concerts Timeline',
+                  style: TextStyle(
+                    color: Get.isDarkMode ? whiteColor : blackColor,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                const Icon(
+                  Icons.swipe_right_alt_rounded,
+                  size: 18,
+                  color: vybzzzTextSecondary,
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  'Swipe back',
+                  style: TextStyle(color: vybzzzTextSecondary, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: GetBuilder<EventController>(
+              builder: (controller) {
+                final upcoming = controller.upcomingEvents.value.data ?? [];
+                final next = controller.nextEvents.value.data ?? [];
+                // Merge next + upcoming, de-duplicated by event id.
+                final merged = <int, Event>{};
+                for (final e in [...next, ...upcoming]) {
+                  if (e.id != null) merged[e.id!] = e;
+                }
+                final events = merged.values.toList();
+                if (events.isEmpty) {
+                  return const EmptyState(
+                    icon: Icons.event_note_rounded,
+                    title: 'No concerts scheduled',
+                    subtitle:
+                        'Upcoming concerts will line up here on a timeline.',
+                  );
+                }
+                return ConcertsTimelineView(
+                  events: events,
+                  onTapEvent: (e) => Get.to(() => FutureScreen(event: e)),
+                );
+              },
+            ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+/// Subtle page indicator for the Home feed / timeline pager.
+class HomePageDots extends StatelessWidget {
+  const HomePageDots({super.key, required this.current, required this.count});
+
+  final int current;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (i) {
+        final active = i == current;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: active ? 22 : 7,
+          height: 7,
+          decoration: BoxDecoration(
+            color: active
+                ? vybzzzGold
+                : vybzzzTextSecondary.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
     );
   }
 }
