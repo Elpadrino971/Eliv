@@ -1,4 +1,5 @@
 import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
+import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
@@ -81,7 +82,16 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
                     children: [
                       /// Upcoming Events
                       upcomingEvents.isEmpty
-                          ? Center(child: Text('No Upcoming Events'))
+                          ? EmptyState(
+                              icon: Icons.confirmation_number_outlined,
+                              title: 'No upcoming tickets yet',
+                              subtitle:
+                                  'Your next concert pass will appear here. '
+                                  'Discover live shows and grab your seat.',
+                              actionLabel: 'Explore Concerts',
+                              onAction: () =>
+                                  Get.offAll(() => const MyBottomBar(index: 1)),
+                            )
                           : ListView.separated(
                               separatorBuilder: (context, index) {
                                 return height(0.01);
@@ -108,7 +118,13 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
 
                       /// Past Events
                       pastEvents.isEmpty
-                          ? Center(child: Text('No Past Events'))
+                          ? const EmptyState(
+                              icon: Icons.history_rounded,
+                              title: 'No past events',
+                              subtitle:
+                                  'Concerts you\'ve attended will be kept here '
+                                  'so you can relive every moment.',
+                            )
                           : ListView.separated(
                               separatorBuilder: (context, index) {
                                 return height(0.01);
