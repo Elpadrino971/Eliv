@@ -94,7 +94,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
                             )
                           : ListView.separated(
                               separatorBuilder: (context, index) {
-                                return height(0.01);
+                                return height(0.018);
                               },
                               itemCount: upcomingEvents.length,
                               shrinkWrap: true,
@@ -104,14 +104,9 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
                                 final event = upcomingEvents[index];
                                 return GestureDetector(
                                   onTap: () {
-                                    // if (event.status == 'live') {
-                                    //   Get.to(() => JoinStream(event: event));
-                                    // } else {
                                     Get.to(() => FutureScreen(event: event));
-                                    // }
-                                    // Get.to(() => ArtistBasicInfo());
                                   },
-                                  child: MyCard(event: event),
+                                  child: TicketPassCard(event: event),
                                 );
                               },
                             ),
@@ -127,7 +122,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
                             )
                           : ListView.separated(
                               separatorBuilder: (context, index) {
-                                return height(0.01);
+                                return height(0.018);
                               },
                               itemCount: pastEvents.length,
                               shrinkWrap: true,
@@ -135,7 +130,10 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
 
                               itemBuilder: (context, index) {
                                 final event = pastEvents[index];
-                                return MyCard(isNothing: true, event: event);
+                                return TicketPassCard(
+                                  event: event,
+                                  isPast: true,
+                                );
                               },
                             ),
                     ],
