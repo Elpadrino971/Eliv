@@ -63,7 +63,7 @@ class _ExploreState extends State<Explore> {
               SizedBox(
                 width: Get.width * 0.7,
                 child: MyTextField(
-                  hintText: 'Artists, events, or genres...',
+                  hintText: 'home_search_hint'.tr,
                   controller: searchController,
                   leading: Icon(Icons.search_rounded, color: Color(0xffA1A1A1)),
 
@@ -77,7 +77,7 @@ class _ExploreState extends State<Explore> {
               SizedBox(
                 width: Get.width * 0.2,
                 child: MyButton(
-                  label: 'Cancel',
+                  label: 'common_cancel'.tr,
                   onTap: () {},
                   borderColor: Colors.transparent,
                   buttonColor: Colors.transparent,
@@ -100,7 +100,7 @@ class _ExploreState extends State<Explore> {
               width(0.01),
 
               Text(
-                ' Recent',
+                ' ${'recent'.tr}',
                 style: TextStyle(
                   color: Color(0xffA1A1A1),
                   fontSize: 16,
@@ -144,7 +144,7 @@ class _ExploreState extends State<Explore> {
               width(0.01),
 
               Text(
-                'Trending Genres',
+                'trending_genres'.tr,
                 style: TextStyle(
                   color: Color(0xffA1A1A1),
                   fontSize: 16,
@@ -204,7 +204,7 @@ class _ExploreState extends State<Explore> {
           height(0.01),
 
           Text(
-            'You might like',
+            'home_you_might_like'.tr,
             style: TextStyle(
               color: Color(0xffA1A1A1),
               fontSize: 16,
@@ -229,13 +229,13 @@ class _ExploreState extends State<Explore> {
               title: Text(
                 'Aria Sol',
                 style: TextStyle(
-                  color: blackColor,
+                  color: ivory,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
               subtitle: Text(
-                '2.4M followers',
+                'home_followers_count'.trParams({'count': '2.4M'}),
                 style: TextStyle(
                   color: Color(0xffA1A1A1),
                   fontWeight: FontWeight.bold,
@@ -256,13 +256,13 @@ class _ExploreState extends State<Explore> {
             title: Text(
               'DJ Koda',
               style: TextStyle(
-                color: blackColor,
+                color: ivory,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
             ),
             subtitle: Text(
-              '850K followers',
+              'home_followers_count'.trParams({'count': '850K'}),
               style: TextStyle(
                 color: Color(0xffA1A1A1),
                 fontWeight: FontWeight.bold,

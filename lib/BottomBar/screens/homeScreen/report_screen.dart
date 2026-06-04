@@ -5,8 +5,7 @@ import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/get_core.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -18,35 +17,41 @@ class ReportScreen extends StatefulWidget {
 class _ReportScreenState extends State<ReportScreen> {
   final describeController = TextEditingController();
   String selectedReason = '';
-  List<Map> reasonList = [
+  List<Map> get reasonList => [
     {
-      'title': 'Harassment or Bullying',
-      'subTitle': 'Targeting individuals with abuse or threats',
+      'title': 'home_reason_harassment_title'.tr,
+      'subTitle': 'home_reason_harassment_sub'.tr,
     },
     {
-      'title': 'Inappropriate Content',
-      'subTitle': 'Nudity, sexual content, or graphic material',
+      'title': 'home_reason_inappropriate_title'.tr,
+      'subTitle': 'home_reason_inappropriate_sub'.tr,
     },
     {
-      'title': 'Violence or Dangerous Acts',
-      'subTitle': 'Physical violence or dangerous behavior',
-    },
-    {'title': 'Spam or Misleading', 'subTitle': 'Scams, fake content, or spam'},
-    {
-      'title': 'Copyright Violation',
-      'subTitle': 'Unauthorized use of copyrighted material',
+      'title': 'home_reason_violence_title'.tr,
+      'subTitle': 'home_reason_violence_sub'.tr,
     },
     {
-      'title': 'Hate Speech',
-      'subTitle': 'Content promoting hate based on identity',
+      'title': 'home_reason_spam_title'.tr,
+      'subTitle': 'home_reason_spam_sub'.tr,
     },
-    {'title': 'Other', 'subTitle': 'Something else that violates guidelines'},
+    {
+      'title': 'home_reason_copyright_title'.tr,
+      'subTitle': 'home_reason_copyright_sub'.tr,
+    },
+    {
+      'title': 'home_reason_hate_title'.tr,
+      'subTitle': 'home_reason_hate_sub'.tr,
+    },
+    {
+      'title': 'home_reason_other_title'.tr,
+      'subTitle': 'home_reason_other_sub'.tr,
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Report'),
+      appBar: MyAppbar(title: 'home_report_title'.tr),
       body: SingleChildScrollView(
         child: Padding(
           padding: myPadding,
@@ -70,7 +75,7 @@ class _ReportScreenState extends State<ReportScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Important',
+                          'home_important'.tr,
                           style: TextStyle(
                             color: Color(0xff101828),
                             fontSize: 18,
@@ -81,7 +86,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         SizedBox(
                           width: Get.width * 0.7,
                           child: Text(
-                            'False reports may result in action against your account. Only report content that violates our Community Guidelines.',
+                            'home_report_warning'.tr,
                             style: TextStyle(
                               color: Color(0xff4A5565),
                               fontSize: 15,
@@ -101,7 +106,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Reporting',
+                      'home_reporting'.tr,
                       style: TextStyle(
                         color: Color(0xff99A1AF),
                         fontSize: 14,
@@ -118,7 +123,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         height: 40,
                       ),
                       title: Text(
-                        'Live Performance',
+                        'home_report_live_performance'.tr,
                         style: TextStyle(
                           color: Get.isDarkMode
                               ? whiteColor
@@ -142,9 +147,9 @@ class _ReportScreenState extends State<ReportScreen> {
               height(0.01),
 
               Text(
-                'Select Reason',
+                'home_select_reason'.tr,
                 style: TextStyle(
-                  color: blackColor,
+                  color: ivory,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
@@ -165,8 +170,8 @@ class _ReportScreenState extends State<ReportScreen> {
                       border: BoxBorder.all(
                         color: Get.isDarkMode
                             ? reasonList[index]['title'] == selectedReason
-                                  ? redColor
-                                  : Color(0xff141821)
+                                  ? goldPrimary
+                                  : cardDeep
                             : reasonList[index]['title'] == selectedReason
                             ? mainThemeColor
                             : Color(0xffE5E7EB),
@@ -199,7 +204,7 @@ class _ReportScreenState extends State<ReportScreen> {
                               height: 20,
                               color: Get.isDarkMode
                                   ? reasonList[index]['title'] == selectedReason
-                                        ? redColor
+                                        ? goldPrimary
                                         : whiteColor
                                   : reasonList[index]['title'] == selectedReason
                                   ? mainThemeColor
@@ -219,9 +224,9 @@ class _ReportScreenState extends State<ReportScreen> {
               height(0.01),
 
               Text(
-                'Please Describe the Issue*',
+                'home_describe_issue'.tr,
                 style: TextStyle(
-                  color: blackColor,
+                  color: ivory,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -229,8 +234,7 @@ class _ReportScreenState extends State<ReportScreen> {
               height(0.01),
 
               MyTextField(
-                hintText:
-                    "Please provide detailed information about why you're reporting this content...",
+                hintText: 'home_describe_issue_hint'.tr,
                 controller: describeController,
                 maxLines: 3,
               ),
@@ -241,7 +245,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   SizedBox(
                     width: Get.width * 0.44,
                     child: MyButton(
-                      label: 'Cancel',
+                      label: 'common_cancel'.tr,
                       onTap: () {},
 
                       labelColor: Color(0xff364153),
@@ -254,7 +258,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   SizedBox(
                     width: Get.width * 0.44,
                     child: MyButton(
-                      label: 'Submit Report',
+                      label: 'home_submit_report'.tr,
                       onTap: () {},
 
                       labelColor: whiteColor,

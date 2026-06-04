@@ -19,7 +19,7 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Featured artist’s'),
+      appBar: MyAppbar(title: 'home_featured_artists_title'.tr),
 
       body: Padding(
         padding: myPadding,
@@ -47,8 +47,8 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
             //         decoration: BoxDecoration(
             //           color: Get.isDarkMode
             //               ? featuredList[index] == selected
-            //                     ? redColor
-            //                     : Color(0xff141821)
+            //                     ? goldPrimary
+            //                     : cardDeep
             //               : featuredList[index] == selected
             //               ? mainThemeColor
             //               : Color(0xffF3F4F6),
@@ -77,7 +77,7 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
             height(0.02),
 
             widget.artists.isEmpty
-                ? Center(child: Text('No Featured Artists'))
+                ? Center(child: Text('home_no_featured_artists'.tr))
                 : GridView.builder(
                     shrinkWrap: true,
                     physics: NeverScrollableScrollPhysics(),
@@ -191,13 +191,13 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
                                 padding: EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: Get.isDarkMode
-                                      ? redColor
+                                      ? goldPrimary
                                       : mainThemeColor,
                                   borderRadius: BorderRadius.circular(50),
                                 ),
                                 child: Text(
                                   textAlign: TextAlign.center,
-                                  'View',
+                                  'home_view'.tr,
                                   style: TextStyle(
                                     color: Get.isDarkMode
                                         ? whiteColor

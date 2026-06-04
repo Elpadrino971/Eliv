@@ -4,8 +4,7 @@ import 'package:artist/artist_bottom_bar/screen/Studio/artist_create_event.dart'
 import 'package:artist/widgets/my_appBar.dart';
 import 'package:artist/widgets/transactions_card.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
-import 'package:get/state_manager.dart';
+import 'package:get/get.dart';
 
 class TranssactinHistory extends StatefulWidget {
   const TranssactinHistory({super.key});
@@ -21,7 +20,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Transaction History'),
+      appBar: MyAppbar(title: 'art_transaction_history'.tr),
 
       body: Padding(
         padding: myPadding,
@@ -43,7 +42,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                     decoration: BoxDecoration(
                       color: Get.isDarkMode
                           ? selectedText == 'All'
-                                ? redColor
+                                ? goldPrimary
                                 : greyColor.withValues(alpha: 0.2)
                           : selectedText == 'All'
                           ? blackColor
@@ -53,7 +52,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                     ),
                     child: Text(
                       textAlign: TextAlign.center,
-                      'All',
+                      'art_all'.tr,
                       style: TextStyle(
                         color: selectedText == 'All'
                             ? whiteColor
@@ -78,7 +77,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                     decoration: BoxDecoration(
                       color: Get.isDarkMode
                           ? selectedText == 'Credit'
-                                ? redColor
+                                ? goldPrimary
                                 : greyColor.withValues(alpha: 0.2)
                           : selectedText == 'Credit'
                           ? blackColor
@@ -99,7 +98,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                         ),
                         width(0.01),
                         Text(
-                          'Credit',
+                          'art_credit'.tr,
                           style: TextStyle(
                             color: selectedText == 'Credit'
                                 ? whiteColor
@@ -126,7 +125,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                     decoration: BoxDecoration(
                       color: Get.isDarkMode
                           ? selectedText == 'Debit'
-                                ? redColor
+                                ? goldPrimary
                                 : greyColor.withValues(alpha: 0.2)
                           : selectedText == 'Debit'
                           ? blackColor
@@ -147,7 +146,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                         ),
                         width(0.01),
                         Text(
-                          'Debit',
+                          'art_debit'.tr,
                           style: TextStyle(
                             color: selectedText == 'Debit'
                                 ? whiteColor
@@ -167,15 +166,15 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Transactions',
+                  'art_transactions'.tr,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: blackColor,
+                    color: ivory,
                   ),
                 ),
                 Text(
-                  '8 Total',
+                  '8 ${'art_total'.tr}',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -195,7 +194,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                 price: '+\$1,240',
                 date: 'FEB 20',
                 subTitle: 'Electric Dreams Festival',
-                name: 'Concert Revenue',
+                name: 'rev_concert_revenue'.tr,
               ),
             ),
             height(0.01),
@@ -205,7 +204,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
               price: '+\$650',
               date: 'FEB 18',
               subTitle: 'Limited Edition T-Shirts',
-              name: 'Merchandise',
+              name: 'rev_merchandise'.tr,
             ),
             height(0.01),
 
@@ -215,7 +214,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
               price: '-\$5,000',
               date: 'FEB 15',
               subTitle: 'Chase Business Account',
-              name: 'Withdrawal',
+              name: 'art_withdrawal'.tr,
             ),
           ],
         ),

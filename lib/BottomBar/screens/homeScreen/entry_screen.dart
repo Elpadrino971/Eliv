@@ -19,16 +19,15 @@ class _EntryScreenState extends State<EntryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Get.isDarkMode ? blackColor : scaffoldBackgroundColor,
+      backgroundColor: Get.isDarkMode ? midnightPrimary : scaffoldBackgroundColor,
       body: Column(
         children: [
           MyPage(
             image: 'assets/entry_image.png',
 
-            title: 'Entry',
-            subTitle: 'Granted',
-            description:
-                'Your Standard pass for Future Nostalgia has been encrypted and stored in your vault.',
+            title: 'home_entry'.tr,
+            subTitle: 'home_granted'.tr,
+            description: 'home_entry_description'.tr,
             widget: Column(
               children: [
                 height(0.03),
@@ -39,7 +38,7 @@ class _EntryScreenState extends State<EntryScreen> {
                       Row(
                         children: [
                           Text(
-                            'Seat No.',
+                            'home_seat_no'.tr,
                             style: TextStyle(
                               color: Color(0xffA0A0A0),
                               fontWeight: FontWeight.bold,
@@ -69,7 +68,7 @@ class _EntryScreenState extends State<EntryScreen> {
                       Row(
                         children: [
                           Text(
-                            'Pass Type',
+                            'home_pass_type'.tr,
                             style: TextStyle(
                               color: Color(0xffA0A0A0),
                               fontWeight: FontWeight.bold,
@@ -88,7 +87,7 @@ class _EntryScreenState extends State<EntryScreen> {
                             ),
                             child: Text(
                               textAlign: TextAlign.center,
-                              'STANDARD',
+                              'home_standard'.tr,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -104,7 +103,7 @@ class _EntryScreenState extends State<EntryScreen> {
                 height(0.03),
 
                 MyButton(
-                  label: 'Return to Home ',
+                  label: 'home_return_to_home'.tr,
                   onTap: () {
                     Get.to(() => WeatingScreen());
                   },
@@ -122,7 +121,7 @@ class _EntryScreenState extends State<EntryScreen> {
                     // Get.to(() => FutureScreen());
                   },
                   child: Text(
-                    'Return to Discovery',
+                    'home_return_to_discovery'.tr,
                     style: TextStyle(
                       color: Color(0xffA0A0A0),
                       fontWeight: FontWeight.bold,

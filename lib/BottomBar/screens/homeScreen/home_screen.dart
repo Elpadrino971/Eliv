@@ -2,6 +2,7 @@ import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
 import 'package:artist/BottomBar/screens/homeScreen/live_performance_screen.dart';
 import 'package:artist/BottomBar/screens/homeScreen/performances_screen.dart';
 import 'package:artist/Controllers/controller.dart';
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
@@ -23,6 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
   var selectedArtist = '';
 
   var like = false;
+
+  final PageController _bannerController = PageController();
+  int _bannerPage = 0;
 
   Future myInitMethod() async {
     /// Banner Events
@@ -67,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _bannerController.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -74,52 +79,101 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          PageView(
-            controller: _pageController,
-            onPageChanged: (i) => setState(() => _currentPage = i),
-            children: [_buildFeed(), _buildTimeline()],
-          ),
-          Positioned(
-            bottom: 16,
-            left: 0,
-            right: 0,
-            child: HomePageDots(current: _currentPage, count: 2),
-          ),
-        ],
+      backgroundColor: midnightPrimary,
+      body: SafeArea(
+        bottom: false,
+        child: Stack(
+          children: [
+            PageView(
+              controller: _pageController,
+              onPageChanged: (i) => setState(() => _currentPage = i),
+              children: [_buildFeed(), _buildTimeline()],
+            ),
+            Positioned(
+              bottom: 16,
+              left: 0,
+              right: 0,
+              child: HomePageDots(current: _currentPage, count: 2),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  /// Page 1: the existing home feed (hero card + sections).
+  /// Page 1: the home feed (top bar + banner carousel + sections).
   Widget _buildFeed() {
     return RefreshIndicator(
-        onRefresh: myInitMethod,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GetBuilder<EventController>(
-                builder: (controller) {
-                  final events = controller.bannerEvents.value.data;
-                  if (events == null) {
-                    return const BannerShimmer();
-                  }
-                  return Column(
-                    children: [
-                      if ((events).isEmpty) height(0.05),
-                      if (events.isNotEmpty)
-                        GestureDetector(
-                          onTap: () {
-                            Get.to(() => FutureScreen(event: events.first));
-                          },
-                          child: HomeBannerCard(event: events.first),
+      color: goldPrimary,
+      backgroundColor: midnightSecondary,
+      onRefresh: myInitMethod,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildTopBar(),
+            GetBuilder<EventController>(
+              builder: (controller) {
+                final events = controller.bannerEvents.value.data;
+                if (events == null) {
+                  return const BannerShimmer();
+                }
+                if (events.isEmpty) return height(0.05);
+                return Column(
+                  children: [
+                    SizedBox(
+                      height: Get.height * 0.46,
+                      child: PageView.builder(
+                        controller: _bannerController,
+                        itemCount: events.length,
+                        onPageChanged: (i) => setState(() => _bannerPage = i),
+                        itemBuilder: (context, index) {
+                          final event = events[index];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 15,
+                            ),
+                            child: GestureDetector(
+                              onTap: () => Get.to(
+                                () => FutureScreen(event: event),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(22),
+                                child: HomeBannerCard(event: event),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                         ),
-                    ],
-                  );
-                },
-              ),
+                        if (events.length > 1) ...[
+                          const SizedBox(height: 14),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(events.length, (i) {
+                              final active = i == _bannerPage;
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 250),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 3,
+                                ),
+                                width: active ? 22 : 7,
+                                height: 7,
+                                decoration: BoxDecoration(
+                                  color: active
+                                      ? goldPrimary
+                                      : ivory.withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              );
+                            }),
+                          ),
+                        ],
+                      ],
+                    );
+                  },
+                ),
 
               Padding(
                 padding: myPadding,
@@ -150,48 +204,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           }
                           return Column(
                             children: [
-                              Row(
-                                children: [
-                                  Image.asset('assets/live_icon.png'),
-                                  width(0.02),
-                                  Text(
-                                    ' Live Now',
-                                    style: TextStyle(
-                                      color: Get.isDarkMode
-                                          ? whiteColor
-                                          : blackColor,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Spacer(),
-
-                                  GestureDetector(
-                                    onTap: () {
-                                      Get.to(
-                                        () => LivePerformanceScreen(
-                                          events: events,
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      textAlign: TextAlign.center,
-                                      'View All',
-                                      style: TextStyle(
-                                        color: textXolor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                              SectionHeader(
+                                title: 'live_now'.tr,
+                                icon: 'assets/live_icon.png',
+                                onViewAll: () => Get.to(
+                                  () => LivePerformanceScreen(events: events),
+                                ),
                               ),
-                              height(0.01),
+                              height(0.015),
 
                               if (events.isEmpty)
                                 Center(
                                   child: Text(
-                                    'No Live Events',
+                                    'no_live_events'.tr,
                                     style: TextStyle(
                                       color: Get.isDarkMode
                                           ? whiteColor
@@ -235,47 +260,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           }
                           return Column(
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    textAlign: TextAlign.center,
-                                    'Next Performance',
-                                    style: TextStyle(
-                                      color: blackColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
+                              SectionHeader(
+                                title: 'next_performance'.tr,
+                                icon: 'assets/date_icon.png',
+                                onViewAll: () => Get.to(
+                                  () => PerformancesScreen(
+                                    events: events,
+                                    title: 'next_performance'.tr,
                                   ),
-                                  Spacer(),
-
-                                  GestureDetector(
-                                    onTap: () {
-                                      Get.to(
-                                        () => PerformancesScreen(
-                                          events: events,
-                                          title: 'Next Performance',
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      textAlign: TextAlign.center,
-                                      'View All',
-                                      style: TextStyle(
-                                        color: textXolor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-
-                              height(0.01),
+                              height(0.015),
 
                               if (events.isEmpty)
                                 Center(
                                   child: Text(
-                                    'No Next Events Available',
+                                    'no_upcoming_events'.tr,
                                     style: TextStyle(
                                       color: Get.isDarkMode
                                           ? whiteColor
@@ -321,49 +321,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           }
                           return Column(
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    textAlign: TextAlign.center,
-                                    'Upcoming Events',
-                                    style: TextStyle(
-                                      color: Get.isDarkMode
-                                          ? whiteColor
-                                          : blackColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
+                              SectionHeader(
+                                title: 'upcoming_events'.tr,
+                                icon: 'assets/date_icon.png',
+                                onViewAll: () => Get.to(
+                                  () => PerformancesScreen(
+                                    events: events,
+                                    title: 'upcoming_events'.tr,
                                   ),
-                                  Spacer(),
-
-                                  GestureDetector(
-                                    onTap: () {
-                                      Get.to(
-                                        () => PerformancesScreen(
-                                          events: events,
-                                          title: 'Upcoming Events',
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      textAlign: TextAlign.center,
-                                      'View All',
-                                      style: TextStyle(
-                                        color: textXolor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-
                               height(0.02),
 
                               if (events.isEmpty)
                                 Center(
                                   child: Text(
-                                    'No Next Events Available',
+                                    'no_upcoming_events'.tr,
                                     style: TextStyle(
                                       color: Get.isDarkMode
                                           ? whiteColor
@@ -468,6 +441,49 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 14),
+      child: Row(
+        children: [
+          const Text(
+            'VybzzZ',
+            style: TextStyle(
+              fontFamily: AppFonts.logo,
+              color: goldPrimary,
+              fontWeight: FontWeight.w600,
+              fontSize: 24,
+              letterSpacing: 4,
+            ),
+          ),
+          const Spacer(),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(
+                Icons.notifications_none_rounded,
+                color: ivory,
+                size: 26,
+              ),
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: goldPrimary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

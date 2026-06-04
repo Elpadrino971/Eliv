@@ -33,7 +33,7 @@ class _HistoryState extends State<History> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'History'),
+      appBar: MyAppbar(title: 'common_history'.tr),
       body: Padding(
         padding: myPadding,
         child: GetBuilder<EventController>(
@@ -43,7 +43,7 @@ class _HistoryState extends State<History> {
               return Center(child: EventTileShimmer());
             }
             if (eventHistory.isEmpty) {
-              return Center(child: Text('No History Found'));
+              return Center(child: Text('empty_no_history'.tr));
             }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,7 +63,7 @@ class _HistoryState extends State<History> {
                           ),
                         ),
                         Text(
-                          'Hours Watched',
+                          'pay_hours_watched'.tr,
                           style: TextStyle(
                             color: greyColor,
                             fontWeight: FontWeight.w500,
@@ -84,7 +84,7 @@ class _HistoryState extends State<History> {
                       children: [
                         height(0.02),
                         Text(
-                          'Recent Streams',
+                          'recent_streams'.tr,
                           style: TextStyle(
                             color: greyColor,
                             fontWeight: FontWeight.w500,

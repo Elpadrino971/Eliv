@@ -16,8 +16,11 @@ class LoadingDialog extends StatelessWidget {
         // margin: const EdgeInsets.all(10.0),
         padding: const EdgeInsets.all(8.0),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Get.isDarkMode ? midnightSecondary : Colors.white,
           borderRadius: BorderRadius.circular(16),
+          border: Get.isDarkMode
+              ? Border.all(color: goldSecondary.withValues(alpha: 0.3))
+              : null,
         ),
         child: Padding(
           padding: const EdgeInsets.all(13),
@@ -26,14 +29,17 @@ class LoadingDialog extends StatelessWidget {
               const SizedBox(width: 6.0),
               CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  color ?? (Get.isDarkMode ? redColor : mainThemeColor),
+                  color ?? goldPrimary,
                 ),
               ),
               const SizedBox(width: 26.0),
               Flexible(
                 child: Text(
                   '$message',
-                  style: const TextStyle(color: Colors.black, fontSize: 12),
+                  style: TextStyle(
+                    color: Get.isDarkMode ? ivory : Colors.black,
+                    fontSize: 12,
+                  ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 2,
                 ),

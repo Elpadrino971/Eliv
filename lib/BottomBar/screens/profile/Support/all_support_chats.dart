@@ -32,7 +32,7 @@ class _AllSupportChatsState extends State<AllSupportChats> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Support Tickets'),
+      appBar: MyAppbar(title: 'sup_tickets'.tr),
       body: RefreshIndicator(
         onRefresh: myInitMethod,
         child: Padding(
@@ -125,8 +125,8 @@ class _AllSupportChatsState extends State<AllSupportChats> {
                                       ),
                                     ),
                                     const Spacer(),
-                                    const Text(
-                                      'View Details',
+                                    Text(
+                                      'common_view_details'.tr,
                                       style: TextStyle(
                                         color: mainThemeColor,
                                         fontWeight: FontWeight.bold,

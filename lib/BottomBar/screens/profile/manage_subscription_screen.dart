@@ -41,11 +41,11 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen>
   @override
   Widget build(BuildContext context) {
     final bool isDark = Get.isDarkMode;
-    final Color accentColor = isDark ? redColor : mainThemeColor;
+    final Color accentColor = isDark ? goldPrimary : mainThemeColor;
 
     return Scaffold(
       backgroundColor: isDark ? darkmodeColor : const Color(0xffF8F8F8),
-      appBar: MyAppbar(title: 'Manage Subscription'),
+      appBar: MyAppbar(title: 'prof_manage_sub'.tr),
       body: Padding(
         padding: myPadding,
         child: Column(
@@ -53,8 +53,8 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen>
             // ── Tab Bar ────────────────────────────────────────────────
             MyTabBar(
               tabController: _tabController,
-              tabOne: 'Current Subscription',
-              tabTwo: 'History',
+              tabOne: 'sub_current'.tr,
+              tabTwo: 'common_history'.tr,
             ),
 
             height(0.015),
@@ -109,8 +109,8 @@ class _CurrentSubscriptionTab extends StatelessWidget {
       if (activeOnly.isEmpty) {
         return Center(
           child: MyDefaultText(
-            text: 'No Active Subscription',
-            color: blackColor,
+            text: 'empty_no_active_sub'.tr,
+            color: ivory,
           ),
         );
       }
@@ -159,8 +159,8 @@ class _HistoryTab extends StatelessWidget {
       if (historySubs.isEmpty) {
         return Center(
           child: MyDefaultText(
-            text: 'No Subscription History',
-            color: blackColor,
+            text: 'empty_no_sub_history'.tr,
+            color: ivory,
           ),
         );
       }

@@ -58,8 +58,8 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
                       supportController.update();
                     }
                   },
-                  child: const Text(
-                    'Done',
+                  child: Text(
+                    'common_done'.tr,
                     style: TextStyle(
                       color: mainThemeColor,
                       fontWeight: FontWeight.bold,
@@ -100,7 +100,7 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
                             color: isUser
                                 ? mainThemeColor
                                 : (Get.isDarkMode
-                                      ? const Color(0xff141821)
+                                      ? cardDeep
                                       : const Color(0xffF2F2F2)),
                             borderRadius: BorderRadius.circular(15).copyWith(
                               bottomRight: isUser
@@ -169,16 +169,16 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             decoration: BoxDecoration(
                               color: Get.isDarkMode
-                                  ? const Color(0xff141821)
+                                  ? cardDeep
                                   : const Color(0xffF8F8F8),
                               borderRadius: BorderRadius.circular(25),
                             ),
                             child: TextField(
                               controller: _msgController,
-                              decoration: const InputDecoration(
-                                hintText: 'Type your message...',
+                              decoration: InputDecoration(
+                                hintText: 'sup_type_message'.tr,
                                 border: InputBorder.none,
-                                hintStyle: TextStyle(
+                                hintStyle: const TextStyle(
                                   color: greyColor,
                                   fontSize: 14,
                                 ),
@@ -216,10 +216,10 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
                     ),
                   )
                 else
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
                     child: Text(
-                      'This ticket has been marked as completed.',
+                      'sup_completed'.tr,
                       style: TextStyle(
                         color: greyColor,
                         fontStyle: FontStyle.italic,
@@ -247,16 +247,16 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            title: const Text(
-              'Resolve Ticket',
+            title: Text(
+              'sup_resolve_ticket'.tr,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'How was your experience with our support team?',
+                Text(
+                  'sup_exp_q'.tr,
                   style: TextStyle(fontSize: 14, color: greyColor),
                 ),
                 height(0.02),
@@ -278,13 +278,13 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
                   }),
                 ),
                 height(0.02),
-                const Text(
-                  'Feedback (Optional)',
+                Text(
+                  'sup_feedback'.tr,
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 height(0.005),
                 MyTextField(
-                  hintText: 'Share your thoughts...',
+                  hintText: 'sup_share_thoughts'.tr,
                   controller: feedbackController,
                   maxLines: 3,
                 ),
@@ -293,7 +293,7 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
             actions: [
               TextButton(
                 onPressed: () => Get.back(),
-                child: const Text('Cancel', style: TextStyle(color: greyColor)),
+                child: Text('common_cancel'.tr, style: TextStyle(color: greyColor)),
               ),
               TextButton(
                 onPressed: () async {
@@ -306,7 +306,7 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
                   toReturn = data;
                   mySuccessDialog(
                     subtitle:
-                        'Ticket resolved successfully. Thank you for your feedback!',
+                        'sup_resolved_thanks'.tr,
                     ontap: () {
                       Get.back(result: data); // close loading
                       Get.back(result: data); // close dialog
@@ -314,8 +314,8 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
                     },
                   );
                 },
-                child: const Text(
-                  'Mark Resolved',
+                child: Text(
+                  'sup_mark_resolved'.tr,
                   style: TextStyle(
                     color: mainThemeColor,
                     fontWeight: FontWeight.bold,

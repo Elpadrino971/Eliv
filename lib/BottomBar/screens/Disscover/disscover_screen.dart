@@ -64,7 +64,7 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
                   children: [
                     height(0.02),
                     MyTextField(
-                      hintText: 'Artists, events, or genres...',
+                      hintText: 'disc_search_hint'.tr,
                       controller: searchController,
                       readOnly: true,
                       onTap: () async {
@@ -127,7 +127,7 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
                                 Image.asset('assets/live_icon.png'),
                                 width(0.02),
                                 Text(
-                                  ' Live Now',
+                                  ' ${'live_now'.tr}',
                                   style: TextStyle(
                                     color: Get.isDarkMode
                                         ? whiteColor
@@ -165,7 +165,7 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
                           Row(
                             children: [
                               Text(
-                                'Trending',
+                                'disc_trending'.tr,
                                 style: TextStyle(
                                   color: Get.isDarkMode
                                       ? whiteColor
@@ -176,7 +176,7 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
                               ),
                               Spacer(),
                               Text(
-                                'View All',
+                                'view_all'.tr,
                                 style: TextStyle(
                                   color: textXolor,
                                   fontWeight: FontWeight.bold,
@@ -207,7 +207,7 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
 
                           height(0.02),
                           Text(
-                            'Featured Events',
+                            'disc_featured_events'.tr,
                             style: TextStyle(
                               color: Get.isDarkMode ? whiteColor : blackColor,
                               fontWeight: FontWeight.bold,
@@ -248,7 +248,7 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
   // Future<void> _showFilterBottomSheet(BuildContext context) async {
   //   await showModalBottomSheet(
   //     backgroundColor: Get.isDarkMode
-  //         ? const Color(0xff141821)
+  //         ? cardDeep
   //         : scaffoldBackgroundColor,
   //     context: context,
   //     builder: (context) {
@@ -339,8 +339,8 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
   //                         child: MyContainer(
   //                           color: Get.isDarkMode
   //                               ? selectedLocation == location
-  //                                     ? redColor.withValues(alpha: 0.2)
-  //                                     : const Color(0xff141821)
+  //                                     ? goldPrimary.withValues(alpha: 0.2)
+  //                                     : cardDeep
   //                               : selectedLocation == location
   //                               ? const Color(0xffF4EDDF)
   //                               : whiteColor,
@@ -348,7 +348,7 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
   //                             width: 3,
   //                             color: Get.isDarkMode
   //                                 ? selectedLocation == location
-  //                                       ? redColor
+  //                                       ? goldPrimary
   //                                       : const Color(0xffE5E7EB)
   //                                 : selectedLocation == location
   //                                 ? mainThemeColor

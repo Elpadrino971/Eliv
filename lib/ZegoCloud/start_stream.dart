@@ -3,6 +3,7 @@
 import 'package:artist/Animation/gift_animation_manager.dart';
 import 'package:artist/Animation/heart_animation.dart';
 import 'package:artist/Controllers/event_controller.dart';
+import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_chat_preview.dart';
@@ -88,7 +89,7 @@ class _StartStreamState extends State<StartStream> {
     if (comment.isEmpty) return;
 
     if (eventController.hasAbusiveWords(comment)) {
-      myWarningDialog(subtitle: 'Your comment contains restricted words.');
+      myWarningDialog(subtitle: 'live_restricted_words'.tr);
       return;
     }
 
@@ -121,6 +122,86 @@ class _StartStreamState extends State<StartStream> {
         );
       }
     }
+  }
+
+  void _launchPromo() {
+    int percent = 20;
+    int minutes = 10;
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: midnightSecondary,
+        title: const Text(
+          'Lancer une promo',
+          style: TextStyle(
+            color: ivory,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+        content: StatefulBuilder(
+          builder: (ctx, setS) => Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Réduction', style: TextStyle(color: textMuted, fontSize: 13)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [10, 20, 30, 50]
+                    .map(
+                      (p) => ChoiceChip(
+                        label: Text('-$p%'),
+                        selected: percent == p,
+                        onSelected: (_) => setS(() => percent = p),
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 16),
+              Text('Durée', style: TextStyle(color: textMuted, fontSize: 13)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [5, 10, 15]
+                    .map(
+                      (m) => ChoiceChip(
+                        label: Text('$m min'),
+                        selected: minutes == m,
+                        onSelected: (_) => setS(() => minutes = m),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('Annuler', style: TextStyle(color: greyColor)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Get.back();
+              await ZegoUIKit().sendInRoomCommand(
+                'promo:$percent:${minutes * 60}',
+                [],
+              );
+              Get.snackbar(
+                'Promo lancée 🎟️',
+                '-$percent% pendant $minutes min',
+                colorText: ivory,
+                backgroundColor: midnightSecondary,
+              );
+            },
+            child: const Text(
+              'Lancer',
+              style: TextStyle(color: goldPrimary, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -183,6 +264,46 @@ class _StartStreamState extends State<StartStream> {
           Padding(
             padding: myPadding,
             child: LiveStreamTopBar(event: currentEvent),
+          ),
+
+          // Bouton "Lancer une promo" (hote)
+          Padding(
+            padding: myPadding,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: GestureDetector(
+                onTap: _launchPromo,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: goldPrimary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.local_offer_rounded,
+                        color: midnightPrimary,
+                        size: 16,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'Lancer une promo',
+                        style: TextStyle(
+                          color: midnightPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
 
           const Spacer(),

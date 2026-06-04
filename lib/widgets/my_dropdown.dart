@@ -38,20 +38,23 @@ class MyDropDown extends StatelessWidget {
         child: DropdownButtonFormField<String>(
           hint: Text(
             hintText,
-            style: TextStyle(color: Color(0xffD4D4D4), fontSize: 13),
+            style: TextStyle(
+              color: Get.isDarkMode ? textMuted : greyColor,
+              fontSize: 13,
+            ),
           ),
           style: TextStyle(
-            color: Get.isDarkMode ? whiteColor : blackColor,
+            color: Get.isDarkMode ? ivory : blackColor,
             fontSize: 14,
           ),
-          dropdownColor: Get.isDarkMode ? Color(0xff141821) : whiteColor,
+          dropdownColor: Get.isDarkMode ? cardDeep : whiteColor,
           onTap: onTap,
           validator: validation,
           onChanged: onChanged,
           initialValue: dropdownvalue,
           icon: Icon(
             Icons.keyboard_arrow_down_outlined,
-            color: Get.isDarkMode ? whiteColor : blackColor,
+            color: Get.isDarkMode ? ivory : blackColor,
           ),
           menuMaxHeight: Get.height * 0.3,
 
@@ -62,7 +65,7 @@ class MyDropDown extends StatelessWidget {
                   child: Text(
                     item,
                     style: TextStyle(
-                      color: Get.isDarkMode ? whiteColor : blackColor,
+                      color: Get.isDarkMode ? ivory : blackColor,
                     ),
                   ),
                 ),
@@ -71,7 +74,7 @@ class MyDropDown extends StatelessWidget {
           decoration: InputDecoration(
             fillColor:
                 fillColor ??
-                (Get.isDarkMode ? Color(0xff141821) : Color(0xffFAFAFA)),
+                (Get.isDarkMode ? cardDeep : cardDeep),
             filled: true,
             contentPadding: const EdgeInsets.all(12.0),
             counterText: '',
@@ -84,8 +87,8 @@ class MyDropDown extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: borderColor ?? Colors.transparent,
-                width: 1,
+                color: borderColor ?? goldPrimary,
+                width: 1.4,
               ),
               borderRadius: BorderRadius.circular(borderRadius ?? 15),
             ),

@@ -119,7 +119,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       }),
 
                       Text(
-                        'Followers',
+                        'live_followers'.tr,
                         style: TextStyle(
                           color: Color(0xff737373),
                           fontSize: 15,
@@ -196,7 +196,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         width: Get.width,
                         padding: EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Get.isDarkMode ? redColor : mainThemeColor,
+                          color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: eventController.isLoading.value
@@ -205,7 +205,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                                 children: [
                                   Text(
                                     textAlign: TextAlign.center,
-                                    'Loading...',
+                                    'live_loading'.tr,
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -225,8 +225,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             : Text(
                                 textAlign: TextAlign.center,
                                 followers.contains(userModel.value.user?.id)
-                                    ? 'Following'
-                                    : 'Follow Artist',
+                                    ? 'live_following'.tr
+                                    : 'live_follow_artist'.tr,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -252,7 +252,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   //       padding: EdgeInsets.all(10),
                   //       decoration: BoxDecoration(
                   //         color: whiteColor,
-                  //         border: Border.all(color: Color(0xffF5F5F5)),
+                  //         border: Border.all(color: Color(0xff223046)),
                   //         borderRadius: BorderRadius.circular(10),
                   //       ),
                   //       child: Center(
@@ -280,11 +280,11 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 child: TabBar(
                   labelColor: Get.isDarkMode ? whiteColor : blackColor,
                   dividerColor: greyColor.withValues(alpha: 0.2),
-                  indicatorColor: Get.isDarkMode ? redColor : mainThemeColor,
+                  indicatorColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   unselectedLabelColor: Color(0xff737373),
                   tabs: [
-                    Tab(text: 'Events'),
-                    Tab(text: 'About'),
+                    Tab(text: 'live_tab_events'.tr),
+                    Tab(text: 'live_tab_about'.tr),
                   ],
                 ),
               ),

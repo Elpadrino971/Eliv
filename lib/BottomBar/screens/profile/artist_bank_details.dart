@@ -42,7 +42,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Become Artist'),
+      appBar: MyAppbar(title: 'prof_become_artist'.tr),
 
       body: Padding(
         padding: myPadding,
@@ -64,9 +64,9 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
 
                     children: [
                       Text(
-                        'Complete Your Profile',
+                        'ba_complete_your_profile'.tr,
                         style: TextStyle(
-                          color: blackColor,
+                          color: ivory,
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
@@ -74,7 +74,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                       SizedBox(
                         width: Get.width * 0.75,
                         child: Text(
-                          'Help fans discover and connect with you',
+                          'ba_help_fans'.tr,
                           style: TextStyle(
                             color: Color(0xff4A5565),
                             fontWeight: FontWeight.bold,
@@ -87,7 +87,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                       SizedBox(
                         width: Get.width * 0.75,
                         child: Text(
-                          'Profile Photo',
+                          'ba_profile_photo'.tr,
                           style: TextStyle(
                             color: Color(0xff364153),
                             fontWeight: FontWeight.bold,
@@ -149,7 +149,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                                   width(0.02),
 
                                   Text(
-                                    'Upload Photo',
+                                    'auth_upload_photo'.tr,
                                     style: TextStyle(
                                       color: Get.isDarkMode
                                           ? whiteColor
@@ -187,18 +187,17 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                       ),
 
                       MyTextField(
-                        hintText:
-                            'Tell your story Share your musical journeyinfluences, and what makes you unique This will appear on your artist profile',
+                        hintText: 'ba_story'.tr,
                         controller: bioController,
                         onChanged: (value) {
                           setState(() {});
                         },
                         validation: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your bio';
+                            return 'val_enter_bio'.tr;
                           }
                           if (value.length < 50) {
-                            return 'Bio must be at least 50 characters';
+                            return 'val_bio_min'.tr;
                           }
                           return null;
                         },
@@ -209,7 +208,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                       Row(
                         children: [
                           Text(
-                            'Minimum 50 characters',
+                            'val_min_50'.tr,
                             style: TextStyle(
                               color: Color(0xff6A7282),
                               fontWeight: FontWeight.w500,
@@ -244,7 +243,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                         controller: addressController,
                         validation: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your address';
+                            return 'val_address'.tr;
                           }
                           return null;
                         },
@@ -257,7 +256,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                       height(0.01),
                       MyContainer(
                         widget: Text(
-                          'By submitting this application, you agree to our Terms of Service and Artist Agreement. You confirm that all information provided is accurate.',
+                          'ba_agreement'.tr,
                           style: TextStyle(
                             color: Color(0xff4A5565),
                             fontSize: 15,
@@ -269,7 +268,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                       height(0.02),
 
                       MyButton(
-                        label: 'Submit Request',
+                        label: 'sup_submit_request'.tr,
                         onTap: () async {
                           if (formKey.currentState!.validate()) {
                             // Print all collected forms data

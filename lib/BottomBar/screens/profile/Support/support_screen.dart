@@ -59,7 +59,7 @@ class _SupportScreenState extends State<SupportScreen> {
       Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Get.isDarkMode ? const Color(0xff141821) : whiteColor,
+          color: Get.isDarkMode ? cardDeep : whiteColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         ),
         child: SingleChildScrollView(
@@ -88,13 +88,13 @@ class _SupportScreenState extends State<SupportScreen> {
                 ),
               ),
               height(0.02),
-              const Text(
-                'Subject',
+              Text(
+                'sup_subject'.tr,
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               height(0.005),
               MyTextField(
-                hintText: 'e.g. Refund Request',
+                hintText: 'sup_subject_hint'.tr,
                 controller: subController,
                 readOnly: !isCustom,
               ),
@@ -105,13 +105,13 @@ class _SupportScreenState extends State<SupportScreen> {
               ),
               height(0.005),
               MyTextField(
-                hintText: 'Please describe the issue you are facing...',
+                hintText: 'sup_describe_hint'.tr,
                 controller: descController,
                 maxLines: 4,
               ),
               height(0.03),
               MyButton(
-                label: 'Create Ticket',
+                label: 'sup_create_ticket'.tr,
                 onTap: () async {
                   if (subController.text.isEmpty ||
                       descController.text.isEmpty) {
@@ -126,7 +126,7 @@ class _SupportScreenState extends State<SupportScreen> {
                   Get.back(); // close loading
                   Get.back(); // close sheet
                   mySuccessDialog(
-                    subtitle: 'Your support ticket has been created!',
+                    subtitle: 'sup_created'.tr,
                     ontap: () => Get.back(),
                   );
                 },
@@ -171,14 +171,14 @@ class _SupportScreenState extends State<SupportScreen> {
                   padding: myPadding,
                   width: Get.width,
                   decoration: BoxDecoration(
-                    color: Get.isDarkMode ? redColor : mainThemeColor,
+                    color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'How can we help?',
+                      Text(
+                        'sup_how_help'.tr,
                         style: TextStyle(
                           color: whiteColor,
                           fontWeight: FontWeight.bold,
@@ -186,8 +186,8 @@ class _SupportScreenState extends State<SupportScreen> {
                         ),
                       ),
                       height(0.01),
-                      const Text(
-                        'Search any reason and contact our 24/7 VIP support team.',
+                      Text(
+                        'sup_search_desc'.tr,
                         style: TextStyle(
                           color: whiteColor,
                           fontWeight: FontWeight.w600,
@@ -196,7 +196,7 @@ class _SupportScreenState extends State<SupportScreen> {
                       ),
                       height(0.01),
                       MyTextField(
-                        hintText: 'Search for help...',
+                        hintText: 'sup_search_hint'.tr,
                         controller: searchController,
                         fillColor: whiteColor.withValues(alpha: 0.1),
                         borderColor: whiteColor,
@@ -207,8 +207,8 @@ class _SupportScreenState extends State<SupportScreen> {
                   ),
                 ),
                 height(0.01),
-                const Text(
-                  'Popular Topics',
+                Text(
+                  'sup_popular_topics'.tr,
                   style: TextStyle(
                     color: greyColor,
                     fontWeight: FontWeight.w600,
@@ -222,12 +222,12 @@ class _SupportScreenState extends State<SupportScreen> {
                     children: [
                       if (filteredSubjects.isEmpty &&
                           searchController.text.isNotEmpty)
-                        const Center(
+                        Center(
                           child: Padding(
-                            padding: EdgeInsets.only(top: 20),
+                            padding: const EdgeInsets.only(top: 20),
                             child: Text(
-                              'No matching topics found',
-                              style: TextStyle(color: greyColor),
+                              'sup_no_topics'.tr,
+                              style: const TextStyle(color: greyColor),
                             ),
                           ),
                         ),
@@ -278,8 +278,8 @@ class _SupportScreenState extends State<SupportScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Other Issues',
+                                  Text(
+                                    'sup_other_issues'.tr,
                                     style: TextStyle(
                                       color: mainThemeColor,
                                       fontWeight: FontWeight.bold,
@@ -287,7 +287,7 @@ class _SupportScreenState extends State<SupportScreen> {
                                     ),
                                   ),
                                   Text(
-                                    'Create a customized ticket',
+                                    'sup_create_custom'.tr,
                                     style: TextStyle(
                                       color: greyColor.withValues(alpha: 0.6),
                                       fontSize: 12,

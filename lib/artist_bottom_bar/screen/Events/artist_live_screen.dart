@@ -48,7 +48,7 @@ class _ArtistLiveScreenState extends State<ArtistLiveScreen> {
                   ),
 
                   subtitle: Text(
-                    '1.2M followers',
+                    '1.2M ${'art_followers'.tr}',
                     style: TextStyle(
                       color: whiteColor,
                       fontSize: 14,
@@ -74,7 +74,7 @@ class _ArtistLiveScreenState extends State<ArtistLiveScreen> {
                       width: Get.width * 0.23,
                       padding: EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Color(0xffDD0000),
+                        color: liveRed,
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Row(

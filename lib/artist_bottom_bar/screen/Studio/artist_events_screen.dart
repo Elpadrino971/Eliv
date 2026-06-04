@@ -46,7 +46,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'My Events',
+              'ev_my_events'.tr,
               style: TextStyle(
                 color: Get.isDarkMode ? whiteColor : blackColor,
 
@@ -56,7 +56,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
             ),
 
             Text(
-              'Manage and control your virtual performances.',
+              'studio_manage_perf'.tr,
               style: TextStyle(
                 color: Color(0xff737373),
 
@@ -80,7 +80,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                         if (published.isEmpty) {
                           return Center(
                             child: Text(
-                              'No events found',
+                              'ev_no_events'.tr,
                               style: TextStyle(
                                 color: Get.isDarkMode ? whiteColor : blackColor,
                                 fontSize: 16,
@@ -175,7 +175,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Schedule',
+                                            'ev_schedule'.tr,
                                             style: TextStyle(
                                               color: Color(0xffA1A1A1),
                                               fontSize: 14,
@@ -189,7 +189,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                               Image.asset(
                                                 'assets/date_icon.png',
                                                 color: Get.isDarkMode
-                                                    ? redColor
+                                                    ? goldPrimary
                                                     : mainThemeColor,
                                                 width: 15,
                                               ),
@@ -239,7 +239,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Ticket Price',
+                                            'ev_ticket_price'.tr,
                                             style: TextStyle(
                                               color: Color(0xffA1A1A1),
                                               fontSize: 14,
@@ -268,7 +268,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                     children: [
                                       Expanded(
                                         child: MyButton(
-                                          label: 'Analytics',
+                                          label: 'ev_analytics'.tr,
                                           onTap: () {
                                             Get.to(
                                               () =>
@@ -281,7 +281,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                           imageWidth: 15,
                                           imageColor: mainThemeColor,
                                           buttonColor: Color(0xFFDADADA),
-                                          borderColor: Color(0xffF5F5F5),
+                                          borderColor: Color(0xff223046),
                                         ),
                                       ),
 
@@ -289,7 +289,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
 
                                       Expanded(
                                         child: MyButton(
-                                          label: 'Go Live',
+                                          label: 'ev_go_live'.tr,
                                           onTap: () async {
                                             final now = DateTime.now();
                                             if (event.startDateTime != null &&
@@ -324,9 +324,9 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                           imageWidth: 15,
                                           imageColor: whiteColor,
                                           buttonColor: Get.isDarkMode
-                                              ? redColor
+                                              ? goldPrimary
                                               : mainThemeColor,
-                                          borderColor: Color(0xffF5F5F5),
+                                          borderColor: Color(0xff223046),
                                           labelColor: whiteColor,
                                         ),
                                       ),
@@ -439,19 +439,23 @@ class _StreamTimerDialogState extends State<StreamTimerDialog> {
           height(0.02),
           Text(
             _hasEnded
-                ? 'Stream Finished'
+                ? 'live_finished'.tr
                 : _hasStarted
-                ? 'Stream is Live!'
-                : 'Stream Starting Soon',
+                ? 'live_is_live'.tr
+                : 'live_starting_soon'.tr,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           height(0.01),
           Text(
             _hasEnded
-                ? 'This event has already ended.'
+                ? 'ev_already_ended'.tr
                 : _hasStarted
-                ? 'You can start your stream now!'
-                : 'Your stream is scheduled for ${DateFormat('dd MMM, hh:mm a').format(widget.event.startDateTime!)}',
+                ? 'art_stream_can_start'.tr
+                : 'art_stream_scheduled'.trParams({
+                    'date': DateFormat(
+                      'dd MMM, hh:mm a',
+                    ).format(widget.event.startDateTime!),
+                  }),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 14, color: greyColor),
           ),
@@ -467,7 +471,7 @@ class _StreamTimerDialogState extends State<StreamTimerDialog> {
             ),
           ],
           height(0.03),
-          MyButton(label: 'Close', onTap: () => Get.back()),
+          MyButton(label: 'art_close'.tr, onTap: () => Get.back()),
         ],
       ),
     );

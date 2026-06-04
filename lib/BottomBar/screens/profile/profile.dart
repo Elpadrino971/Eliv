@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:artist/Auth/login_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/BottomBar/screens/profile/all_subscription_screen.dart';
@@ -17,9 +19,7 @@ import 'package:artist/artist_bottom_bar/artist_bottom_bar.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/get_core.dart';
-import 'package:get/get_instance/get_instance.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class Profile extends StatefulWidget {
@@ -35,7 +35,6 @@ class _ProfileState extends State<Profile> {
 
   List<UserSubscription> userActiveSubscriptions = [];
 
-  late List<Map> acountList = [];
   Future myInitMethod() async {
     final data = userModel.value.user?.userSubscription;
     if (data != null && data.isNotEmpty) {
@@ -43,27 +42,30 @@ class _ProfileState extends State<Profile> {
           .where((e) => e.status == 'active')
           .toList();
     }
+    await authController.getSettings();
+    if (mounted) setState(() {});
+  }
 
-    acountList = [
+  List<Map> get acountList => [
       widget.fromArtist
           ? {
-              'image': 'assets/image2.png',
-              'title': 'Switch to User',
-              'subTitle': 'Switch to user mode',
+              'icon': Icons.swap_horiz_rounded,
+              'title': 'prof_switch_user'.tr,
+              'subTitle': 'prof_switch_user_sub'.tr,
               'onTap': () {
                 Get.offAll(() => MyBottomBar());
               },
             }
           : {
-              'image': 'assets/image2.png',
-              'title': 'Become An Artist',
-              'subTitle': 'Do live performances',
+              'icon': Icons.mic_none_rounded,
+              'title': 'prof_become_artist'.tr,
+              'subTitle': 'prof_do_live'.tr,
               'onTap': () {
                 if (userActiveSubscriptions.isEmpty) {
                   myWarningDialog(
-                    title: 'Warning',
+                    title: 'common_warning'.tr,
                     subtitle:
-                        'You have no active subscription, subscribe to become an artist',
+                        'prof_no_sub_become_artist'.tr,
                     ontap: () {
                       Get.back();
                       Get.to(
@@ -83,60 +85,58 @@ class _ProfileState extends State<Profile> {
               },
             },
       {
-        'image': 'assets/image3.png',
-        'title': 'Following Artists',
-        'subTitle': 'Artists you love',
+        'icon': Icons.favorite_border_rounded,
+        'title': 'prof_following_artists'.tr,
+        'subTitle': 'prof_following_artists_sub'.tr,
         'onTap': () => Get.to(() => FollowingArtists()),
       },
       {
-        'image': 'assets/image4.png',
-        'title': 'Stream History',
-        'subTitle': 'Stream History',
+        'icon': Icons.history_rounded,
+        'title': 'prof_stream_history'.tr,
+        'subTitle': 'prof_stream_history'.tr,
         'onTap': () => Get.to(() => History()),
       },
       {
-        'image': 'assets/wallet.png',
-        'title': 'Wallet',
-        'subTitle': 'View your wallet balance',
+        'icon': Icons.account_balance_wallet_outlined,
+        'title': 'prof_wallet'.tr,
+        'subTitle': 'prof_wallet_sub'.tr,
         'onTap': () => Get.to(() => const UserWallet()),
       },
       {
-        'image': 'assets/wallet.png',
-        'title': 'Purchase Subscription',
-        'subTitle': 'Unlock artist features with a subscription plan',
+        'icon': Icons.workspace_premium_outlined,
+        'title': 'prof_purchase_sub'.tr,
+        'subTitle': 'prof_become_artist_sub'.tr,
         'onTap': () => Get.to(() => const AllSubscriptionScreen()),
       },
       {
-        'image': 'assets/wallet.png',
-        'title': 'Manage Subscription',
-        'subTitle': 'View & manage your active subscription',
+        'icon': Icons.card_membership_outlined,
+        'title': 'prof_manage_sub'.tr,
+        'subTitle': 'prof_manage_sub_sub'.tr,
         'onTap': () => Get.to(() => const ManageSubscriptionScreen()),
       },
       {
-        'image': 'assets/icon10.png',
-        'title': 'Privacy Policy',
-        'subTitle': 'View privacy policy',
+        'icon': Icons.shield_outlined,
+        'title': 'prof_privacy'.tr,
+        'subTitle': 'prof_privacy_sub'.tr,
         'onTap': () => Get.to(
           () => ContantPage(
-            title: 'Privacy Policy',
+            title: 'prof_privacy'.tr,
             content: authController.settings['privacy_policy'],
           ),
         ),
       },
       {
-        'image': 'assets/warning.png',
-        'title': 'Terms & Conditions',
-        'subTitle': 'View terms & conditions',
+        'icon': Icons.description_outlined,
+        'title': 'prof_terms'.tr,
+        'subTitle': 'prof_terms_sub'.tr,
         'onTap': () => Get.to(
           () => ContantPage(
-            title: 'Terms & Conditions',
+            title: 'prof_terms'.tr,
             content: authController.settings['terms_and_conditions'],
           ),
         ),
       },
-    ];
-    await authController.getSettings();
-  }
+  ];
 
   @override
   void initState() {
@@ -156,11 +156,12 @@ class _ProfileState extends State<Profile> {
             Row(
               children: [
                 Text(
-                  'Profile',
+                  'nav_profile'.tr,
                   style: TextStyle(
-                    color: blackColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                    color: goldPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 26,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 Spacer(),
@@ -170,7 +171,23 @@ class _ProfileState extends State<Profile> {
                     await Get.to(() => Settings());
                     setState(() {});
                   },
-                  child: Image.asset('assets/setting4.png', width: 40),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: cardDeep,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: goldSecondary.withValues(alpha: 0.4),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.settings_outlined,
+                      color: goldPrimary,
+                      size: 22,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -180,20 +197,45 @@ class _ProfileState extends State<Profile> {
               width: Get.width,
               padding: myPadding,
               decoration: BoxDecoration(
-                color: Get.isDarkMode ? redColor : mainThemeColor,
-                borderRadius: BorderRadius.circular(15),
+                gradient: kCardGradient,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: goldSecondary.withValues(alpha: 0.45),
+                  width: 1,
+                ),
               ),
-              child: Column(
+              child: Stack(
+                children: [
+                  // Traînée de paillettes dorées (forte opacite)
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: CustomPaint(
+                        painter: _SparkleTrailPainter(),
+                      ),
+                    ),
+                  ),
+                  Column(
                 children: [
                   Row(
                     children: [
-                      ClipOval(
-                        child: ImageWidget(
-                          url: widget.fromArtist
-                              ? '${userModel.value.user?.artistProfile}'
-                              : '${userModel.value.user?.profileImage}',
-                          width: 50,
-                          height: 50,
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: goldSecondary.withValues(alpha: 0.6),
+                            width: 1.4,
+                          ),
+                        ),
+                        child: ClipOval(
+                          child: ImageWidget(
+                            url: widget.fromArtist
+                                ? '${userModel.value.user?.artistProfile}'
+                                : '${userModel.value.user?.profileImage}',
+                            width: 50,
+                            height: 50,
+                          ),
                         ),
                       ),
 
@@ -230,8 +272,8 @@ class _ProfileState extends State<Profile> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: whiteColor,
-                                fontWeight: FontWeight.w500,
+                                color: ivory,
+                                fontWeight: FontWeight.w600,
                                 fontSize: 20,
                               ),
                             ),
@@ -242,7 +284,7 @@ class _ProfileState extends State<Profile> {
                               userModel.value.user?.email ?? 'N/A',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: whiteColor),
+                              style: TextStyle(color: textMuted),
                             ),
                           ),
                         ],
@@ -252,26 +294,28 @@ class _ProfileState extends State<Profile> {
 
                   height(0.02),
 
-                  Divider(color: whiteColor.withValues(alpha: 0.2)),
+                  Divider(color: goldSecondary.withValues(alpha: 0.25)),
                   Row(
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Total Points',
+                            'prof_total_points'.tr,
                             style: TextStyle(
-                              color: whiteColor.withValues(alpha: 0.3),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              color: textMuted,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                              letterSpacing: 1.5,
                             ),
                           ),
+                          height(0.005),
                           Text(
                             userModel.value.user?.points.toString() ?? 'N/A',
                             style: TextStyle(
-                              color: whiteColor,
+                              color: goldPrimary,
                               fontWeight: FontWeight.bold,
-                              fontSize: 18,
+                              fontSize: 20,
                             ),
                           ),
                         ],
@@ -279,6 +323,8 @@ class _ProfileState extends State<Profile> {
                       Spacer(),
                     ],
                   ),
+                ],
+              ),
                 ],
               ),
             ),
@@ -290,14 +336,15 @@ class _ProfileState extends State<Profile> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Account Experience',
+                      'prof_account_experience'.tr,
                       style: TextStyle(
-                        color: Color(0xffA1A1A1),
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        color: textMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 2,
                       ),
                     ),
-                    height(0.01),
+                    height(0.015),
 
                     ListView.separated(
                       shrinkWrap: true,
@@ -310,26 +357,45 @@ class _ProfileState extends State<Profile> {
                         return GestureDetector(
                           onTap: acountList[index]['onTap'] as VoidCallback,
                           child: ListTile(
-                            contentPadding: EdgeInsets.all(0),
-                            leading: Image.asset(
-                              acountList[index]['image'],
-                              height: 45,
+                            contentPadding: EdgeInsets.symmetric(vertical: 6),
+                            leading: Icon(
+                              acountList[index]['icon'] as IconData,
+                              color: goldPrimary,
+                              size: 28,
                             ),
-                            title: Text(acountList[index]['title']),
+                            horizontalTitleGap: 14,
+                            title: Text(
+                              acountList[index]['title'],
+                              style: TextStyle(
+                                color: ivory,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
                             subtitle: Text(
                               acountList[index]['subTitle'],
-                              style: TextStyle(color: Color(0xffA1A1A1)),
+                              style: TextStyle(
+                                color: textMuted,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w300,
+                              ),
                             ),
                             trailing: Icon(
                               Icons.arrow_forward_ios_sharp,
-                              size: 15,
-                              color: greyColor,
+                              size: 14,
+                              color: goldSecondary.withValues(alpha: 0.5),
                             ),
                           ),
                         );
                       },
                       separatorBuilder: (context, index) {
-                        return height(0.0);
+                        if (widget.fromArtist && index == 0) {
+                          return SizedBox();
+                        }
+                        return Divider(
+                          height: 1,
+                          color: goldSecondary.withValues(alpha: 0.12),
+                        );
                       },
                       itemCount: acountList.length,
                     ),
@@ -337,8 +403,8 @@ class _ProfileState extends State<Profile> {
                     GestureDetector(
                       onTap: () async {
                         await myAlertDialog(
-                          title: 'Logout',
-                          content: 'Are you sure you want to logout?',
+                          title: 'prof_logout'.tr,
+                          content: 'prof_logout_confirm'.tr,
                           onTap: () async {
                             myLoadingDialog();
                             await unSub('00${userModel.value.user?.id}');
@@ -382,7 +448,7 @@ class _ProfileState extends State<Profile> {
                     Center(
                       child: Text(
                         textAlign: TextAlign.center,
-                        'VyBzzZ Mobile App ',
+                        'VybzzZ Mobile App ',
                         style: TextStyle(
                           color: Color(0xffA1A1A1),
                           fontSize: 16,
@@ -402,4 +468,48 @@ class _ProfileState extends State<Profile> {
 
   Future unSub(String topic) async =>
       await FirebaseMessaging.instance.unsubscribeFromTopic(topic);
+}
+
+/// Traînée de paillettes dorées en diagonale, à forte opacité,
+/// pour habiller la carte profil (style comète).
+class _SparkleTrailPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rnd = math.Random(11);
+    final paint = Paint()
+      ..color = goldPrimary
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 0.4);
+
+    const count = 70;
+    for (int i = 0; i < count; i++) {
+      final t = i / count;
+      // Axe diagonal : du centre-haut vers le bas-droite
+      final baseX = size.width * (0.40 + t * 0.62);
+      final baseY = size.height * (0.02 + t * 1.0);
+      final jitterX = (rnd.nextDouble() - 0.5) * size.width * 0.28;
+      final jitterY = (rnd.nextDouble() - 0.5) * size.height * 0.32;
+      final x = baseX + jitterX;
+      final y = baseY + jitterY;
+
+      // Plus dense / opaque vers la fin de la traînée
+      final r = 0.6 + rnd.nextDouble() * 2.4;
+      final op = (0.25 + rnd.nextDouble() * 0.45 + t * 0.25).clamp(0.0, 0.85);
+      paint.color = goldPrimary.withValues(alpha: op);
+      canvas.drawCircle(Offset(x, y), r, paint);
+
+      // Quelques éclats en étoile à 4 branches
+      if (rnd.nextDouble() > 0.82) {
+        final s = 3.0 + rnd.nextDouble() * 3.0;
+        final star = Paint()
+          ..color = goldPrimary.withValues(alpha: op.clamp(0.0, 0.8))
+          ..strokeWidth = 1.0
+          ..strokeCap = StrokeCap.round;
+        canvas.drawLine(Offset(x - s, y), Offset(x + s, y), star);
+        canvas.drawLine(Offset(x, y - s), Offset(x, y + s), star);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SparkleTrailPainter oldDelegate) => false;
 }

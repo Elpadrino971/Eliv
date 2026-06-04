@@ -7,8 +7,7 @@ import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:artist/widgets/my_appBar.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_utils/src/extensions/string_extensions.dart';
-import 'package:get/route_manager.dart';
+import 'package:get/get.dart';
 
 class LivePerformanceScreen extends StatefulWidget {
   const LivePerformanceScreen({super.key, required this.events});
@@ -22,10 +21,10 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Live performance'),
+      appBar: MyAppbar(title: 'home_live_performance_title'.tr),
 
       body: widget.events.isEmpty
-          ? Center(child: Text('No Live Events'))
+          ? Center(child: Text('no_live_events'.tr))
           : SingleChildScrollView(
         child: Padding(
           padding: myPadding,
@@ -70,13 +69,13 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
                                             right: 9,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Color(0xffDD0000),
+                                            color: liveRed,
                                             borderRadius: BorderRadius.circular(
                                               15,
                                             ),
                                           ),
                                           child: Text(
-                                            'LIVE NOW',
+                                            'live_now'.tr,
                                             style: TextStyle(
                                               color: whiteColor,
                                               fontSize: 13,
@@ -130,7 +129,7 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
                                       child: Text(
                                         '\$${event.ticketPrice}',
                                         style: TextStyle(
-                                          color: blackColor,
+                                          color: ivory,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -188,7 +187,7 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
                                         Row(
                                           children: [
                                             Text(
-                                              'Today',
+                                              'home_today'.tr,
                                               style: TextStyle(
                                                 color: whiteColor,
                                                 fontWeight: FontWeight.w400,
@@ -245,9 +244,9 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
                                             Image.asset('assets/play.png'),
                                             width(0.01),
                                             Text(
-                                              'Join live',
+                                              'join_live'.tr,
                                               style: TextStyle(
-                                                color: blackColor,
+                                                color: ivory,
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w500,
                                               ),

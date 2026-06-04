@@ -1,12 +1,8 @@
-import 'dart:async';
 import 'dart:io';
 import 'package:artist/Global/colors.dart';
-import 'package:artist/services/vybzzz_bf1200fc5027.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:artist/Global/global.dart';
-import 'package:http/http.dart' as http;
-import 'package:googleapis_auth/auth_io.dart' as auth;
 
 class PushNotificationSystem {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
@@ -50,50 +46,6 @@ class PushNotificationSystem {
 
       await showNotification(remoteMessage);
     });
-  }
-
-  //Access Token
-
-  // Get and Read Access Token OAuth 2.0
-  Future<String> getAccessToken() async {
-    final serviceAccountJson = FirebaseAuthKeys.firebaseJson;
-
-    List<String> scopes = [
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/firebase.database",
-      "https://www.googleapis.com/auth/firebase.messaging",
-    ];
-    http.Client client = await auth.clientViaServiceAccount(
-      auth.ServiceAccountCredentials.fromJson(serviceAccountJson),
-      scopes,
-    );
-    credentials = await auth.obtainAccessCredentialsViaServiceAccount(
-      auth.ServiceAccountCredentials.fromJson(serviceAccountJson),
-      scopes,
-      client,
-    );
-    // Access token and expiration time
-    fcmAccessToken = credentials?.accessToken.data ?? '';
-    final expiresIn = credentials?.accessToken.expiry;
-
-    // Print access token and its expiration time
-    myPrint("Access Token: $fcmAccessToken");
-    myPrint("Expires In: $expiresIn");
-    expiresIn!.difference(DateTime.now()).inMinutes;
-    Timer.periodic(
-      Duration(minutes: expiresIn.difference(DateTime.now()).inMinutes),
-      (timer) async {
-        credentials = await auth.obtainAccessCredentialsViaServiceAccount(
-          auth.ServiceAccountCredentials.fromJson(serviceAccountJson),
-          scopes,
-          client,
-        );
-        // Access token and expiration time
-        fcmAccessToken = credentials?.accessToken.data ?? '';
-      },
-    );
-
-    return credentials?.accessToken.data ?? '';
   }
 
   // Helper function

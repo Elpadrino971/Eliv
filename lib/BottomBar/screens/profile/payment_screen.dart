@@ -18,7 +18,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Payment'),
+      appBar: MyAppbar(title: 'pay_title'.tr),
 
       body: Padding(
         padding: myPadding,
@@ -26,7 +26,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Primary Method',
+              'pay_primary_method'.tr,
               style: TextStyle(
                 color: greyColor,
                 fontWeight: FontWeight.bold,
@@ -85,7 +85,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                         ),
                         child: Text(
-                          'Default',
+                          'common_default'.tr,
                           style: TextStyle(
                             color: whiteColor,
                             fontWeight: FontWeight.bold,
@@ -124,7 +124,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Expires',
+                            'label_expires'.tr,
                             style: TextStyle(
                               color: whiteColor.withValues(alpha: 0.3),
                               fontWeight: FontWeight.bold,
@@ -161,7 +161,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             height(0.02),
 
             Text(
-              'Other Methods',
+              'pay_other_methods'.tr,
               style: TextStyle(
                 color: greyColor,
                 fontWeight: FontWeight.bold,
@@ -185,13 +185,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     title: Text(
                       'Apple Pay',
                       style: TextStyle(
-                        color: blackColor,
+                        color: ivory,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
                     subtitle: Text(
-                      'Linked to iCloud',
+                      'pay_linked_icloud'.tr,
                       style: TextStyle(
                         color: Color(0xff737373),
                         fontWeight: FontWeight.bold,
@@ -218,13 +218,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     title: Text(
                       'Visa •••• 9901',
                       style: TextStyle(
-                        color: blackColor,
+                        color: ivory,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
                     subtitle: Text(
-                      'Backup method',
+                      'pay_backup_method'.tr,
                       style: TextStyle(
                         color: Color(0xff737373),
                         fontWeight: FontWeight.bold,
@@ -261,7 +261,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 SizedBox(
                   width: Get.width * 0.7,
                   child: Text(
-                    'Secure 256-bit SSL encrypted checkout powered by VyBzzZ Pay.',
+                    'pay_secure_ssl'.tr,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,

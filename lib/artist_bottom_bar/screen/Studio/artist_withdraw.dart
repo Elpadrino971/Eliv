@@ -35,12 +35,12 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
   void _onConfirmWithdraw() {
     final String amount = priceController.text.trim();
     if (amount.isEmpty) {
-      myWarningDialog(subtitle: 'Please enter a withdrawal amount.');
+      myWarningDialog(subtitle: 'art_val_withdraw_amount'.tr);
       return;
     }
 
     if (selectedBank == null) {
-      myWarningDialog(subtitle: 'Please select a payout method.');
+      myWarningDialog(subtitle: 'art_val_payout_method'.tr);
       return;
     }
 
@@ -50,7 +50,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
 
     if (withdrawalValue > points) {
       myWarningDialog(
-        subtitle: 'You do not have enough points for this withdrawal.',
+        subtitle: 'art_err_insufficient_points'.tr,
       );
       return;
     }
@@ -64,7 +64,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Withdraw'),
+      appBar: MyAppbar(title: 'art_withdraw'.tr),
       body: SingleChildScrollView(
         child: Padding(
           padding: myPadding,
@@ -76,7 +76,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                 padding: myPadding,
                 width: Get.width,
                 decoration: BoxDecoration(
-                  color: Get.isDarkMode ? redColor : blackColor,
+                  color: Get.isDarkMode ? goldPrimary : blackColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
@@ -90,9 +90,9 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                           height: 30,
                         ),
                         const Spacer(),
-                        const Text(
-                          'Available Balance',
-                          style: TextStyle(
+                        Text(
+                          'rev_available_balance'.tr,
+                          style: const TextStyle(
                             color: whiteColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
@@ -111,9 +111,9 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                         ),
                       ),
                     ),
-                    const Text(
-                      'Ready for Payout',
-                      style: TextStyle(
+                    Text(
+                      'rev_ready_payout'.tr,
+                      style: const TextStyle(
                         color: whiteColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -124,7 +124,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
               ),
               height(0.02),
               Text(
-                'Withdrawal Amount',
+                'art_withdrawal_amount'.tr,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -134,7 +134,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
               height(0.01),
 
               MyTextField(
-                hintText: 'Enter amount...',
+                hintText: 'art_enter_amount'.tr,
                 controller: priceController,
                 keyboardType: TextInputType.number,
               ),
@@ -175,7 +175,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                           vertical: 8,
                         ),
                         widget: Text(
-                          s == 'All' ? 'All' : '\$$s',
+                          s == 'All' ? 'art_all'.tr : '\$$s',
                           style: TextStyle(
                             color: Get.isDarkMode ? whiteColor : blackColor,
                             fontSize: 16,
@@ -198,7 +198,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                   ),
                   SizedBox(width: 8),
                   Text(
-                    'Payout Methods',
+                    'art_payout_methods'.tr,
                     style: TextStyle(
                       color: Get.isDarkMode ? whiteColor : blackColor,
                       fontWeight: FontWeight.bold,
@@ -213,12 +213,12 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
               Obx(() {
                 final list = authController.banks.value.list ?? [];
                 if (list.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
                       child: Text(
-                        'No bank accounts linked.',
-                        style: TextStyle(color: greyColor),
+                        'art_no_banks'.tr,
+                        style: const TextStyle(color: greyColor),
                       ),
                     ),
                   );
@@ -242,7 +242,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                       child: MyContainer(
                         border: Border.all(
                           color: isPicked
-                              ? (Get.isDarkMode ? redColor : mainThemeColor)
+                              ? (Get.isDarkMode ? goldPrimary : mainThemeColor)
                               : Colors.transparent,
                         ),
                         widget: ListTile(
@@ -257,7 +257,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                             ),
                           ),
                           title: Text(
-                            bank.bankName ?? 'Bank',
+                            bank.bankName ?? 'art_bank'.tr,
                             style: TextStyle(
                               color: Get.isDarkMode ? whiteColor : blackColor,
                               fontWeight: FontWeight.bold,
@@ -288,9 +288,9 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                                       color: const Color(0xff00A63E),
                                     ),
                                   ),
-                                  child: const Text(
-                                    'Primary',
-                                    style: TextStyle(
+                                  child: Text(
+                                    'art_primary'.tr,
+                                    style: const TextStyle(
                                       color: Color(0xff00A63E),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
@@ -302,17 +302,21 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                               IconButton(
                                 icon: Icon(
                                   Icons.delete_outline,
-                                  color: Get.isDarkMode ? redColor : Colors.red,
+                                  color: Get.isDarkMode ? goldPrimary : Colors.red,
                                   size: 22,
                                 ),
                                 onPressed: () {
                                   myWarningDialog(
-                                    title: 'Delete Payout Method',
-                                    subtitle:
-                                        'Are you sure you want to delete ${bank.bankName} ending in ${bank.accountNumber != null && bank.accountNumber!.length > 4 ? bank.accountNumber!.substring(bank.accountNumber!.length - 4) : bank.accountNumber}?',
-                                    btnTitle: 'Cancel',
+                                    title: 'art_delete_payout_title'.tr,
+                                    subtitle: 'art_delete_payout_confirm'
+                                        .trParams({
+                                          'bank': '${bank.bankName}',
+                                          'last4':
+                                              '${bank.accountNumber != null && bank.accountNumber!.length > 4 ? bank.accountNumber!.substring(bank.accountNumber!.length - 4) : bank.accountNumber}',
+                                        }),
+                                    btnTitle: 'common_cancel'.tr,
                                     ontap: () => Get.back(),
-                                    secondBtnTitle: 'Delete',
+                                    secondBtnTitle: 'art_delete'.tr,
                                     secondOnTap: () async {
                                       Get.back(); // close warning dialog
                                       if (selectedBank?.id == bank.id) {
@@ -345,7 +349,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                 },
                 child: MyContainer(
                   border: Border.all(
-                    color: Get.isDarkMode ? redColor : mainThemeColor,
+                    color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   ),
                   widget: ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -359,9 +363,9 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                         size: 20,
                       ),
                     ),
-                    title: const Text(
-                      'Add Bank account',
-                      style: TextStyle(
+                    title: Text(
+                      'art_add_bank_account'.tr,
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -373,10 +377,10 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
               height(0.04),
 
               MyButton(
-                label: 'Confirm Withdrawal',
+                label: 'art_confirm_withdrawal'.tr,
                 onTap: _onConfirmWithdraw,
                 labelColor: whiteColor,
-                buttonColor: Get.isDarkMode ? redColor : mainThemeColor,
+                buttonColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
               ),
               height(0.03),
             ],

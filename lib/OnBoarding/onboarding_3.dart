@@ -41,7 +41,7 @@ class _Onboarding3State extends State<Onboarding3> {
                 Get.to(() => LoginScreen());
               },
               image: 'assets/arrow.png',
-              imageColor: whiteColor,
+              imageColor: midnightPrimary,
             ),
           ],
         ),

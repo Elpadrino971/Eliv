@@ -67,7 +67,7 @@ class _StudioScreenState extends State<StudioScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Studio',
+                          'studio_title'.tr,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -75,7 +75,7 @@ class _StudioScreenState extends State<StudioScreen> {
                           ),
                         ),
                         Text(
-                          'Artist Command Center',
+                          'studio_command_center'.tr,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -122,7 +122,7 @@ class _StudioScreenState extends State<StudioScreen> {
                       children: [
                         ArtistGridCard(
                           img: 'assets/studio_icon1.png',
-                          title: 'Events',
+                          title: 'art_events'.tr,
                           count: '${event.eventCount ?? '0'}',
                           onTap: () {
                             Get.to(() => ArtistEventsScreen());
@@ -130,7 +130,7 @@ class _StudioScreenState extends State<StudioScreen> {
                         ),
                         ArtistGridCard(
                           img: 'assets/studio_icon2.png',
-                          title: 'Ticket sold',
+                          title: 'art_ticket_sold'.tr,
                           count: '${event.totalTicketsSold ?? '0'}',
                           onTap: () {
                             Get.to(() => RevenueScreen());
@@ -138,7 +138,7 @@ class _StudioScreenState extends State<StudioScreen> {
                         ),
                         ArtistGridCard(
                           img: 'assets/studio_icon3.png',
-                          title: 'Revenue',
+                          title: 'rev_revenue'.tr,
                           count: '\$${event.totalRevenue ?? '0'}',
                           onTap: () {
                             Get.to(() => RevenueScreen());
@@ -146,7 +146,7 @@ class _StudioScreenState extends State<StudioScreen> {
                         ),
                         ArtistGridCard(
                           img: 'assets/studio_icon4.png',
-                          title: 'Balance',
+                          title: 'rev_balance'.tr,
                           count: '\$${event.currentWallet ?? '0'}',
                           onTap: () {
                             Get.to(() => RevenueScreen());
@@ -158,7 +158,7 @@ class _StudioScreenState extends State<StudioScreen> {
                 ),
                 height(0.02),
                 MyButton(
-                  label: 'Withdraw',
+                  label: 'art_withdraw'.tr,
                   onTap: () {
                     Get.to(() => ArtistWithdraw());
                   },

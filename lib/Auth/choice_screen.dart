@@ -4,6 +4,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/get_core/get_core.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 
@@ -19,7 +20,7 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Get.isDarkMode ? blackColor : scaffoldBackgroundColor,
+      backgroundColor: Get.isDarkMode ? midnightPrimary : scaffoldBackgroundColor,
       body: Padding(
         padding: myPadding,
         child: Column(
@@ -55,7 +56,7 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
                   textAlign: TextAlign.center,
                   'ZZZ',
                   style: TextStyle(
-                    color: yellowColor,
+                    color: goldPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
                     fontStyle: FontStyle.italic,
@@ -69,7 +70,7 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
               width: Get.width * 0.7,
               child: Text(
                 textAlign: TextAlign.center,
-                'Please Select Your Account Type',
+                'auth_select_account_type'.tr,
                 style: TextStyle(
                   color: greyColor,
                   fontWeight: FontWeight.w400,
@@ -88,11 +89,11 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
               child: MyContainer(
                 color: Get.isDarkMode
                     ? selected == 'Artist'
-                          ? redColor
-                          : Color(0xffFAFAFA)
+                          ? goldPrimary
+                          : cardDeep
                     : selected == 'Artist'
                     ? mainThemeColor
-                    : Color(0xffFAFAFA),
+                    : cardDeep,
                 widget: Text(
                   textAlign: TextAlign.center,
                   'Artist',
@@ -121,11 +122,11 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
               child: MyContainer(
                 color: Get.isDarkMode
                     ? selected == 'User'
-                          ? redColor
-                          : Color(0xffFAFAFA)
+                          ? goldPrimary
+                          : cardDeep
                     : selected == 'User'
                     ? mainThemeColor
-                    : Color(0xffFAFAFA),
+                    : cardDeep,
                 widget: Text(
                   textAlign: TextAlign.center,
                   'User',
@@ -145,11 +146,11 @@ class _ChoiceScreenState extends State<ChoiceScreen> {
             ),
             Spacer(),
             MyButton(
-              label: 'Continue',
+              label: 'common_continue'.tr,
               onTap: () {
                 Get.to(() => LoginScreen());
               },
-              labelColor: whiteColor,
+              labelColor: midnightPrimary,
             ),
           ],
         ),

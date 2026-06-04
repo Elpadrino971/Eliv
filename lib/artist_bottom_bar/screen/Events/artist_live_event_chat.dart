@@ -76,7 +76,7 @@ class _ArtistLiveEventChatState extends State<ArtistLiveEventChat>
             child: Image.asset('assets/cros_icon.png', width: 20),
           ),
           title: Text(
-            currentEvent.name?.capitalize ?? 'Live Event',
+            currentEvent.name?.capitalize ?? 'ev_live_event'.tr,
             style: TextStyle(
               color: Get.isDarkMode ? whiteColor : blackColor,
               fontSize: 18,
@@ -114,8 +114,8 @@ class _ArtistLiveEventChatState extends State<ArtistLiveEventChat>
           children: [
             MyTabBar(
               tabController: tabController,
-              tabOne: 'Chat',
-              tabTwo: 'Gift',
+              tabOne: 'live_chat'.tr,
+              tabTwo: 'art_gift'.tr,
             ),
 
             Expanded(

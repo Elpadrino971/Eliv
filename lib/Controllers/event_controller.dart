@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/mux.dart';
 import 'package:artist/Models/abusive_words_model.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/Models/follow_model.dart';
@@ -43,10 +44,13 @@ class EventController extends GetxController {
     currentController.value?.dispose();
     currentController.value = null;
 
+    // Accepte une URL complete (HLS Mux : https://stream.mux.com/<id>.m3u8)
+    // ou un simple nom de fichier sur le backend.
+    final uri = videoUrl.startsWith('http')
+        ? Uri.parse(videoUrl)
+        : Uri.parse('${APIs.eventVideoIP}/$videoUrl');
     final controller =
-        VideoPlayerController.networkUrl(
-            Uri.parse('${APIs.eventVideoIP}/$videoUrl'),
-          )
+        VideoPlayerController.networkUrl(uri)
           ..initialize().then((_) {
             update();
           });
@@ -59,14 +63,31 @@ class EventController extends GetxController {
 
   void onPageChanged(int index) {
     currentVideoIndex.value = index;
-    final event = allEvents.value.data?[index];
-    if (event?.videoReel != null && event!.videoReel!.isNotEmpty) {
-      initVideoPlayer(event.videoReel!);
+    final ids = APIs.muxDemoPlaybackIds;
+    String? url;
+    if (ids.isNotEmpty) {
+      url = Mux.hlsUrl(ids[index % ids.length]);
+    } else {
+      final reel = allEvents.value.data?[index]?.videoReel;
+      url = (reel != null && reel.isNotEmpty) ? reel : null;
+    }
+    if (url != null) {
+      initVideoPlayer(url);
     } else {
       currentController.value?.dispose();
       currentController.value = null;
     }
     update();
+  }
+
+  /// URL du 1er reel (init du feed). Priorite a Mux (demos aujourd'hui ;
+  /// id par event/short quand le backend le fournira) ; sinon video backend.
+  String? reelUrlFor(Event? event) {
+    if (APIs.muxDemoPlaybackIds.isNotEmpty) {
+      return Mux.hlsUrl(APIs.muxDemoPlaybackIds.first);
+    }
+    final reel = event?.videoReel;
+    return (reel != null && reel.isNotEmpty) ? reel : null;
   }
 
   void toggleVideoControls() {

@@ -65,6 +65,14 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: goldPrimary),
+          onPressed: () => Get.back(),
+        ),
+      ),
       body: Padding(
         padding: myPadding,
         child: Form(
@@ -72,19 +80,19 @@ class _OtpScreenState extends State<OtpScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              height(0.1),
+              height(0.04),
               Text(
-                'Verify Email',
+                'auth_verify_email'.tr,
                 style: TextStyle(
-                  color: blackColor,
+                  color: ivory,
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                 ),
               ),
               Text(
-                "We've sent a code to novinj55@gmail.com",
+                "We've sent a code to ${widget.email}",
                 style: TextStyle(
-                  color: const Color.fromARGB(255, 212, 212, 212),
+                  color: textMuted,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -120,7 +128,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   ? Container()
                   : Center(
                       child: Text(
-                        'Resend Code in',
+                        'auth_resend_code_in'.tr,
                         style: TextStyle(
                           color: textXolor,
                           fontWeight: FontWeight.bold,
@@ -155,7 +163,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     width(0.01),
 
                     Text(
-                      'Resend Code',
+                      'auth_resend_code'.tr,
                       style: TextStyle(
                         color: timer == 1 ? blackColor : textXolor,
                         fontWeight: FontWeight.bold,
@@ -168,7 +176,7 @@ class _OtpScreenState extends State<OtpScreen> {
               height(0.02),
 
               MyButton(
-                label: 'Verify Code',
+                label: 'auth_verify_code'.tr,
                 onTap: () async {
                   if (formKey.currentState!.validate()) {
                     await authController.verifyOtp(
@@ -179,8 +187,8 @@ class _OtpScreenState extends State<OtpScreen> {
                   }
                 },
                 image: 'assets/arrow.png',
-                imageColor: whiteColor,
-                labelColor: whiteColor,
+                imageColor: midnightPrimary,
+                labelColor: midnightPrimary,
               ),
 
               Spacer(),

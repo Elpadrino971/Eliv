@@ -63,7 +63,7 @@ class _ArtistChatScreenState extends State<ArtistChatScreen> {
     if (text.isEmpty) return;
 
     if (eventController.hasAbusiveWords(text)) {
-      myWarningDialog(subtitle: 'Your message contains restricted words.');
+      myWarningDialog(subtitle: 'art_restricted_words'.tr);
       return;
     }
 
@@ -95,7 +95,7 @@ class _ArtistChatScreenState extends State<ArtistChatScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    msg.userInfo?.fullName ?? 'anonymous',
+                    msg.userInfo?.fullName ?? 'art_msg_send_failed'.tr,
                     style: const TextStyle(
                       color: Color(0xffA1A1A1),
                       fontWeight: FontWeight.bold,
@@ -127,7 +127,7 @@ class _ArtistChatScreenState extends State<ArtistChatScreen> {
             children: [
               Expanded(
                 child: MyTextField(
-                  hintText: 'Message fans...',
+                  hintText: 'chat_message_fans'.tr,
                   controller: messageController,
                 ),
               ),
@@ -136,7 +136,7 @@ class _ArtistChatScreenState extends State<ArtistChatScreen> {
                 onTap: _sendMessage,
                 child: MyContainer(
                   padding: const EdgeInsets.all(11),
-                  color: Get.isDarkMode ? redColor : mainThemeColor,
+                  color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   noWidth: true,
                   widget: const Icon(
                     Icons.arrow_forward,

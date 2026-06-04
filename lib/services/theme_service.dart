@@ -6,29 +6,25 @@ class ThemeService {
   final _box = GetStorage();
   final _key = 'isDarkMode';
 
-  bool _readIsDarkModeFromStorage() {
-    return _box.read(_key) ??
-        true; // default to dark (change if you want light default)
+  // VYBZZZ : identite visuelle unique (premium bleu nuit + or).
+  // L'app est verrouillee en mode sombre ; le basculement clair est neutralise
+  // pour garantir un theme coherent sur tous les ecrans.
+  ThemeMode getThemeMode() => ThemeMode.dark;
+
+  bool isDarkMode() => true;
+
+  void saveIsDarkMode(bool isDark) {
+    // Verrouille : on conserve toujours le mode sombre.
+    _box.write(_key, true);
   }
 
-  ThemeMode getThemeMode() {
-    return _readIsDarkModeFromStorage() ? ThemeMode.dark : ThemeMode.light;
-  }
-
-  bool isDarkMode() => _readIsDarkModeFromStorage();
-
-  void saveIsDarkMode(bool isDark) => _box.write(_key, isDark);
-
-  /// Toggles and applies the theme immediately
+  /// Conserve le mode sombre (basculement desactive).
   void switchTheme() {
-    final newIsDark = !_readIsDarkModeFromStorage();
-    saveIsDarkMode(newIsDark);
-    Get.changeThemeMode(newIsDark ? ThemeMode.dark : ThemeMode.light);
+    Get.changeThemeMode(ThemeMode.dark);
   }
 
-  /// Set explicitly
+  /// Conserve le mode sombre (basculement desactive).
   void setTheme(bool isDark) {
-    saveIsDarkMode(isDark);
-    Get.changeThemeMode(isDark ? ThemeMode.dark : ThemeMode.light);
+    Get.changeThemeMode(ThemeMode.dark);
   }
 }

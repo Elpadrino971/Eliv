@@ -45,10 +45,10 @@ class _UserWalletState extends State<UserWallet> {
                 padding: const EdgeInsets.all(30),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(40),
-                  color: Get.isDarkMode ? redColor : mainThemeColor,
+                  color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   boxShadow: [
                     BoxShadow(
-                      color: Get.isDarkMode ? redColor : mainThemeColor,
+                      color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -67,7 +67,7 @@ class _UserWalletState extends State<UserWallet> {
                         ),
                         child: Icon(
                           Icons.attach_money,
-                          color: Get.isDarkMode ? redColor : mainThemeColor,
+                          color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                           size: 20,
                         ),
                       ),
@@ -76,7 +76,7 @@ class _UserWalletState extends State<UserWallet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'ARENA POINTS BALANCE',
+                          'wallet_arena_points'.tr,
                           style: TextStyle(
                             color: whiteColor.withValues(alpha: 0.85),
                             fontWeight: FontWeight.w600,
@@ -114,13 +114,13 @@ class _UserWalletState extends State<UserWallet> {
                         ),
                         height(0.01),
                         MyButton(
-                          label: 'Withdraw Points',
+                          label: 'points_withdraw'.tr,
                           onTap: () {
                             Get.to(() => ArtistWithdraw());
                           },
                           buttonColor: whiteColor,
                           labelColor: Get.isDarkMode
-                              ? redColor
+                              ? goldPrimary
                               : mainThemeColor,
                         ),
                       ],
@@ -134,16 +134,16 @@ class _UserWalletState extends State<UserWallet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'TOP UP POINTS',
+                  Text(
+                    'points_top_up'.tr,
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                   ),
                   GestureDetector(
                     onTap: () => Get.to(() => const TopupHistory()),
                     child: Text(
-                      'VIEW HISTORY',
+                      'common_view_history'.tr,
                       style: TextStyle(
-                        color: Get.isDarkMode ? redColor : mainThemeColor,
+                        color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -157,7 +157,7 @@ class _UserWalletState extends State<UserWallet> {
               Obx(() {
                 final packages = authController.packages.value.list ?? [];
                 if (packages.isEmpty) {
-                  return Center(child: Text('No Packages Available'));
+                  return Center(child: Text('empty_no_packages'.tr));
                 }
                 return GridView.builder(
                   shrinkWrap: true,
@@ -174,8 +174,8 @@ class _UserWalletState extends State<UserWallet> {
                     return PointsCard(
                       onTap: () async {
                         await myAlertDialog(
-                          title: 'Buy Package',
-                          content: 'Are you sure you want to buy this package?',
+                          title: 'pay_buy_package'.tr,
+                          content: 'pay_buy_package_confirm'.tr,
                           onTap: () async {
                             Get.back();
                             await authController.purchasePackage(
@@ -207,7 +207,7 @@ class _UserWalletState extends State<UserWallet> {
                     borderRadius: BorderRadius.circular(25),
                     gradient: Get.isDarkMode
                         ? LinearGradient(
-                            colors: [redColor.withValues(alpha: 0.8), redColor],
+                            colors: [goldPrimary.withValues(alpha: 0.8), goldPrimary],
                           )
                         : LinearGradient(
                             colors: [
@@ -222,8 +222,8 @@ class _UserWalletState extends State<UserWallet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Points Store',
+                            Text(
+                              'points_store'.tr,
                               style: TextStyle(
                                 color: whiteColor,
                                 fontSize: 22,
@@ -232,7 +232,7 @@ class _UserWalletState extends State<UserWallet> {
                             ),
                             height(0.005),
                             Text(
-                              'Unlock special bundles, limited-time multipliers, and more.',
+                              'points_store_desc'.tr,
                               style: TextStyle(
                                 color: whiteColor.withValues(alpha: 0.9),
                                 fontSize: 11,
@@ -258,7 +258,7 @@ class _UserWalletState extends State<UserWallet> {
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Get.isDarkMode
-                                    ? redColor
+                                    ? goldPrimary
                                     : mainThemeColor,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -268,7 +268,7 @@ class _UserWalletState extends State<UserWallet> {
                             width(0.02),
                             Icon(
                               Icons.arrow_forward_ios,
-                              color: Get.isDarkMode ? redColor : mainThemeColor,
+                              color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                               size: 12,
                             ),
                           ],

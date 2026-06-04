@@ -40,6 +40,17 @@ class Subscription {
     final DateTime? createdAt;
     final DateTime? updatedAt;
 
+    /// Founder launch fields (optional — null until the backend sends them, so
+    /// the UI degrades gracefully). See docs/founder_plan_api_spec.md.
+    final bool? isFounder;        // marks the limited Founder plan
+    final int? seatsTotal;        // e.g. 200
+    final int? seatsRemaining;    // live remaining seats
+    final String? nextPrice;      // price of the next tier once this one fills
+    final int? nextPriceInSeats;  // seats left before the price rises
+    final String? publicPrice;    // anchor: public Growth price (e.g. 199)
+    final String? badge;          // e.g. "BEST VALUE"
+    final String? iapProductId;   // active IAP product (e.g. founder_149)
+
     Subscription({
         this.id,
         this.title,
@@ -51,6 +62,14 @@ class Subscription {
         this.status,
         this.createdAt,
         this.updatedAt,
+        this.isFounder,
+        this.seatsTotal,
+        this.seatsRemaining,
+        this.nextPrice,
+        this.nextPriceInSeats,
+        this.publicPrice,
+        this.badge,
+        this.iapProductId,
     });
 
     factory Subscription.fromJson(Map<String, dynamic> json) => Subscription(
@@ -64,6 +83,14 @@ class Subscription {
         status: json["status"],
         createdAt: json["created_at"] == null ? null : DateTime.parse(json["created_at"]),
         updatedAt: json["updated_at"] == null ? null : DateTime.parse(json["updated_at"]),
+        isFounder: json["is_founder"],
+        seatsTotal: json["seats_total"],
+        seatsRemaining: json["seats_remaining"],
+        nextPrice: json["next_price"]?.toString(),
+        nextPriceInSeats: json["next_price_in_seats"],
+        publicPrice: json["public_price"]?.toString(),
+        badge: json["badge"],
+        iapProductId: json["iap_product_id"],
     );
 
     Map<String, dynamic> toJson() => {
@@ -77,5 +104,13 @@ class Subscription {
         "status": status,
         "created_at": createdAt?.toIso8601String(),
         "updated_at": updatedAt?.toIso8601String(),
+        "is_founder": isFounder,
+        "seats_total": seatsTotal,
+        "seats_remaining": seatsRemaining,
+        "next_price": nextPrice,
+        "next_price_in_seats": nextPriceInSeats,
+        "public_price": publicPrice,
+        "badge": badge,
+        "iap_product_id": iapProductId,
     };
 }

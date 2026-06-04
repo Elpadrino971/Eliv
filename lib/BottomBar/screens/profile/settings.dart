@@ -1,10 +1,10 @@
 import 'package:artist/BottomBar/screens/profile/faq_screen.dart';
 import 'package:artist/Controllers/auth_controller.dart';
-import 'package:artist/Controllers/theme_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/BottomBar/screens/profile/alerts_screen.dart';
 import 'package:artist/BottomBar/screens/profile/language_screen.dart';
+import 'package:artist/Global/locale_service.dart';
 import 'package:artist/BottomBar/screens/profile/personal_screen.dart';
 import 'package:artist/BottomBar/screens/profile/security_screen.dart';
 import 'package:artist/BottomBar/screens/profile/Support/all_support_chats.dart';
@@ -22,63 +22,62 @@ class Settings extends StatefulWidget {
 
 class _SettingsState extends State<Settings> {
   final authController = Get.find<AuthController>();
-  List<Map> acountList = [
+  List<Map> get acountList => [
     {
-      'title': 'Personal Information',
-      'subTitle': 'Email, Phone, Birthday',
+      'title': 'prof_personal_info'.tr,
+      'subTitle': 'prof_personal_info_sub'.tr,
       'image': 'assets/icon8.png',
       'screen': PersonalScreen(),
     },
     {
-      'title': 'Password & Security',
-      'subTitle': 'Change password',
+      'title': 'prof_password_security'.tr,
+      'subTitle': 'prof_password_security_sub'.tr,
       'image': 'assets/icon9.png',
       'screen': SecurityScreen(),
     },
     {
-      'title': 'Language',
-      'subTitle': 'English (US)',
+      'title': 'language'.tr,
+      'subTitle': LocaleService.supported
+          .firstWhere(
+            (l) => l.code == LocaleService.currentCode,
+            orElse: () => LocaleService.supported.first,
+          )
+          .name,
       'image': 'assets/icon10.png',
 
       'screen': LanguageScreen(),
     },
   ];
 
-  List<Map> preferencesList = [
+  List<Map> get preferencesList => [
     {
-      'title': 'Notifications',
-      'subTitle': 'Push, Email, SMS',
+      'title': 'prof_notifications'.tr,
+      'subTitle': 'prof_notifications_sub'.tr,
       'image': 'assets/icon11.png',
       'screen': AlertsScreen(),
     },
   ];
 
-  List<Map> supportList = [
+  List<Map> get supportList => [
     {
-      'title': 'Help Center',
-      'subTitle': 'Contact support',
+      'title': 'prof_help_center'.tr,
+      'subTitle': 'prof_help_center_sub'.tr,
       'image': 'assets/icon12.png',
       'screen': AllSupportChats(),
     },
     {
-      'title': 'FAQ',
-      'subTitle': 'Frequently Asked Questions',
+      'title': 'prof_faq'.tr,
+      'subTitle': 'prof_faq_sub'.tr,
       'image': 'assets/icon12.png',
       'screen': FaqScreen(),
     },
   ];
 
-  var swichValue = true;
-  @override
-  void initState() {
-    super.initState();
-    swichValue = box.read(themeKey) ?? true;
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Settings'),
+      appBar: MyAppbar(title: 'common_settings'.tr),
 
       body: SingleChildScrollView(
         child: Padding(
@@ -87,7 +86,7 @@ class _SettingsState extends State<Settings> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Acount',
+                'section_account'.tr,
                 style: TextStyle(
                   color: Color(0xff737373),
                   fontWeight: FontWeight.w600,
@@ -209,7 +208,7 @@ class _SettingsState extends State<Settings> {
               // ),
               height(0.01),
               Text(
-                'Support',
+                'section_support'.tr,
                 style: TextStyle(
                   color: Color(0xff737373),
                   fontWeight: FontWeight.w600,
@@ -273,12 +272,12 @@ class _SettingsState extends State<Settings> {
               GestureDetector(
                 onTap: () async {
                   await myWarningDialog(
-                    title: 'Delete Account',
+                    title: 'prof_delete_account'.tr,
                     subtitle:
-                        'This action is permanent. All your ticket history, points, and following data will be lost forever.',
+                        'prof_delete_warning'.tr,
                     image: 'assets/warning.png',
-                    btnTitle: 'Back',
-                    secondBtnTitle: 'Delete Account',
+                    btnTitle: 'common_back'.tr,
+                    secondBtnTitle: 'prof_delete_account'.tr,
                     secondOnTap: () async {
                       await authController.deleteAccount();
                     },
@@ -297,7 +296,7 @@ class _SettingsState extends State<Settings> {
                     ),
 
                     title: Text(
-                      'Delete Acount',
+                      'prof_delete_account'.tr,
                       style: TextStyle(
                         color: Get.isDarkMode ? whiteColor : blackColor,
                         fontWeight: FontWeight.bold,
@@ -305,7 +304,7 @@ class _SettingsState extends State<Settings> {
                       ),
                     ),
                     subtitle: Text(
-                      'Permanently remove your data',
+                      'prof_delete_account_sub'.tr,
                       style: TextStyle(
                         color: Color(0xff737373),
                         fontWeight: FontWeight.w600,
@@ -317,44 +316,6 @@ class _SettingsState extends State<Settings> {
                       size: 12,
                       color: greyColor,
                     ),
-                  ),
-                ),
-              ),
-
-              height(0.01),
-              MyContainer(
-                widget: ListTile(
-                  minTileHeight: 50,
-                  contentPadding: EdgeInsets.all(0),
-
-                  leading: Image.asset(
-                    'assets/icon14.png',
-                    width: 40,
-                    height: 40,
-                  ),
-
-                  title: Text(
-                    'Switch to Dark Mode',
-                    style: TextStyle(
-                      color: Get.isDarkMode ? whiteColor : blackColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-
-                  trailing: Switch(
-                    value: swichValue,
-                    onChanged: (value) async {
-                      await box.write(themeKey, value);
-                      Get.find<ThemeController>().toggleTheme(value);
-                      swichValue = value;
-                      await Future.delayed(Duration(milliseconds: 100));
-                      setState(() {});
-                    },
-                    inactiveThumbColor: whiteColor,
-                    inactiveTrackColor: greyColor,
-                    activeTrackColor: redColor,
-                    activeThumbColor: whiteColor,
                   ),
                 ),
               ),

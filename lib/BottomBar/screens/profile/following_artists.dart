@@ -44,7 +44,7 @@ class _FollowingArtistsState extends State<FollowingArtists> {
                   return Center(child: CircularProgressIndicator.adaptive());
                 }
                 if (followingArtists.isEmpty) {
-                  return Center(child: Text('No Following Artists'));
+                  return Center(child: Text('empty_no_following'.tr));
                 }
                 return GridView.builder(
                   shrinkWrap: true,
@@ -70,9 +70,9 @@ class _FollowingArtistsState extends State<FollowingArtists> {
                         padding: myPadding,
                         decoration: BoxDecoration(
                           color: Get.isDarkMode
-                              ? Color(0xff141821)
-                              : Color(0xffFAFAFA),
-                          border: Border.all(color: Color(0xffF5F5F5)),
+                              ? cardDeep
+                              : cardDeep,
+                          border: Border.all(color: Color(0xff223046)),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Center(

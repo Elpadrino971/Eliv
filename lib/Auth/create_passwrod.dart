@@ -26,7 +26,7 @@ class _CreatePasswrodState extends State<CreatePasswrod> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Create passwrd'),
+      appBar: MyAppbar(title: 'auth_create_password'.tr),
       body: Container(
         padding: myPadding,
         child: Column(
@@ -35,7 +35,7 @@ class _CreatePasswrodState extends State<CreatePasswrod> {
             Text(
               'New Security ',
               style: TextStyle(
-                color: blackColor,
+                color: ivory,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
               ),
@@ -54,7 +54,7 @@ class _CreatePasswrodState extends State<CreatePasswrod> {
 
             MyTextField(
               isObscure: hiddinPassword2,
-              hintText: 'New Password',
+              hintText: 'auth_new_password'.tr,
               controller: passwordController,
 
               leading: Image.asset(
@@ -84,7 +84,7 @@ class _CreatePasswrodState extends State<CreatePasswrod> {
 
             MyTextField(
               isObscure: hiddinPassword,
-              hintText: 'Confirm Password',
+              hintText: 'auth_confirm_password'.tr,
               controller: newPasswordController,
               leading: Image.asset(
                 'assets/lock_icon.png',
@@ -115,7 +115,7 @@ class _CreatePasswrodState extends State<CreatePasswrod> {
             height(0.02),
 
             MyButton(
-              label: 'Update Password ',
+              label: 'auth_update_password'.tr,
               onTap: () async {
                 await authController.resetPassword(
                   password: passwordController.text,
@@ -123,8 +123,8 @@ class _CreatePasswrodState extends State<CreatePasswrod> {
                 );
               },
               image: 'assets/arrow.png',
-              imageColor: whiteColor,
-              labelColor: whiteColor,
+              imageColor: midnightPrimary,
+              labelColor: midnightPrimary,
             ),
           ],
         ),

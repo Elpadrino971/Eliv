@@ -11,7 +11,8 @@ import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:artist/Global/app_date.dart';
+import 'package:artist/widgets/replay_player_screen.dart';
 
 class FutureScreen extends StatefulWidget {
   const FutureScreen({super.key, required this.event});
@@ -23,15 +24,18 @@ class FutureScreen extends StatefulWidget {
 
 class _FutureScreenState extends State<FutureScreen> {
   final eventController = Get.find<EventController>();
-  List<Map> futureList = [
-    {'name': '4K Ultra HD Streaming', 'image': 'assets/icon3.png'},
-    {'name': 'Dolby Atmos Spatial Audio', 'image': 'assets/icon4.png'},
-    {'name': 'Exclusive Digital Merch', 'image': 'assets/icon3.png'},
-    {'name': 'Live Chat with VIP Fans', 'image': 'assets/icon5.png'},
-  ];
-  Event event = Event();
-  var selectedAccess = '';
 
+  List<Map> get futureList => [
+    {'name': 'home_feature_4k_streaming'.tr, 'icon': Icons.high_quality_rounded},
+    {'name': 'home_feature_dolby'.tr, 'icon': Icons.surround_sound_rounded},
+    {'name': 'home_feature_merch'.tr, 'icon': Icons.shopping_bag_outlined},
+    {
+      'name': 'home_feature_vip_chat'.tr,
+      'icon': Icons.chat_bubble_outline_rounded,
+    },
+  ];
+
+  Event event = Event();
   var like = false;
 
   Future myInitMethod() async {
@@ -44,558 +48,657 @@ class _FutureScreenState extends State<FutureScreen> {
     event = widget.event;
   }
 
+  bool get _hasTicket =>
+      (event.ticketBuyerIds ?? []).contains(userModel.value.user?.id ?? 1);
+
+  /// Bouton circulaire "glass" premium (bleu nuit + contour or).
+  Widget _glassButton({required VoidCallback onTap, required Widget child}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(9),
+        decoration: BoxDecoration(
+          color: midnightPrimary.withValues(alpha: 0.55),
+          shape: BoxShape.circle,
+          border: Border.all(color: goldSecondary.withValues(alpha: 0.5)),
+        ),
+        child: child,
+      ),
+    );
+  }
+
+  /// Heure lisible "2:41 PM (GMT+2)" dans le fuseau du SPECTATEUR (via AppDate).
+  String _timeLabel(DateTime dt) => AppDate.timeWithZone(dt);
+
+  /// Petite info compacte (icone or + texte).
+  Widget _metaItem(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: goldPrimary, size: 16),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: const TextStyle(
+            color: ivory,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _metaDivider() => Container(
+        width: 1,
+        height: 16,
+        color: goldSecondary.withValues(alpha: 0.3),
+        margin: const EdgeInsets.symmetric(horizontal: 12),
+      );
+
+  /// Chip de feature (badge icone or + label).
+  Widget _featureChip(IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: goldPrimary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Icon(icon, color: goldPrimary, size: 15),
+        ),
+        const SizedBox(width: 7),
+        Text(
+          label,
+          style: const TextStyle(
+            color: ivory,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    bool isLive = event.status == 'live';
+    final bool isLive = event.status == 'live';
     return Scaffold(
-      backgroundColor: Get.isDarkMode ? blackColor : scaffoldBackgroundColor,
+      backgroundColor: midnightPrimary,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: myPadding,
+          // ── Héro : image plein écran + dégradé + overlay
+          SizedBox(
             width: Get.width,
-            height: Get.height * 0.42,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage('${APIs.eventImageIP}/${event.coverImage}'),
-                fit: BoxFit.fill,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            height: Get.height * 0.46,
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                height(0.03),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Get.back();
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: greyColor.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(50),
-                          border: Border.all(
-                            color: whiteColor.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Image.asset(
-                          'assets/arrow2.png',
-                          width: 20,
-                          height: 20,
-                        ),
-                      ),
-                    ),
-
-                    Spacer(),
-
-                    GestureDetector(
-                      onTap: () async {
-                        await myShare(message: APIs.mainIP);
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: greyColor.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(50),
-                          border: Border.all(
-                            color: whiteColor.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Center(
-                          child: Image.asset(
-                            'assets/share.png',
-                            width: 20,
-                            height: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                ImageWidget(
+                  url: '${APIs.eventImageIP}/${event.coverImage}',
+                  fit: BoxFit.cover,
                 ),
-                height(0.01),
-                Row(
-                  children: [
-                    Spacer(),
-
-                    InkWell(
-                      onTap: () {
-                        String selectedReason = '';
-                        final otherReasonController = TextEditingController();
-                        final descController = TextEditingController();
-
-                        showModalBottomSheet(
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          context: context,
-                          builder: (context) {
-                            return StatefulBuilder(
-                              builder: (context, setModalState) {
-                                return Container(
-                                  padding: EdgeInsets.only(
-                                    left: 20,
-                                    right: 20,
-                                    top: 20,
-                                    bottom:
-                                        MediaQuery.of(
-                                          context,
-                                        ).viewInsets.bottom +
-                                        20,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Get.isDarkMode
-                                        ? const Color(0xff141821)
-                                        : whiteColor,
-                                    borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(30),
-                                    ),
-                                  ),
-                                  child: SingleChildScrollView(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Center(
-                                          child: Container(
-                                            width: 50,
-                                            height: 5,
-                                            decoration: BoxDecoration(
-                                              color: greyColor.withValues(
-                                                alpha: 0.3,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                          ),
-                                        ),
-                                        height(0.02),
-                                        const Text(
-                                          'Report Event',
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const Text(
-                                          'Please select a reason for reporting this event.',
-                                          style: TextStyle(
-                                            color: greyColor,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                        height(0.02),
-                                        ...[
-                                          'Spam',
-                                          'Inappropriate Content',
-                                          'Harassment',
-                                          'Copyright Issue',
-                                          'Other',
-                                        ].map((reason) {
-                                          return RadioListTile<String>(
-                                            contentPadding: EdgeInsets.zero,
-                                            title: Text(
-                                              reason,
-                                              style: TextStyle(
-                                                color: Get.isDarkMode
-                                                    ? whiteColor
-                                                    : blackColor,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                            value: reason,
-                                            groupValue: selectedReason,
-                                            activeColor: mainThemeColor,
-                                            onChanged: (value) {
-                                              setModalState(() {
-                                                selectedReason = value!;
-                                              });
-                                            },
-                                          );
-                                        }),
-                                        if (selectedReason == 'Other') ...[
-                                          height(0.01),
-                                          MyTextField(
-                                            hintText: 'Enter your reason...',
-                                            controller: otherReasonController,
-                                          ),
-                                        ],
-                                        height(0.02),
-                                        const Text(
-                                          'Description',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        height(0.01),
-                                        MyTextField(
-                                          hintText: 'Provide more details...',
-                                          controller: descController,
-                                          maxLines: 4,
-                                        ),
-                                        height(0.03),
-                                        MyButton(
-                                          label: 'Submit Report',
-                                          onTap: () async {
-                                            String finalReason =
-                                                selectedReason == 'Other'
-                                                ? otherReasonController.text
-                                                      .trim()
-                                                : selectedReason;
-
-                                            if (finalReason.isEmpty) {
-                                              myWarningDialog(
-                                                subtitle:
-                                                    'Please select or enter a reason.',
-                                              );
-                                              return;
-                                            }
-
-                                            myLoadingDialog();
-                                            await eventController.reportEvent(
-                                              eventId: '${event.id}',
-                                              reason: finalReason,
-                                              description: descController.text
-                                                  .trim(),
-                                            );
-                                            Get.back(); // close loading
-                                            Get.back(); // close sheet
-
-                                            mySuccessDialog(
-                                              subtitle:
-                                                  'Report submitted. We will review it shortly.',
-                                              ontap: () => Get.back(),
-                                            );
-                                          },
-                                          labelColor: whiteColor,
-                                        ),
-                                        height(0.01),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        );
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: greyColor.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(50),
-                          border: Border.all(
-                            color: whiteColor.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Center(
-                          child: Icon(Icons.more_vert, color: whiteColor),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                height(0.02),
-
-                height(0.01),
-                SizedBox(
-                  width: Get.width * 0.4,
-                  child: Text(
-                    event.name?.capitalize ?? 'N/A',
-                    style: TextStyle(
-                      color: Get.isDarkMode ? whiteColor : blackColor,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 22,
-
-                      fontFamily: 'Google Sans',
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x99071426), Color(0x00071426), Color(0xFF071426)],
+                      stops: [0.0, 0.4, 1.0],
                     ),
                   ),
                 ),
-                height(0.02),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 50,
-                      height: 50,
-                      child: ClipOval(
-                        child: ImageWidget(
-                          url: '${event.artist?.profileImage}',
-                          fit: BoxFit.fill,
-                          width: 50,
-                          height: 50,
+                Padding(
+                  padding: myPadding,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      height(0.03),
+                      Row(
+                        children: [
+                          _glassButton(
+                            onTap: () => Get.back(),
+                            child: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: ivory,
+                              size: 18,
+                            ),
+                          ),
+                          if (APIs.muxDemoPlaybackId.isNotEmpty) ...[
+                            width(0.02),
+                            _glassButton(
+                              onTap: () => Get.to(
+                                () => ReplayPlayerScreen(
+                                  playbackId: APIs.muxDemoPlaybackId,
+                                  title: event.name,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.smart_display_rounded,
+                                color: goldPrimary,
+                                size: 18,
+                              ),
+                            ),
+                          ],
+                          const Spacer(),
+                          _glassButton(
+                            onTap: () => setState(() => like = !like),
+                            child: Icon(
+                              like
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              color: like ? goldPrimary : ivory,
+                              size: 18,
+                            ),
+                          ),
+                          width(0.02),
+                          _glassButton(
+                            onTap: () async {
+                              await myShare(message: APIs.mainIP);
+                            },
+                            child: const Icon(
+                              Icons.ios_share_rounded,
+                              color: ivory,
+                              size: 18,
+                            ),
+                          ),
+                          width(0.02),
+                          _glassButton(
+                            onTap: _showReportSheet,
+                            child: const Icon(
+                              Icons.more_vert,
+                              color: ivory,
+                              size: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      // Badge LIVE / LIVE CONCERT
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 11,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isLive
+                              ? liveRed
+                              : midnightPrimary.withValues(alpha: 0.55),
+                          borderRadius: BorderRadius.circular(20),
+                          border: isLive
+                              ? null
+                              : Border.all(
+                                  color: goldSecondary.withValues(alpha: 0.5),
+                                ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.circle,
+                              color: isLive ? Colors.white : goldPrimary,
+                              size: 8,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              isLive ? 'live_now'.tr : 'live_concert'.tr,
+                              style: TextStyle(
+                                color: isLive ? Colors.white : ivory,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    width(0.02),
-
-                    Text(
-                      event.artist?.artistName ?? 'N/A',
-                      style: TextStyle(
-                        color: Get.isDarkMode ? whiteColor : blackColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                      height(0.012),
+                      Text(
+                        event.name?.capitalize ?? 'N/A',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: ivory,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 30,
+                          height: 1.05,
+                          fontFamily: 'Google Sans',
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        (event.artist?.artistName ?? 'home_live_stream'.tr)
+                            .toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: goldPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      height(0.015),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
 
+          // ── Contenu défilant
           Expanded(
             child: SingleChildScrollView(
-              child: Padding(
-                padding: myPadding,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              padding: EdgeInsets.fromLTRB(
+                myPadding.horizontal / 2,
+                10,
+                myPadding.horizontal / 2,
+                20,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Ligne date / heure compacte
+                  Row(
+                    children: [
+                      _metaItem(
+                        Icons.calendar_month_rounded,
+                        AppDate.fullDate(event.startDateTime),
+                      ),
+                      _metaDivider(),
+                      _metaItem(
+                        Icons.schedule_rounded,
+                        _timeLabel(event.startDateTime!),
+                      ),
+                    ],
+                  ),
+                  height(0.02),
+                  // Chips de features
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 10,
+                    children: [
+                      _featureChip(Icons.high_quality_rounded, 'home_chip_4k'.tr),
+                      _featureChip(
+                        Icons.surround_sound_rounded,
+                        'home_chip_dolby'.tr,
+                      ),
+                      _featureChip(
+                        Icons.chat_bubble_outline_rounded,
+                        'home_chip_vip_chat'.tr,
+                      ),
+                    ],
+                  ),
+                  height(0.025),
+
+                  // ── Inclus
+                  Container(
+                    width: Get.width,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: kCardGradient,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: goldSecondary.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          width: Get.width * 0.48,
-                          child: Container(
-                            padding: myPadding,
-                            decoration: BoxDecoration(
-                              color: Get.isDarkMode
-                                  ? darkmodeColor
-                                  : whiteColor,
-                              border: Border.all(
-                                color: Get.isDarkMode
-                                    ? darkmodeColor
-                                    : borderGreyColor,
-                              ),
-                              borderRadius: BorderRadius.circular(15),
+                        Text(
+                          'home_whats_included'.tr,
+                          style: const TextStyle(
+                            color: goldPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        height(0.018),
+                        ...List.generate(futureList.length, (index) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom:
+                                  index == futureList.length - 1 ? 0 : 14,
                             ),
-                            child: Column(
+                            child: Row(
                               children: [
                                 Container(
-                                  padding: EdgeInsets.all(10),
+                                  padding: const EdgeInsets.all(7),
                                   decoration: BoxDecoration(
-                                    color: Color(0xffF3E3E5),
-                                    borderRadius: BorderRadius.circular(15),
+                                    color: goldPrimary.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: Image.asset('assets/date_icon2.png'),
-                                ),
-                                height(0.01),
-                                Text(
-                                  'Live Date',
-                                  style: TextStyle(
-                                    color: Color(0xff737373),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                  child: Icon(
+                                    futureList[index]['icon'] as IconData,
+                                    color: goldPrimary,
+                                    size: 17,
                                   ),
                                 ),
-                                Text(
-                                  DateFormat(
-                                    'MMM dd, HH:mm a',
-                                  ).format(event.startDateTime!),
-                                  style: TextStyle(
-                                    color: Get.isDarkMode
-                                        ? greyColor
-                                        : blackColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 17,
+                                width(0.035),
+                                Expanded(
+                                  child: Text(
+                                    futureList[index]['name'],
+                                    style: const TextStyle(
+                                      color: ivory,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-
-                        Spacer(),
-
-                        SizedBox(
-                          width: Get.width * 0.4,
-                          child: Container(
-                            padding: myPadding,
-                            decoration: BoxDecoration(
-                              color: Get.isDarkMode
-                                  ? darkmodeColor
-                                  : borderGreyColor,
-                              border: Border.all(
-                                color: Get.isDarkMode
-                                    ? darkmodeColor
-                                    : borderGreyColor,
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: Column(
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xffE5EEFB),
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                  child: Image.asset('assets/clock.png'),
-                                ),
-                                height(0.01),
-                                Text(
-                                  'Kick Off',
-                                  style: TextStyle(
-                                    color: Color(0xff737373),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                Text(
-                                  DateFormat(
-                                    'HH:mm a',
-                                  ).format(event.endDateTime!),
-                                  style: TextStyle(
-                                    color: Get.isDarkMode
-                                        ? greyColor
-                                        : blackColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                          );
+                        }),
                       ],
                     ),
-                    height(0.01),
-                    Text(
-                      'Description',
-                      style: TextStyle(
-                        color: Color(0xff262626),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                    SizedBox(
-                      width: Get.width * 0.8,
-                      child: Text(
-                        event.description ?? 'N/A',
-                        style: TextStyle(
-                          color: greyColor,
-                          fontWeight: FontWeight.w400,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    height(0.02),
+                  ),
+                  height(0.025),
 
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      padding: EdgeInsets.all(0),
-                      itemBuilder: (context, index) {
-                        String title = futureList[index]['name'];
-                        return Row(
-                          children: [
-                            Image.asset(futureList[index]['image']),
-                            width(0.02),
-                            Text(
-                              title.toUpperCase(),
-                              style: TextStyle(
-                                color: Color(0xff525252),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        );
+                  // ── À propos
+                  Text(
+                    'home_about_this_event'.tr,
+                    style: const TextStyle(
+                      color: textMuted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  height(0.012),
+                  Text(
+                    event.description ?? 'N/A',
+                    style: const TextStyle(
+                      color: textMuted,
+                      fontWeight: FontWeight.w400,
+                      fontSize: 14,
+                      height: 1.55,
+                    ),
+                  ),
+
+                  // ── Bouton "Join Room" (jour J, avant le live)
+                  if (canJoinRoom()) ...[
+                    height(0.025),
+                    MyButton(
+                      label: 'home_join_room'.tr,
+                      buttonColor: Colors.transparent,
+                      borderColor: goldPrimary,
+                      labelColor: goldPrimary,
+                      onTap: () async {
+                        await Get.to(() => PreStreamScreen(event: event));
+                        await myInitMethod();
+                        final data = eventController.userJoinedEvents.value.data
+                            ?.firstWhere((element) => element.id == event.id);
+                        data != null ? event = data : null;
+                        setState(() {});
                       },
-                      separatorBuilder: (context, index) {
-                        return height(0.03);
-                      },
-                      itemCount: futureList.length,
                     ),
-
-                    height(0.01),
-
-                    Text(
-                      'Select Access Tier',
-                      style: TextStyle(
-                        color: Color(0xff262626),
-                        fontWeight: FontWeight.w400,
-                        fontSize: 18,
-                      ),
-                    ),
-
-                    height(0.02),
-                    if (canJoinRoom()) ...[
-                      MyButton(
-                        label: 'Join Room',
-                        onTap: () async {
-                          await Get.to(() => PreStreamScreen(event: event));
-                          await myInitMethod();
-                          final data = eventController
-                              .userJoinedEvents
-                              .value
-                              .data
-                              ?.firstWhere((element) => element.id == event.id);
-                          data != null ? event = data : null;
-                          setState(() {});
-                        },
-                      ),
-                      height(0.01),
-                    ],
-                    (event.ticketBuyerIds ?? []).contains(
-                          userModel.value.user?.id ?? 1,
-                        )
-                        ? MyButton(
-                            label: isLive
-                                ? 'Join Event'
-                                : event.status == 'completed'
-                                ? 'Event Completed'
-                                : 'Wait for Live',
-                            onTap: !isLive
-                                ? () {}
-                                : event.status == 'completed'
-                                ? () {}
-                                : () async {
-                                    await Get.to(
-                                      () => JoinStream(event: event),
-                                    );
-                                    await myInitMethod();
-                                    final data = eventController
-                                        .userJoinedEvents
-                                        .value
-                                        .data
-                                        ?.firstWhere(
-                                          (element) => element.id == event.id,
-                                        );
-                                    data != null ? event = data : null;
-                                    setState(() {});
-                                  },
-                            image: 'assets/arrow.png',
-                            imageColor: whiteColor,
-                            labelColor: whiteColor,
-                          )
-                        : MyButton(
-                            label: 'Continue to Checkout',
-                            onTap: () async {
-                              final value = await Get.to(
-                                () => CheckOutScreen(event: event),
-                              );
-                              if (value != null) {
-                                event = event.copyWith(
-                                  ticketBuyerIds: [
-                                    ...(event.ticketBuyerIds ?? []),
-                                    userModel.value.user?.id ?? 1,
-                                  ],
-                                );
-                                setState(() {});
-                              }
-                            },
-                            image: 'assets/arrow.png',
-                            imageColor: whiteColor,
-                            labelColor: whiteColor,
-                          ),
                   ],
-                ),
+                  height(0.01),
+                ],
               ),
             ),
           ),
+
+          // ── Barre CTA sticky (toujours visible)
+          _buildStickyBar(isLive),
         ],
       ),
+    );
+  }
+
+  Widget _buildStickyBar(bool isLive) {
+    final bool hasTicket = _hasTicket;
+
+    Widget content;
+    if (hasTicket) {
+      // Déjà acheté : action selon le statut de l'event
+      final completed = event.status == 'completed';
+      content = MyButton(
+        label: isLive
+            ? 'home_join_event'.tr
+            : completed
+                ? 'home_event_completed'.tr
+                : 'home_wait_for_live'.tr,
+        image: 'assets/arrow.png',
+        imageColor: midnightPrimary,
+        labelColor: midnightPrimary,
+        buttonColor: (isLive) ? null : greyColor.withValues(alpha: 0.4),
+        onTap: (!isLive || completed)
+            ? () {}
+            : () async {
+                await Get.to(() => JoinStream(event: event));
+                await myInitMethod();
+                final data = eventController.userJoinedEvents.value.data
+                    ?.firstWhere((element) => element.id == event.id);
+                data != null ? event = data : null;
+                setState(() {});
+              },
+      );
+    } else {
+      // Pas encore acheté : prix du palier + checkout
+      content = Row(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'home_total'.tr,
+                style: const TextStyle(color: textMuted, fontSize: 12),
+              ),
+              Text(
+                '\$${event.ticketPrice}',
+                style: const TextStyle(
+                  color: ivory,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              Text(
+                'home_full_access'.tr,
+                style: const TextStyle(color: textMuted, fontSize: 11),
+              ),
+            ],
+          ),
+          width(0.04),
+          Expanded(
+            child: MyButton(
+              label: 'home_continue_to_checkout'.tr,
+              image: 'assets/arrow.png',
+              imageColor: midnightPrimary,
+              labelColor: midnightPrimary,
+              onTap: () async {
+                final value = await Get.to(
+                  () => CheckOutScreen(event: event),
+                );
+                if (value != null) {
+                  event = event.copyWith(
+                    ticketBuyerIds: [
+                      ...(event.ticketBuyerIds ?? []),
+                      userModel.value.user?.id ?? 1,
+                    ],
+                  );
+                  setState(() {});
+                }
+              },
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: midnightSecondary,
+        border: Border(
+          top: BorderSide(color: goldSecondary.withValues(alpha: 0.2)),
+        ),
+        boxShadow: const [
+          BoxShadow(color: Color(0x66000000), blurRadius: 16, offset: Offset(0, -4)),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+          child: content,
+        ),
+      ),
+    );
+  }
+
+  void _showReportSheet() {
+    String selectedReason = '';
+    final otherReasonController = TextEditingController();
+    final descController = TextEditingController();
+
+    showModalBottomSheet(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              decoration: const BoxDecoration(
+                color: cardDeep,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 50,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: goldSecondary.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    height(0.02),
+                    Text(
+                      'home_report_event'.tr,
+                      style: const TextStyle(
+                        color: ivory,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'home_report_event_msg'.tr,
+                      style: const TextStyle(color: textMuted, fontSize: 13),
+                    ),
+                    height(0.02),
+                    ...[
+                      {'value': 'Spam', 'label': 'home_reason_spam'.tr},
+                      {
+                        'value': 'Inappropriate Content',
+                        'label': 'home_reason_inappropriate'.tr,
+                      },
+                      {
+                        'value': 'Harassment',
+                        'label': 'home_reason_harassment'.tr,
+                      },
+                      {
+                        'value': 'Copyright Issue',
+                        'label': 'home_reason_copyright'.tr,
+                      },
+                      {'value': 'Other', 'label': 'home_reason_other'.tr},
+                    ].map((reason) {
+                      return RadioListTile<String>(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          reason['label']!,
+                          style: const TextStyle(
+                            color: ivory,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        value: reason['value']!,
+                        groupValue: selectedReason,
+                        activeColor: goldPrimary,
+                        onChanged: (value) {
+                          setModalState(() {
+                            selectedReason = value!;
+                          });
+                        },
+                      );
+                    }),
+                    if (selectedReason == 'Other') ...[
+                      height(0.01),
+                      MyTextField(
+                        hintText: 'home_enter_reason_hint'.tr,
+                        controller: otherReasonController,
+                      ),
+                    ],
+                    height(0.02),
+                    Text(
+                      'home_description'.tr,
+                      style: const TextStyle(
+                        color: ivory,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    height(0.01),
+                    MyTextField(
+                      hintText: 'home_provide_details_hint'.tr,
+                      controller: descController,
+                      maxLines: 4,
+                    ),
+                    height(0.03),
+                    MyButton(
+                      label: 'home_submit_report'.tr,
+                      onTap: () async {
+                        String finalReason = selectedReason == 'Other'
+                            ? otherReasonController.text.trim()
+                            : selectedReason;
+
+                        if (finalReason.isEmpty) {
+                          myWarningDialog(
+                            subtitle: 'home_select_enter_reason'.tr,
+                          );
+                          return;
+                        }
+
+                        myLoadingDialog();
+                        await eventController.reportEvent(
+                          eventId: '${event.id}',
+                          reason: finalReason,
+                          description: descController.text.trim(),
+                        );
+                        Get.back(); // close loading
+                        Get.back(); // close sheet
+
+                        mySuccessDialog(
+                          subtitle: 'home_report_submitted'.tr,
+                          ontap: () => Get.back(),
+                        );
+                      },
+                      labelColor: whiteColor,
+                    ),
+                    height(0.01),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

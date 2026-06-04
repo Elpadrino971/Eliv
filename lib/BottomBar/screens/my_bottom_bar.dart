@@ -2,6 +2,7 @@ import 'package:artist/BottomBar/screens/homeScreen/home_screen.dart';
 import 'package:artist/BottomBar/screens/profile/profile.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/vybz_live_screen.dart';
 import 'package:artist/Controllers/theme_controller.dart';
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/BottomBar/screens/Disscover/disscover_screen.dart';
 import 'package:artist/BottomBar/screens/my_tIckets/my_tickets_screen.dart';
@@ -52,13 +53,15 @@ class _MyBottomBarState extends State<MyBottomBar> {
     return Scaffold(
       body: screenList[currentIndex ?? 0],
 
-      bottomNavigationBar: Obx(
+      bottomNavigationBar: (currentIndex ?? 0) == 2
+          ? null
+          : Obx(
         () => Container(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           margin: const EdgeInsets.fromLTRB(15, 0, 15, 5),
           decoration: BoxDecoration(
             color: themeController.isDark.value
-                ? const Color(0xff0b0d12)
+                ? midnightSecondary
                 : whiteColor,
             borderRadius: BorderRadius.circular(35),
             boxShadow: const [
@@ -82,12 +85,18 @@ class _MyBottomBarState extends State<MyBottomBar> {
               currentIndex: currentIndex??0,
               selectedFontSize: 12,
               unselectedFontSize: 12,
-              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
+              selectedLabelStyle: const TextStyle(
+                fontFamily: AppFonts.ui,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1,
+              ),
               unselectedLabelStyle: const TextStyle(
-                fontWeight: FontWeight.w400,
+                fontFamily: AppFonts.ui,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 1,
               ),
               selectedItemColor: themeController.isDark.value
-                  ? redColor
+                  ? goldPrimary
                   : mainThemeColor,
               unselectedItemColor: const Color(0xff737373),
               elevation: 0,
@@ -99,18 +108,18 @@ class _MyBottomBarState extends State<MyBottomBar> {
               items: [
                 /// HOME
                 BottomNavigationBarItem(
-                  label: 'Home',
+                  label: 'nav_home'.tr,
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: currentIndex == 0
                         ? BoxDecoration(
                             color: themeController.isDark.value
-                                ? redColor.withValues(alpha: 0.2)
+                                ? goldPrimary.withValues(alpha: 0.2)
                                 : mainThemeColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(35),
                             border: Border.all(
                               color: themeController.isDark.value
-                                  ? redColor
+                                  ? goldPrimary
                                   : mainThemeColor,
                             ),
                           )
@@ -121,7 +130,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
                       height: 18,
                       color: currentIndex == 0
                           ? (themeController.isDark.value
-                                ? redColor
+                                ? goldPrimary
                                 : mainThemeColor)
                           : const Color(0xff737373),
                     ),
@@ -130,18 +139,18 @@ class _MyBottomBarState extends State<MyBottomBar> {
 
                 /// EXPLORE
                 BottomNavigationBarItem(
-                  label: 'Explore',
+                  label: 'nav_explore'.tr,
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: currentIndex == 1
                         ? BoxDecoration(
                             color: themeController.isDark.value
-                                ? redColor.withValues(alpha: 0.2)
+                                ? goldPrimary.withValues(alpha: 0.2)
                                 : mainThemeColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(35),
                             border: Border.all(
                               color: themeController.isDark.value
-                                  ? redColor
+                                  ? goldPrimary
                                   : mainThemeColor,
                             ),
                           )
@@ -152,7 +161,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
                       height: 18,
                       color: currentIndex == 1
                           ? (themeController.isDark.value
-                                ? redColor
+                                ? goldPrimary
                                 : mainThemeColor)
                           : const Color(0xff737373),
                     ),
@@ -161,18 +170,18 @@ class _MyBottomBarState extends State<MyBottomBar> {
 
                 /// LIVE
                 BottomNavigationBarItem(
-                  label: 'Live',
+                  label: 'nav_live'.tr,
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: currentIndex == 2
                         ? BoxDecoration(
                             color: themeController.isDark.value
-                                ? redColor.withValues(alpha: 0.2)
+                                ? goldPrimary.withValues(alpha: 0.2)
                                 : mainThemeColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(35),
                             border: Border.all(
                               color: themeController.isDark.value
-                                  ? redColor
+                                  ? goldPrimary
                                   : mainThemeColor,
                             ),
                           )
@@ -183,7 +192,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
                       height: 18,
                       color: currentIndex == 2
                           ? (themeController.isDark.value
-                                ? redColor
+                                ? goldPrimary
                                 : mainThemeColor)
                           : const Color(0xff737373),
                     ),
@@ -192,18 +201,18 @@ class _MyBottomBarState extends State<MyBottomBar> {
 
                 /// TICKETS
                 BottomNavigationBarItem(
-                  label: 'Tickets',
+                  label: 'nav_tickets'.tr,
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: currentIndex == 3
                         ? BoxDecoration(
                             color: themeController.isDark.value
-                                ? redColor.withValues(alpha: 0.2)
+                                ? goldPrimary.withValues(alpha: 0.2)
                                 : mainThemeColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(35),
                             border: Border.all(
                               color: themeController.isDark.value
-                                  ? redColor
+                                  ? goldPrimary
                                   : mainThemeColor,
                             ),
                           )
@@ -214,7 +223,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
                       height: 18,
                       color: currentIndex == 3
                           ? (themeController.isDark.value
-                                ? redColor
+                                ? goldPrimary
                                 : mainThemeColor)
                           : const Color(0xff737373),
                     ),
@@ -223,18 +232,18 @@ class _MyBottomBarState extends State<MyBottomBar> {
 
                 /// PROFILE
                 BottomNavigationBarItem(
-                  label: 'Profile',
+                  label: 'nav_profile'.tr,
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: currentIndex == 4
                         ? BoxDecoration(
                             color: themeController.isDark.value
-                                ? redColor.withValues(alpha: 0.2)
+                                ? goldPrimary.withValues(alpha: 0.2)
                                 : mainThemeColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(35),
                             border: Border.all(
                               color: themeController.isDark.value
-                                  ? redColor
+                                  ? goldPrimary
                                   : mainThemeColor,
                             ),
                           )
@@ -245,7 +254,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
                       height: 18,
                       color: currentIndex == 4
                           ? (themeController.isDark.value
-                                ? redColor
+                                ? goldPrimary
                                 : mainThemeColor)
                           : const Color(0xff737373),
                     ),

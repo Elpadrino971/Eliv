@@ -10,6 +10,57 @@ class APIs {
 
   static const String baseAPI = '$mainIP/api';
 
+  // ───────────────────────────────────────────────────────────────────────
+  // ABONNEMENT WEB (Stripe) — abos ARTISTES, modele hybride (IAP + Web).
+  //
+  // Page generique vybzzz.com qui gere les 3 paliers fondateurs (1->200) ET le
+  // Pro (200+) via current_founder_plan() cote Supabase, puis lance le Stripe
+  // Checkout avec le bon price_id. L'app y ajoute ?user_id=... (a mapper en
+  // client_reference_id cote web -> webhook). Voir docs/STRIPE_HYBRID_SETUP.md
+  // ───────────────────────────────────────────────────────────────────────
+  static const String webSubscribeUrl = 'https://vybzzz.com/subscribe';
+
+  // ───────────────────────────────────────────────────────────────────────
+  // MUX — REPLAY (VOD). Le PLAYBACK ID est PUBLIC (pas un secret).
+  // Pour tester un replay Mux dans l'app : colle ici un Playback ID d'un de
+  // tes assets Mux (dashboard Mux > Assets > Playback ID). Le bouton
+  // "Regarder le replay" apparait alors sur la fiche event.
+  // En prod, ce champ viendra du backend par event (signed playback id).
+  // ───────────────────────────────────────────────────────────────────────
+  static const String muxDemoPlaybackId =
+      'sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU';
+
+  /// CONCERT PRO (Mux Live) : playback id d'un flux LIVE (regie -> encodeur
+  /// RTMP/SRT -> Mux Live -> HLS). Vide = pas de live pro en cours.
+  /// En prod : un mux_live_playback_id par event, fourni par le backend.
+  static const String muxLivePlaybackId =
+      '801JS1xqX3AfFn8nWo3ISZUUdeW01402569WQXowjZojYg';
+
+  /// Plusieurs assets de demo pour valider le defilement du feed "Pour toi".
+  /// (En prod : un playback id par event/short, fourni par le backend.)
+  static const List<String> muxDemoPlaybackIds = [
+    '01c02msAhj7ug800qbzrvHkTNx4JZn79TBsCC8xtV7tc5k', // clip louis
+    'sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU', // KRYS
+    'MW3Ts7Jng66mhzjyUg4AGqQ9ow9yqjgwUI003lSPRLag', // YTDown
+  ];
+
+  /// Shorts UGC affichés dans l'onglet "Clips" (3e page du Live).
+  /// Front-end pour l'instant — à remplacer par la liste renvoyée par le backend
+  /// (les shorts uploadés via Mux Direct Upload). Vide = état "Créer un short".
+  static const List<String> muxShortsPlaybackIds = [
+    '01c02msAhj7ug800qbzrvHkTNx4JZn79TBsCC8xtV7tc5k',
+    'sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU',
+  ];
+
+  // ───────────────────────────────────────────────────────────────────────
+  // SHORTS UGC (upload vidéo utilisateur via Mux Direct Upload).
+  // [A IMPLEMENTER PAR LE DEV] Le backend cree un "direct upload" Mux
+  // (POST https://api.mux.com/video/v1/uploads avec le token secret) et
+  // renvoie { "upload_url": "https://storage.googleapis.com/..." }.
+  // L'app PUT ensuite la video sur cette URL. Voir docs/MUX_SHORTS_UGC.md
+  // ───────────────────────────────────────────────────────────────────────
+  static const String createShortUploadAPI = '$baseAPI/shorts/create-upload';
+
   //Auth
   static const String loginAPI = '$baseAPI/login';
   static const String signupAPI = '$baseAPI/sign-up';

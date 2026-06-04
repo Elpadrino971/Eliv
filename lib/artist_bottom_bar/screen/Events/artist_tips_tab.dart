@@ -5,6 +5,7 @@ import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ArtistTipsScreen extends StatefulWidget {
   const ArtistTipsScreen({super.key, required this.activities});
@@ -25,11 +26,11 @@ class _ArtistTipsScreenState extends State<ArtistTipsScreen> {
       children: [
         height(0.02),
         if (giftActivities.isEmpty)
-          const Expanded(
+          Expanded(
             child: Center(
               child: Text(
-                'No gifts received yet',
-                style: TextStyle(color: greyColor),
+                'art_no_gifts'.tr,
+                style: const TextStyle(color: greyColor),
               ),
             ),
           )
@@ -68,15 +69,15 @@ class _ArtistTipsScreenState extends State<ArtistTipsScreen> {
                             height: 40,
                           ),
                     title: Text(
-                      activity.userInfo?.fullName ?? 'anonymous',
+                      activity.userInfo?.fullName ?? 'art_msg_send_failed'.tr,
                       style: const TextStyle(
-                        color: blackColor,
+                        color: ivory,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
                     subtitle: Text(
-                      activity.description ?? 'Sent a gift',
+                      activity.description ?? 'art_sent_gift'.tr,
                       style: const TextStyle(
                         color: Color(0xff00A63E),
                         fontWeight: FontWeight.bold,

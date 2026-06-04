@@ -39,21 +39,31 @@ class MyPinInputField extends StatelessWidget {
             FilteringTextInputFormatter.digitsOnly,
           ],
           cursorHeight: 22,
-          cursorColor: blackColor,
-          style: TextStyle(fontSize: 25, color: Color(0xff23334A)),
+          cursorColor: Get.isDarkMode ? goldPrimary : blackColor,
+          style: TextStyle(
+            fontSize: 25,
+            fontWeight: FontWeight.w700,
+            color: Get.isDarkMode ? ivory : Color(0xff23334A),
+          ),
           decoration: InputDecoration(
             counterText: '',
-            fillColor: Color(0xffF3F3F5),
-
+            fillColor: Get.isDarkMode ? cardDeep : cardDeep,
             filled: true,
             contentPadding: const EdgeInsets.only(top: 2, bottom: 2, left: 2),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
             enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.transparent),
+              borderSide: BorderSide(
+                color: Get.isDarkMode
+                    ? goldSecondary.withValues(alpha: 0.3)
+                    : Colors.transparent,
+              ),
               borderRadius: BorderRadius.circular(15),
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.transparent),
+              borderSide: BorderSide(
+                color: Get.isDarkMode ? goldPrimary : Colors.transparent,
+                width: 1.4,
+              ),
               borderRadius: BorderRadius.circular(15),
             ),
           ),

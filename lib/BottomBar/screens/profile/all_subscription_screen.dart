@@ -18,6 +18,54 @@ class AllSubscriptionScreen extends StatefulWidget {
 class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
   final subscriptionController = Get.put(SubscriptionController());
 
+  /// [SCAFFOLD HYBRIDE] Bannière non-bloquante "s'abonner sur le web".
+  /// L'IAP reste le bouton principal (instantané) ; ceci est l'option marge.
+  Widget _webSaveBanner() {
+    return GestureDetector(
+      onTap: () => subscriptionController.subscribeOnWeb(),
+      child: Container(
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: goldPrimary.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: goldPrimary.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.savings_outlined, color: goldPrimary, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "S'abonner sur le web",
+                    style: TextStyle(
+                      color: ivory,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Meilleur prix, paiement sécurisé',
+                    style: TextStyle(color: textMuted, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_rounded,
+              color: goldPrimary,
+              size: 18,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -88,12 +136,12 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
                 ),
                 height(0.02),
                 Text(
-                  'Tap To Confirm Subscription',
+                  'sub_tap_confirm'.tr,
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
 
                 Text(
-                  'By continuing, you agree to pay for the following plan',
+                  'pay_confirm_continue'.tr,
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
                 ),
                 height(0.02),
@@ -121,15 +169,15 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
                                 subscriptionId: id,
                               )
                             : myWarningDialog(
-                                title: 'Purchasing failed',
-                                subtitle: 'Subscribing a new package failed',
-                                btnTitle: 'Continue',
+                                title: 'pay_purchasing_failed'.tr,
+                                subtitle: 'pay_subscribe_failed'.tr,
+                                btnTitle: 'common_continue'.tr,
                               );
                       },
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 15),
                         decoration: BoxDecoration(
-                          color: Get.isDarkMode ? redColor : mainThemeColor,
+                          color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                           borderRadius: BorderRadius.circular(20),
                           // boxShadow: [
                           //   BoxShadow(
@@ -172,8 +220,8 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
                                   height(0.005),
                                   Text(
                                     product.subscriptionPeriod == 'P1M'
-                                        ? 'Monthly Plan'
-                                        : 'Yearly Plan',
+                                        ? 'sub_monthly_plan'.tr
+                                        : 'sub_yearly_plan'.tr,
                                     style: TextStyle(
                                       color: whiteColor,
                                       fontWeight: FontWeight.w600,
@@ -226,28 +274,24 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Get.isDarkMode;
-
     return Scaffold(
-      backgroundColor: isDark ? darkmodeColor : const Color(0xffF8F8F8),
-      appBar: MyAppbar(title: 'Subscriptions'),
+      backgroundColor: midnightPrimary,
+      appBar: MyAppbar(title: 'subs_title'.tr),
       body: Obx(() {
         final list = subscriptionController.subscriptionModel.value.list;
 
         if (list == null) {
           return Center(
-            child: CircularProgressIndicator(color: mainThemeColor),
+            child: CircularProgressIndicator(color: goldPrimary),
           );
         }
 
         if (list.isEmpty) {
           return Center(
             child: Text(
-              'No Subscriptions Available',
+              'empty_no_subscriptions'.tr,
               style: TextStyle(
-                color: isDark
-                    ? whiteColor.withValues(alpha: 0.6)
-                    : const Color(0xff888888),
+                color: whiteColor.withValues(alpha: 0.6),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
@@ -255,35 +299,120 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          itemCount: list.length,
-          itemBuilder: (context, index) {
-            final sub = list[index];
-            return SubscriptionCard(
-              subscription: sub,
-              showButton: true,
-              onPurchaseTap: () async {
-                await fetchOffers(id: sub.id.toString(), title: sub.title!);
-                // await myAlertDialog(
-                //   title: 'Purchase Subscription',
-                //   content: 'Are you sure you want to purchase "${sub.title}"?',
-                //   onTap: () async {
-                //     Get.back();
-
-                //     await fetchOffers(id: sub.id.toString(), title: sub.title!);
-
-                //     // await subscriptionController.buySubscription(
-                //     //   fromArtist: widget.fromArtist,
-                //     //   subscriptionId: '${sub.id}',
-                //     // );
-                //   },
-                // );
-              },
-            );
-          },
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          children: [
+            _header(),
+            const SizedBox(height: 18),
+            ...list.map(
+              (sub) => SubscriptionCard(
+                subscription: sub,
+                showButton: true,
+                onPurchaseTap: () async {
+                  await fetchOffers(id: sub.id.toString(), title: sub.title!);
+                },
+              ),
+            ),
+            // Bannière "s'abonner sur le web" masquée sur iOS (anti-steering
+            // Apple 3.1.1 = risque de rejet). Conservée sur Android.
+            if (!Platform.isIOS) _webSaveBanner(),
+            const SizedBox(height: 18),
+            _footer(),
+          ],
         );
       }),
+    );
+  }
+
+  /// En-tête "CHOOSE YOUR PLAN" (style mockup VYBZZZ).
+  Widget _header() {
+    return Column(
+      children: [
+        RichText(
+          textAlign: TextAlign.center,
+          text: const TextSpan(
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.5,
+            ),
+            children: [
+              TextSpan(text: 'CHOOSE ', style: TextStyle(color: ivory)),
+              TextSpan(text: 'YOUR ', style: TextStyle(color: goldPrimary)),
+              TextSpan(text: 'PLAN', style: TextStyle(color: ivory)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'UNLOCK MORE · EARN MORE · LIVE MORE',
+          style: TextStyle(
+            color: textMuted,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Pied "Secure checkout · Cancel anytime".
+  Widget _footer() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: midnightSecondary,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: goldSecondary.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _footerItem(
+              Icons.lock_outline_rounded,
+              'Secure checkout',
+              'Your data is encrypted',
+            ),
+          ),
+          Container(width: 1, height: 34, color: goldSecondary.withValues(alpha: 0.2)),
+          Expanded(
+            child: _footerItem(
+              Icons.autorenew_rounded,
+              'Cancel anytime',
+              'No contracts',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _footerItem(IconData icon, String title, String subtitle) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, color: goldPrimary, size: 20),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: ivory,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: TextStyle(color: textMuted, fontSize: 10),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

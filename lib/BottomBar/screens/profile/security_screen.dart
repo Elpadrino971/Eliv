@@ -4,6 +4,7 @@ import 'package:artist/widgets/my_appBar.dart';
 // import 'package:artist/widgets/my_container.dart';
 import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 // import 'package:get/get_core/src/get_main.dart';
 // import 'package:get/get_navigation/src/extension_navigation.dart';
 
@@ -25,7 +26,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Security'),
+      appBar: MyAppbar(title: 'sec_title'.tr),
       body: SingleChildScrollView(
         child: Padding(
           padding: myPadding,
@@ -34,7 +35,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
             children: [
               height(0.08),
               Text(
-                'Old Password',
+                'sec_old_pwd'.tr,
                 style: TextStyle(
                   color: greyColor,
                   fontWeight: FontWeight.w600,
@@ -43,7 +44,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
               ),
               height(0.01),
               MyTextField(
-                hintText: 'Enter Password',
+                hintText: 'sec_enter_pwd'.tr,
                 controller: oldPasswordController,
                 isObscure: showPassword,
 
@@ -74,7 +75,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
               ),
               height(0.01),
               MyTextField(
-                hintText: 'Enter Password',
+                hintText: 'sec_enter_pwd'.tr,
                 controller: newPasswordController,
                 isObscure: showPassword2,
 
@@ -106,7 +107,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
               height(0.01),
 
               MyTextField(
-                hintText: 'Enter Password',
+                hintText: 'sec_enter_pwd'.tr,
                 controller: conformPasswordController,
                 isObscure: showPassword3,
 
@@ -128,7 +129,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
               height(0.01),
 
               // Text(
-              //   'Two-Factor Authentication',
+              //   'sec_2fa'.tr,
               //   style: TextStyle(
               //     color: greyColor,
               //     fontWeight: FontWeight.w600,
@@ -151,7 +152,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
               //               width(0.02),
 
               //               Text(
-              //                 'Enabled',
+              //                 'common_enabled'.tr,
               //                 style: TextStyle(
               //                   color: Get.isDarkMode ? whiteColor : blackColor,
               //                   fontWeight: FontWeight.bold,
@@ -181,7 +182,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
               //       height(0.01),
 
               //       Text(
-              //         'Two-factor authentication adds an extra layer of security to your account by requiring more than just a password to log in.',
+              //         'sec_2fa_desc'.tr,
               //         style: TextStyle(
               //           color: greyColor,
               //           fontWeight: FontWeight.w400,

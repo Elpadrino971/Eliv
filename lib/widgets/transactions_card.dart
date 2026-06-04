@@ -60,7 +60,7 @@ class _TransactionsCardState extends State<TransactionsCard> {
           Text(
             widget.date,
             style: TextStyle(
-              color: greyColor.withValues(alpha: 0.3),
+              color: textMuted,
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
@@ -69,7 +69,7 @@ class _TransactionsCardState extends State<TransactionsCard> {
           Text(
             widget.subTitle,
             style: TextStyle(
-              color: greyColor.withValues(alpha: 0.3),
+              color: textMuted,
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
@@ -81,7 +81,7 @@ class _TransactionsCardState extends State<TransactionsCard> {
               Text(
                 widget.name,
                 style: TextStyle(
-                  color: greyColor.withValues(alpha: 0.3),
+                  color: textMuted,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),

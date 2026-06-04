@@ -6,8 +6,7 @@ import 'package:artist/widgets/my_appBar.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class RevenueScreen extends StatefulWidget {
@@ -36,7 +35,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
     {'title': 'Bank Payout', 'date': 'Jan 28', 'price': '-\$5,000'},
   ];
 
-  List<Map> methodsList = [
+  List<Map> get methodsList => [
     {
       'image': 'assets/chase_icon.png',
       'title': 'Chase Business',
@@ -44,8 +43,8 @@ class _RevenueScreenState extends State<RevenueScreen> {
     },
     {
       'image': 'assets/add_icon.png',
-      'title': 'Add Method',
-      'subTitle': 'Connect Stripe',
+      'title': 'art_add_method'.tr,
+      'subTitle': 'art_connect_stripe'.tr,
     },
   ];
 
@@ -54,7 +53,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Revenue'),
+      appBar: MyAppbar(title: 'rev_revenue'.tr),
 
       body: SingleChildScrollView(
         child: Padding(
@@ -63,15 +62,15 @@ class _RevenueScreenState extends State<RevenueScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Earnings',
+                'rev_earnings'.tr,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: blackColor,
+                  color: ivory,
                 ),
               ),
               Text(
-                'Financial Hub',
+                'studio_financial_hub'.tr,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -93,7 +92,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
                         ),
                         Spacer(),
                         Text(
-                          'Default',
+                          'common_default'.tr,
                           style: TextStyle(
                             color: whiteColor,
                             fontWeight: FontWeight.bold,
@@ -124,7 +123,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
                     ),
 
                     MyButton(
-                      label: 'Withdraw',
+                      label: 'art_withdraw'.tr,
                       onTap: () {
                         Get.to(() => const ArtistWithdraw());
                       },
@@ -135,9 +134,9 @@ class _RevenueScreenState extends State<RevenueScreen> {
               ),
               height(0.02),
               Text(
-                ' Revenue Streams',
+                'art_revenue_streams'.tr,
                 style: TextStyle(
-                  color: blackColor,
+                  color: ivory,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -214,9 +213,9 @@ class _RevenueScreenState extends State<RevenueScreen> {
                   ),
                   width(0.02),
                   Text(
-                    ' Transactions',
+                    'art_transactions'.tr,
                     style: TextStyle(
-                      color: blackColor,
+                      color: ivory,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -229,7 +228,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
                       Get.to(() => TranssactinHistory());
                     },
                     child: Text(
-                      'View All',
+                      'art_view_all'.tr,
                       style: TextStyle(
                         color: Color(0xff737373),
                         fontSize: 16,
@@ -294,7 +293,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
                   ),
                   width(0.02),
                   Text(
-                    '  Payout Methods',
+                    'art_payout_methods'.tr,
                     style: TextStyle(
                       color: Get.isDarkMode ? whiteColor : blackColor,
                       fontWeight: FontWeight.bold,
@@ -320,7 +319,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
                       border: BoxBorder.all(
                         color: Get.isDarkMode
                             ? methodsList[index]['title'] == _selected
-                                  ? redColor
+                                  ? goldPrimary
                                   : greyColor.withValues(alpha: 0.2)
                             : methodsList[index]['title'] == _selected
                             ? mainThemeColor
@@ -374,7 +373,7 @@ class _RevenueScreenState extends State<RevenueScreen> {
                                 color: Color(0xffDCFCE7),
                                 border: BoxBorder.all(color: Color(0xff00A63E)),
                                 widget: Text(
-                                  'Primary',
+                                  'art_primary'.tr,
                                   style: TextStyle(
                                     color: Color(0xff00A63E),
                                     fontWeight: FontWeight.bold,

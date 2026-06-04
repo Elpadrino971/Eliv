@@ -20,6 +20,7 @@ export 'my_page.dart';
 export 'my_pin_input_field.dart';
 export 'my_tab_bar.dart';
 export 'next_performance_card.dart';
+export 'section_header.dart';
 export 'transactions_card.dart';
 export 'upcoming_event_tile.dart';
 export 'live_event_card.dart';

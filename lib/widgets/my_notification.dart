@@ -34,7 +34,7 @@ class _MyNotificationState extends State<MyNotification> {
             Text(
               widget.title,
               style: TextStyle(
-                color: blackColor,
+                color: ivory,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),

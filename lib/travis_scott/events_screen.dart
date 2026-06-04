@@ -5,7 +5,7 @@ import 'package:artist/widgets/my_container.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:artist/Global/app_date.dart';
 
 class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key, required this.events});
@@ -29,7 +29,7 @@ class _EventsScreenState extends State<EventsScreen> {
           //     Text(
           //       'Live Experience',
           //       style: TextStyle(
-          //         color: blackColor,
+          //         color: ivory,
           //         fontSize: 15,
           //         fontWeight: FontWeight.bold,
           //       ),
@@ -85,7 +85,7 @@ class _EventsScreenState extends State<EventsScreen> {
           //         'The After Hours Tour',
 
           //         style: TextStyle(
-          //           color: blackColor,
+          //           color: ivory,
           //           fontWeight: FontWeight.bold,
           //           fontSize: 15,
           //         ),
@@ -104,9 +104,9 @@ class _EventsScreenState extends State<EventsScreen> {
           //   trailing: Image.asset('assets/stop.png', width: 30, height: 30),
           // ),
           Text(
-            'Events Schedule',
+            'live_events_schedule'.tr,
             style: TextStyle(
-              color: blackColor,
+              color: ivory,
               fontWeight: FontWeight.bold,
               fontSize: 15,
             ),
@@ -115,7 +115,7 @@ class _EventsScreenState extends State<EventsScreen> {
           height(0.01),
 
           widget.events.isEmpty
-              ? Center(child: Text('No Events Found'))
+              ? Center(child: Text('live_no_events'.tr))
               : Expanded(
                   child: ListView.separated(
                     separatorBuilder: (context, index) => height(0.01),
@@ -141,18 +141,20 @@ class _EventsScreenState extends State<EventsScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  DateFormat('MMM').format(
+                                  AppDate.format(
                                     event.startDateTime ?? DateTime.now(),
+                                    'MMM',
                                   ),
                                   style: TextStyle(
-                                    color: redColor,
+                                    color: goldPrimary,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
                                 ),
                                 Text(
-                                  DateFormat('dd').format(
+                                  AppDate.format(
                                     event.startDateTime ?? DateTime.now(),
+                                    'dd',
                                   ),
                                   style: TextStyle(
                                     color: blackColor.withValues(alpha: 0.5),
@@ -199,12 +201,12 @@ class _EventsScreenState extends State<EventsScreen> {
                               padding: myPadding,
                               decoration: BoxDecoration(
                                 color: Get.isDarkMode
-                                    ? redColor
+                                    ? goldPrimary
                                     : mainThemeColor,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
-                                'Tickets',
+                                'live_tickets'.tr,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: whiteColor,

@@ -11,7 +11,7 @@ import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:artist/Global/app_date.dart';
 
 class PerformancesScreen extends StatefulWidget {
   const PerformancesScreen({
@@ -37,7 +37,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
         child: Column(
           children: [
             widget.events.isEmpty
-                ? Center(child: Text('No Next Events Available'))
+                ? Center(child: Text('home_no_next_events'.tr))
                 : Expanded(
                     child: ListView.separated(
                       separatorBuilder: (context, index) => height(0.01),
@@ -80,7 +80,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                           noWidth: true,
                                           widget: Text(
                                             event.genre?.genre?.capitalize ??
-                                                'No Genre',
+                                                'home_no_genre'.tr,
                                             style: TextStyle(
                                               color: greyColor,
                                               fontWeight: FontWeight.w400,
@@ -92,11 +92,12 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                         SizedBox(
                                           width: Get.width * 0.5,
                                           child: Text(
-                                            event.name?.capitalize ?? 'No Name',
+                                            event.name?.capitalize ??
+                                                'home_no_name'.tr,
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
-                                              color: blackColor,
+                                              color: ivory,
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
                                             ),
@@ -108,7 +109,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                                   .artist
                                                   ?.artistName
                                                   ?.capitalize ??
-                                              'No Artist',
+                                              'home_no_artist'.tr,
                                           style: TextStyle(
                                             color: greyColor,
                                             fontWeight: FontWeight.w400,
@@ -123,9 +124,10 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                             ),
                                             width(0.01),
                                             Text(
-                                              DateFormat(
+                                              AppDate.format(
+                                                event.startDateTime,
                                                 'hh:mm a',
-                                              ).format(event.startDateTime!),
+                                              ),
                                               style: TextStyle(
                                                 color: textXolor,
                                                 fontSize: 13,
@@ -147,7 +149,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                             width(0.01),
                                             Text(
                                               event.artist?.address ??
-                                                  'No Address',
+                                                  'home_no_address'.tr,
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
@@ -180,7 +182,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                     Text(
                                       '\$${event.ticketPrice ?? '0.0'}',
                                       style: TextStyle(
-                                        color: blackColor,
+                                        color: ivory,
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -191,7 +193,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                     SizedBox(
                                       width: Get.width * 0.4,
                                       child: MyButton(
-                                        label: 'Get Tickets',
+                                        label: 'home_get_tickets'.tr,
                                         onTap: () {
                                           Get.to(
                                             () => CheckOutScreen(event: event),

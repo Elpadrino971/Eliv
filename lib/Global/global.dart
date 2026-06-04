@@ -10,7 +10,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:googleapis_auth/auth_io.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
@@ -26,11 +25,7 @@ const myPaddingTwo = EdgeInsets.only(top: 15, left: 15, right: 15);
 const textFieldPadding = EdgeInsets.symmetric(vertical: 5);
 const String themeKey = 'isDarkMode';
 
-AccessCredentials? credentials;
-
 const String revenueCatAppleApiKey = 'appl_KIbaeOroARylQdwdEhBeHEGIVms';
-
-String fcmAccessToken = '';
 
 Widget height(double height) {
   return SizedBox(height: Get.height * height);
@@ -193,19 +188,19 @@ Future<String?> pickTime(BuildContext context) async {
       return Theme(
         data: Theme.of(context).copyWith(
           timePickerTheme: TimePickerThemeData(
-            hourMinuteColor: mainThemeColor,
-            dayPeriodColor: mainThemeColor,
-            backgroundColor: whiteColor,
-            hourMinuteTextColor: whiteColor,
-            dialHandColor: mainThemeColor,
-            dialBackgroundColor: blackColor.withValues(alpha: 0.1),
-            dayPeriodTextColor: blackColor,
-            entryModeIconColor: blackColor,
-
-            helpTextStyle: TextStyle(color: blackColor),
+            backgroundColor: midnightSecondary,
+            hourMinuteColor: cardDeep,
+            hourMinuteTextColor: ivory,
+            dayPeriodColor: cardDeep,
+            dayPeriodTextColor: ivory,
+            dialHandColor: goldPrimary,
+            dialBackgroundColor: cardDeep,
+            dialTextColor: ivory,
+            entryModeIconColor: goldPrimary,
+            helpTextStyle: TextStyle(color: ivory),
           ),
           textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(foregroundColor: blackColor),
+            style: TextButton.styleFrom(foregroundColor: goldPrimary),
           ),
         ),
         child: child!,
@@ -242,13 +237,16 @@ Future<dynamic> myAlertDialog({
     context: Get.context!,
     builder: (context) {
       return AlertDialog(
-        backgroundColor: Get.isDarkMode ? Colors.black : whiteColor,
+        backgroundColor: midnightSecondary,
         elevation: 0,
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.w600)),
-        content: Text(content),
+        title: Text(
+          title,
+          style: TextStyle(fontWeight: FontWeight.w600, color: ivory),
+        ),
+        content: Text(content, style: TextStyle(color: textMuted)),
         actions: [
           TextButton(
-            child: Text('No'),
+            child: Text('No', style: TextStyle(color: greyColor)),
             onPressed: () {
               Get.back();
             },
@@ -270,12 +268,40 @@ dynamic parseError(
   bool doBack = false,
   bool showDialog = true,
 }) {
-  final data = value.split('error ').last;
-  final error = jsonDecode(data);
   if (doBack) {
     Get.back();
   }
-  showDialog ? myWarningDialog(subtitle: error['message']) : null;
+  String message = 'Something went wrong';
+  try {
+    final data = value.split('error ').last;
+    final error = jsonDecode(data);
+
+    // Message principal renvoye par l'API
+    if (error is Map && error['message'] != null) {
+      message = error['message'].toString();
+    }
+
+    // Erreurs de validation detaillees (style Laravel : {"errors": {"champ": ["..."]}})
+    if (error is Map && error['errors'] is Map) {
+      final details = <String>[];
+      (error['errors'] as Map).forEach((key, val) {
+        if (val is List) {
+          details.addAll(val.map((e) => e.toString()));
+        } else {
+          details.add(val.toString());
+        }
+      });
+      if (details.isNotEmpty) {
+        message = details.join('\n');
+      }
+    }
+  } catch (_) {
+    // Reponse non-JSON : on garde le texte brut s'il est court
+    final raw = value.replaceFirst('error ', '').trim();
+    if (raw.isNotEmpty && raw.length < 200) message = raw;
+  }
+
+  if (showDialog) myWarningDialog(subtitle: message);
 }
 
 /// Calculate total watch time from a list of events

@@ -73,7 +73,7 @@ class _TopupHistoryState extends State<TopupHistory> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Get.isDarkMode ? darkmodeColor : whiteColor,
-      appBar: MyAppbar(title: 'Topup History'),
+      appBar: MyAppbar(title: 'topup_history'.tr),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: myInitMethod,
@@ -99,7 +99,7 @@ class _TopupHistoryState extends State<TopupHistory> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'AVAILABLE BALANCE',
+                        'wallet_available_balance'.tr,
                         style: TextStyle(
                           color: whiteColor.withValues(alpha: 0.8),
                           fontWeight: FontWeight.bold,
@@ -152,8 +152,8 @@ class _TopupHistoryState extends State<TopupHistory> {
                 ),
                 height(0.03),
 
-                const Text(
-                  'Recent History',
+                Text(
+                  'recent_history'.tr,
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 height(0.02),
@@ -175,10 +175,10 @@ class _TopupHistoryState extends State<TopupHistory> {
                   final grouped = groupTransactions(transactions);
 
                   if (grouped.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Padding(
-                        padding: EdgeInsets.only(top: 20.0),
-                        child: Text('No Transactions Found'),
+                        padding: const EdgeInsets.only(top: 20.0),
+                        child: Text('empty_no_transactions'.tr),
                       ),
                     );
                   }

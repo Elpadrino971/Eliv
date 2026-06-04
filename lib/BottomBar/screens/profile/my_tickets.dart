@@ -3,6 +3,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/widgets/my_appbar.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 
@@ -17,7 +18,7 @@ class _MyTicketsState extends State<MyTickets> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'My Tickets'),
+      appBar: MyAppbar(title: 'my_tickets_title'.tr),
 
       body: Padding(
         padding: myPadding,
@@ -39,7 +40,7 @@ class _MyTicketsState extends State<MyTickets> {
                             width: Get.width * 0.3,
                             padding: EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: Get.isDarkMode ? redColor : mainThemeColor,
+                              color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                               borderRadius: BorderRadius.circular(25),
                             ),
                             child: Text(
@@ -104,7 +105,7 @@ class _MyTicketsState extends State<MyTickets> {
                           Text(
                             'Watch Now ',
                             style: TextStyle(
-                              color: Get.isDarkMode ? redColor : mainThemeColor,
+                              color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -112,7 +113,7 @@ class _MyTicketsState extends State<MyTickets> {
                           width(0.02),
                           Image.asset(
                             'assets/play_icon.png',
-                            color: Get.isDarkMode ? redColor : mainThemeColor,
+                            color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                           ),
                         ],
                       ),

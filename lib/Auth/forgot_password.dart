@@ -20,16 +20,16 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Forgot Password'),
+      appBar: MyAppbar(title: 'auth_forgot_password'.tr),
       body: Container(
         padding: myPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Reset Password',
+              'auth_reset_password'.tr,
               style: TextStyle(
-                color: blackColor,
+                color: ivory,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
               ),
@@ -48,7 +48,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
             height(0.02),
 
             MyTextField(
-              hintText: 'Email Address',
+              hintText: 'auth_email_address'.tr,
               controller: emailController,
 
               leading: Image.asset(
@@ -73,10 +73,10 @@ class _ForgotPasswordState extends State<ForgotPassword> {
               froResent: false,
             );
           },
-          label: 'Send Link',
+          label: 'auth_send_link'.tr,
           image: 'assets/arrow.png',
-          imageColor: whiteColor,
-          labelColor: whiteColor,
+          imageColor: midnightPrimary,
+          labelColor: midnightPrimary,
         ),
       ),
     );

@@ -3,7 +3,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/BottomBar/screens/profile/basic_info.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:flutter/material.dart';
-import 'package:get/route_manager.dart';
+import 'package:get/get.dart';
 
 class ArtistOnboardingScreen extends StatefulWidget {
   const ArtistOnboardingScreen({super.key});
@@ -29,7 +29,7 @@ class _ArtistOnboardingScreenState extends State<ArtistOnboardingScreen> {
             Spacer(),
 
             MyButton(
-              label: 'Continue',
+              label: 'common_continue'.tr,
               onTap: () {
                 Get.to(() => BasicInfo());
               },

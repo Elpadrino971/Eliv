@@ -27,7 +27,7 @@ class PointsCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: Get.isDarkMode
-                ? redColor
+                ? goldPrimary
                 : mainThemeColor.withValues(alpha: 0.3),
           ),
         ),
@@ -40,12 +40,12 @@ class PointsCard extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Get.isDarkMode ? redColor : mainThemeColor,
+                  color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                 ),
               ),
               child: Icon(
                 Icons.stars_rounded,
-                color: Get.isDarkMode ? redColor : mainThemeColor,
+                color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                 size: 24,
               ),
             ),
@@ -55,7 +55,7 @@ class PointsCard extends StatelessWidget {
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             Text(
-              'ARENA POINTS',
+              'home_arena_points'.tr,
               style: TextStyle(
                 color: greyColor,
                 fontSize: 10,
@@ -69,7 +69,7 @@ class PointsCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isHighlighted
                     ? (Get.isDarkMode
-                          ? redColor.withValues(alpha: 0.7)
+                          ? goldPrimary.withValues(alpha: 0.7)
                           : mainThemeColor.withValues(alpha: 0.7))
                     : boxColor,
                 borderRadius: BorderRadius.circular(12),
@@ -80,7 +80,7 @@ class PointsCard extends StatelessWidget {
                 style: TextStyle(
                   color: isHighlighted
                       ? (Get.isDarkMode ? whiteColor : mainThemeColor)
-                      : (Get.isDarkMode ? redColor : mainThemeColor),
+                      : (Get.isDarkMode ? goldPrimary : mainThemeColor),
                   fontWeight: FontWeight.bold,
                 ),
               ),

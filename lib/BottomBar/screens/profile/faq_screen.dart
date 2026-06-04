@@ -52,10 +52,10 @@ class _FaqScreenState extends State<FaqScreen> {
           }
 
           if (faqList.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                'No FAQs available right now.',
-                style: TextStyle(color: greyColor, fontSize: 16),
+                'empty_no_faqs'.tr,
+                style: const TextStyle(color: greyColor, fontSize: 16),
               ),
             );
           }
@@ -68,7 +68,7 @@ class _FaqScreenState extends State<FaqScreen> {
               final faq = faqList[index];
               return Container(
                 decoration: BoxDecoration(
-                  color: Get.isDarkMode ? const Color(0xff141821) : whiteColor,
+                  color: Get.isDarkMode ? cardDeep : whiteColor,
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(color: greyColor.withValues(alpha: 0.1)),
                   boxShadow: [
@@ -92,7 +92,7 @@ class _FaqScreenState extends State<FaqScreen> {
                         vertical: 4,
                       ),
                       title: Text(
-                        faq.name ?? 'No Question Title',
+                        faq.name ?? 'sup_no_title'.tr,
                         style: TextStyle(
                           color: Get.isDarkMode ? whiteColor : blackColor,
                           fontWeight: FontWeight.bold,
@@ -109,7 +109,7 @@ class _FaqScreenState extends State<FaqScreen> {
                             bottom: 16,
                           ),
                           child: Text(
-                            faq.description ?? 'No answer provided.',
+                            faq.description ?? 'sup_no_answer'.tr,
                             style: TextStyle(
                               color: greyColor.withValues(alpha: 0.8),
                               fontSize: 14,

@@ -1,3 +1,4 @@
+import 'package:artist/Global/api.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/artist_bottom_bar/screen/Events/artist_live_event_chat.dart';
@@ -69,7 +70,13 @@ class LiveStreamSideActions extends StatelessWidget {
                 child: Image.asset('assets/chart_icon1.png', width: 50),
               ),
         !fromArtist ? SizedBox() : height(0.02),
-        Image.asset('assets/share_icon.png', width: 50),
+        GestureDetector(
+          onTap: () => myShare(
+            message:
+                '${event.name?.capitalize ?? 'VybzzZ'} — ${APIs.mainIP}',
+          ),
+          child: Image.asset('assets/share_icon.png', width: 50),
+        ),
         height(0.02),
         // Image.asset('assets/show_icon.png', width: 50),
       ],

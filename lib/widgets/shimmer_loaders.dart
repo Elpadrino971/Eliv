@@ -19,13 +19,14 @@ class ShimmerBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Get.isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
-      highlightColor: Get.isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+      baseColor: Get.isDarkMode ? cardDeep : Colors.grey[300]!,
+      highlightColor:
+          Get.isDarkMode ? const Color(0xff1C3350) : Colors.grey[100]!,
       child: Container(
         height: height,
         width: width,
         decoration: BoxDecoration(
-          color: whiteColor,
+          color: Get.isDarkMode ? cardDeep : whiteColor,
           borderRadius: BorderRadius.circular(radius),
         ),
       ),

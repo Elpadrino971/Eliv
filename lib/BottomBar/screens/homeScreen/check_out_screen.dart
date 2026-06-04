@@ -1,4 +1,5 @@
 import 'package:artist/Controllers/controller.dart';
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
@@ -9,31 +10,42 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class CheckOutScreen extends StatefulWidget {
-  const CheckOutScreen({super.key, required this.event});
+  const CheckOutScreen({super.key, required this.event, this.discountPercent = 0});
   final Event event;
+
+  /// Remise (%) appliquee via une promo live (ex: 20 = -20%). 0 = aucune.
+  final int discountPercent;
 
   @override
   State<CheckOutScreen> createState() => _CheckOutScreenState();
 }
 
 class _CheckOutScreenState extends State<CheckOutScreen> {
-  List<Map> paymentList = [
-    {'name': 'Card', 'image': 'assets/card_icon.png'},
-    {'name': 'Pay', 'image': 'assets/pay_icon.png'},
+  List<Map> get paymentList => [
+    {'name': 'home_payment_card'.tr, 'image': 'assets/card_icon.png'},
+    {'name': 'home_payment_pay'.tr, 'image': 'assets/pay_icon.png'},
   ];
   String selectedPayment = '';
 
-  late List<Map> textList;
+  double get _ticketPrice {
+    final base = double.tryParse(widget.event.ticketPrice ?? '0') ?? 0;
+    return widget.discountPercent > 0
+        ? base * (1 - widget.discountPercent / 100)
+        : base;
+  }
+
+  List<Map> get textList => [
+    {
+      'title': 'home_standard_pass'.tr,
+      'subTitle': widget.discountPercent > 0
+          ? 'Promo -${widget.discountPercent}% appliquée'
+          : 'home_4k_uhd_access'.tr,
+      'price': '\$${_ticketPrice.toStringAsFixed(2)}',
+    },
+  ];
   String selectedAccess = '';
   @override
   void initState() {
-    textList = [
-      {
-        'title': 'Standard Pass',
-        'subTitle': '4K UHD Access',
-        'price': '\$${widget.event.ticketPrice}',
-      },
-    ];
     selectedPayment = paymentList[0]['name'];
     super.initState();
   }
@@ -46,8 +58,8 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Get.isDarkMode ? blackColor : scaffoldBackgroundColor,
-      appBar: MyAppbar(title: 'Checkout'),
+      backgroundColor: Get.isDarkMode ? midnightPrimary : scaffoldBackgroundColor,
+      appBar: MyAppbar(title: 'home_checkout'.tr),
       body: SingleChildScrollView(
         child: Padding(
           padding: myPadding,
@@ -55,11 +67,13 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Select Access Tier'.toUpperCase(),
-                style: TextStyle(
-                  color: Color(0xff737373),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                'home_select_access_tier'.tr.toUpperCase(),
+                style: const TextStyle(
+                  fontFamily: AppFonts.ui,
+                  color: textMuted,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  letterSpacing: 2.5,
                 ),
               ),
               height(0.02),
@@ -80,7 +94,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                       decoration: BoxDecoration(
                         color: Get.isDarkMode
                             ? selectedAccess == textList[index]['title']
-                                  ? redColor
+                                  ? goldPrimary
                                   : darkmodeColor
                             : selectedAccess == textList[index]['title']
                             ? mainThemeColor.withValues(alpha: 0.2)
@@ -89,7 +103,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         border: Border.all(
                           color: Get.isDarkMode
                               ? selectedAccess == textList[index]['title']
-                                    ? redColor
+                                    ? goldPrimary
                                     : borderGreyColor
                               : selectedAccess == textList[index]['title']
                               ? mainThemeColor
@@ -152,11 +166,13 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
               height(0.01),
 
               Text(
-                'Payment Method'.toUpperCase(),
-                style: TextStyle(
-                  color: Color(0xff737373),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+                'home_payment_method'.tr.toUpperCase(),
+                style: const TextStyle(
+                  fontFamily: AppFonts.ui,
+                  color: textMuted,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  letterSpacing: 2.5,
                 ),
               ),
               height(0.02),
@@ -195,7 +211,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         ),
                         color: Get.isDarkMode
                             ? selectedPayment == paymentList[index]['name']
-                                  ? redColor
+                                  ? goldPrimary
                                   : darkmodeColor
                             : selectedPayment == paymentList[index]['name']
                             ? mainThemeColor.withValues(alpha: 0.2)
@@ -236,7 +252,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Cardholder Name',
+                    'home_cardholder_name'.tr,
                     style: TextStyle(
                       color: Color(0xffA1A1A1),
                       fontSize: 16,
@@ -251,7 +267,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
                   height(0.01),
                   Text(
-                    'Card Number',
+                    'home_card_number'.tr,
                     style: TextStyle(
                       color: Color(0xffA1A1A1),
                       fontSize: 16,
@@ -272,7 +288,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         children: [
                           height(0.01),
                           Text(
-                            'Expiry Date',
+                            'home_expiry_date'.tr,
                             style: TextStyle(
                               color: Color(0xffA1A1A1),
                               fontSize: 16,
@@ -298,7 +314,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         children: [
                           height(0.01),
                           Text(
-                            'CVV',
+                            'home_cvv'.tr,
                             style: TextStyle(
                               color: Color(0xffA1A1A1),
                               fontSize: 16,
@@ -323,7 +339,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                   Row(
                     children: [
                       Text(
-                        'Total Charged',
+                        'home_total_charged'.tr,
                         style: TextStyle(
                           color: Color(0xffA1A1A1),
                           fontSize: 14,
@@ -339,7 +355,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                 (t) => t['title'] == selectedAccess,
                               )['price'],
                         style: TextStyle(
-                          color: blackColor,
+                          color: ivory,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -349,7 +365,8 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
                   height(0.01),
                   MyButton(
-                    label: 'AUTHORIZE PAYMENT',
+                    label: 'home_authorize_payment'.tr,
+                    labelColor: midnightPrimary,
                     onTap: () async {
                       final eventController = Get.find<EventController>();
 
@@ -374,9 +391,8 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
                       if (userPoints < price) {
                         myAlertDialog(
-                          title: 'Insufficient Points',
-                          content:
-                              'You do not have enough points to buy this event. Please top up your wallet.',
+                          title: 'home_insufficient_points'.tr,
+                          content: 'home_insufficient_points_msg'.tr,
                           onTap: () => Get.back(),
                         );
                         return;
@@ -384,9 +400,10 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
                       // 3. Confirmation and Buy
                       myAlertDialog(
-                        title: 'Confirm Purchase',
-                        content:
-                            'Are you sure you want to buy the ticket for ${widget.event.name}?',
+                        title: 'home_confirm_purchase'.tr,
+                        content: 'home_confirm_purchase_msg'.trParams({
+                          'name': '${widget.event.name}',
+                        }),
                         onTap: () async {
                           Get.back(); // Close alert
                           myLoadingDialog();
@@ -396,7 +413,6 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         },
                       );
                     },
-                    labelColor: whiteColor,
                   ),
                 ],
               ),

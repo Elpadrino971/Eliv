@@ -5,7 +5,7 @@ import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:artist/Global/app_date.dart';
 
 class MyCard extends StatefulWidget {
   const MyCard({
@@ -64,7 +64,7 @@ class _MyCardState extends State<MyCard> {
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: Text(
-                            'PURCHASED',
+                            'tk_purchased'.tr,
                             style: TextStyle(
                               color: whiteColor,
                               fontSize: 13,
@@ -81,11 +81,11 @@ class _MyCardState extends State<MyCard> {
                             right: 9,
                           ),
                           decoration: BoxDecoration(
-                            color: Color(0xffDD0000),
+                            color: liveRed,
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: Text(
-                            'LIVE NOW',
+                            'live_now'.tr,
                             style: TextStyle(
                               color: whiteColor,
                               fontSize: 13,
@@ -144,7 +144,7 @@ class _MyCardState extends State<MyCard> {
                       Row(
                         children: [
                           Text(
-                            'Today',
+                            'home_today'.tr,
                             style: TextStyle(
                               color: whiteColor,
                               fontWeight: FontWeight.w400,
@@ -163,9 +163,10 @@ class _MyCardState extends State<MyCard> {
                               ),
                               width(0.02),
                               Text(
-                                DateFormat(
+                                AppDate.format(
+                                  widget.event.startDateTime,
                                   'hh:mm a',
-                                ).format(widget.event.startDateTime!),
+                                ),
                                 style: TextStyle(
                                   color: textXolor,
                                   fontSize: 13,
@@ -200,9 +201,9 @@ class _MyCardState extends State<MyCard> {
                               Image.asset('assets/play.png'),
                               width(0.01),
                               Text(
-                                'Join Arena',
+                                'tk_join_arena'.tr,
                                 style: TextStyle(
-                                  color: blackColor,
+                                  color: midnightPrimary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -218,7 +219,7 @@ class _MyCardState extends State<MyCard> {
                             right: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: Get.isDarkMode ? redColor : mainThemeColor,
+                            color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
