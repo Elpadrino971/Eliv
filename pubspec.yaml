@@ -67,6 +67,23 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # Génère toutes les icônes (iOS/Android/Web/macOS) à partir d'une seule
+  # image carrée. Lancer ensuite: dart run flutter_launcher_icons
+  flutter_launcher_icons: ^0.14.4
+
+# Configuration des icônes d'app — source: assets/app_icon.png (1024x1024)
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/app_icon.png"
+  web:
+    generate: true
+    image_path: "assets/app_icon.png"
+  macos:
+    generate: true
+    image_path: "assets/app_icon.png"
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
