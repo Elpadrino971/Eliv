@@ -137,13 +137,13 @@ class _Header extends StatelessWidget {
               ? Image.asset(
                   previewAsset!,
                   width: double.infinity,
-                  height: 160,
+                  height: 210,
                   fit: BoxFit.cover,
                 )
               : ImageWidget(
                   url: '${APIs.eventImageIP}/${event.coverImage}',
                   width: double.infinity,
-                  height: 160,
+                  height: 210,
                   fit: BoxFit.cover,
                 ),
           // Dark overlay for legibility
