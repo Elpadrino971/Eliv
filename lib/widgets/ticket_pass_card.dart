@@ -16,10 +16,20 @@ import 'package:intl/intl.dart';
 /// id — it is decorative, not a scannable Code-128. To make it scannable later,
 /// add the `barcode_widget` (or `qr_flutter`) package and swap [_BarcodeStrip].
 class TicketPassCard extends StatelessWidget {
-  const TicketPassCard({super.key, required this.event, this.isPast = false});
+  const TicketPassCard({
+    super.key,
+    required this.event,
+    this.isPast = false,
+    this.previewAsset,
+  });
 
   final Event event;
   final bool isPast;
+
+  /// Optional local asset (e.g. 'assets/artist_image5.png') used instead of the
+  /// network cover/avatar. For the demo preview only — leave null for real
+  /// tickets so the artist's real images load from the server.
+  final String? previewAsset;
 
   String get _ticketId {
     final ticket = (event.tickets != null && event.tickets!.isNotEmpty)
@@ -51,7 +61,7 @@ class TicketPassCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _Header(event: event, isPast: isPast),
+          _Header(event: event, isPast: isPast, previewAsset: previewAsset),
           _Perforation(notchColor: pageColor),
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
@@ -106,10 +116,15 @@ class TicketPassCard extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.event, required this.isPast});
+  const _Header({
+    required this.event,
+    required this.isPast,
+    this.previewAsset,
+  });
 
   final Event event;
   final bool isPast;
+  final String? previewAsset;
 
   @override
   Widget build(BuildContext context) {
@@ -118,12 +133,19 @@ class _Header extends StatelessWidget {
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       child: Stack(
         children: [
-          ImageWidget(
-            url: '${APIs.eventImageIP}/${event.coverImage}',
-            width: double.infinity,
-            height: 160,
-            fit: BoxFit.cover,
-          ),
+          previewAsset != null
+              ? Image.asset(
+                  previewAsset!,
+                  width: double.infinity,
+                  height: 160,
+                  fit: BoxFit.cover,
+                )
+              : ImageWidget(
+                  url: '${APIs.eventImageIP}/${event.coverImage}',
+                  width: double.infinity,
+                  height: 160,
+                  fit: BoxFit.cover,
+                ),
           // Dark overlay for legibility
           Positioned.fill(
             child: DecoratedBox(
@@ -164,12 +186,19 @@ class _Header extends StatelessWidget {
                 Row(
                   children: [
                     ClipOval(
-                      child: ImageWidget(
-                        url: event.artist?.artistProfile ??
-                            '${APIs.profileIP}/default.png',
-                        width: 26,
-                        height: 26,
-                      ),
+                      child: previewAsset != null
+                          ? Image.asset(
+                              previewAsset!,
+                              width: 26,
+                              height: 26,
+                              fit: BoxFit.cover,
+                            )
+                          : ImageWidget(
+                              url: event.artist?.artistProfile ??
+                                  '${APIs.profileIP}/default.png',
+                              width: 26,
+                              height: 26,
+                            ),
                     ),
                     const SizedBox(width: 8),
                     Flexible(

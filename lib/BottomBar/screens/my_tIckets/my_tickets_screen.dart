@@ -126,7 +126,10 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
                                     ],
                                   ),
                                 ),
-                                TicketPassCard(event: demoTicketEvent()),
+                                TicketPassCard(
+                                  event: demoTicketEvent(),
+                                  previewAsset: 'assets/artist_image5.png',
+                                ),
                                 height(0.025),
                                 SizedBox(
                                   height: 360,
