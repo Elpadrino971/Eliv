@@ -9,12 +9,13 @@
 const { db, init } = require('./db');
 const { hash } = require('./auth');
 
-// Playback IDs Mux repris de lib/Global/api.dart (publics, pas des secrets)
+// Playback IDs Mux (publics, pas des secrets) — alignés sur lib/Global/api.dart
 const MUX = {
-  clipLouis: '01c02msAhj7ug800qbzrvHkTNx4JZn79TBsCC8xtV7tc5k',
-  krys: 'sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU',
-  ytdown: 'MW3Ts7Jng66mhzjyUg4AGqQ9ow9yqjgwUI003lSPRLag',
-  live: '801JS1xqX3AfFn8nWo3ISZUUdeW01402569WQXowjZojYg',
+  carousel: 'Ixf100DM00MIBOSiPjVkEfbToOgso01NuVin19ugUXbjQA', // concert vedette / bannière
+  pourToi1: 'OBFReMrxEbTxZVlQw202hYRSzVxVqu7BisBWWKBM3S18',
+  pourToi2: 'ZIAVh2AYyALPoxxrRW01wIqPDzX5eO1vYx1XSOSbj39o',
+  live1: 'EcO013Q00m3BON019ydIrEUd3YaAES4J9nx02arl7U862P4', // Prince - Purple Rain
+  live2: 'Qz0200nUKYr5025USFnUB9DrK3YzXY2k8jzjWcvq4SukBc', // Hans Zimmer
 };
 
 function hls(id) {
@@ -102,37 +103,37 @@ function run() {
     {
       artist_id: artistIds[0], name: 'After Hours Tour', cover_image: 'weeknd.jpg', ticket_price: '560',
       start: daysFromNow(20), genre_id: genreIds[3], status: 'published',
-      video_reel: hls(MUX.clipLouis), mux_playback_id: MUX.clipLouis, is_banner: 1, likes: 1240,
+      video_reel: hls(MUX.carousel), mux_playback_id: MUX.carousel, is_banner: 1, likes: 1240,
       description: 'The Weeknd — After Hours Tour, en direct sur VYBZZZ.',
     },
     {
       artist_id: artistIds[1], name: 'Renaissance Live', cover_image: 'beyonce.jpg', ticket_price: '720',
       start: daysFromNow(35), genre_id: genreIds[1], status: 'published',
-      video_reel: hls(MUX.ytdown), mux_playback_id: MUX.ytdown, is_banner: 1, likes: 3120,
+      video_reel: hls(MUX.carousel), mux_playback_id: MUX.carousel, is_banner: 1, likes: 3120,
       description: 'Beyoncé — Renaissance World Tour.',
     },
     {
       artist_id: artistIds[2], name: 'Happier Than Ever', cover_image: 'billie.jpg', ticket_price: '480',
       start: daysFromNow(12), genre_id: genreIds[1], status: 'published',
-      video_reel: hls(MUX.krys), mux_playback_id: MUX.krys, is_banner: 0, likes: 980,
+      video_reel: hls(MUX.pourToi1), mux_playback_id: MUX.pourToi1, is_banner: 0, likes: 980,
       description: 'Billie Eilish en concert.',
     },
     {
       artist_id: artistIds[3], name: 'Afro Nation Night', cover_image: 'burna.jpg', ticket_price: '390',
       start: daysFromNow(0, new Date().getHours()), genre_id: genreIds[0], status: 'live',
-      video_reel: hls(MUX.live), mux_playback_id: MUX.live, mux_live_playback_id: MUX.live, is_banner: 0, likes: 5400,
+      video_reel: hls(MUX.live1), mux_playback_id: MUX.live1, mux_live_playback_id: MUX.live1, is_banner: 0, likes: 5400,
       description: 'Burna Boy — LIVE maintenant.',
     },
     {
       artist_id: artistIds[4], name: 'Guyane Vibes', cover_image: 'krys.jpg', ticket_price: '150',
-      start: daysFromNow(2, 19), genre_id: genreIds[4], status: 'published',
-      video_reel: hls(MUX.krys), mux_playback_id: MUX.krys, is_banner: 0, likes: 410,
-      description: 'KRYS — Dancehall live depuis Cayenne.',
+      start: daysFromNow(0, new Date().getHours()), genre_id: genreIds[4], status: 'live',
+      video_reel: hls(MUX.live2), mux_playback_id: MUX.live2, mux_live_playback_id: MUX.live2, is_banner: 0, likes: 410,
+      description: 'KRYS — Dancehall LIVE depuis Cayenne.',
     },
     {
       artist_id: artistIds[0], name: 'Dawn FM Premiere', cover_image: 'weeknd.jpg', ticket_price: '300',
       start: daysFromNow(-15), end: daysFromNow(-15, 22), genre_id: genreIds[3], status: 'completed',
-      video_reel: hls(MUX.clipLouis), mux_playback_id: MUX.clipLouis, is_banner: 0, likes: 2100,
+      video_reel: hls(MUX.pourToi2), mux_playback_id: MUX.pourToi2, is_banner: 0, likes: 2100,
       description: 'Replay disponible.',
     },
   ];

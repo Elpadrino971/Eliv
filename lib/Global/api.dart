@@ -23,34 +23,33 @@ class APIs {
 
   // ───────────────────────────────────────────────────────────────────────
   // MUX — REPLAY (VOD). Le PLAYBACK ID est PUBLIC (pas un secret).
-  // Pour tester un replay Mux dans l'app : colle ici un Playback ID d'un de
-  // tes assets Mux (dashboard Mux > Assets > Playback ID). Le bouton
-  // "Regarder le replay" apparait alors sur la fiche event.
+  // CAROUSEL / concert vedette du 1er écran Home (16:9).
   // En prod, ce champ viendra du backend par event (signed playback id).
   // ───────────────────────────────────────────────────────────────────────
   static const String muxDemoPlaybackId =
-      'sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU';
+      'Ixf100DM00MIBOSiPjVkEfbToOgso01NuVin19ugUXbjQA'; // YTDown — carousel home
 
-  /// CONCERT PRO (Mux Live) : playback id d'un flux LIVE (regie -> encodeur
-  /// RTMP/SRT -> Mux Live -> HLS). Vide = pas de live pro en cours.
-  /// En prod : un mux_live_playback_id par event, fourni par le backend.
+  /// CONCERT PRO (Mux Live) : playback id d'un flux LIVE.
+  /// Vide = pas de live pro en cours.
   static const String muxLivePlaybackId =
-      '801JS1xqX3AfFn8nWo3ISZUUdeW01402569WQXowjZojYg';
+      'EcO013Q00m3BON019ydIrEUd3YaAES4J9nx02arl7U862P4'; // Prince - Purple Rain
 
-  /// Plusieurs assets de demo pour valider le defilement du feed "Pour toi".
-  /// (En prod : un playback id par event/short, fourni par le backend.)
-  static const List<String> muxDemoPlaybackIds = [
-    '01c02msAhj7ug800qbzrvHkTNx4JZn79TBsCC8xtV7tc5k', // clip louis
-    'sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU', // KRYS
-    'MW3Ts7Jng66mhzjyUg4AGqQ9ow9yqjgwUI003lSPRLag', // YTDown
+  /// LIVES (concerts en direct façon Mux Live).
+  static const List<String> muxLivePlaybackIds = [
+    'EcO013Q00m3BON019ydIrEUd3YaAES4J9nx02arl7U862P4', // Prince - Purple Rain (4:3)
+    'Qz0200nUKYr5025USFnUB9DrK3YzXY2k8jzjWcvq4SukBc', // Hans Zimmer (16:9)
   ];
 
-  /// Shorts UGC affichés dans l'onglet "Clips" (3e page du Live).
-  /// Front-end pour l'instant — à remplacer par la liste renvoyée par le backend
-  /// (les shorts uploadés via Mux Direct Upload). Vide = état "Créer un short".
+  /// Feed "POUR TOI" (reels verticaux).
+  static const List<String> muxDemoPlaybackIds = [
+    'OBFReMrxEbTxZVlQw202hYRSzVxVqu7BisBWWKBM3S18', // Kelly Rowland - Cater 2 U (9:16)
+    'ZIAVh2AYyALPoxxrRW01wIqPDzX5eO1vYx1XSOSbj39o', // rap short (9:16)
+  ];
+
+  /// Onglet "CLIPS" (shorts UGC, 3e page du Live).
   static const List<String> muxShortsPlaybackIds = [
-    '01c02msAhj7ug800qbzrvHkTNx4JZn79TBsCC8xtV7tc5k',
-    'sdsKbwNQ5UxSJhyUC9aBhM1m9kVQsJuKxGaBsMpI01VU',
+    'JI800K01xSrahXo97QPL01MuLITIH7m3AMvYeJk02Mcfsi00', // Linkin Park - In The End (160:89)
+    'BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g', // YTDown (16:9)
   ];
 
   // ───────────────────────────────────────────────────────────────────────
