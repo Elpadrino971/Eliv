@@ -1,6 +1,7 @@
 class APIs {
-  static const String mainIP = 'https://vybzzz.fryandeatfood.com'; //Live
-  // static const String mainIP = 'http://192.168.100.241:8002'; //Local
+  // static const String mainIP = 'https://vybzzz.fryandeatfood.com'; //Live (Hammad)
+  // DEV: notre backend local (backend/). Remettre la ligne Live avant la prod.
+  static const String mainIP = 'http://192.168.1.62:8002'; //Local (notre backend)
 
   ///For Assets
   static const String profileIP = '$mainIP/profiles';
