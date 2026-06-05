@@ -1,0 +1,21 @@
+{
+  "name": "vybzzz-backend",
+  "version": "1.0.0",
+  "description": "Backend de référence VYBZZZ — réplique le contrat d'API de l'app Flutter (vybzzz.fryandeatfood.com) et le complète (referral, ghost pass, Mux, etc.). NE remplace PAS le serveur d'Hammad : c'est une copie autonome qu'on possède et qu'on finit.",
+  "type": "commonjs",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "seed": "node src/seed.js",
+    "reset": "node src/seed.js --reset",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}
