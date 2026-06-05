@@ -216,24 +216,27 @@ class _LoginScreenState extends State<LoginScreen> {
                         height(0.02),
 
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            SizedBox(
-                              width: Get.width * 0.24,
+                            Expanded(
                               child: Divider(color: textXolor, thickness: 2),
                             ),
 
-                            Text(
-                              'auth_or_continue_with'.tr,
-                              style: TextStyle(
-                                color: textXolor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              child: Text(
+                                'auth_or_continue_with'.tr,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: textXolor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
 
-                            SizedBox(
-                              width: Get.width * 0.24,
+                            Expanded(
                               child: Divider(color: textXolor, thickness: 2),
                             ),
                           ],
