@@ -1,5 +1,6 @@
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/mux.dart';
+import 'package:artist/widgets/cast_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
@@ -116,6 +117,13 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
                   ),
                 ),
               ),
+            ),
+
+            // Bouton CAST / AirPlay (toujours visible, haut droite)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 10,
+              right: 12,
+              child: const CastButton(),
             ),
 
             // Badge EN DIRECT (flux live pro)
