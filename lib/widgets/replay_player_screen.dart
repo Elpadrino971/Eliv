@@ -10,13 +10,18 @@ import 'package:video_player/video_player.dart';
 class ReplayPlayerScreen extends StatefulWidget {
   const ReplayPlayerScreen({
     super.key,
-    required this.playbackId,
+    this.playbackId,
+    this.url,
     this.title,
     this.isLive = false,
-  });
+  }) : assert(playbackId != null || url != null, 'playbackId ou url requis');
 
   /// Playback ID Mux (public). On en derive l'URL HLS.
-  final String playbackId;
+  final String? playbackId;
+
+  /// URL HLS complète (ex. event.videoReel = https://stream.mux.com/<id>.m3u8).
+  /// Prioritaire sur [playbackId] si fournie.
+  final String? url;
   final String? title;
 
   /// true = flux LIVE (concert pro Mux Live) : pas de boucle, badge EN DIRECT.
@@ -40,9 +45,8 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
 
   Future<void> _init() async {
     try {
-      final c = VideoPlayerController.networkUrl(
-        Uri.parse(Mux.hlsUrl(widget.playbackId)),
-      );
+      final src = widget.url ?? Mux.hlsUrl(widget.playbackId!);
+      final c = VideoPlayerController.networkUrl(Uri.parse(src));
       await c.initialize();
       if (!widget.isLive) await c.setLooping(true);
       c.play();

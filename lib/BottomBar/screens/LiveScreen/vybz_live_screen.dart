@@ -6,12 +6,12 @@ import 'package:artist/Global/api.dart';
 import 'package:artist/Global/mux.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/live_router.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/artist_detail.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/create_short_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/replay_player_screen.dart';
-import 'package:artist/ZegoCloud/join_stream.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:flutter/material.dart';
@@ -716,7 +716,7 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
     super.dispose();
   }
 
-  void _joinLive() => Get.to(() => JoinStream(event: widget.event));
+  void _joinLive() => joinLive(widget.event);
   void _openDetail() => Get.to(() => FutureScreen(event: widget.event));
 
   @override

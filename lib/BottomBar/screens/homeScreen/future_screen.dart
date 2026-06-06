@@ -2,9 +2,9 @@ import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/live_router.dart';
 import 'package:artist/BottomBar/screens/homeScreen/check_out_screen.dart';
 import 'package:artist/Models/event_model.dart';
-import 'package:artist/ZegoCloud/join_stream.dart';
 import 'package:artist/ZegoCloud/pre_stream_screen.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:artist/widgets/my_button.dart';
@@ -470,7 +470,7 @@ class _FutureScreenState extends State<FutureScreen> {
         onTap: (!isLive || completed)
             ? () {}
             : () async {
-                await Get.to(() => JoinStream(event: event));
+                await joinLive(event);
                 await myInitMethod();
                 final data = eventController.userJoinedEvents.value.data
                     ?.firstWhere((element) => element.id == event.id);
