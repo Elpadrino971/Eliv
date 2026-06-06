@@ -62,6 +62,36 @@ static const String mainIP = 'http://192.168.X.X:8002';            // notre back
 
 ---
 
+## Héberger en ligne (URL fixe, accessible partout)
+
+Pour ne plus dépendre de ton Mac/Wi-Fi : déploie le backend. Une URL `https://…`
+sera utilisable depuis l'app (même en 4G) et pour le dashboard admin.
+
+### Option A — Render (recommandé, blueprint fourni)
+1. Pousse le repo sur GitHub (déjà fait).
+2. Sur [render.com](https://render.com) → **New → Blueprint** → choisis ce repo.
+   Render lit `backend/render.yaml` (Docker + volume `/data` pour persister la base).
+3. Déploiement auto. Tu obtiens une URL type `https://vybzzz-backend.onrender.com`.
+4. Admin : `https://…onrender.com/admin`.
+
+### Option B — Railway
+1. [railway.app](https://railway.app) → **New Project → Deploy from GitHub repo**.
+2. Root directory : `backend`. Railway détecte le `Dockerfile`.
+3. Ajoute une variable `JWT_SECRET` (chaîne aléatoire), et un **Volume** monté sur
+   `/data` + variable `VYBZZZ_DB=/data/vybzzz.sqlite` pour persister les données.
+4. Tu obtiens une URL `https://…up.railway.app`.
+
+### Après déploiement — pointer l'app
+Dans `lib/Global/api.dart` :
+```dart
+static const String mainIP = 'https://TON-URL.onrender.com'; // backend en ligne
+```
+→ l'app marche partout, **plus besoin du même Wi-Fi**.
+
+> ⚠️ Plan gratuit : la base SQLite est recréée + re-seedée si tu ne montes pas de
+> volume (`/data`). Avec le volume (render.yaml le fait), les données persistent.
+> Pour une vraie prod multi-utilisateurs : passer à Postgres.
+
 ## Ce qui est implémenté (réplique de l'API existante)
 
 | Domaine | Endpoints |

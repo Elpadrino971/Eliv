@@ -1,0 +1,18 @@
+# Blueprint Render (https://render.com) — déploiement en 1 clic.
+# Dans Render : New → Blueprint → pointe sur ce repo (rootDir backend).
+services:
+  - type: web
+    name: vybzzz-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: VYBZZZ_DB
+        value: /data/vybzzz.sqlite
+    disk:
+      name: vybzzz-data
+      mountPath: /data
+      sizeGB: 1
