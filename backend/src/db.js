@@ -166,6 +166,66 @@ function init() {
       region TEXT,
       created_at TEXT DEFAULT (datetime('now'))
     );
+
+    -- Admin : Packages, Subscriptions, Reviews, Withdrawals, Contact Leads, FAQ, CMS
+    CREATE TABLE IF NOT EXISTS packages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      points TEXT DEFAULT '0',
+      price TEXT DEFAULT '0',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      tier TEXT,
+      price TEXT DEFAULT '0',
+      period TEXT DEFAULT 'month',
+      active INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS reviews (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      event_id INTEGER,
+      rating INTEGER DEFAULT 5,
+      comment TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS withdrawals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      amount TEXT,
+      status TEXT DEFAULT 'pending',
+      bank TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS contact_leads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      email TEXT,
+      phone TEXT,
+      message TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS faqs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      question TEXT,
+      answer TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS cms_pages (
+      slug TEXT PRIMARY KEY,
+      title TEXT,
+      content TEXT,
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 }
 

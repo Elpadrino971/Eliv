@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VYBZZZ — Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ─── LOGIN ─── -->
+  <div id="login" class="login-wrap">
+    <div class="login-card">
+      <div class="login-left"><span>VYBZZZ</span></div>
+      <div class="login-right">
+        <h1>Login</h1>
+        <p>Access to our dashboard</p>
+        <input id="login-email" type="email" placeholder="Email" autocomplete="username" />
+        <input id="login-password" type="password" placeholder="Password" autocomplete="current-password" />
+        <button id="login-btn">Login</button>
+        <div id="login-error" class="login-error"></div>
+        <div class="login-hint">démo : admin@vybzzz.com / admin123</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── APP ─── -->
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand">VYBZZZ</div>
+      <nav id="nav"></nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="burger">≡</div>
+        <div class="topbar-right">
+          <span id="admin-name"></span>
+          <button id="logout-btn" class="logout">Déconnexion</button>
+        </div>
+      </header>
+      <section id="view" class="view"></section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

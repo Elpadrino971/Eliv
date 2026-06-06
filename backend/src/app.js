@@ -9,6 +9,7 @@ const { init } = require('./db');
 const authRoutes = require('./routes/auth.routes');
 const eventRoutes = require('./routes/events.routes');
 const miscRoutes = require('./routes/misc.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 init();
 
@@ -32,6 +33,12 @@ app.use('/giftImages', express.static(path.join(__dirname, '..', 'storage', 'gif
 // Santé
 app.get('/', (req, res) => res.json({ status: 'success', service: 'vybzzz-backend', version: '1.0.0' }));
 app.get('/api', (req, res) => res.json({ status: 'success', message: 'VYBZZZ API up' }));
+
+// Dashboard admin web (statique) sous /admin
+app.use('/admin', express.static(path.join(__dirname, '..', 'public', 'admin')));
+
+// API admin sous /api/admin
+app.use('/api/admin', adminRoutes);
 
 // Toutes les routes API sous /api (comme baseAPI = mainIP/api)
 app.use('/api', authRoutes);

@@ -30,7 +30,18 @@ npm run reset    # vider puis re-seeder (repart de zéro)
 npm run dev      # démarrage avec rechargement auto (node --watch)
 ```
 
-**Compte de démo :** `demo@vybzzz.com` / `password`
+**Compte de démo (app) :** `demo@vybzzz.com` / `password`
+
+## Dashboard admin web
+
+Une fois le serveur lancé, ouvre **`http://localhost:8002/admin`** dans un navigateur.
+
+**Compte admin :** `admin@vybzzz.com` / `admin123`
+
+Thème bleu nuit + or, sections : Dashboard (stats), Users (tabs + status + delete),
+Genres (CRUD), User Genre, Events, Packages, Subscription, Abusive (CRUD), Reviews,
+Withdrawals (approve/reject), Transactions, Reports, Contact Leads, FAQS (CRUD),
+CMS (édition), Profile. API sous `/api/admin/*` (auth Bearer, role=admin).
 
 ---
 

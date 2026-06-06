@@ -33,6 +33,7 @@ function reset() {
   for (const t of [
     'user_genres', 'tickets', 'follows', 'activities', 'events', 'gifts',
     'genres', 'users', 'settings', 'abusive_words', 'referrals', 'ghost_passes', 'event_signals',
+    'packages', 'subscriptions', 'reviews', 'withdrawals', 'contact_leads', 'faqs', 'cms_pages',
   ]) {
     db.exec(`DELETE FROM ${t};`);
   }
@@ -61,6 +62,17 @@ function run() {
     role: 'user',
     is_artist: 0,
     referral_code: 'ALEX1234',
+    address: 'Paris, France',
+  });
+
+  // ── Compte ADMIN (dashboard web /admin) ──
+  insUser.run({
+    email: 'admin@vybzzz.com',
+    password: hash('admin123'),
+    full_name: 'Admin VYBZZZ',
+    role: 'admin',
+    is_artist: 0,
+    referral_code: 'ADMIN001',
     address: 'Paris, France',
   });
 
@@ -166,6 +178,64 @@ function run() {
   // ── Mots interdits ──
   const insWord = db.prepare('INSERT INTO abusive_words (word) VALUES (?)');
   ['spam', 'scam', 'insulte'].forEach((w) => insWord.run(w));
+
+  // ── User Genres (associations user ↔ genre) ──
+  const allUserIds = db.prepare("SELECT id FROM users WHERE role != 'admin'").all().map((r) => r.id);
+  const insUG = db.prepare('INSERT OR IGNORE INTO user_genres (user_id, genre_id) VALUES (?, ?)');
+  allUserIds.forEach((uid, i) => {
+    insUG.run(uid, genreIds[i % genreIds.length]);
+    insUG.run(uid, genreIds[(i + 1) % genreIds.length]);
+  });
+
+  // ── Packages (points) ──
+  const insPkg = db.prepare('INSERT INTO packages (name, points, price) VALUES (?, ?, ?)');
+  [['Starter', '100', '4.99'], ['Pro', '500', '19.99'], ['VIP', '1200', '39.99']].forEach((p) => insPkg.run(...p));
+
+  // ── Subscriptions (paliers artistes) ──
+  const insSub = db.prepare('INSERT INTO subscriptions (name, tier, price, period) VALUES (?, ?, ?, ?)');
+  [
+    ['Founder 79', 'founder', '79', 'year'],
+    ['Starter', 'starter', '9.99', 'month'],
+    ['Growth', 'growth', '29.99', 'month'],
+    ['Elite', 'elite', '99.99', 'month'],
+  ].forEach((s) => insSub.run(...s));
+
+  // ── Reviews ──
+  const insReview = db.prepare('INSERT INTO reviews (user_id, event_id, rating, comment) VALUES (?, ?, ?, ?)');
+  [
+    [allUserIds[0], eventIds[0], 5, 'Concert incroyable, son parfait !'],
+    [allUserIds[0], eventIds[1], 4, 'Très bonne expérience live.'],
+    [allUserIds[0], eventIds[3], 5, 'Le live Mux est top.'],
+  ].forEach((r) => insReview.run(...r));
+
+  // ── Withdrawals ──
+  const insWd = db.prepare('INSERT INTO withdrawals (user_id, amount, status, bank) VALUES (?, ?, ?, ?)');
+  [
+    [artistIds[0], '1200', 'pending', 'IBAN ****1234'],
+    [artistIds[1], '850', 'approved', 'IBAN ****5678'],
+    [artistIds[3], '430', 'rejected', 'IBAN ****9012'],
+  ].forEach((w) => insWd.run(...w));
+
+  // ── Contact Leads ──
+  const insLead = db.prepare('INSERT INTO contact_leads (name, email, phone, message) VALUES (?, ?, ?, ?)');
+  [
+    ['Marie Dupont', 'marie@example.com', '+33600000001', 'Comment devenir artiste sur VYBZZZ ?'],
+    ['John Smith', 'john@example.com', '+33600000002', 'Partenariat possible ?'],
+  ].forEach((l) => insLead.run(...l));
+
+  // ── FAQ ──
+  const insFaq = db.prepare('INSERT INTO faqs (question, answer) VALUES (?, ?)');
+  [
+    ['Comment acheter un billet ?', 'Ouvre un concert puis appuie sur "Acheter un billet".'],
+    ['Comment caster un concert ?', 'Depuis le lecteur, appuie sur l\'icône AirPlay en haut à droite.'],
+    ['Comment devenir artiste ?', 'Va dans Profil → Devenir artiste et complète l\'onboarding.'],
+  ].forEach((f) => insFaq.run(...f));
+
+  // ── CMS ──
+  const insCms = db.prepare('INSERT OR REPLACE INTO cms_pages (slug, title, content) VALUES (?, ?, ?)');
+  insCms.run('terms', 'Conditions générales', 'Contenu des CGU VYBZZZ…');
+  insCms.run('privacy', 'Politique de confidentialité', 'Contenu de la politique de confidentialité…');
+  insCms.run('about', 'À propos', 'VYBZZZ — Live begins here.');
 
   console.log('[seed] OK :',
     `${genreIds.length} genres, ${artistIds.length} artistes, ${eventIds.length} events, 6 gifts.`);
