@@ -175,9 +175,38 @@ function run() {
   insSetting.run('currency', 'EUR');
   insSetting.run('min_withdraw', '50');
 
-  // ── Mots interdits ──
+  // ── Mots interdits (modération du chat des lives / commentaires) ──
+  // Liste FR + EN par catégories. Le filtre côté app fait une correspondance
+  // de MOT ENTIER (les expressions à espaces sont en sous-chaîne).
+  const ABUSIVE_WORDS = [
+    // Insultes FR
+    'con', 'conard', 'connard', 'connasse', 'conne', 'salope', 'salaud', 'pute',
+    'putain', 'enculé', 'encule', 'enculer', 'batard', 'bâtard', 'ducon', 'abruti',
+    'débile', 'crétin', 'ordure', 'raclure', 'pétasse', 'pouffiasse', 'grognasse',
+    'trouduc', 'couillon', 'bouffon', 'nique', 'niquer', 'niqué', 'fdp', 'ntm', 'tg',
+    'ta gueule', 'ferme ta gueule', 'va te faire foutre', 'fils de pute',
+    // Insultes EN
+    'fuck', 'fucking', 'fucker', 'motherfucker', 'shit', 'bitch', 'asshole',
+    'bastard', 'dick', 'cunt', 'slut', 'whore', 'douche', 'wanker', 'prick',
+    // Haine / discrimination (racisme, homophobie, validisme) — à bloquer
+    'pd', 'pédé', 'pede', 'tapette', 'tarlouze', 'gouine', 'bougnoule', 'négro',
+    'negro', 'nègre', 'bamboula', 'youpin', 'bicot', 'mongol', 'attardé',
+    'sale arabe', 'sale juif', 'sale noir', 'sale blanc', 'sale pédé',
+    'nigger', 'nigga', 'faggot', 'fag', 'retard', 'retarded', 'tranny',
+    'chink', 'spic', 'kike', 'dyke', 'coon',
+    // Sexuel / illégal
+    'viol', 'violer', 'pédophile', 'pedophile', 'pédo', 'pedo', 'zoophile', 'rape',
+    'child porn',
+    // Menaces / automutilation
+    'crève', 'creve', 'crever', 'tue-toi', 'va mourir', 'je vais te tuer',
+    'suicide-toi', 'kill yourself', 'kys',
+    // Spam / arnaque
+    'arnaque', 'scam', 'spam', 'free money', 'argent facile', 'argent gratuit',
+    'crypto gratuit', 'bitcoin gratuit', 'giveaway', 'clique ici', 'cliquez ici',
+    'pump and dump',
+  ];
   const insWord = db.prepare('INSERT INTO abusive_words (word) VALUES (?)');
-  ['spam', 'scam', 'insulte'].forEach((w) => insWord.run(w));
+  ABUSIVE_WORDS.forEach((w) => insWord.run(w));
 
   // ── User Genres (associations user ↔ genre) ──
   const allUserIds = db.prepare("SELECT id FROM users WHERE role != 'admin'").all().map((r) => r.id);

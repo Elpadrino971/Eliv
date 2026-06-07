@@ -479,12 +479,21 @@ class EventController extends GetxController {
       return false;
     }
     final lowerText = text.toLowerCase();
+    // Découpe le texte en MOTS (lettres/chiffres, accents inclus) pour une
+    // correspondance de mot entier -> "con" ne bloque plus "concert".
+    final tokens = lowerText
+        .split(RegExp(r'[^a-z0-9àâäéèêëïîôöùûüÿçœæ]+'))
+        .where((t) => t.isNotEmpty)
+        .toSet();
     for (var w in abusiveWords.value.data!) {
-      final abusiveWord = w.word?.trim().toLowerCase();
-      if (abusiveWord != null && abusiveWord.isNotEmpty) {
-        if (lowerText.contains(abusiveWord)) {
-          return true;
-        }
+      final bad = w.word?.trim().toLowerCase();
+      if (bad == null || bad.isEmpty) continue;
+      if (bad.contains(' ')) {
+        // Expression (ex. "ta gueule", "kill yourself") -> sous-chaîne.
+        if (lowerText.contains(bad)) return true;
+      } else {
+        // Mot seul -> correspondance de mot entier.
+        if (tokens.contains(bad)) return true;
       }
     }
     return false;
