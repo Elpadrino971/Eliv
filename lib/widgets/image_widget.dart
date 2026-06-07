@@ -21,10 +21,26 @@ class ImageWidget extends StatelessWidget {
     this.errorAsset = "assets/no_img.jpg",
   });
 
+  /// Si une URL complète a été collée DANS le champ (ex. cover_image =
+  /// "https://photo.com/x.jpg"), les appelants produisent
+  /// "https://api.../events/covers/https://photo.com/x.jpg".
+  /// On détecte ce cas (2e "://") et on garde uniquement l'URL réelle.
+  /// Sinon (simple nom de fichier), on renvoie l'URL telle quelle.
+  String _resolve(String u) {
+    final firstScheme = u.indexOf('://');
+    if (firstScheme == -1) return u;
+    final secondScheme = u.indexOf('://', firstScheme + 3);
+    if (secondScheme != -1) {
+      final start = u.lastIndexOf('http', secondScheme);
+      if (start > 0) return u.substring(start);
+    }
+    return u;
+  }
+
   @override
   Widget build(BuildContext context) {
     return CachedNetworkImage(
-      imageUrl: url,
+      imageUrl: _resolve(url),
       height: height,
       width: width,
       color: color,
