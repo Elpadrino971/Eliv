@@ -174,6 +174,7 @@ class _FutureScreenState extends State<FutureScreen> {
                                 () => ReplayPlayerScreen(
                                   playbackId: APIs.muxDemoPlaybackId,
                                   title: event.name,
+                                  event: event,
                                 ),
                               ),
                               child: const Icon(

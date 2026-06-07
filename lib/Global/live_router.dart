@@ -15,7 +15,12 @@ Future<dynamic>? joinLive(Event event) {
   final isMux = reel != null && reel.contains('stream.mux.com');
   if (isMux) {
     return Get.to(
-      () => ReplayPlayerScreen(url: reel, isLive: true, title: event.name),
+      () => ReplayPlayerScreen(
+        url: reel,
+        isLive: true,
+        title: event.name,
+        event: event,
+      ),
     );
   }
   return Get.to(() => JoinStream(event: event));

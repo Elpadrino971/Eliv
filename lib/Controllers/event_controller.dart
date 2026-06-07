@@ -296,6 +296,23 @@ class EventController extends GetxController {
     });
   }
 
+  /// Like / unlike un concert. Renvoie le nouveau nombre de likes.
+  Future<int?> likeEvent({required String eventId, required bool liked}) async {
+    int? count;
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.likeEventAPI(eventId);
+    response.bodySetter = {'liked': '$liked', 'user_id': '${userModel.value.user?.id ?? 1}'};
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        count = jsonDecode(value)['likes_count'];
+        update();
+      } else {
+        parseError(value, doBack: false);
+      }
+    });
+    return count;
+  }
+
   Future<List<Activity>?> getEventComments({
     required String eventId,
     required String comment,

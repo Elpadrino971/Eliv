@@ -22,6 +22,15 @@ router.post('/ideas', optionalAuth, (req, res) => {
   return res.json({ status: 'success', message: 'Merci, votre idée a bien été envoyée !' });
 });
 
+// POST /api/event/:id/like — like / unlike un concert (toggle via body { liked })
+router.post('/event/:id/like', optionalAuth, (req, res) => {
+  const liked = req.body?.liked === false ? false : true;
+  db.prepare('UPDATE events SET likes_count = MAX(0, COALESCE(likes_count,0) + ?) WHERE id = ?')
+    .run(liked ? 1 : -1, req.params.id);
+  const row = db.prepare('SELECT likes_count FROM events WHERE id = ?').get(req.params.id);
+  return res.json({ status: 'success', likes_count: row?.likes_count ?? 0 });
+});
+
 // GET /api/get-abusive-words -> { status, data: [...] }
 router.get('/get-abusive-words', (req, res) => {
   return ok(res, db.prepare('SELECT * FROM abusive_words').all());

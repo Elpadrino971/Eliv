@@ -139,4 +139,7 @@ class APIs {
 
   // Boîte à idées
   static const String submitIdeaAPI = '$baseAPI/ideas';
+
+  // Like d'un concert
+  static String likeEventAPI(String id) => '$baseAPI/event/$id/like';
 }
