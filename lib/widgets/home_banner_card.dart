@@ -117,7 +117,7 @@ class HomeBannerCard extends StatelessWidget {
                 const SizedBox(height: 10),
 
                 Text(
-                  event.artist?.fullName ?? 'N/A',
+                  event.artist?.artistName ?? event.artist?.fullName ?? 'N/A',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
