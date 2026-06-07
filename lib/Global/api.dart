@@ -1,7 +1,7 @@
 class APIs {
   // static const String mainIP = 'https://vybzzz.fryandeatfood.com'; //Live (Hammad)
-  // DEV: notre backend local (backend/). Remettre la ligne Live avant la prod.
-  static const String mainIP = 'http://192.168.1.62:8002'; //Local (notre backend)
+  // static const String mainIP = 'http://192.168.1.62:8002'; //Local (dev)
+  static const String mainIP = 'https://api.vybzzz.online'; //PROD (notre VPS Hostinger)
 
   ///For Assets
   static const String profileIP = '$mainIP/profiles';
