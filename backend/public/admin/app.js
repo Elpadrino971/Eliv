@@ -289,6 +289,7 @@ function userEditForm(r) {
   modal({
     title: "Modifier l'utilisateur", fields: [
       { name: 'full_name', label: 'Nom complet', value: r.full_name },
+      { name: 'photo', label: 'Photo / avatar (URL)', value: r.profile_image, placeholder: 'https://… (bulle artiste)' },
       { name: 'phone_number', label: 'Téléphone', value: r.phone_number },
       { name: 'address', label: 'Adresse', value: r.address },
       { name: 'is_artist', label: 'Artiste ?', type: 'checkbox', value: !!r.is_artist, hint: 'Compte artiste' },

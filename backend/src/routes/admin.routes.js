@@ -75,7 +75,7 @@ router.get('/users', requireAdmin, (req, res) => {
   const rows = db.prepare(sql).all(...params).map((u) => ({
     id: u.id, full_name: u.full_name, email: u.email, phone_number: u.phone_number,
     address: u.address, status: u.status, is_artist: !!u.is_artist,
-    profile_image: u.profile_image, created_at: u.created_at,
+    profile_image: u.artist_profile || u.profile_image, created_at: u.created_at,
   }));
   const counts = {
     all: db.prepare("SELECT COUNT(*) c FROM users WHERE role != 'admin'").get().c,
@@ -359,11 +359,17 @@ router.get('/users-list', requireAdmin, (req, res) => {
 // ─── Édition Utilisateur ───
 router.put('/users/:id', requireAdmin, (req, res) => {
   const b = req.body || {};
+  // photo : sert d'avatar artiste (artist_profile) ET de photo profil (profile_image)
+  const photo = b.photo || b.artist_profile || null;
   db.prepare(
-    "UPDATE users SET full_name = @full_name, phone_number = @phone, address = @address, is_artist = @artist WHERE id = @id"
+    `UPDATE users SET full_name = @full_name, phone_number = @phone, address = @address,
+        is_artist = @artist,
+        artist_profile = COALESCE(@photo, artist_profile),
+        profile_image = COALESCE(@photo, profile_image)
+     WHERE id = @id`
   ).run({
     id: req.params.id, full_name: b.full_name || null, phone: b.phone_number || null,
-    address: b.address || null, artist: b.is_artist ? 1 : 0,
+    address: b.address || null, artist: b.is_artist ? 1 : 0, photo,
   });
   return res.json({ status: 'success', message: 'Utilisateur modifié.' });
 });
