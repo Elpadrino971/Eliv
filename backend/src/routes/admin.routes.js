@@ -41,16 +41,20 @@ router.post('/login', (req, res) => {
 
 // GET /api/admin/stats
 router.get('/stats', requireAdmin, (req, res) => {
-  const users = db.prepare('SELECT COUNT(*) c FROM users WHERE role != ?').get('admin').c;
+  const fans = db.prepare("SELECT COUNT(*) c FROM users WHERE role = 'user' AND is_artist = 0").get().c;
+  const artists = db.prepare('SELECT COUNT(*) c FROM users WHERE is_artist = 1').get().c;
   const events = db.prepare('SELECT COUNT(*) c FROM events').get().c;
   const packages = db.prepare('SELECT COUNT(*) c FROM packages').get().c;
+  const referrals = db.prepare("SELECT COUNT(*) c FROM referrals WHERE status = 'validated'").get().c;
   const revenueRow = db.prepare("SELECT COALESCE(SUM(CAST(price_paid AS REAL)),0) r FROM tickets").get();
   return res.json({
     status: 'success',
     data: {
-      total_users: users,
+      total_users: fans,
+      total_artists: artists,
       total_events: events,
       total_packages: packages,
+      total_referrals: referrals,
       total_revenue: Math.round(revenueRow.r),
     },
   });
@@ -140,19 +144,66 @@ router.get('/user-genres', requireAdmin, (req, res) => {
   return res.json({ status: 'success', data: rows });
 });
 
-// ─── Events ───
+// ─── Events (CRUD complet + vidéo Mux) ───
+const muxHls = (id) => (id ? `https://stream.mux.com/${id}.m3u8` : null);
+
 router.get('/events', requireAdmin, (req, res) => {
   const rows = db.prepare(
     `SELECT e.id, e.name, e.status, e.ticket_price, e.start_date_time, e.likes_count,
-            u.artist_name AS artist
+            e.artist_id, e.genre_id, e.description, e.cover_image, e.mux_playback_id,
+            e.is_banner, u.artist_name AS artist
      FROM events e LEFT JOIN users u ON u.id = e.artist_id
      ORDER BY e.id DESC`
   ).all();
   return res.json({ status: 'success', data: rows });
 });
+
+// Liste des artistes (pour le menu déroulant du formulaire event)
+router.get('/artists-list', requireAdmin, (req, res) => {
+  const rows = db.prepare(
+    "SELECT id, COALESCE(artist_name, full_name, email) AS name FROM users WHERE is_artist = 1 ORDER BY name"
+  ).all();
+  return res.json({ status: 'success', data: rows });
+});
+
+router.post('/events', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  if (!b.name) return res.status(422).json({ status: 'error', message: 'Le nom est requis.' });
+  db.prepare(
+    `INSERT INTO events (artist_id, name, cover_image, ticket_price, start_date_time, genre_id,
+        description, status, mux_playback_id, mux_live_playback_id, video_reel, is_banner)
+     VALUES (@artist_id, @name, @cover, @price, @start, @genre, @desc, @status, @mux, @muxLive, @reel, @banner)`
+  ).run({
+    artist_id: b.artist_id || null, name: b.name, cover: b.cover_image || null,
+    price: b.ticket_price || '0', start: b.start_date_time || null, genre: b.genre_id || null,
+    desc: b.description || null, status: b.status || 'published',
+    mux: b.mux_playback_id || null, muxLive: b.status === 'live' ? (b.mux_playback_id || null) : null,
+    reel: muxHls(b.mux_playback_id), banner: b.is_banner ? 1 : 0,
+  });
+  return res.json({ status: 'success', message: 'Concert créé.' });
+});
+
+router.put('/events/:id', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  db.prepare(
+    `UPDATE events SET artist_id = @artist_id, name = @name, cover_image = @cover,
+        ticket_price = @price, start_date_time = @start, genre_id = @genre, description = @desc,
+        status = @status, mux_playback_id = @mux, mux_live_playback_id = @muxLive,
+        video_reel = @reel, is_banner = @banner, updated_at = datetime('now')
+     WHERE id = @id`
+  ).run({
+    id: req.params.id, artist_id: b.artist_id || null, name: b.name, cover: b.cover_image || null,
+    price: b.ticket_price || '0', start: b.start_date_time || null, genre: b.genre_id || null,
+    desc: b.description || null, status: b.status || 'published',
+    mux: b.mux_playback_id || null, muxLive: b.status === 'live' ? (b.mux_playback_id || null) : null,
+    reel: muxHls(b.mux_playback_id), banner: b.is_banner ? 1 : 0,
+  });
+  return res.json({ status: 'success', message: 'Concert mis à jour.' });
+});
+
 router.delete('/events/:id', requireAdmin, (req, res) => {
   db.prepare('DELETE FROM events WHERE id = ?').run(req.params.id);
-  return res.json({ status: 'success', message: 'Event supprimé.' });
+  return res.json({ status: 'success', message: 'Concert supprimé.' });
 });
 
 // ─── Packages ───
@@ -295,6 +346,51 @@ router.post('/abusive', requireAdmin, (req, res) => {
 router.delete('/abusive/:id', requireAdmin, (req, res) => {
   db.prepare('DELETE FROM abusive_words WHERE id = ?').run(req.params.id);
   return res.json({ status: 'success', message: 'Supprimé.' });
+});
+
+// ─── Parrainage (10% par nouvel artiste parrainé, plafonné à 10/mois) ───
+function refRule() {
+  const rate = +(db.prepare("SELECT value v FROM settings WHERE key = 'referral_rate'").get()?.v || 10);
+  const cap = +(db.prepare("SELECT value v FROM settings WHERE key = 'referral_monthly_cap'").get()?.v || 10);
+  return { rate, cap };
+}
+
+router.get('/referrals', requireAdmin, (req, res) => {
+  const rows = db.prepare(
+    `SELECT r.id, r.code, r.status, r.reward, r.created_at, r.referrer_id,
+            COALESCE(ru.artist_name, ru.full_name, ru.email) AS referrer,
+            COALESCE(re.full_name, re.email) AS referee, re.is_artist AS referee_is_artist
+     FROM referrals r
+     LEFT JOIN users ru ON ru.id = r.referrer_id
+     LEFT JOIN users re ON re.id = r.referee_id
+     ORDER BY r.id DESC`
+  ).all();
+  // Compteur du mois en cours par parrain (artistes validés uniquement)
+  const month = new Date().toISOString().slice(0, 7);
+  const monthly = {};
+  for (const r of rows) {
+    if (r.status === 'validated' && r.referee_is_artist && (r.created_at || '').slice(0, 7) === month) {
+      monthly[r.referrer_id] = (monthly[r.referrer_id] || 0) + 1;
+    }
+  }
+  return res.json({ status: 'success', data: rows, rule: refRule(), monthly });
+});
+
+router.put('/referral-settings', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const set = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+  if (b.rate != null) set.run('referral_rate', String(b.rate));
+  if (b.cap != null) set.run('referral_monthly_cap', String(b.cap));
+  return res.json({ status: 'success', message: 'Règle de parrainage enregistrée.' });
+});
+
+router.post('/referrals/:id/validate', requireAdmin, (req, res) => {
+  db.prepare("UPDATE referrals SET status = 'validated' WHERE id = ?").run(req.params.id);
+  return res.json({ status: 'success', message: 'Parrainage validé.' });
+});
+router.delete('/referrals/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM referrals WHERE id = ?').run(req.params.id);
+  return res.json({ status: 'success', message: 'Parrainage supprimé.' });
 });
 
 module.exports = router;

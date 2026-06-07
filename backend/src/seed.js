@@ -237,6 +237,16 @@ function run() {
   insCms.run('privacy', 'Politique de confidentialité', 'Contenu de la politique de confidentialité…');
   insCms.run('about', 'À propos', 'VYBZZZ — Live begins here.');
 
+  // ── Parrainage : règle 10% / 10 par mois + parrainages de démo ──
+  insSetting.run('referral_rate', '10');
+  insSetting.run('referral_monthly_cap', '10');
+  const insRef = db.prepare(
+    'INSERT INTO referrals (code, referrer_id, referee_id, status, reward) VALUES (?, ?, ?, ?, ?)'
+  );
+  insRef.run('THEW1234', artistIds[0], artistIds[1], 'validated', '10%');
+  insRef.run('THEW1234', artistIds[0], artistIds[2], 'validated', '10%');
+  insRef.run('BEYO5678', artistIds[1], artistIds[3], 'pending', '10%');
+
   console.log('[seed] OK :',
     `${genreIds.length} genres, ${artistIds.length} artistes, ${eventIds.length} events, 6 gifts.`);
   console.log('[seed] Compte démo : demo@vybzzz.com / password');
