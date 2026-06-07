@@ -24,13 +24,32 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   await GetStorage.init();
   // Donnees de formatage des dates pour toutes les langues (mois/jours
   // localises selon la langue choisie).
   await initializeDateFormatting();
-  await SubscriptionController.init();
-  await PushNotificationSystem().setup();
+
+  // Services tiers protégés : si l'un échoue (Firebase iOS non configuré,
+  // clé RevenueCat invalide, push indisponible…), l'app DÉMARRE quand même.
+  // Sans ces try/catch, une erreur ici crashait l'app avant l'affichage.
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('⚠️ Firebase init échouée (app continue): $e');
+  }
+  try {
+    await SubscriptionController.init();
+  } catch (e) {
+    debugPrint('⚠️ RevenueCat init échouée (app continue): $e');
+  }
+  try {
+    await PushNotificationSystem().setup();
+  } catch (e) {
+    debugPrint('⚠️ Push setup échouée (app continue): $e');
+  }
 
   runApp(const MyApp());
 }
