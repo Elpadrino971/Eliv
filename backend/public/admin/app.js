@@ -209,16 +209,47 @@ const view = () => $('view');
 // ════════════════════════════════════════════════════════════════════
 // PAGES
 // ════════════════════════════════════════════════════════════════════
+// ─── Graphiques SVG (sans dépendance) ───
+function svgLine(values, labels, color = '#d8b45a') {
+  const w = 560, h = 190, pad = 34, n = values.length, max = Math.max(1, ...values);
+  const x = (i) => pad + (i * (w - 2 * pad)) / Math.max(1, n - 1);
+  const y = (v) => h - pad - (v / max) * (h - 2 * pad);
+  const pts = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const grid = [0, 0.5, 1].map((f) => { const yy = h - pad - f * (h - 2 * pad); return `<line x1="${pad}" y1="${yy}" x2="${w - pad}" y2="${yy}" stroke="#1b2a3d" stroke-width="1"/>`; }).join('');
+  const dots = values.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${color}"/>`).join('');
+  const lbls = labels.map((l, i) => `<text x="${x(i)}" y="${h - 8}" fill="#aeb7c2" font-size="11" text-anchor="middle">${esc(l)}</text>`).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" preserveAspectRatio="xMidYMid meet">${grid}
+    <polyline points="${pad},${h - pad} ${pts} ${x(n - 1)},${h - pad}" fill="${color}22"/>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>${dots}${lbls}</svg>`;
+}
+function svgBars(values, labels, color = '#3b82f6') {
+  const w = 560, h = 190, pad = 34, n = values.length, max = Math.max(1, ...values), step = (w - 2 * pad) / n, bw = step * 0.55;
+  const bars = values.map((v, i) => {
+    const bx = pad + i * step + (step - bw) / 2, bh = (v / max) * (h - 2 * pad), by = h - pad - bh;
+    return `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="4" fill="${color}"/><text x="${bx + bw / 2}" y="${by - 5}" fill="#aeb7c2" font-size="10" text-anchor="middle">${v}</text>`;
+  }).join('');
+  const lbls = labels.map((l, i) => `<text x="${pad + i * step + step / 2}" y="${h - 8}" fill="#aeb7c2" font-size="11" text-anchor="middle">${esc(l)}</text>`).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" preserveAspectRatio="xMidYMid meet">${bars}${lbls}</svg>`;
+}
+function goalBar(label, current, target, color, fmt = (x) => x) {
+  const pct = Math.min(100, Math.round((current / Math.max(1, target)) * 100));
+  return `<div style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:14px"><span>${esc(label)}</span>
+      <span style="color:${color};font-weight:700">${fmt(current)} / ${fmt(target)} <span style="color:var(--muted)">(${pct}%)</span></span></div>
+    <div class="bar" style="height:10px"><i style="width:${pct}%;background:${color}"></i></div></div>`;
+}
+
 async function pageDashboard() {
   view().innerHTML = '<div class="empty">Chargement…</div>';
-  const { data } = await api('GET', '/stats');
+  const [{ data: s }, { data: ch }] = await Promise.all([api('GET', '/stats'), api('GET', '/chart-data')]);
   const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const euro = (x) => '$' + Number(x).toLocaleString('fr-FR');
   const cards = [
-    { ic: '👥', bg: 'rgba(59,130,246,.15)', col: '#7eb0ff', n: data.total_users, l: 'Utilisateurs', bar: '70%', barc: '#3b82f6' },
-    { ic: '🎤', bg: 'rgba(216,180,90,.15)', col: '#d8b45a', n: data.total_artists, l: 'Artistes', bar: '60%', barc: '#d8b45a' },
-    { ic: '📅', bg: 'rgba(31,157,87,.15)', col: '#4ade80', n: data.total_events, l: 'Concerts', bar: '55%', barc: '#1f9d57' },
-    { ic: '🤝', bg: 'rgba(168,85,247,.15)', col: '#c084fc', n: data.total_referrals, l: 'Parrainages', bar: '45%', barc: '#a855f7' },
-    { ic: '💰', bg: 'rgba(224,167,58,.15)', col: '#e0a73a', n: '$' + Number(data.total_revenue).toLocaleString('fr-FR'), l: 'Revenus', bar: '85%', barc: '#e0a73a' },
+    { ic: '👥', bg: 'rgba(59,130,246,.15)', col: '#7eb0ff', n: s.total_users, l: 'Utilisateurs', bar: '70%', barc: '#3b82f6' },
+    { ic: '🎤', bg: 'rgba(216,180,90,.15)', col: '#d8b45a', n: s.total_artists, l: 'Artistes', bar: '60%', barc: '#d8b45a' },
+    { ic: '📅', bg: 'rgba(31,157,87,.15)', col: '#4ade80', n: s.total_events, l: 'Concerts', bar: '55%', barc: '#1f9d57' },
+    { ic: '🤝', bg: 'rgba(168,85,247,.15)', col: '#c084fc', n: s.total_referrals, l: 'Parrainages', bar: '45%', barc: '#a855f7' },
+    { ic: '💰', bg: 'rgba(224,167,58,.15)', col: '#e0a73a', n: euro(s.total_revenue), l: 'Revenus', bar: '85%', barc: '#e0a73a' },
   ];
   view().innerHTML = `
     <div class="dash-banner">
@@ -226,48 +257,70 @@ async function pageDashboard() {
       <div class="dash-date">📅 ${today}</div>
     </div>
     <div class="cards">${cards.map((c) => `
-      <div class="card">
-        <div class="row"><div class="ic-box" style="background:${c.bg};color:${c.col}">${c.ic}</div><div class="num">${c.n}</div></div>
-        <div class="lbl">${c.l}</div><div class="bar"><i style="width:${c.bar};background:${c.barc}"></i></div>
-      </div>`).join('')}</div>`;
+      <div class="card"><div class="row"><div class="ic-box" style="background:${c.bg};color:${c.col}">${c.ic}</div><div class="num">${c.n}</div></div>
+        <div class="lbl">${c.l}</div><div class="bar"><i style="width:${c.bar};background:${c.barc}"></i></div></div>`).join('')}</div>
+    <div class="report-grid" style="margin-top:22px">
+      <div class="tcard"><h3 style="color:var(--gold);margin-bottom:10px">📈 Revenus (6 derniers mois)</h3>${svgLine(ch.revenue, ch.labels, '#d8b45a')}</div>
+      <div class="tcard"><h3 style="color:var(--gold);margin-bottom:10px">🎟️ Billets vendus / mois</h3>${svgBars(ch.tickets, ch.labels, '#3b82f6')}</div>
+    </div>
+    <div class="tcard" style="margin-top:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3 style="color:var(--gold)">🎯 Objectifs à atteindre</h3>
+        <button class="btn gold" id="editGoals">Modifier les objectifs</button>
+      </div>
+      ${goalBar("Chiffre d'affaires", ch.goals.revenue.current, ch.goals.revenue.target, '#e0a73a', euro)}
+      ${goalBar('Utilisateurs', ch.goals.users.current, ch.goals.users.target, '#3b82f6')}
+      ${goalBar('Artistes', ch.goals.artists.current, ch.goals.artists.target, '#d8b45a')}
+    </div>`;
+  view().querySelector('#editGoals').onclick = () => modal({
+    title: 'Modifier les objectifs', fields: [
+      { name: 'goal_revenue', label: "Objectif chiffre d'affaires ($)", type: 'number', value: ch.goals.revenue.target },
+      { name: 'goal_users', label: 'Objectif utilisateurs', type: 'number', value: ch.goals.users.target },
+      { name: 'goal_artists', label: 'Objectif artistes', type: 'number', value: ch.goals.artists.target },
+    ],
+    onSave: async (d) => { await api('PUT', '/goals', d); toast('Objectifs enregistrés'); route(); },
+  });
 }
 
 // Utilisateurs (onglets)
+let usersTab = 'all';
+function userEditForm(r) {
+  modal({
+    title: "Modifier l'utilisateur", fields: [
+      { name: 'full_name', label: 'Nom complet', value: r.full_name },
+      { name: 'phone_number', label: 'Téléphone', value: r.phone_number },
+      { name: 'address', label: 'Adresse', value: r.address },
+      { name: 'is_artist', label: 'Artiste ?', type: 'checkbox', value: !!r.is_artist, hint: 'Compte artiste' },
+    ],
+    onSave: async (d) => { await api('PUT', '/users/' + r.id, d); toast('Utilisateur modifié'); route(); },
+  });
+}
 async function pageUsers() {
-  let type = 'all';
-  async function load() {
-    const { data, counts } = await api('GET', '/users?type=' + (type === 'all' ? '' : type));
-    const cols = [
-      { label: '#', render: (r) => r.id },
-      { label: 'Utilisateur', render: (r) => `<div class="uinfo">${avatar(r)}<div><div class="nm">${esc(r.full_name || 'N/A')}</div><div class="em">${esc(r.email)}</div></div></div>` },
-      { label: 'Téléphone', render: (r) => esc(r.phone_number || '—') },
-      { label: 'Adresse', render: (r) => esc(r.address || 'N/A') },
-      { label: 'Statut', render: (r) => badge(r.status) },
-      { label: 'Date', render: (r) => fmtDate(r.created_at) },
-      { label: 'Action', render: (r) => `<button class="btn status" data-act="status" data-id="${r.id}" data-s="${r.status}">Statut</button><button class="btn del" data-act="del" data-id="${r.id}">Supprimer</button>` },
-    ];
-    const host = view().querySelector('#utable');
-    host.innerHTML = `<div class="tabs">
-      <button data-t="all" class="${type === 'all' ? 'active' : ''}">Tous (${counts.all})</button>
-      <button data-t="user" class="${type === 'user' ? 'active' : ''}">Utilisateurs (${counts.user})</button>
-      <button data-t="artist" class="${type === 'artist' ? 'active' : ''}">Artistes (${counts.artist})</button>
-    </div>` + tableShellInner(cols);
-    host.querySelectorAll('.tabs button').forEach((b) => b.onclick = () => { type = b.dataset.t; load(); });
-    mountTable(host, { columns: cols, rows: data });
-    host.querySelectorAll('[data-act]').forEach((b) => b.onclick = async () => {
-      const id = b.dataset.id;
-      if (b.dataset.act === 'del') return confirmDelete(async () => { await api('DELETE', '/users/' + id); toast('Supprimé'); load(); });
-      const next = b.dataset.s === 'active' ? 'pending' : 'active';
-      await api('POST', `/users/${id}/status`, { status: next }); toast('Statut → ' + (STATUS_FR[next] || next)); load();
-    });
-  }
-  view().innerHTML = `<div class="head-row"><h1 class="page-title">Utilisateurs</h1><button class="add-btn" id="adduser">+ Ajouter</button></div><div id="utable"><div class="empty">Chargement…</div></div>`;
+  EDIT.user = (id) => { const r = currentRows.find((x) => x.id == id); if (r) userEditForm(r); };
+  const { data, counts } = await api('GET', '/users?type=' + (usersTab === 'all' ? '' : usersTab));
+  currentRows = data;
+  const cols = [
+    { label: '#', render: (r) => r.id },
+    { label: 'Utilisateur', render: (r) => `<div class="uinfo">${avatar(r)}<div><div class="nm">${esc(r.full_name || 'N/A')}</div><div class="em">${esc(r.email)}</div></div></div>` },
+    { label: 'Téléphone', render: (r) => esc(r.phone_number || '—') },
+    { label: 'Adresse', render: (r) => esc(r.address || 'N/A') },
+    { label: 'Statut', render: (r) => badge(r.status) },
+    { label: 'Date', render: (r) => fmtDate(r.created_at) },
+    { label: 'Action', render: (r) => `<button class="btn edit" data-edit="user:${r.id}">Modifier</button><button class="btn status" data-status="${r.id}">Statut</button><button class="btn del" data-del="/users/${r.id}">Supprimer</button>` },
+  ];
+  view().innerHTML = `<div class="head-row"><h1 class="page-title">Utilisateurs</h1><button class="add-btn" id="adduser">+ Ajouter</button></div>
+    <div class="tabs">
+      <button data-t="all" class="${usersTab === 'all' ? 'active' : ''}">Tous (${counts.all})</button>
+      <button data-t="user" class="${usersTab === 'user' ? 'active' : ''}">Utilisateurs (${counts.user})</button>
+      <button data-t="artist" class="${usersTab === 'artist' ? 'active' : ''}">Artistes (${counts.artist})</button>
+    </div>${tableShellInner(cols)}`;
+  view().querySelectorAll('.tabs button').forEach((b) => b.onclick = () => { usersTab = b.dataset.t; pageUsers(); });
+  mountTable(view().querySelector('.tcard'), { columns: cols, rows: data });
   view().querySelector('#adduser').onclick = () => modal({
     title: 'Ajouter un utilisateur',
     fields: [{ name: 'full_name', label: 'Nom complet' }, { name: 'email', label: 'Email', type: 'email' }, { name: 'password', label: 'Mot de passe', type: 'password' }, { name: 'is_artist', label: 'Artiste ?', type: 'checkbox', hint: 'Compte artiste' }],
-    onSave: async (d) => { await api('POST', '/users', d); toast('Utilisateur créé'); load(); },
+    onSave: async (d) => { await api('POST', '/users', d); toast('Utilisateur créé'); pageUsers(); },
   });
-  load();
 }
 
 // Liste générique
@@ -300,12 +353,24 @@ function pageGenres() {
 }
 
 function pageUserGenres() {
+  async function openAdd(reload) {
+    const [{ data: users }, { data: genres }] = await Promise.all([api('GET', '/users-list'), api('GET', '/genres')]);
+    modal({
+      title: 'Associer un genre à un utilisateur', fields: [
+        { name: 'user_id', label: 'Utilisateur', type: 'select', options: [{ value: '', label: '— Choisir —' }, ...users.map((u) => ({ value: u.id, label: u.name }))] },
+        { name: 'genre_id', label: 'Genre', type: 'select', options: [{ value: '', label: '— Choisir —' }, ...genres.map((g) => ({ value: g.id, label: g.name }))] },
+      ],
+      onSave: async (d) => { await api('POST', '/user-genres', d); toast('Association ajoutée'); reload(); },
+    });
+  }
   listPage({
-    title: 'Genres par utilisateur', endpoint: '/user-genres', columns: [
+    title: 'Genres par utilisateur', endpoint: '/user-genres', addLabel: '+ Associer un genre', onAdd: (reload) => openAdd(reload),
+    columns: [
       { label: '#', render: (r) => r.user_id },
       { label: 'Utilisateur', render: (r) => `<div class="uinfo">${avatar(r)}<div><div class="nm">${esc(r.full_name || 'N/A')}</div><div class="em">${esc(r.email)}</div></div></div>` },
       { label: 'Genre', render: (r) => esc(r.genre) },
       { label: 'Date', render: (r) => fmtDate(r.created_at) },
+      { label: 'Action', render: (r) => `<button class="btn del" data-del="/user-genres?user_id=${r.user_id}&genre_id=${r.genre_id}">Supprimer</button>` },
     ],
   });
 }
@@ -352,27 +417,45 @@ function pageEvents() {
 }
 
 function pagePackages() {
+  EDIT.pkg = (id) => {
+    const r = currentRows.find((x) => x.id == id); if (!r) return;
+    modal({ title: 'Modifier le package', fields: [{ name: 'name', label: 'Nom', value: r.name }, { name: 'points', label: 'Points', value: r.points }, { name: 'price', label: 'Prix', value: r.price }], onSave: async (d) => { await api('PUT', '/packages/' + id, d); toast('Modifié'); route(); } });
+  };
   listPage({
     title: 'Packages', endpoint: '/packages', addLabel: '+ Ajouter', columns: [
       { label: '#', render: (r) => r.id },
       { label: 'Nom', render: (r) => esc(r.name) },
       { label: 'Points', render: (r) => esc(r.points) },
       { label: 'Prix', render: (r) => '$' + esc(r.price) },
-      { label: 'Action', render: (r) => `<button class="btn del" data-del="/packages/${r.id}">Supprimer</button>` },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="pkg:${r.id}">Modifier</button><button class="btn del" data-del="/packages/${r.id}">Supprimer</button>` },
     ],
     onAdd: (reload) => modal({ title: 'Ajouter un package', fields: [{ name: 'name', label: 'Nom' }, { name: 'points', label: 'Points' }, { name: 'price', label: 'Prix' }], onSave: async (d) => { await api('POST', '/packages', d); toast('Ajouté'); reload(); } }),
   });
 }
 
+function subForm(row) {
+  modal({
+    title: row ? "Modifier l'abonnement" : 'Ajouter un abonnement', fields: [
+      { name: 'name', label: 'Nom', value: row?.name },
+      { name: 'tier', label: 'Palier', value: row?.tier },
+      { name: 'price', label: 'Prix ($)', type: 'number', value: row?.price || '0' },
+      { name: 'period', label: 'Période', type: 'select', value: row?.period || 'month', options: [{ value: 'month', label: 'Mois' }, { value: 'year', label: 'An' }] },
+      { name: 'active', label: 'Actif ?', type: 'checkbox', value: row ? !!row.active : true, hint: 'Visible dans l\'app' },
+    ],
+    onSave: async (d) => { if (row) { await api('PUT', '/subscriptions/' + row.id, d); toast('Modifié'); } else { await api('POST', '/subscriptions', d); toast('Ajouté'); } route(); },
+  });
+}
 function pageSubscriptions() {
+  EDIT.sub = (id) => { const r = currentRows.find((x) => x.id == id); if (r) subForm(r); };
   listPage({
-    title: 'Abonnements', endpoint: '/subscriptions', columns: [
+    title: 'Abonnements', endpoint: '/subscriptions', addLabel: '+ Ajouter', onAdd: () => subForm(null), columns: [
       { label: '#', render: (r) => r.id },
       { label: 'Nom', render: (r) => esc(r.name) },
       { label: 'Palier', render: (r) => esc(r.tier) },
       { label: 'Prix', render: (r) => '$' + esc(r.price) },
       { label: 'Période', render: (r) => esc(r.period === 'year' ? 'an' : 'mois') },
       { label: 'Actif', render: (r) => badge(r.active ? 'active' : 'pending') },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="sub:${r.id}">Modifier</button><button class="btn del" data-del="/subscriptions/${r.id}">Supprimer</button>` },
     ],
   });
 }
@@ -392,10 +475,26 @@ async function pageReferrals() {
     { label: 'Action', render: (r) => `${r.status !== 'validated' ? `<button class="btn status" data-val="${r.id}">Valider</button>` : ''}<button class="btn del" data-del="/referrals/${r.id}">Supprimer</button>` },
   ];
   view().innerHTML = `
-    <div class="head-row"><h1 class="page-title">Parrainages</h1><button class="add-btn" id="ruleBtn">⚙️ Règle : ${rule.rate}% · max ${rule.cap}/mois</button></div>
+    <div class="head-row"><h1 class="page-title">Parrainages</h1>
+      <div style="display:flex;gap:10px">
+        <button class="add-btn" id="addRef">+ Ajouter</button>
+        <button class="add-btn" id="ruleBtn" style="background:transparent;border:1px solid var(--gold);color:var(--gold)">⚙️ ${rule.rate}% · max ${rule.cap}/mois</button>
+      </div></div>
     <p style="color:var(--muted);margin-bottom:14px">Règle actuelle : <b style="color:var(--gold)">${rule.rate}%</b> par nouvel artiste parrainé, plafonné à <b style="color:var(--gold)">${rule.cap}</b> parrainages par mois.</p>
     ${tableShellInner(cols)}`;
   mountTable(view().querySelector('.tcard'), { columns: cols, rows: data });
+  view().querySelector('#addRef').onclick = async () => {
+    const { data: users } = await api('GET', '/users-list');
+    const opts = [{ value: '', label: '— Choisir —' }, ...users.map((u) => ({ value: u.id, label: u.name }))];
+    modal({
+      title: 'Ajouter un parrainage', fields: [
+        { name: 'referrer_id', label: 'Parrain', type: 'select', options: opts },
+        { name: 'referee_id', label: 'Filleul', type: 'select', options: opts },
+        { name: 'status', label: 'Statut', type: 'select', value: 'validated', options: [{ value: 'validated', label: 'Validé' }, { value: 'pending', label: 'En attente' }] },
+      ],
+      onSave: async (d) => { await api('POST', '/referrals', d); toast('Parrainage ajouté'); route(); },
+    });
+  };
   view().querySelector('#ruleBtn').onclick = () => modal({
     title: 'Règle de parrainage', fields: [
       { name: 'rate', label: 'Pourcentage par nouvel artiste (%)', type: 'number', value: rule.rate },
@@ -552,12 +651,19 @@ async function pageProfile() {
   };
 }
 
-// Délégation globale Supprimer / Modifier
+// Délégation globale Supprimer / Modifier / Statut
 document.addEventListener('click', (e) => {
   const del = e.target.closest('[data-del]');
   if (del) { confirmDelete(async () => { await api('DELETE', del.dataset.del); toast('Supprimé'); route(); }); return; }
   const ed = e.target.closest('[data-edit]');
-  if (ed) { const [type, id] = ed.dataset.edit.split(':'); EDIT[type]?.(id); }
+  if (ed) { const [type, id] = ed.dataset.edit.split(':'); EDIT[type]?.(id); return; }
+  const st = e.target.closest('[data-status]');
+  if (st) {
+    const r = currentRows.find((x) => x.id == st.dataset.status);
+    const next = r?.status === 'active' ? 'pending' : 'active';
+    api('POST', `/users/${st.dataset.status}/status`, { status: next })
+      .then(() => { toast('Statut → ' + (STATUS_FR[next] || next)); route(); }).catch((err) => toast(err.message));
+  }
 });
 
 const ROUTES = {

@@ -247,6 +247,36 @@ function run() {
   insRef.run('THEW1234', artistIds[0], artistIds[2], 'validated', '10%');
   insRef.run('BEYO5678', artistIds[1], artistIds[3], 'pending', '10%');
 
+  // ── Fans + billets répartis sur 6 mois (pour revenus & graphiques) ──
+  const insFan = db.prepare(
+    `INSERT INTO users (email, password, full_name, role, is_artist, is_verified, registration_type, referral_code, address)
+     VALUES (?, ?, ?, 'user', 0, 1, 'email', ?, ?)`
+  );
+  const fanIds = [];
+  const cities = ['Paris', 'Cayenne', 'Lyon', 'Pointe-à-Pitre', 'Marseille', 'Kourou'];
+  for (let i = 1; i <= 14; i++) {
+    fanIds.push(insFan.run(`fan${i}@vybzzz.com`, hash('password'), `Fan ${i}`, `FAN${1000 + i}`, cities[i % cities.length]).lastInsertRowid);
+  }
+
+  const insTicket = db.prepare(
+    `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status, created_at)
+     VALUES (?, ?, ?, ?, 'active', ?)`
+  );
+  const dAgo = (d) => { const dt = new Date(); dt.setDate(dt.getDate() - d); return dt.toISOString().replace('T', ' ').slice(0, 19); };
+  let rec = 1000;
+  events.forEach((ev, idx) => {
+    const n = 4 + Math.floor(Math.random() * 9); // 4 à 12 billets / concert
+    for (let k = 0; k < n; k++) {
+      const fan = fanIds[Math.floor(Math.random() * fanIds.length)];
+      insTicket.run(eventIds[idx], fan, ev.ticket_price, `VBZ-${rec++}-${1000 + k}`, dAgo(Math.floor(Math.random() * 175)));
+    }
+  });
+
+  // ── Objectifs (CA, users, artistes) — éditables dans l'admin ──
+  insSetting.run('goal_revenue', '50000');
+  insSetting.run('goal_users', '500');
+  insSetting.run('goal_artists', '50');
+
   console.log('[seed] OK :',
     `${genreIds.length} genres, ${artistIds.length} artistes, ${eventIds.length} events, 6 gifts.`);
   console.log('[seed] Compte démo : demo@vybzzz.com / password');

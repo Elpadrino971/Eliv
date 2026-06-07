@@ -348,6 +348,99 @@ router.delete('/abusive/:id', requireAdmin, (req, res) => {
   return res.json({ status: 'success', message: 'Supprimé.' });
 });
 
+// ─── Listes pour les menus déroulants ───
+router.get('/users-list', requireAdmin, (req, res) => {
+  const rows = db.prepare(
+    "SELECT id, COALESCE(full_name, artist_name, email) AS name FROM users WHERE role != 'admin' ORDER BY name"
+  ).all();
+  return res.json({ status: 'success', data: rows });
+});
+
+// ─── Édition Utilisateur ───
+router.put('/users/:id', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  db.prepare(
+    "UPDATE users SET full_name = @full_name, phone_number = @phone, address = @address, is_artist = @artist WHERE id = @id"
+  ).run({
+    id: req.params.id, full_name: b.full_name || null, phone: b.phone_number || null,
+    address: b.address || null, artist: b.is_artist ? 1 : 0,
+  });
+  return res.json({ status: 'success', message: 'Utilisateur modifié.' });
+});
+
+// ─── User Genres : ajout / suppression ───
+router.post('/user-genres', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  if (!b.user_id || !b.genre_id) return res.status(422).json({ status: 'error', message: 'Utilisateur et genre requis.' });
+  db.prepare('INSERT OR IGNORE INTO user_genres (user_id, genre_id) VALUES (?, ?)').run(b.user_id, b.genre_id);
+  return res.json({ status: 'success', message: 'Association ajoutée.' });
+});
+router.delete('/user-genres', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM user_genres WHERE user_id = ? AND genre_id = ?').run(req.query.user_id, req.query.genre_id);
+  return res.json({ status: 'success', message: 'Association supprimée.' });
+});
+
+// ─── Packages : édition ───
+router.put('/packages/:id', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  db.prepare('UPDATE packages SET name = ?, points = ?, price = ? WHERE id = ?').run(b.name, b.points || '0', b.price || '0', req.params.id);
+  return res.json({ status: 'success', message: 'Package modifié.' });
+});
+
+// ─── Abonnements : CRUD ───
+router.post('/subscriptions', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  db.prepare('INSERT INTO subscriptions (name, tier, price, period, active) VALUES (?, ?, ?, ?, ?)').run(b.name, b.tier || '', b.price || '0', b.period || 'month', b.active === false ? 0 : 1);
+  return res.json({ status: 'success', message: 'Abonnement ajouté.' });
+});
+router.put('/subscriptions/:id', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  db.prepare('UPDATE subscriptions SET name = ?, tier = ?, price = ?, period = ?, active = ? WHERE id = ?').run(b.name, b.tier, b.price, b.period, b.active ? 1 : 0, req.params.id);
+  return res.json({ status: 'success', message: 'Abonnement modifié.' });
+});
+router.delete('/subscriptions/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM subscriptions WHERE id = ?').run(req.params.id);
+  return res.json({ status: 'success', message: 'Abonnement supprimé.' });
+});
+
+// ─── Graphiques + Objectifs (Dashboard) ───
+const MONTHS_FR = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+router.get('/chart-data', requireAdmin, (req, res) => {
+  const rows = db.prepare(
+    "SELECT strftime('%Y-%m', created_at) m, COALESCE(SUM(CAST(price_paid AS REAL)),0) rev, COUNT(*) cnt FROM tickets GROUP BY m"
+  ).all();
+  const byMonth = Object.fromEntries(rows.map((r) => [r.m, r]));
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) months.push(new Date(now.getFullYear(), now.getMonth() - i, 1));
+  const keys = months.map((d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  const labels = months.map((d) => MONTHS_FR[d.getMonth()]);
+  const revenue = keys.map((k) => Math.round(byMonth[k]?.rev || 0));
+  const tickets = keys.map((k) => byMonth[k]?.cnt || 0);
+
+  const g = (k, def) => +(db.prepare('SELECT value v FROM settings WHERE key = ?').get(k)?.v || def);
+  const totalRev = Math.round(db.prepare("SELECT COALESCE(SUM(CAST(price_paid AS REAL)),0) r FROM tickets").get().r);
+  const fans = db.prepare("SELECT COUNT(*) c FROM users WHERE role = 'user' AND is_artist = 0").get().c;
+  const artists = db.prepare('SELECT COUNT(*) c FROM users WHERE is_artist = 1').get().c;
+  return res.json({
+    status: 'success',
+    data: {
+      labels, revenue, tickets,
+      goals: {
+        revenue: { current: totalRev, target: g('goal_revenue', 50000) },
+        users: { current: fans, target: g('goal_users', 500) },
+        artists: { current: artists, target: g('goal_artists', 50) },
+      },
+    },
+  });
+});
+router.put('/goals', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const set = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+  ['goal_revenue', 'goal_users', 'goal_artists'].forEach((k) => { if (b[k] != null && b[k] !== '') set.run(k, String(b[k])); });
+  return res.json({ status: 'success', message: 'Objectifs enregistrés.' });
+});
+
 // ─── Parrainage (10% par nouvel artiste parrainé, plafonné à 10/mois) ───
 function refRule() {
   const rate = +(db.prepare("SELECT value v FROM settings WHERE key = 'referral_rate'").get()?.v || 10);
@@ -382,6 +475,16 @@ router.put('/referral-settings', requireAdmin, (req, res) => {
   if (b.rate != null) set.run('referral_rate', String(b.rate));
   if (b.cap != null) set.run('referral_monthly_cap', String(b.cap));
   return res.json({ status: 'success', message: 'Règle de parrainage enregistrée.' });
+});
+
+router.post('/referrals', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  if (!b.referrer_id || !b.referee_id) return res.status(422).json({ status: 'error', message: 'Parrain et filleul requis.' });
+  if (b.referrer_id === b.referee_id) return res.status(422).json({ status: 'error', message: 'Un parrain ne peut pas se parrainer lui-même.' });
+  const code = db.prepare('SELECT referral_code c FROM users WHERE id = ?').get(b.referrer_id)?.c || 'MANUEL';
+  db.prepare("INSERT INTO referrals (code, referrer_id, referee_id, status, reward) VALUES (?, ?, ?, ?, ?)")
+    .run(code, b.referrer_id, b.referee_id, b.status || 'validated', refRule().rate + '%');
+  return res.json({ status: 'success', message: 'Parrainage ajouté.' });
 });
 
 router.post('/referrals/:id/validate', requireAdmin, (req, res) => {
