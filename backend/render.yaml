@@ -1,5 +1,11 @@
-# Blueprint Render (https://render.com) — déploiement en 1 clic.
-# Dans Render : New → Blueprint → pointe sur ce repo (rootDir backend).
+# Blueprint Render (https://render.com)
+# Dans Render : New → Blueprint → choisis ce repo. Render lit ce fichier.
+#
+# ⚠️ Plan FREE : pas de volume persistant. La base SQLite est recréée + re-seedée
+# à chaque redéploiement/réveil (le service s'endort après inactivité).
+# → Parfait pour METTRE EN LIGNE et tester. Pour de la VRAIE prod (données qui
+#   persistent, pas de cold start), passe en plan "Starter" et décommente le bloc
+#   `disk:` + la variable VYBZZZ_DB plus bas.
 services:
   - type: web
     name: vybzzz-backend
@@ -7,12 +13,19 @@ services:
     rootDir: backend
     dockerfilePath: ./Dockerfile
     plan: free
+    healthCheckPath: /api
     envVars:
       - key: JWT_SECRET
         generateValue: true
-      - key: VYBZZZ_DB
-        value: /data/vybzzz.sqlite
-    disk:
-      name: vybzzz-data
-      mountPath: /data
-      sizeGB: 1
+
+    # ── Persistance (plan payant uniquement) ──
+    # plan: starter
+    # envVars:
+    #   - key: JWT_SECRET
+    #     generateValue: true
+    #   - key: VYBZZZ_DB
+    #     value: /data/vybzzz.sqlite
+    # disk:
+    #   name: vybzzz-data
+    #   mountPath: /data
+    #   sizeGB: 1
