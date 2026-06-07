@@ -33,7 +33,7 @@ function reset() {
   for (const t of [
     'user_genres', 'tickets', 'follows', 'activities', 'events', 'gifts',
     'genres', 'users', 'settings', 'abusive_words', 'referrals', 'ghost_passes', 'event_signals',
-    'packages', 'subscriptions', 'reviews', 'withdrawals', 'contact_leads', 'faqs', 'cms_pages',
+    'packages', 'subscriptions', 'reviews', 'withdrawals', 'contact_leads', 'faqs', 'cms_pages', 'ideas',
   ]) {
     db.exec(`DELETE FROM ${t};`);
   }
@@ -271,6 +271,12 @@ function run() {
       insTicket.run(eventIds[idx], fan, ev.ticket_price, `VBZ-${rec++}-${1000 + k}`, dAgo(Math.floor(Math.random() * 175)));
     }
   });
+
+  // ── Boîte à idées (suggestions de démo) ──
+  const insIdea = db.prepare('INSERT INTO ideas (user_id, name, email, category, message, status) VALUES (?, ?, ?, ?, ?, ?)');
+  insIdea.run(fanIds[0], 'Fan 1', 'fan1@vybzzz.com', 'Fonctionnalité', 'Ajouter un mode hors-ligne pour réécouter les concerts.', 'new');
+  insIdea.run(artistIds[0], 'The Weeknd', 'artist1@vybzzz.com', 'Artiste', 'Pouvoir programmer un live à l\'avance avec un compte à rebours.', 'reviewed');
+  insIdea.run(fanIds[2], 'Fan 3', 'fan3@vybzzz.com', 'Cadeaux', 'Plus de cadeaux animés pendant les lives !', 'new');
 
   // ── Objectifs (CA, users, artistes) — éditables dans l'admin ──
   insSetting.run('goal_revenue', '50000');

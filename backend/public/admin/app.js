@@ -76,6 +76,7 @@ const NAV = [
     { id: 'reports', label: 'Rapports', ic: '📈' },
   ] },
   { group: 'Support & contenu', items: [
+    { id: 'ideas', label: 'Boîte à idées', ic: '💡' },
     { id: 'leads', label: 'Contacts / Leads', ic: '📞' },
     { id: 'faqs', label: 'FAQ', ic: '❓' },
     { id: 'cms', label: 'CMS', ic: '📄' },
@@ -111,7 +112,7 @@ function avatar(row) {
   if (row.profile_image && /^https?:/.test(row.profile_image)) return `<div class="av"><img src="${esc(row.profile_image)}"></div>`;
   return `<div class="av">${esc(initials(row.full_name, row.email))}</div>`;
 }
-const STATUS_FR = { active: 'Actif', pending: 'En attente', live: 'En direct', published: 'Publié', completed: 'Terminé', cancelled: 'Annulé', approved: 'Approuvé', rejected: 'Refusé', validated: 'Validé' };
+const STATUS_FR = { active: 'Actif', pending: 'En attente', live: 'En direct', published: 'Publié', completed: 'Terminé', cancelled: 'Annulé', approved: 'Approuvé', rejected: 'Refusé', validated: 'Validé', new: 'Nouveau', reviewed: 'Vu', implemented: 'Implémenté' };
 function badge(status) {
   const s = (status || '').toLowerCase();
   return `<span class="badge ${esc(s)}">${esc(STATUS_FR[s] || status || '—')}</span>`;
@@ -579,6 +580,28 @@ async function pageReports() {
     </div>`;
 }
 
+// Boîte à idées
+async function pageIdeas() {
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  const { data } = await api('GET', '/ideas');
+  const STATUSES = [['new', 'Nouveau'], ['reviewed', 'Vu'], ['implemented', 'Implémenté'], ['rejected', 'Refusé']];
+  const cols = [
+    { label: '#', render: (r) => r.id },
+    { label: 'Auteur', render: (r) => `<div class="nm">${esc(r.author || 'Anonyme')}</div><div class="em">${esc(r.email || '')}</div>` },
+    { label: 'Catégorie', render: (r) => esc(r.category || '—') },
+    { label: 'Idée', render: (r) => esc(r.message) },
+    { label: 'Statut', render: (r) => badge(r.status) },
+    { label: 'Date', render: (r) => fmtDate(r.created_at) },
+    { label: 'Action', render: (r) => `<select class="idea-st" data-id="${r.id}" style="background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:7px;padding:6px;margin-right:6px">${STATUSES.map(([v, l]) => `<option value="${v}" ${r.status === v ? 'selected' : ''}>${l}</option>`).join('')}</select><button class="btn del" data-del="/ideas/${r.id}">Supprimer</button>` },
+  ];
+  view().innerHTML = tableShell('💡 Boîte à idées', cols);
+  mountTable(view().querySelector('.tcard'), { columns: cols, rows: data });
+  view().addEventListener('change', async (e) => {
+    const s = e.target.closest('.idea-st'); if (!s) return;
+    await api('POST', `/ideas/${s.dataset.id}/status`, { status: s.value }); toast('Statut mis à jour');
+  });
+}
+
 function pageLeads() {
   listPage({
     title: 'Contacts / Leads', endpoint: '/contact-leads', columns: [
@@ -670,7 +693,7 @@ const ROUTES = {
   dashboard: pageDashboard, users: pageUsers, genres: pageGenres, 'user-genres': pageUserGenres,
   events: pageEvents, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
-  reports: pageReports, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
+  reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
 };
 
 window.addEventListener('hashchange', route);

@@ -11,6 +11,17 @@ router.get('/genres', (req, res) => {
   return ok(res, db.prepare('SELECT * FROM genres').all());
 });
 
+// POST /api/ideas — Boîte à idées (soumission depuis l'app)
+router.post('/ideas', optionalAuth, (req, res) => {
+  const b = req.body || {};
+  if (!b.message) return fail(res, 'Le message est requis.', 422, { message: ['Le message est requis.'] });
+  db.prepare(
+    'INSERT INTO ideas (user_id, name, email, category, message) VALUES (?, ?, ?, ?, ?)'
+  ).run(req.user?.id || b.user_id || null, b.name || req.user?.full_name || null,
+    b.email || req.user?.email || null, b.category || 'Général', b.message);
+  return res.json({ status: 'success', message: 'Merci, votre idée a bien été envoyée !' });
+});
+
 // GET /api/get-abusive-words -> { status, data: [...] }
 router.get('/get-abusive-words', (req, res) => {
   return ok(res, db.prepare('SELECT * FROM abusive_words').all());

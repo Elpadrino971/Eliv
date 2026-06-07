@@ -136,4 +136,7 @@ class APIs {
 
   // Abusive Words
   static const String getAbusiveWordsAPI = '$baseAPI/get-abusive-words';
+
+  // Boîte à idées
+  static const String submitIdeaAPI = '$baseAPI/ideas';
 }

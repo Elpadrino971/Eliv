@@ -496,4 +496,21 @@ router.delete('/referrals/:id', requireAdmin, (req, res) => {
   return res.json({ status: 'success', message: 'Parrainage supprimé.' });
 });
 
+// ─── Boîte à idées ───
+router.get('/ideas', requireAdmin, (req, res) => {
+  const rows = db.prepare(
+    `SELECT i.*, COALESCE(u.full_name, u.artist_name, i.name) AS author
+     FROM ideas i LEFT JOIN users u ON u.id = i.user_id ORDER BY i.id DESC`
+  ).all();
+  return res.json({ status: 'success', data: rows });
+});
+router.post('/ideas/:id/status', requireAdmin, (req, res) => {
+  db.prepare('UPDATE ideas SET status = ? WHERE id = ?').run(req.body?.status || 'reviewed', req.params.id);
+  return res.json({ status: 'success', message: 'Statut mis à jour.' });
+});
+router.delete('/ideas/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM ideas WHERE id = ?').run(req.params.id);
+  return res.json({ status: 'success', message: 'Idée supprimée.' });
+});
+
 module.exports = router;

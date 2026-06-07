@@ -7,6 +7,7 @@ import 'package:artist/BottomBar/screens/profile/artist_onboarding_screen.dart';
 import 'package:artist/BottomBar/screens/profile/contant_page.dart';
 import 'package:artist/BottomBar/screens/profile/following_artists.dart';
 import 'package:artist/BottomBar/screens/profile/history.dart';
+import 'package:artist/BottomBar/screens/profile/idea_box_screen.dart';
 import 'package:artist/BottomBar/screens/profile/manage_subscription_screen.dart';
 import 'package:artist/BottomBar/screens/profile/user_wallet.dart';
 import 'package:artist/Controllers/controller.dart';
@@ -113,6 +114,12 @@ class _ProfileState extends State<Profile> {
         'title': 'prof_manage_sub'.tr,
         'subTitle': 'prof_manage_sub_sub'.tr,
         'onTap': () => Get.to(() => const ManageSubscriptionScreen()),
+      },
+      {
+        'icon': Icons.lightbulb_outline_rounded,
+        'title': 'Boîte à idées',
+        'subTitle': 'Aidez-nous à améliorer VYBZZZ',
+        'onTap': () => Get.to(() => const IdeaBoxScreen()),
       },
       {
         'icon': Icons.shield_outlined,

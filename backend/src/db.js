@@ -226,6 +226,18 @@ function init() {
       content TEXT,
       updated_at TEXT DEFAULT (datetime('now'))
     );
+
+    -- Boîte à idées (suggestions des utilisateurs/artistes)
+    CREATE TABLE IF NOT EXISTS ideas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      name TEXT,
+      email TEXT,
+      category TEXT,
+      message TEXT,
+      status TEXT DEFAULT 'new',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 }
 
