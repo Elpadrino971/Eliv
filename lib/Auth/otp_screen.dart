@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:artist/Controllers/auth_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
@@ -19,20 +21,28 @@ class _OtpScreenState extends State<OtpScreen> {
   final authController = Get.find<AuthController>();
   late final List<TextEditingController> pins;
   int timer = 60;
+  Timer? _countdownTimer;
 
   final formKey = GlobalKey<FormState>();
 
-  Future myTimerMethod() async {
-    timer = 60;
-    for (int i = 60; i > 0; i--) {
-      await Future.delayed(const Duration(seconds: 1));
-      timer = i;
-      setState(() {});
-    }
+  void startTimer() {
+    _countdownTimer?.cancel();
+    if (mounted) setState(() => timer = 60);
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      if (timer <= 1) {
+        t.cancel();
+      } else {
+        setState(() => timer--);
+      }
+    });
   }
 
   Future myInitMethod() async {
-    myTimerMethod();
+    startTimer();
     if (widget.fromForget) {
       await authController.forgetPassword(email: widget.email, froResent: true);
     }
@@ -41,12 +51,13 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   void initState() {
     super.initState();
-    myTimerMethod();
+    startTimer();
     pins = List.generate(6, (_) => TextEditingController());
   }
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     for (var i in pins) {
       i.dispose();
     }
@@ -154,7 +165,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     email: userModel.value.user?.email ?? "",
                     froResent: true,
                   );
-                  myTimerMethod();
+                  startTimer();
                 },
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
