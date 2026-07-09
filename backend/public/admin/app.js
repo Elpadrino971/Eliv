@@ -21,7 +21,8 @@ function toast(msg) {
 
 async function api(method, path, body) {
   const opt = { method, headers: {} };
-  if (body) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+  if (body instanceof FormData) { opt.body = body; }
+  else if (body) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
   if (token) opt.headers['Authorization'] = 'Bearer ' + token;
   const r = await fetch(API + path, opt);
   const j = await r.json().catch(() => ({}));
@@ -186,6 +187,7 @@ function modal({ title, fields, onSave, wide }) {
     if (f.type === 'textarea') return `<textarea data-k="${f.name}">${esc(f.value || '')}</textarea>`;
     if (f.type === 'checkbox') return `<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-k="${f.name}" style="width:auto" ${f.value ? 'checked' : ''}> ${esc(f.hint || '')}</label>`;
     if (f.type === 'select') return `<select data-k="${f.name}">${(f.options || []).map((o) => `<option value="${esc(o.value)}" ${String(o.value) === String(f.value) ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`;
+    if (f.type === 'file') return `<input type="file" data-k="${f.name}" accept="${esc(f.accept || 'image/*')}">`;
     return `<input type="${f.type || 'text'}" data-k="${f.name}" value="${esc(f.value ?? '')}" placeholder="${esc(f.placeholder || '')}">`;
   };
   bg.innerHTML = `<div class="modal" ${wide ? 'style="width:560px"' : ''}><h3>${esc(title)}</h3>${fields.map((f) => `<label>${esc(f.label)}</label>${fieldHtml(f)}`).join('')}
@@ -194,8 +196,20 @@ function modal({ title, fields, onSave, wide }) {
   bg.querySelector('.cancel').onclick = () => bg.remove();
   bg.onclick = (e) => { if (e.target === bg) bg.remove(); };
   bg.querySelector('.save').onclick = async () => {
-    const data = {};
-    bg.querySelectorAll('[data-k]').forEach((el) => { data[el.dataset.k] = el.type === 'checkbox' ? el.checked : el.value; });
+    const els = [...bg.querySelectorAll('[data-k]')];
+    const hasFile = els.some((el) => el.type === 'file' && el.files && el.files.length);
+    let data;
+    if (hasFile) {
+      data = new FormData();
+      els.forEach((el) => {
+        if (el.type === 'file') { if (el.files && el.files[0]) data.append(el.dataset.k, el.files[0]); }
+        else if (el.type === 'checkbox') data.append(el.dataset.k, el.checked ? '1' : '0');
+        else data.append(el.dataset.k, el.value);
+      });
+    } else {
+      data = {};
+      els.forEach((el) => { data[el.dataset.k] = el.type === 'checkbox' ? el.checked : el.value; });
+    }
     try { await onSave(data); bg.remove(); } catch (e) { toast(e.message); }
   };
 }
@@ -289,7 +303,8 @@ function userEditForm(r) {
   modal({
     title: "Modifier l'utilisateur", fields: [
       { name: 'full_name', label: 'Nom complet', value: r.full_name },
-      { name: 'photo', label: 'Photo / avatar (URL)', value: r.profile_image, placeholder: 'https://… (bulle artiste)' },
+      { name: 'photo', label: 'Photo / avatar (fichier)', type: 'file', accept: 'image/*' },
+      { name: 'photo', label: 'Ou coller une URL', value: r.profile_image, placeholder: 'https://… (bulle artiste)' },
       { name: 'phone_number', label: 'Téléphone', value: r.phone_number },
       { name: 'address', label: 'Adresse', value: r.address },
       { name: 'is_artist', label: 'Artiste ?', type: 'checkbox', value: !!r.is_artist, hint: 'Compte artiste' },
@@ -390,7 +405,8 @@ async function openEventForm(row) {
       { name: 'ticket_price', label: 'Prix du billet ($)', type: 'number', value: row?.ticket_price || '0' },
       { name: 'start_date_time', label: 'Date/heure (AAAA-MM-JJ HH:MM:SS)', value: row?.start_date_time, placeholder: '2026-12-26 19:30:00' },
       { name: 'mux_playback_id', label: 'Vidéo — Mux Playback ID', value: row?.mux_playback_id, placeholder: 'colle l\'ID Mux (ou laisse vide)' },
-      { name: 'cover_image', label: 'Image de couverture (nom de fichier ou URL)', value: row?.cover_image },
+      { name: 'cover', label: 'Image de couverture (fichier)', type: 'file', accept: 'image/*' },
+      { name: 'cover_image', label: 'Ou nom de fichier / URL', value: row?.cover_image },
       { name: 'description', label: 'Description', type: 'textarea', value: row?.description },
       { name: 'is_banner', label: 'Mettre en bannière (carrousel accueil) ?', type: 'checkbox', value: !!row?.is_banner, hint: 'Afficher dans le carrousel' },
     ],
@@ -442,6 +458,9 @@ function subForm(row) {
       { name: 'tier', label: 'Palier', value: row?.tier },
       { name: 'price', label: 'Prix ($)', type: 'number', value: row?.price || '0' },
       { name: 'period', label: 'Période', type: 'select', value: row?.period || 'month', options: [{ value: 'month', label: 'Mois' }, { value: 'year', label: 'An' }] },
+      { name: 'slot_from', label: 'Places : de (n°)', type: 'number', value: row?.slot_from, placeholder: '1' },
+      { name: 'slot_to', label: 'Places : à (n°)', type: 'number', value: row?.slot_to, placeholder: '24' },
+      { name: 'image', label: 'Image de l\'abonnement (fichier)', type: 'file', accept: 'image/*' },
       { name: 'active', label: 'Actif ?', type: 'checkbox', value: row ? !!row.active : true, hint: 'Visible dans l\'app' },
     ],
     onSave: async (d) => { if (row) { await api('PUT', '/subscriptions/' + row.id, d); toast('Modifié'); } else { await api('POST', '/subscriptions', d); toast('Ajouté'); } route(); },

@@ -239,6 +239,16 @@ function init() {
       created_at TEXT DEFAULT (datetime('now'))
     );
   `);
+
+  // ─── Migrations : colonnes ajoutées après coup (ignorées si déjà présentes) ───
+  for (const sql of [
+    "ALTER TABLE subscriptions ADD COLUMN image TEXT",
+    "ALTER TABLE subscriptions ADD COLUMN slot_from INTEGER",
+    "ALTER TABLE subscriptions ADD COLUMN slot_to INTEGER",
+    "ALTER TABLE packages ADD COLUMN image TEXT",
+  ]) {
+    try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
+  }
 }
 
 module.exports = { db, init, DB_PATH };

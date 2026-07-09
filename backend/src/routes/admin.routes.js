@@ -5,6 +5,8 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { db } = require('../db');
 const { hash, compare, SECRET } = require('../auth');
+const { saveUpload } = require('../uploads');
+const truthy = (v) => v === true || v === 1 || v === '1' || v === 'true' || v === 'on';
 
 /** Auth admin : exige un token dont le user a role='admin'. */
 function requireAdmin(req, res, next) {
@@ -168,13 +170,14 @@ router.get('/artists-list', requireAdmin, (req, res) => {
 
 router.post('/events', requireAdmin, (req, res) => {
   const b = req.body || {};
+  const cover = saveUpload(req, ['cover', 'cover_image', 'image'], 'covers', 'events/covers') || b.cover_image || null;
   if (!b.name) return res.status(422).json({ status: 'error', message: 'Le nom est requis.' });
   db.prepare(
     `INSERT INTO events (artist_id, name, cover_image, ticket_price, start_date_time, genre_id,
         description, status, mux_playback_id, mux_live_playback_id, video_reel, is_banner)
      VALUES (@artist_id, @name, @cover, @price, @start, @genre, @desc, @status, @mux, @muxLive, @reel, @banner)`
   ).run({
-    artist_id: b.artist_id || null, name: b.name, cover: b.cover_image || null,
+    artist_id: b.artist_id || null, name: b.name, cover,
     price: b.ticket_price || '0', start: b.start_date_time || null, genre: b.genre_id || null,
     desc: b.description || null, status: b.status || 'published',
     mux: b.mux_playback_id || null, muxLive: b.status === 'live' ? (b.mux_playback_id || null) : null,
@@ -185,6 +188,7 @@ router.post('/events', requireAdmin, (req, res) => {
 
 router.put('/events/:id', requireAdmin, (req, res) => {
   const b = req.body || {};
+  const cover = saveUpload(req, ['cover', 'cover_image', 'image'], 'covers', 'events/covers') || b.cover_image || null;
   db.prepare(
     `UPDATE events SET artist_id = @artist_id, name = @name, cover_image = @cover,
         ticket_price = @price, start_date_time = @start, genre_id = @genre, description = @desc,
@@ -192,7 +196,7 @@ router.put('/events/:id', requireAdmin, (req, res) => {
         video_reel = @reel, is_banner = @banner, updated_at = datetime('now')
      WHERE id = @id`
   ).run({
-    id: req.params.id, artist_id: b.artist_id || null, name: b.name, cover: b.cover_image || null,
+    id: req.params.id, artist_id: b.artist_id || null, name: b.name, cover,
     price: b.ticket_price || '0', start: b.start_date_time || null, genre: b.genre_id || null,
     desc: b.description || null, status: b.status || 'published',
     mux: b.mux_playback_id || null, muxLive: b.status === 'live' ? (b.mux_playback_id || null) : null,
@@ -360,7 +364,7 @@ router.get('/users-list', requireAdmin, (req, res) => {
 router.put('/users/:id', requireAdmin, (req, res) => {
   const b = req.body || {};
   // photo : sert d'avatar artiste (artist_profile) ET de photo profil (profile_image)
-  const photo = b.photo || b.artist_profile || null;
+  const photo = saveUpload(req, ['photo', 'avatar', 'profile_picture', 'image'], 'profiles', 'profiles') || b.photo || b.artist_profile || null;
   db.prepare(
     `UPDATE users SET full_name = @full_name, phone_number = @phone, address = @address,
         is_artist = @artist,
@@ -369,7 +373,7 @@ router.put('/users/:id', requireAdmin, (req, res) => {
      WHERE id = @id`
   ).run({
     id: req.params.id, full_name: b.full_name || null, phone: b.phone_number || null,
-    address: b.address || null, artist: b.is_artist ? 1 : 0, photo,
+    address: b.address || null, artist: truthy(b.is_artist) ? 1 : 0, photo,
   });
   return res.json({ status: 'success', message: 'Utilisateur modifié.' });
 });
@@ -396,12 +400,17 @@ router.put('/packages/:id', requireAdmin, (req, res) => {
 // ─── Abonnements : CRUD ───
 router.post('/subscriptions', requireAdmin, (req, res) => {
   const b = req.body || {};
-  db.prepare('INSERT INTO subscriptions (name, tier, price, period, active) VALUES (?, ?, ?, ?, ?)').run(b.name, b.tier || '', b.price || '0', b.period || 'month', b.active === false ? 0 : 1);
+  const image = saveUpload(req, ['image', 'photo'], 'covers', 'events/covers') || b.image || null;
+  db.prepare('INSERT INTO subscriptions (name, tier, price, period, active, image, slot_from, slot_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(b.name, b.tier || '', b.price || '0', b.period || 'month', b.active === undefined ? 1 : (truthy(b.active) ? 1 : 0), image, b.slot_from || null, b.slot_to || null);
   return res.json({ status: 'success', message: 'Abonnement ajouté.' });
 });
 router.put('/subscriptions/:id', requireAdmin, (req, res) => {
   const b = req.body || {};
-  db.prepare('UPDATE subscriptions SET name = ?, tier = ?, price = ?, period = ?, active = ? WHERE id = ?').run(b.name, b.tier, b.price, b.period, b.active ? 1 : 0, req.params.id);
+  const image = saveUpload(req, ['image', 'photo'], 'covers', 'events/covers') || b.image || null;
+  db.prepare(`UPDATE subscriptions SET name = ?, tier = ?, price = ?, period = ?, active = ?,
+      image = COALESCE(?, image), slot_from = ?, slot_to = ? WHERE id = ?`)
+    .run(b.name, b.tier, b.price, b.period, truthy(b.active) ? 1 : 0, image, b.slot_from || null, b.slot_to || null, req.params.id);
   return res.json({ status: 'success', message: 'Abonnement modifié.' });
 });
 router.delete('/subscriptions/:id', requireAdmin, (req, res) => {
