@@ -27,7 +27,10 @@ function saveUpload(req, fieldNames, subfolder, urlPath) {
   let ext = path.extname(file.originalname || '').toLowerCase();
   if (!ext || ext.length > 6) ext = '.jpg';
   const filename = `${Date.now()}_${Math.floor(Math.random() * 1e9)}${ext}`;
-  fs.renameSync(file.path, path.join(destDir, filename));
+  // copyFile + unlink (pas renameSync) : uploads/ et storage/ peuvent être sur
+  // des filesystems differents (volume Docker separe) -> rename echoue en EXDEV.
+  fs.copyFileSync(file.path, path.join(destDir, filename));
+  fs.unlinkSync(file.path);
   return `${PUBLIC_BASE_URL}/${urlPath}/${filename}`;
 }
 
