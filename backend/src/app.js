@@ -21,7 +21,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const upload = multer({ dest: path.join(__dirname, '..', 'uploads') });
+const fs = require('fs');
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+fs.mkdirSync(uploadsDir, { recursive: true }); // dossier temp multer (créé au démarrage)
+const upload = multer({ dest: uploadsDir });
 app.use(upload.any()); // accepte n'importe quel champ fichier (profile_picture, images[], …)
 
 // Fichiers statiques (covers, profils, vidéos, gifts) — mêmes chemins que l'API live
