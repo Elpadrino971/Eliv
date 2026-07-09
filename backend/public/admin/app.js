@@ -109,9 +109,10 @@ function route() {
 
 // ─── Helpers d'affichage ───
 function initials(name, email) { return (name || email || '?').trim().slice(0, 2).toUpperCase(); }
+function displayName(row) { return row.artist_name || row.full_name || 'N/A'; }
 function avatar(row) {
   if (row.profile_image && /^https?:/.test(row.profile_image)) return `<div class="av"><img src="${esc(row.profile_image)}"></div>`;
-  return `<div class="av">${esc(initials(row.full_name, row.email))}</div>`;
+  return `<div class="av">${esc(initials(displayName(row), row.email))}</div>`;
 }
 const STATUS_FR = { active: 'Actif', pending: 'En attente', live: 'En direct', published: 'Publié', completed: 'Terminé', cancelled: 'Annulé', approved: 'Approuvé', rejected: 'Refusé', validated: 'Validé', new: 'Nouveau', reviewed: 'Vu', implemented: 'Implémenté' };
 function badge(status) {
@@ -302,6 +303,7 @@ let usersTab = 'all';
 function userEditForm(r) {
   modal({
     title: "Modifier l'utilisateur", fields: [
+      { name: 'artist_name', label: "Nom d'artiste (prioritaire, ex. Burna Boy)", value: r.artist_name },
       { name: 'full_name', label: 'Nom complet', value: r.full_name },
       { name: 'photo', label: 'Photo / avatar (fichier)', type: 'file', accept: 'image/*' },
       { name: 'photo', label: 'Ou coller une URL', value: r.profile_image, placeholder: 'https://… (bulle artiste)' },
@@ -318,7 +320,8 @@ async function pageUsers() {
   currentRows = data;
   const cols = [
     { label: '#', render: (r) => r.id },
-    { label: 'Utilisateur', render: (r) => `<div class="uinfo">${avatar(r)}<div><div class="nm">${esc(r.full_name || 'N/A')}</div><div class="em">${esc(r.email)}</div></div></div>` },
+    { label: 'Utilisateur', render: (r) => `<div class="uinfo">${avatar(r)}<div><div class="nm">${esc(displayName(r))}</div><div class="em">${r.artist_name && r.full_name ? esc(r.full_name) + ' · ' : ''}${esc(r.email)}</div></div></div>` },
+    { label: "Nom d'artiste", render: (r) => esc(r.artist_name || '—') },
     { label: 'Téléphone', render: (r) => esc(r.phone_number || '—') },
     { label: 'Adresse', render: (r) => esc(r.address || 'N/A') },
     { label: 'Statut', render: (r) => badge(r.status) },

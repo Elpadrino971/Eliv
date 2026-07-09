@@ -75,7 +75,7 @@ router.get('/users', requireAdmin, (req, res) => {
   }
   sql += ' ORDER BY id DESC';
   const rows = db.prepare(sql).all(...params).map((u) => ({
-    id: u.id, full_name: u.full_name, email: u.email, phone_number: u.phone_number,
+    id: u.id, full_name: u.full_name, artist_name: u.artist_name, email: u.email, phone_number: u.phone_number,
     address: u.address, status: u.status, is_artist: !!u.is_artist,
     profile_image: u.artist_profile || u.profile_image, created_at: u.created_at,
   }));
@@ -366,13 +366,13 @@ router.put('/users/:id', requireAdmin, (req, res) => {
   // photo : sert d'avatar artiste (artist_profile) ET de photo profil (profile_image)
   const photo = saveUpload(req, ['photo', 'avatar', 'profile_picture', 'image'], 'profiles', 'profiles') || b.photo || b.artist_profile || null;
   db.prepare(
-    `UPDATE users SET full_name = @full_name, phone_number = @phone, address = @address,
+    `UPDATE users SET full_name = @full_name, artist_name = @artist_name, phone_number = @phone, address = @address,
         is_artist = @artist,
         artist_profile = COALESCE(@photo, artist_profile),
         profile_image = COALESCE(@photo, profile_image)
      WHERE id = @id`
   ).run({
-    id: req.params.id, full_name: b.full_name || null, phone: b.phone_number || null,
+    id: req.params.id, full_name: b.full_name || null, artist_name: b.artist_name || null, phone: b.phone_number || null,
     address: b.address || null, artist: truthy(b.is_artist) ? 1 : 0, photo,
   });
   return res.json({ status: 'success', message: 'Utilisateur modifié.' });
