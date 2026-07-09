@@ -31,16 +31,20 @@ class SectionHeader extends StatelessWidget {
           const SizedBox(width: 10),
         ],
         Expanded(
-          child: Text(
-            title.toUpperCase(),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontFamily: AppFonts.ui,
-              color: ivory,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-              letterSpacing: 3,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              title.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: AppFonts.ui,
+                color: ivory,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                letterSpacing: 2,
+              ),
             ),
           ),
         ),

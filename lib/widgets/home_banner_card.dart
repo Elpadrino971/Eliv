@@ -97,17 +97,27 @@ class _HomeBannerCardState extends State<HomeBannerCard> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Video de teaser si disponible (Mux), sinon photo de couverture
-          videoReady
-              ? FittedBox(
+          // ── Photo de couverture (toujours presente en dessous)
+          Positioned.fill(child: _coverImage()),
+
+          // ── Video de teaser (Mux) : fondu enchaine par-dessus la photo
+          // des qu'elle est prete, pour eviter un changement brusque.
+          if (_videoController != null)
+            Positioned.fill(
+              child: AnimatedOpacity(
+                opacity: videoReady ? 1 : 0,
+                duration: const Duration(milliseconds: 450),
+                curve: Curves.easeIn,
+                child: FittedBox(
                   fit: BoxFit.cover,
                   child: SizedBox(
                     width: _videoController!.value.size.width,
                     height: _videoController!.value.size.height,
                     child: VideoPlayer(_videoController!),
                   ),
-                )
-              : _coverImage(),
+                ),
+              ),
+            ),
 
           // ── Overlay bleu nuit pour la lisibilite
           const DecoratedBox(
