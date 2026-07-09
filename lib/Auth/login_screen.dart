@@ -11,6 +11,7 @@ import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -42,9 +43,32 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: Get.isDarkMode ? midnightPrimary : Color(0xfffffcf6),
 
-      body: Center(
-        child: Container(
-          padding: myPadding,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/launch_bg.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stack) => const SizedBox(),
+            ),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    midnightPrimary.withOpacity(0.55),
+                    midnightPrimary.withOpacity(0.88),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Center(
+            child: Container(
+              padding: myPadding,
 
           child: Form(
             key: formKey,
@@ -282,40 +306,91 @@ class _LoginScreenState extends State<LoginScreen> {
                               )
                             : Row(
                                 children: [
-                                  SizedBox(
-                                    width: Get.width * 0.43,
-                                    height: 50,
-                                    child: Container(
-                                      padding: myPadding,
-                                      decoration: BoxDecoration(
-                                        color: cardDeep,
-                                        border: Border.all(
-                                          color: Color(0xff223046),
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final user = await signInWithGoogle();
+                                      if (user != null) {
+                                        await authController.socialLogin(
+                                          email: user.email ?? '',
+                                          name:
+                                              user.displayName ?? 'Google User',
+                                          phone: user.phoneNumber,
+                                        );
+                                      } else {
+                                        myWarningDialog(
+                                          subtitle: 'error_try_again'.tr,
+                                        );
+                                      }
+                                    },
+                                    child: SizedBox(
+                                      width: Get.width * 0.43,
+                                      height: 50,
+                                      child: Container(
+                                        padding: myPadding,
+                                        decoration: BoxDecoration(
+                                          color: cardDeep,
+                                          border: Border.all(
+                                            color: Color(0xff223046),
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                         ),
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Image.asset(
-                                        'assets/google_icon.png',
+                                        child: Image.asset(
+                                          'assets/google_icon.png',
+                                        ),
                                       ),
                                     ),
                                   ),
 
                                   Spacer(),
 
-                                  SizedBox(
-                                    width: Get.width * 0.43,
-                                    height: 50,
-                                    child: Container(
-                                      padding: myPadding,
-                                      decoration: BoxDecoration(
-                                        color: cardDeep,
-                                        border: Border.all(
-                                          color: Color(0xff223046),
+                                  GestureDetector(
+                                    onTap: () async {
+                                      try {
+                                        await SignInWithApple.getAppleIDCredential(
+                                          scopes: [
+                                            AppleIDAuthorizationScopes.email,
+                                            AppleIDAuthorizationScopes.fullName,
+                                          ],
+                                        ).then((value) async {
+                                          await authController.socialLogin(
+                                            email:
+                                                value.email?.toString() ??
+                                                value.userIdentifier.toString(),
+                                            name:
+                                                value.givenName?.toString() ??
+                                                'iOS User',
+                                          );
+                                        }).onError((error, stackTrace) {
+                                          myPrint(
+                                            'Apple sign in error: ${error.toString()}',
+                                          );
+                                          myWarningDialog(
+                                            subtitle: 'error_try_again'.tr,
+                                          );
+                                        });
+                                      } catch (e) {
+                                        myPrint(e);
+                                      }
+                                    },
+                                    child: SizedBox(
+                                      width: Get.width * 0.43,
+                                      height: 50,
+                                      child: Container(
+                                        padding: myPadding,
+                                        decoration: BoxDecoration(
+                                          color: cardDeep,
+                                          border: Border.all(
+                                            color: Color(0xff223046),
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                         ),
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Image.asset(
-                                        'assets/apple_icon.png',
+                                        child: Image.asset(
+                                          'assets/apple_icon.png',
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -360,6 +435,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+      ),
+        ],
       ),
     );
   }

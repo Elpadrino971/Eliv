@@ -55,6 +55,7 @@ dependencies:
   googleapis_auth: any
   share_plus: any
   purchases_flutter: any
+  sign_in_with_apple: ^8.1.0
 
 dev_dependencies:
   flutter_test:
