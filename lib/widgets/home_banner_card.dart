@@ -5,17 +5,69 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:video_player/video_player.dart';
 import 'package:artist/Global/app_date.dart';
 
-class HomeBannerCard extends StatelessWidget {
+class HomeBannerCard extends StatefulWidget {
   const HomeBannerCard({super.key, required this.event});
   final Event event;
+
+  @override
+  State<HomeBannerCard> createState() => _HomeBannerCardState();
+}
+
+class _HomeBannerCardState extends State<HomeBannerCard> {
+  VideoPlayerController? _videoController;
+
+  Event get event => widget.event;
 
   bool get _isLive =>
       event.startDateTime != null &&
       event.endDateTime != null &&
       DateTime.now().isAfter(event.startDateTime!) &&
       DateTime.now().isBefore(event.endDateTime!);
+
+  @override
+  void initState() {
+    super.initState();
+    _initVideo();
+  }
+
+  void _initVideo() {
+    final reel = event.videoReel;
+    if (reel == null || reel.isEmpty) return;
+    final controller = VideoPlayerController.networkUrl(Uri.parse(reel));
+    controller
+        .initialize()
+        .then((_) {
+          if (!mounted) return;
+          controller
+            ..setLooping(true)
+            ..setVolume(0)
+            ..play();
+          setState(() {});
+        })
+        .catchError((_) {
+          // Flux video indisponible : le visuel de couverture reste affiche.
+        });
+    _videoController = controller;
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeBannerCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.event.videoReel != widget.event.videoReel) {
+      _videoController?.dispose();
+      _videoController = null;
+      _initVideo();
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    super.dispose();
+  }
 
   /// 12800 -> "12.8K"
   String _formatCount(int? value) {
@@ -25,25 +77,39 @@ class HomeBannerCard extends StatelessWidget {
     return '$v';
   }
 
+  Widget _coverImage() {
+    return Image.network(
+      '${APIs.eventImageIP}/${event.coverImage}',
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) =>
+          Image.asset('assets/background4.png', fit: BoxFit.cover),
+      loadingBuilder: (context, child, progress) =>
+          progress == null ? child : Container(color: cardDeep),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final videoReady = _videoController?.value.isInitialized ?? false;
     return SizedBox(
       width: Get.width,
       height: Get.height * 0.46,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Image de concert (cinématique)
-          Image.network(
-            '${APIs.eventImageIP}/${event.coverImage}',
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) =>
-                Image.asset('assets/background4.png', fit: BoxFit.cover),
-            loadingBuilder: (context, child, progress) =>
-                progress == null ? child : Container(color: cardDeep),
-          ),
+          // ── Video de teaser si disponible (Mux), sinon photo de couverture
+          videoReady
+              ? FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: _videoController!.value.size.width,
+                    height: _videoController!.value.size.height,
+                    child: VideoPlayer(_videoController!),
+                  ),
+                )
+              : _coverImage(),
 
-          // ── Overlay bleu nuit pour la lisibilité
+          // ── Overlay bleu nuit pour la lisibilite
           const DecoratedBox(
             decoration: BoxDecoration(gradient: kImageOverlay),
           ),

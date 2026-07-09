@@ -76,14 +76,19 @@ class MyButton extends StatelessWidget {
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        label,
-                        style: TextStyle(
-                          fontFamily: AppFonts.ui,
-                          color: labelColor ?? midnightPrimary,
-                          fontWeight: fontWeight ?? FontWeight.w700,
-                          fontSize: labelSize ?? 14,
-                          letterSpacing: 1,
+                      Flexible(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: AppFonts.ui,
+                            color: labelColor ?? midnightPrimary,
+                            fontWeight: fontWeight ?? FontWeight.w700,
+                            fontSize: labelSize ?? 14,
+                            letterSpacing: 1,
+                          ),
                         ),
                       ),
                       width(0.02),

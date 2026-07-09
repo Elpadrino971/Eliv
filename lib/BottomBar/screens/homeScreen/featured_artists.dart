@@ -3,6 +3,7 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/user_model.dart';
 import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/image_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -95,18 +96,21 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
                           Get.to(() => ArtistDetailScreen(artist: artist));
                         },
                         child: Container(
-                          padding: EdgeInsets.all(10),
+                          clipBehavior: Clip.antiAlias,
                           decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: NetworkImage('${artist.profileImage}'),
-                              onError: (exception, stackTrace) {
-                                Image.asset('assets/icon2.png');
-                              },
-                              fit: BoxFit.fill,
-                            ),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Column(
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              ImageWidget(
+                                url: '${artist.profileImage}',
+                                fit: BoxFit.cover,
+                                errorAsset: 'assets/icon2.png',
+                              ),
+                              Padding(
+                                padding: EdgeInsets.all(10),
+                                child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               (artist.genres ?? []).isEmpty
@@ -205,6 +209,9 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),
+                                ),
+                              ),
+                            ],
                                 ),
                               ),
                             ],
