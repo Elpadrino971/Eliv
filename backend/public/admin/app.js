@@ -514,6 +514,7 @@ function subForm(row) {
       { name: 'commission', label: 'Commission (%)', type: 'number', value: row?.commission, placeholder: '60' },
       { name: 'slot_from', label: 'Places : de (n°)', type: 'number', value: row?.slot_from, placeholder: '1' },
       { name: 'slot_to', label: 'Places : à (n°)', type: 'number', value: row?.slot_to, placeholder: '24' },
+      { name: 'badge', label: 'Badge / ruban (ex. OFFRE LIMITÉE)', value: row?.badge, placeholder: 'OFFRE LIMITÉE' },
       { name: 'image', label: 'Image de l\'abonnement (fichier)', type: 'file', accept: 'image/*' },
       { name: 'active', label: 'Actif ?', type: 'checkbox', value: row ? !!row.active : true, hint: 'Visible dans l\'app' },
     ],

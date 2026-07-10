@@ -87,7 +87,7 @@ router.get('/subscription/get', (req, res) => {
       next_price: null,
       next_price_in_seats: null,
       public_price: null,
-      badge: null,
+      badge: r.badge,
       iap_product_id: null,
       image: r.image,
     };
