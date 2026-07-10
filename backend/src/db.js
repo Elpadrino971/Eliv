@@ -247,6 +247,7 @@ function init() {
     "ALTER TABLE subscriptions ADD COLUMN slot_to INTEGER",
     "ALTER TABLE packages ADD COLUMN image TEXT",
     "ALTER TABLE events ADD COLUMN tz_offset_minutes INTEGER DEFAULT 0",
+    "ALTER TABLE subscriptions ADD COLUMN commission INTEGER",
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }

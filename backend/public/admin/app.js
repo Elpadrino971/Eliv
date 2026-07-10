@@ -511,6 +511,7 @@ function subForm(row) {
       { name: 'tier', label: 'Palier', value: row?.tier },
       { name: 'price', label: 'Prix ($)', type: 'number', value: row?.price || '0' },
       { name: 'period', label: 'Période', type: 'select', value: row?.period || 'month', options: [{ value: 'month', label: 'Mois' }, { value: 'year', label: 'An' }] },
+      { name: 'commission', label: 'Commission (%)', type: 'number', value: row?.commission, placeholder: '60' },
       { name: 'slot_from', label: 'Places : de (n°)', type: 'number', value: row?.slot_from, placeholder: '1' },
       { name: 'slot_to', label: 'Places : à (n°)', type: 'number', value: row?.slot_to, placeholder: '24' },
       { name: 'image', label: 'Image de l\'abonnement (fichier)', type: 'file', accept: 'image/*' },
