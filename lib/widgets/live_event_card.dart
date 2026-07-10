@@ -32,7 +32,8 @@ class LiveEventsCards extends StatelessWidget {
               Image.network(
                 '${APIs.eventImageIP}/${event.coverImage}',
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(color: cardDeep),
+                errorBuilder: (_, __, ___) =>
+                    Image.asset('assets/background4.png', fit: BoxFit.cover),
                 loadingBuilder: (context, child, progress) =>
                     progress == null ? child : Container(color: cardDeep),
               ),
@@ -47,9 +48,13 @@ class LiveEventsCards extends StatelessWidget {
                     Row(
                       children: [
                         _liveBadge(),
-                        const SizedBox(width: 8),
-                        Flexible(child: _genrePill()),
+                        if ((event.genre?.genre ?? '').isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Flexible(child: _genrePill()),
+                        ],
                         const Spacer(),
+                        _viewerCount(),
+                        const SizedBox(width: 10),
                         Text(
                           '\$${event.ticketPrice}',
                           style: const TextStyle(
@@ -135,6 +140,24 @@ class LiveEventsCards extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _viewerCount() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.remove_red_eye_outlined, size: 15, color: ivory),
+        const SizedBox(width: 5),
+        Text(
+          '${event.joinedUsersCount ?? 0}',
+          style: const TextStyle(
+            color: ivory,
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+          ),
+        ),
+      ],
     );
   }
 
