@@ -71,6 +71,18 @@ function serializeEvent(row, { currentUserId = null } = {}) {
     .all(row.id)
     .map((r) => r.user_id);
 
+  // ─── Fenetre de replay : 60 jours apres la fin du concert ───
+  // Au-dela, le teaser gratuit ET le replay paye s'arretent tous les deux
+  // (meme flux Mux pour les deux usages) : on ne renvoie plus l'ID/URL video.
+  const REPLAY_WINDOW_DAYS = 60;
+  const referenceDate = row.end_date_time || row.start_date_time;
+  const refTime = referenceDate ? new Date(referenceDate).getTime() : NaN;
+  const replayExpiresAt = !isNaN(refTime)
+    ? new Date(refTime + REPLAY_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString()
+    : null;
+  const replayExpired =
+    replayExpiresAt !== null && row.status !== 'live' && Date.now() > new Date(replayExpiresAt).getTime();
+
   return {
     id: row.id,
     artist_id: row.artist_id,
@@ -81,7 +93,7 @@ function serializeEvent(row, { currentUserId = null } = {}) {
     end_date_time: row.end_date_time,
     genre_id: row.genre_id,
     description: row.description,
-    video_reel: row.video_reel,
+    video_reel: replayExpired ? null : row.video_reel,
     is_private: row.is_private,
     has_live_chat: row.has_live_chat,
     capacity_limit: row.capacity_limit,
@@ -91,8 +103,10 @@ function serializeEvent(row, { currentUserId = null } = {}) {
     likes_count: row.likes_count,
     stream_key: row.stream_key,
     stream_url: row.stream_url,
-    mux_playback_id: row.mux_playback_id,
+    mux_playback_id: replayExpired ? null : row.mux_playback_id,
     mux_live_playback_id: row.mux_live_playback_id,
+    replay_expires_at: replayExpiresAt,
+    replay_expired: replayExpired,
     teaser_enabled: !!row.teaser_enabled,
     teaser_duration: row.teaser_duration,
     created_at: row.created_at,

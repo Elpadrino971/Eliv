@@ -149,11 +149,23 @@ router.get('/user-genres', requireAdmin, (req, res) => {
 // ─── Events (CRUD complet + vidéo Mux) ───
 const muxHls = (id) => (id ? `https://stream.mux.com/${id}.m3u8` : null);
 
+// Convertit une heure LOCALE saisie dans l'admin ("2026-06-07 02:30:00") + un
+// offset (minutes vs UTC, ex: -180 pour GMT-3) en ISO UTC pour le stockage.
+// Chaque spectateur la reverra ensuite dans SON propre fuseau (app cote client,
+// via .toLocal()) : c'est ce qui rend l'heure correcte pour tout le monde.
+function localToUtcIso(localStr, offsetMinutes) {
+  if (!localStr) return null;
+  const off = Number(offsetMinutes) || 0;
+  const naive = new Date(`${localStr.replace(' ', 'T')}Z`);
+  if (isNaN(naive.getTime())) return localStr;
+  return new Date(naive.getTime() - off * 60000).toISOString();
+}
+
 router.get('/events', requireAdmin, (req, res) => {
   const rows = db.prepare(
     `SELECT e.id, e.name, e.status, e.ticket_price, e.start_date_time, e.likes_count,
             e.artist_id, e.genre_id, e.description, e.cover_image, e.mux_playback_id,
-            e.is_banner, u.artist_name AS artist
+            e.is_banner, e.tz_offset_minutes, u.artist_name AS artist
      FROM events e LEFT JOIN users u ON u.id = e.artist_id
      ORDER BY e.id DESC`
   ).all();
@@ -172,13 +184,14 @@ router.post('/events', requireAdmin, (req, res) => {
   const b = req.body || {};
   const cover = saveUpload(req, ['cover', 'cover_image', 'image'], 'covers', 'events/covers') || b.cover_image || null;
   if (!b.name) return res.status(422).json({ status: 'error', message: 'Le nom est requis.' });
+  const tzOffset = Number(b.tz_offset_minutes) || 0;
   db.prepare(
-    `INSERT INTO events (artist_id, name, cover_image, ticket_price, start_date_time, genre_id,
+    `INSERT INTO events (artist_id, name, cover_image, ticket_price, start_date_time, tz_offset_minutes, genre_id,
         description, status, mux_playback_id, mux_live_playback_id, video_reel, is_banner)
-     VALUES (@artist_id, @name, @cover, @price, @start, @genre, @desc, @status, @mux, @muxLive, @reel, @banner)`
+     VALUES (@artist_id, @name, @cover, @price, @start, @tzOffset, @genre, @desc, @status, @mux, @muxLive, @reel, @banner)`
   ).run({
     artist_id: b.artist_id || null, name: b.name, cover,
-    price: b.ticket_price || '0', start: b.start_date_time || null, genre: b.genre_id || null,
+    price: b.ticket_price || '0', start: localToUtcIso(b.start_date_time, tzOffset), tzOffset, genre: b.genre_id || null,
     desc: b.description || null, status: b.status || 'published',
     mux: b.mux_playback_id || null, muxLive: b.status === 'live' ? (b.mux_playback_id || null) : null,
     reel: muxHls(b.mux_playback_id), banner: b.is_banner ? 1 : 0,
@@ -189,15 +202,16 @@ router.post('/events', requireAdmin, (req, res) => {
 router.put('/events/:id', requireAdmin, (req, res) => {
   const b = req.body || {};
   const cover = saveUpload(req, ['cover', 'cover_image', 'image'], 'covers', 'events/covers') || b.cover_image || null;
+  const tzOffset = Number(b.tz_offset_minutes) || 0;
   db.prepare(
     `UPDATE events SET artist_id = @artist_id, name = @name, cover_image = @cover,
-        ticket_price = @price, start_date_time = @start, genre_id = @genre, description = @desc,
+        ticket_price = @price, start_date_time = @start, tz_offset_minutes = @tzOffset, genre_id = @genre, description = @desc,
         status = @status, mux_playback_id = @mux, mux_live_playback_id = @muxLive,
         video_reel = @reel, is_banner = @banner, updated_at = datetime('now')
      WHERE id = @id`
   ).run({
     id: req.params.id, artist_id: b.artist_id || null, name: b.name, cover,
-    price: b.ticket_price || '0', start: b.start_date_time || null, genre: b.genre_id || null,
+    price: b.ticket_price || '0', start: localToUtcIso(b.start_date_time, tzOffset), tzOffset, genre: b.genre_id || null,
     desc: b.description || null, status: b.status || 'published',
     mux: b.mux_playback_id || null, muxLive: b.status === 'live' ? (b.mux_playback_id || null) : null,
     reel: muxHls(b.mux_playback_id), banner: b.is_banner ? 1 : 0,

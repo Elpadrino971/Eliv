@@ -9,6 +9,27 @@ let admin = JSON.parse(localStorage.getItem('vybzzz_admin') || 'null');
 let currentRows = [];
 const EDIT = {};
 
+// ─── Fuseaux horaires courants (offset en minutes vs UTC) ───
+// Sert a convertir l'heure LOCALE du lieu du concert en UTC pour le stockage,
+// afin que chaque spectateur la voie ensuite dans SON propre fuseau (app cote client).
+const TZ_OFFSETS = [
+  { value: '-720', label: 'GMT-12' }, { value: '-660', label: 'GMT-11' },
+  { value: '-600', label: 'GMT-10 (Hawaii)' }, { value: '-540', label: 'GMT-9 (Alaska)' },
+  { value: '-480', label: 'GMT-8 (Los Angeles)' }, { value: '-420', label: 'GMT-7 (Denver)' },
+  { value: '-360', label: 'GMT-6 (Mexico)' }, { value: '-300', label: 'GMT-5 (New York)' },
+  { value: '-240', label: 'GMT-4 (Guadeloupe)' }, { value: '-180', label: 'GMT-3 (Guyane, Cayenne)' },
+  { value: '-120', label: 'GMT-2' }, { value: '-60', label: 'GMT-1 (Açores)' },
+  { value: '0', label: 'GMT+0 (Londres)' }, { value: '60', label: 'GMT+1 (Paris, Berlin)' },
+  { value: '120', label: 'GMT+2 (Le Caire, Athenes)' }, { value: '180', label: 'GMT+3 (Moscou)' },
+  { value: '210', label: 'GMT+3:30 (Teheran)' }, { value: '240', label: 'GMT+4 (Dubai)' },
+  { value: '270', label: 'GMT+4:30 (Kaboul)' }, { value: '300', label: 'GMT+5 (Karachi)' },
+  { value: '330', label: 'GMT+5:30 (Inde)' }, { value: '345', label: 'GMT+5:45 (Nepal)' },
+  { value: '360', label: 'GMT+6 (Dacca)' }, { value: '420', label: 'GMT+7 (Bangkok)' },
+  { value: '480', label: 'GMT+8 (Pekin, Singapour)' }, { value: '540', label: 'GMT+9 (Tokyo)' },
+  { value: '570', label: 'GMT+9:30 (Adelaide)' }, { value: '600', label: 'GMT+10 (Sydney)' },
+  { value: '660', label: 'GMT+11' }, { value: '720', label: 'GMT+12 (Auckland)' },
+];
+
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -395,6 +416,19 @@ function pageUserGenres() {
   });
 }
 
+// Reconstruit l'heure LOCALE du lieu ("2026-06-07 02:30:00") a partir de l'UTC
+// stocke + de son offset, pour pre-remplir le formulaire d'edition avec
+// l'heure du lieu (pas l'UTC brut, illisible pour l'admin).
+function utcToLocalDisplay(utcIso, offsetMinutes) {
+  if (!utcIso) return '';
+  const off = Number(offsetMinutes) || 0;
+  const d = new Date(utcIso);
+  if (isNaN(d.getTime())) return utcIso;
+  const local = new Date(d.getTime() + off * 60000);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${local.getUTCFullYear()}-${p(local.getUTCMonth() + 1)}-${p(local.getUTCDate())} ${p(local.getUTCHours())}:${p(local.getUTCMinutes())}:${p(local.getUTCSeconds())}`;
+}
+
 // Concerts (CRUD + Mux)
 async function openEventForm(row) {
   const [{ data: artists }, { data: genres }] = await Promise.all([api('GET', '/artists-list'), api('GET', '/genres')]);
@@ -406,7 +440,8 @@ async function openEventForm(row) {
       { name: 'genre_id', label: 'Genre', type: 'select', value: row?.genre_id, options: [{ value: '', label: '— Choisir —' }, ...genres.map((g) => ({ value: g.id, label: g.name }))] },
       { name: 'status', label: 'Statut', type: 'select', value: row?.status || 'published', options: [{ value: 'published', label: 'Publié' }, { value: 'live', label: 'En direct' }, { value: 'completed', label: 'Terminé' }, { value: 'cancelled', label: 'Annulé' }] },
       { name: 'ticket_price', label: 'Prix du billet ($)', type: 'number', value: row?.ticket_price || '0' },
-      { name: 'start_date_time', label: 'Date/heure (AAAA-MM-JJ HH:MM:SS)', value: row?.start_date_time, placeholder: '2026-12-26 19:30:00' },
+      { name: 'start_date_time', label: 'Date/heure LOCALE du lieu (AAAA-MM-JJ HH:MM:SS)', value: row ? utcToLocalDisplay(row.start_date_time, row.tz_offset_minutes) : '', placeholder: '2026-12-26 19:30:00' },
+      { name: 'tz_offset_minutes', label: 'Fuseau horaire du lieu', type: 'select', value: row?.tz_offset_minutes ?? '0', options: TZ_OFFSETS },
       { name: 'mux_playback_id', label: 'Vidéo — Mux Playback ID', value: row?.mux_playback_id, placeholder: 'colle l\'ID Mux (ou laisse vide)' },
       { name: 'cover', label: 'Image de couverture (fichier)', type: 'file', accept: 'image/*' },
       { name: 'cover_image', label: 'Ou nom de fichier / URL', value: row?.cover_image },

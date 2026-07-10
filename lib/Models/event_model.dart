@@ -59,6 +59,8 @@ class Event {
   final int? likesCount;
   final String? streamKey;
   final String? streamUrl;
+  final DateTime? replayExpiresAt;
+  final bool? replayExpired;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final List<int>? ticketBuyerIds;
@@ -87,6 +89,8 @@ class Event {
     this.likesCount,
     this.streamKey,
     this.streamUrl,
+    this.replayExpiresAt,
+    this.replayExpired,
     this.createdAt,
     this.updatedAt,
     this.ticketBuyerIds,
@@ -116,6 +120,8 @@ class Event {
     int? likesCount,
     String? streamKey,
     String? streamUrl,
+    DateTime? replayExpiresAt,
+    bool? replayExpired,
     DateTime? createdAt,
     DateTime? updatedAt,
     List<int>? ticketBuyerIds,
@@ -143,6 +149,8 @@ class Event {
     likesCount: likesCount ?? this.likesCount,
     streamKey: streamKey ?? this.streamKey,
     streamUrl: streamUrl ?? this.streamUrl,
+    replayExpiresAt: replayExpiresAt ?? this.replayExpiresAt,
+    replayExpired: replayExpired ?? this.replayExpired,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     ticketBuyerIds: ticketBuyerIds ?? this.ticketBuyerIds,
@@ -176,6 +184,10 @@ class Event {
     likesCount: json["likes_count"],
     streamKey: json["stream_key"],
     streamUrl: json["stream_url"],
+    replayExpiresAt: json["replay_expires_at"] == null
+        ? null
+        : DateTime.parse(json["replay_expires_at"]),
+    replayExpired: json["replay_expired"],
     createdAt: json["created_at"] == null
         ? null
         : DateTime.parse(json["created_at"]),
@@ -221,6 +233,8 @@ class Event {
     "likes_count": likesCount,
     "stream_key": streamKey,
     "stream_url": streamUrl,
+    "replay_expires_at": replayExpiresAt?.toIso8601String(),
+    "replay_expired": replayExpired,
     "created_at": createdAt?.toIso8601String(),
     "updated_at": updatedAt?.toIso8601String(),
     "ticket_buyer_ids": ticketBuyerIds == null
