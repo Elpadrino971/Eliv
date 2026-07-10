@@ -68,15 +68,27 @@ router.get('/settings/get-management', (req, res) => {
 // enregistrera reellement une souscription en base.
 router.get('/subscription/get', (req, res) => {
   const rows = db.prepare('SELECT * FROM subscriptions WHERE active = 1 ORDER BY CAST(price AS REAL) ASC').all();
-  const list = rows.map((r) => {
+
+  // Un seul palier "Founder" visible a la fois (le moins cher parmi les
+  // paliers actifs = le palier en cours). Les paliers suivants restent en
+  // base, prets a prendre le relais des que l'admin desactive le precedent
+  // (pas encore de suivi automatique des vraies ventes -> bascule manuelle).
+  const founderRows = rows.filter((r) => (r.tier || '').toLowerCase() === 'founder');
+  const otherRows = rows.filter((r) => (r.tier || '').toLowerCase() !== 'founder');
+  const currentFounder = founderRows[0] || null;
+  const nextFounder = founderRows[1] || null;
+  const visibleRows = currentFounder ? [currentFounder, ...otherRows] : otherRows;
+
+  const list = visibleRows.map((r) => {
     const seatsTotal = r.slot_from != null && r.slot_to != null ? r.slot_to - r.slot_from + 1 : null;
+    const isCurrentFounder = currentFounder && r.id === currentFounder.id;
     return {
       id: r.id,
       title: r.name,
       price: r.price,
       price_type: r.period === 'year' ? 'yearly' : 'monthly',
       commission_type: r.commission != null ? 'percentage' : null,
-      commission: r.commission,
+      commission: r.commission != null ? String(r.commission) : null,
       artists_count: null,
       status: 'active',
       created_at: r.created_at,
@@ -84,8 +96,8 @@ router.get('/subscription/get', (req, res) => {
       is_founder: (r.tier || '').toLowerCase() === 'founder',
       seats_total: seatsTotal,
       seats_remaining: seatsTotal,
-      next_price: null,
-      next_price_in_seats: null,
+      next_price: isCurrentFounder && nextFounder ? nextFounder.price : null,
+      next_price_in_seats: isCurrentFounder ? seatsTotal : null,
       public_price: null,
       badge: r.badge,
       iap_product_id: null,
