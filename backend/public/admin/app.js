@@ -210,7 +210,15 @@ function modal({ title, fields, onSave, wide }) {
     if (f.type === 'checkbox') return `<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-k="${f.name}" style="width:auto" ${f.value ? 'checked' : ''}> ${esc(f.hint || '')}</label>`;
     if (f.type === 'select') return `<select data-k="${f.name}">${(f.options || []).map((o) => `<option value="${esc(o.value)}" ${String(o.value) === String(f.value) ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`;
     if (f.type === 'file') return `<input type="file" data-k="${f.name}" accept="${esc(f.accept || 'image/*')}">`;
+    if (f.type === 'datetime') return `<input type="datetime-local" step="1" data-k="${f.name}" value="${esc((f.value || '').replace(' ', 'T'))}">`;
     return `<input type="${f.type || 'text'}" data-k="${f.name}" value="${esc(f.value ?? '')}" placeholder="${esc(f.placeholder || '')}">`;
+  };
+  // datetime-local renvoie "AAAA-MM-JJTHH:MM[:SS]" : on remet le format
+  // "AAAA-MM-JJ HH:MM:SS" attendu par le backend (secondes ajoutees si absentes).
+  const normalizeDatetime = (v) => {
+    if (!v) return v;
+    const withSeconds = v.length === 16 ? `${v}:00` : v;
+    return withSeconds.replace('T', ' ');
   };
   bg.innerHTML = `<div class="modal" ${wide ? 'style="width:560px"' : ''}><h3>${esc(title)}</h3>${fields.map((f) => `<label>${esc(f.label)}</label>${fieldHtml(f)}`).join('')}
     <div class="modal-actions"><button class="cancel">Annuler</button><button class="btn gold save">Enregistrer</button></div></div>`;
@@ -226,11 +234,18 @@ function modal({ title, fields, onSave, wide }) {
       els.forEach((el) => {
         if (el.type === 'file') { if (el.files && el.files[0]) data.append(el.dataset.k, el.files[0]); }
         else if (el.type === 'checkbox') data.append(el.dataset.k, el.checked ? '1' : '0');
+        else if (el.type === 'datetime-local') data.append(el.dataset.k, normalizeDatetime(el.value));
         else data.append(el.dataset.k, el.value);
       });
     } else {
       data = {};
-      els.forEach((el) => { data[el.dataset.k] = el.type === 'checkbox' ? el.checked : el.value; });
+      els.forEach((el) => {
+        data[el.dataset.k] = el.type === 'checkbox'
+          ? el.checked
+          : el.type === 'datetime-local'
+            ? normalizeDatetime(el.value)
+            : el.value;
+      });
     }
     try { await onSave(data); bg.remove(); } catch (e) { toast(e.message); }
   };
@@ -440,7 +455,7 @@ async function openEventForm(row) {
       { name: 'genre_id', label: 'Genre', type: 'select', value: row?.genre_id, options: [{ value: '', label: '— Choisir —' }, ...genres.map((g) => ({ value: g.id, label: g.name }))] },
       { name: 'status', label: 'Statut', type: 'select', value: row?.status || 'published', options: [{ value: 'published', label: 'Publié' }, { value: 'live', label: 'En direct' }, { value: 'completed', label: 'Terminé' }, { value: 'cancelled', label: 'Annulé' }] },
       { name: 'ticket_price', label: 'Prix du billet ($)', type: 'number', value: row?.ticket_price || '0' },
-      { name: 'start_date_time', label: 'Date/heure LOCALE du lieu (AAAA-MM-JJ HH:MM:SS)', value: row ? utcToLocalDisplay(row.start_date_time, row.tz_offset_minutes) : '', placeholder: '2026-12-26 19:30:00' },
+      { name: 'start_date_time', label: 'Date/heure LOCALE du lieu (calendrier)', type: 'datetime', value: row ? utcToLocalDisplay(row.start_date_time, row.tz_offset_minutes) : '' },
       { name: 'tz_offset_minutes', label: 'Fuseau horaire du lieu', type: 'select', value: row?.tz_offset_minutes ?? '0', options: TZ_OFFSETS },
       { name: 'mux_playback_id', label: 'Vidéo — Mux Playback ID', value: row?.mux_playback_id, placeholder: 'colle l\'ID Mux (ou laisse vide)' },
       { name: 'cover', label: 'Image de couverture (fichier)', type: 'file', accept: 'image/*' },
