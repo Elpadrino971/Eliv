@@ -57,8 +57,42 @@ router.get('/settings/get-management', (req, res) => {
 });
 
 // ─── Subscriptions (artistes) ───
+// Lit la vraie table `subscriptions` geree dans l'admin (Abonnements) et la
+// convertit au format attendu par le modele Flutter (Subscription.fromJson) :
+// title/price/is_founder/seats_total/seats_remaining/... Voir
+// docs/founder_plan_api_spec.md pour le detail des champs Founder.
+//
+// NB seats_remaining : pas encore de suivi des achats reels (aucune table
+// d'abonnements payes pour l'instant) -> on renvoie seats_total tel quel.
+// A brancher sur un vrai compteur d'achats des que /subscription/buy
+// enregistrera reellement une souscription en base.
 router.get('/subscription/get', (req, res) => {
-  return ok(res, db.prepare('SELECT * FROM settings WHERE key LIKE \'plan_%\'').all());
+  const rows = db.prepare('SELECT * FROM subscriptions WHERE active = 1 ORDER BY CAST(price AS REAL) ASC').all();
+  const list = rows.map((r) => {
+    const seatsTotal = r.slot_from != null && r.slot_to != null ? r.slot_to - r.slot_from + 1 : null;
+    return {
+      id: r.id,
+      title: r.name,
+      price: r.price,
+      price_type: r.period === 'year' ? 'yearly' : 'monthly',
+      commission_type: null,
+      commission: null,
+      artists_count: null,
+      status: 'active',
+      created_at: r.created_at,
+      updated_at: r.created_at,
+      is_founder: (r.tier || '').toLowerCase() === 'founder',
+      seats_total: seatsTotal,
+      seats_remaining: seatsTotal,
+      next_price: null,
+      next_price_in_seats: null,
+      public_price: null,
+      badge: null,
+      iap_product_id: null,
+      image: r.image,
+    };
+  });
+  return res.json({ status: 'success', count: list.length, list });
 });
 router.post('/subscription/buy', optionalAuth, (req, res) => {
   return res.json({ status: 'success', message: 'Subscription recorded (demo).' });
