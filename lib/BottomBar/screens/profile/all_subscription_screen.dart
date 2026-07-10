@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:artist/Controllers/subscription_controller.dart';
+import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/widgets/widget.dart';
@@ -328,6 +329,22 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
   Widget _header() {
     return Column(
       children: [
+        RichText(
+          textAlign: TextAlign.center,
+          text: const TextSpan(
+            style: TextStyle(
+              fontFamily: AppFonts.logo,
+              fontSize: 30,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 3,
+            ),
+            children: [
+              TextSpan(text: 'VYBZZZ', style: TextStyle(color: goldPrimary)),
+              TextSpan(text: '  LIVE', style: TextStyle(color: ivory)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
         RichText(
           textAlign: TextAlign.center,
           text: const TextSpan(

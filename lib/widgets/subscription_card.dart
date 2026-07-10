@@ -78,8 +78,8 @@ class SubscriptionCard extends StatelessWidget {
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        midnightSecondary.withValues(alpha: 0.97),
-                        midnightSecondary.withValues(alpha: 0.62),
+                        midnightSecondary.withValues(alpha: 0.80),
+                        midnightSecondary.withValues(alpha: 0.35),
                       ],
                     ),
                   ),
