@@ -1,5 +1,6 @@
 import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
 import 'package:artist/BottomBar/screens/homeScreen/live_performance_screen.dart';
+import 'package:artist/BottomBar/screens/homeScreen/notification_screen.dart';
 import 'package:artist/BottomBar/screens/homeScreen/performances_screen.dart';
 import 'package:artist/Controllers/controller.dart';
 import 'package:artist/Global/app_fonts.dart';
@@ -463,27 +464,31 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const Spacer(),
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const Icon(
-                Icons.notifications_none_rounded,
-                color: ivory,
-                size: 26,
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: goldPrimary,
-                    shape: BoxShape.circle,
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Get.to(() => const NotificationScreen()),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(
+                  Icons.notifications_none_rounded,
+                  color: ivory,
+                  size: 26,
+                ),
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: goldPrimary,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
