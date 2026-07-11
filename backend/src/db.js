@@ -250,6 +250,7 @@ function init() {
     "ALTER TABLE subscriptions ADD COLUMN commission INTEGER",
     "ALTER TABLE subscriptions ADD COLUMN badge TEXT",
     "ALTER TABLE subscriptions ADD COLUMN perks TEXT",
+    "ALTER TABLE subscriptions ADD COLUMN price_annual TEXT",
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }

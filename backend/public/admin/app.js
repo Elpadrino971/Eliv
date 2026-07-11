@@ -8,6 +8,7 @@ let token = localStorage.getItem('vybzzz_admin_token') || '';
 let admin = JSON.parse(localStorage.getItem('vybzzz_admin') || 'null');
 let currentRows = [];
 const EDIT = {};
+const DUP = {};
 
 // ─── Fuseaux horaires courants (offset en minutes vs UTC) ───
 // Sert a convertir l'heure LOCALE du lieu du concert en UTC pour le stockage,
@@ -445,10 +446,10 @@ function utcToLocalDisplay(utcIso, offsetMinutes) {
 }
 
 // Concerts (CRUD + Mux)
-async function openEventForm(row) {
+async function openEventForm(row, { duplicate = false } = {}) {
   const [{ data: artists }, { data: genres }] = await Promise.all([api('GET', '/artists-list'), api('GET', '/genres')]);
   modal({
-    title: row ? 'Modifier le concert' : 'Ajouter un concert', wide: true,
+    title: duplicate ? 'Dupliquer le concert' : (row ? 'Modifier le concert' : 'Ajouter un concert'), wide: true,
     fields: [
       { name: 'name', label: 'Nom du concert', value: row?.name },
       { name: 'artist_id', label: 'Artiste', type: 'select', value: row?.artist_id, options: [{ value: '', label: '— Choisir —' }, ...artists.map((a) => ({ value: a.id, label: a.name }))] },
@@ -464,14 +465,15 @@ async function openEventForm(row) {
       { name: 'is_banner', label: 'Mettre en bannière (carrousel accueil) ?', type: 'checkbox', value: !!row?.is_banner, hint: 'Afficher dans le carrousel' },
     ],
     onSave: async (d) => {
-      if (row) { await api('PUT', '/events/' + row.id, d); toast('Concert mis à jour'); }
-      else { await api('POST', '/events', d); toast('Concert créé'); }
+      if (row && !duplicate) { await api('PUT', '/events/' + row.id, d); toast('Concert mis à jour'); }
+      else { await api('POST', '/events', d); toast(duplicate ? 'Concert dupliqué' : 'Concert créé'); }
       route();
     },
   });
 }
 function pageEvents() {
   EDIT.event = (id) => { const r = currentRows.find((x) => x.id == id); if (r) openEventForm(r); };
+  DUP.event = (id) => { const r = currentRows.find((x) => x.id == id); if (r) openEventForm(r, { duplicate: true }); };
   listPage({
     title: 'Concerts', endpoint: '/events', addLabel: '+ Ajouter un concert',
     onAdd: () => openEventForm(null),
@@ -482,7 +484,7 @@ function pageEvents() {
       { label: 'Prix', render: (r) => '$' + esc(r.ticket_price || '0') },
       { label: 'Statut', render: (r) => badge(r.status) },
       { label: 'Date', render: (r) => fmtDate(r.start_date_time) },
-      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
     ],
   });
 }
@@ -504,12 +506,13 @@ function pagePackages() {
   });
 }
 
-function subForm(row) {
+function subForm(row, { duplicate = false } = {}) {
   modal({
-    title: row ? "Modifier l'abonnement" : 'Ajouter un abonnement', fields: [
+    title: duplicate ? "Dupliquer l'abonnement" : (row ? "Modifier l'abonnement" : 'Ajouter un abonnement'), fields: [
       { name: 'name', label: 'Nom', value: row?.name },
       { name: 'tier', label: 'Palier', value: row?.tier },
-      { name: 'price', label: 'Prix ($)', type: 'number', value: row?.price || '0' },
+      { name: 'price', label: 'Prix mensuel ($)', type: 'number', value: row?.price || '0' },
+      { name: 'price_annual', label: 'Prix annuel ($)', type: 'number', value: row?.price_annual, placeholder: 'ex. 99.99 (laisser vide si aucun tarif annuel)' },
       { name: 'period', label: 'Période', type: 'select', value: row?.period || 'month', options: [{ value: 'month', label: 'Mois' }, { value: 'year', label: 'An' }] },
       { name: 'commission', label: 'Commission (%)', type: 'number', value: row?.commission, placeholder: '60' },
       { name: 'slot_from', label: 'Places : de (n°)', type: 'number', value: row?.slot_from, placeholder: '1' },
@@ -519,11 +522,12 @@ function subForm(row) {
       { name: 'image', label: 'Image de l\'abonnement (fichier)', type: 'file', accept: 'image/*' },
       { name: 'active', label: 'Actif ?', type: 'checkbox', value: row ? !!row.active : true, hint: 'Visible dans l\'app' },
     ],
-    onSave: async (d) => { if (row) { await api('PUT', '/subscriptions/' + row.id, d); toast('Modifié'); } else { await api('POST', '/subscriptions', d); toast('Ajouté'); } route(); },
+    onSave: async (d) => { if (row && !duplicate) { await api('PUT', '/subscriptions/' + row.id, d); toast('Modifié'); } else { await api('POST', '/subscriptions', d); toast(duplicate ? 'Dupliqué' : 'Ajouté'); } route(); },
   });
 }
 function pageSubscriptions() {
   EDIT.sub = (id) => { const r = currentRows.find((x) => x.id == id); if (r) subForm(r); };
+  DUP.sub = (id) => { const r = currentRows.find((x) => x.id == id); if (r) subForm(r, { duplicate: true }); };
   listPage({
     title: 'Abonnements', endpoint: '/subscriptions', addLabel: '+ Ajouter', onAdd: () => subForm(null), columns: [
       { label: '#', render: (r) => r.id },
@@ -532,7 +536,7 @@ function pageSubscriptions() {
       { label: 'Prix', render: (r) => '$' + esc(r.price) },
       { label: 'Période', render: (r) => esc(r.period === 'year' ? 'an' : 'mois') },
       { label: 'Actif', render: (r) => badge(r.active ? 'active' : 'pending') },
-      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="sub:${r.id}">Modifier</button><button class="btn del" data-del="/subscriptions/${r.id}">Supprimer</button>` },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="sub:${r.id}">Modifier</button><button class="btn dup" data-dup="sub:${r.id}">Dupliquer</button><button class="btn del" data-del="/subscriptions/${r.id}">Supprimer</button>` },
     ],
   });
 }
@@ -756,6 +760,8 @@ document.addEventListener('click', (e) => {
   if (del) { confirmDelete(async () => { await api('DELETE', del.dataset.del); toast('Supprimé'); route(); }); return; }
   const ed = e.target.closest('[data-edit]');
   if (ed) { const [type, id] = ed.dataset.edit.split(':'); EDIT[type]?.(id); return; }
+  const dup = e.target.closest('[data-dup]');
+  if (dup) { const [type, id] = dup.dataset.dup.split(':'); DUP[type]?.(id); return; }
   const st = e.target.closest('[data-status]');
   if (st) {
     const r = currentRows.find((x) => x.id == st.dataset.status);
