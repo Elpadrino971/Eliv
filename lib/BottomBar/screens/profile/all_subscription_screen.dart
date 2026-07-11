@@ -18,6 +18,54 @@ class AllSubscriptionScreen extends StatefulWidget {
 
 class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
   final subscriptionController = Get.put(SubscriptionController());
+  bool _isAnnual = false;
+
+  /// Switch "Monthly / Annual" — 2 mois offerts sur l'annuel (prix x10, pas x12).
+  Widget _billingToggle() {
+    Widget segment(String label, bool selected, VoidCallback onTap) {
+      return Expanded(
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              gradient: selected ? kGoldGradient : null,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: selected ? midnightPrimary : textMuted,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: midnightSecondary,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: goldSecondary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          segment('MONTHLY', !_isAnnual, () => setState(() => _isAnnual = false)),
+          segment(
+            'ANNUAL 🔥 SAVE 2 MO.',
+            _isAnnual,
+            () => setState(() => _isAnnual = true),
+          ),
+        ],
+      ),
+    );
+  }
 
   /// [SCAFFOLD HYBRIDE] Bannière non-bloquante "s'abonner sur le web".
   /// L'IAP reste le bouton principal (instantané) ; ceci est l'option marge.
@@ -304,11 +352,13 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
             _header(),
+            _billingToggle(),
             const SizedBox(height: 18),
             ...list.map(
               (sub) => SubscriptionCard(
                 subscription: sub,
                 showButton: true,
+                isAnnual: _isAnnual,
                 onPurchaseTap: () async {
                   await fetchOffers(id: sub.id.toString(), title: sub.title!);
                 },

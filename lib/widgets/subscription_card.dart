@@ -14,6 +14,7 @@ const Color _featuredBlue = Color(0xff2E9BFF);
 class SubscriptionCard extends StatelessWidget {
   final Subscription subscription;
   final bool showButton;
+  final bool isAnnual;
   final String? purchasedDate;
   final VoidCallback? onPurchaseTap;
 
@@ -21,6 +22,7 @@ class SubscriptionCard extends StatelessWidget {
     super.key,
     required this.subscription,
     this.showButton = true,
+    this.isAnnual = false,
     this.onPurchaseTap,
     this.purchasedDate,
   });
@@ -28,6 +30,22 @@ class SubscriptionCard extends StatelessWidget {
   bool get _featured =>
       (subscription.isFounder ?? false) ||
       (subscription.badge != null && subscription.badge!.isNotEmpty);
+
+  /// Bascule annuelle active ET une equivalence annuelle existe pour ce plan.
+  bool get _showAnnual =>
+      isAnnual &&
+      subscription.annualPrice != null &&
+      subscription.annualPrice!.isNotEmpty;
+
+  /// "Economisez $X" (2 mois offerts = 2 x le prix mensuel).
+  String? get _annualSavings {
+    final monthly = double.tryParse(subscription.price ?? '');
+    if (monthly == null) return null;
+    final savings = monthly * 2;
+    return savings % 1 == 0
+        ? savings.toStringAsFixed(0)
+        : savings.toStringAsFixed(2);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +117,12 @@ class SubscriptionCard extends StatelessWidget {
                       const SizedBox(height: 10),
                       _seatCounter(),
                     ],
+                    if (_showAnnual &&
+                        subscription.perks != null &&
+                        subscription.perks!.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _perksList(),
+                    ],
                     if (purchasedDate != null) ...[
                       const SizedBox(height: 10),
                       _purchasedRow(),
@@ -169,38 +193,97 @@ class SubscriptionCard extends StatelessWidget {
         // Price
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            if (subscription.publicPrice != null &&
-                subscription.publicPrice!.isNotEmpty)
-              Text(
-                '\$${subscription.publicPrice}',
-                style: TextStyle(
-                  color: textMuted,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  decoration: TextDecoration.lineThrough,
-                ),
-              ),
-            Text(
-              '\$${subscription.price ?? '0'}',
-              style: const TextStyle(
-                color: whiteColor,
-                fontWeight: FontWeight.w900,
-                fontSize: 26,
-              ),
-            ),
-            Text(
-              _billingLabel(subscription.priceType),
-              style: TextStyle(
-                color: textMuted,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+          children: _showAnnual
+              ? _annualPriceLines()
+              : _monthlyPriceLines(),
         ),
       ],
     );
+  }
+
+  List<Widget> _monthlyPriceLines() {
+    return [
+      if (subscription.publicPrice != null &&
+          subscription.publicPrice!.isNotEmpty)
+        Text(
+          '\$${subscription.publicPrice}',
+          style: TextStyle(
+            color: textMuted,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            decoration: TextDecoration.lineThrough,
+          ),
+        ),
+      Text(
+        '\$${subscription.price ?? '0'}',
+        style: const TextStyle(
+          color: whiteColor,
+          fontWeight: FontWeight.w900,
+          fontSize: 26,
+        ),
+      ),
+      Text(
+        _billingLabel(subscription.priceType),
+        style: TextStyle(
+          color: textMuted,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ];
+  }
+
+  /// "2 mois offerts" : prix mensuel barre (x12) + prix annuel + economie.
+  List<Widget> _annualPriceLines() {
+    final monthly = double.tryParse(subscription.price ?? '');
+    final struckThrough = monthly != null
+        ? (monthly * 12 % 1 == 0
+            ? (monthly * 12).toStringAsFixed(0)
+            : (monthly * 12).toStringAsFixed(2))
+        : null;
+    return [
+      if (struckThrough != null)
+        Text(
+          '\$$struckThrough',
+          style: TextStyle(
+            color: textMuted,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            decoration: TextDecoration.lineThrough,
+          ),
+        ),
+      Text(
+        '\$${subscription.annualPrice}',
+        style: const TextStyle(
+          color: whiteColor,
+          fontWeight: FontWeight.w900,
+          fontSize: 26,
+        ),
+      ),
+      const Text(
+        '/ year',
+        style: TextStyle(color: textMuted, fontSize: 12, fontWeight: FontWeight.w500),
+      ),
+      if (_annualSavings != null) ...[
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: goldPrimary.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            'SAVE \$$_annualSavings',
+            style: const TextStyle(
+              color: goldPrimary,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.4,
+            ),
+          ),
+        ),
+      ],
+    ];
   }
 
   Widget _commissionRow() {
@@ -233,6 +316,37 @@ class SubscriptionCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _perksList() {
+    final perks = subscription.perks ?? [];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: perks
+          .map(
+            (perk) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.check_circle, size: 14, color: goldPrimary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      perk,
+                      style: const TextStyle(
+                        color: ivory,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 

@@ -249,6 +249,7 @@ function init() {
     "ALTER TABLE events ADD COLUMN tz_offset_minutes INTEGER DEFAULT 0",
     "ALTER TABLE subscriptions ADD COLUMN commission INTEGER",
     "ALTER TABLE subscriptions ADD COLUMN badge TEXT",
+    "ALTER TABLE subscriptions ADD COLUMN perks TEXT",
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }

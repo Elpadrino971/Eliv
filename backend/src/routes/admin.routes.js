@@ -415,16 +415,16 @@ router.put('/packages/:id', requireAdmin, (req, res) => {
 router.post('/subscriptions', requireAdmin, (req, res) => {
   const b = req.body || {};
   const image = saveUpload(req, ['image', 'photo'], 'covers', 'events/covers') || b.image || null;
-  db.prepare('INSERT INTO subscriptions (name, tier, price, period, active, image, slot_from, slot_to, commission, badge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(b.name, b.tier || '', b.price || '0', b.period || 'month', b.active === undefined ? 1 : (truthy(b.active) ? 1 : 0), image, b.slot_from || null, b.slot_to || null, b.commission || null, b.badge || null);
+  db.prepare('INSERT INTO subscriptions (name, tier, price, period, active, image, slot_from, slot_to, commission, badge, perks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(b.name, b.tier || '', b.price || '0', b.period || 'month', b.active === undefined ? 1 : (truthy(b.active) ? 1 : 0), image, b.slot_from || null, b.slot_to || null, b.commission || null, b.badge || null, b.perks || null);
   return res.json({ status: 'success', message: 'Abonnement ajouté.' });
 });
 router.put('/subscriptions/:id', requireAdmin, (req, res) => {
   const b = req.body || {};
   const image = saveUpload(req, ['image', 'photo'], 'covers', 'events/covers') || b.image || null;
   db.prepare(`UPDATE subscriptions SET name = ?, tier = ?, price = ?, period = ?, active = ?,
-      image = COALESCE(?, image), slot_from = ?, slot_to = ?, commission = ?, badge = ? WHERE id = ?`)
-    .run(b.name, b.tier, b.price, b.period, truthy(b.active) ? 1 : 0, image, b.slot_from || null, b.slot_to || null, b.commission || null, b.badge || null, req.params.id);
+      image = COALESCE(?, image), slot_from = ?, slot_to = ?, commission = ?, badge = ?, perks = ? WHERE id = ?`)
+    .run(b.name, b.tier, b.price, b.period, truthy(b.active) ? 1 : 0, image, b.slot_from || null, b.slot_to || null, b.commission || null, b.badge || null, b.perks || null, req.params.id);
   return res.json({ status: 'success', message: 'Abonnement modifié.' });
 });
 router.delete('/subscriptions/:id', requireAdmin, (req, res) => {

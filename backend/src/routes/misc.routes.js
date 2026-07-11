@@ -82,11 +82,20 @@ router.get('/subscription/get', (req, res) => {
   const list = visibleRows.map((r) => {
     const seatsTotal = r.slot_from != null && r.slot_to != null ? r.slot_to - r.slot_from + 1 : null;
     const isCurrentFounder = currentFounder && r.id === currentFounder.id;
+    // "2 mois offerts" sur l'annuel : prix annuel = prix mensuel x 10 (pas x12).
+    const monthlyPrice = Number(r.price) || 0;
+    const annualPrice = r.period !== 'year' ? Math.round(monthlyPrice * 10 * 100) / 100 : null;
+    const perks = (r.perks || '')
+      .split('\n')
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
     return {
       id: r.id,
       title: r.name,
       price: r.price,
       price_type: r.period === 'year' ? 'yearly' : 'monthly',
+      annual_price: annualPrice != null ? String(annualPrice) : null,
+      perks,
       commission_type: r.commission != null ? 'percentage' : null,
       commission: r.commission != null ? String(r.commission) : null,
       artists_count: null,

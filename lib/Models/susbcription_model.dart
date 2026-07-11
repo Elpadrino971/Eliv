@@ -51,6 +51,11 @@ class Subscription {
     final String? badge;          // e.g. "BEST VALUE"
     final String? iapProductId;   // active IAP product (e.g. founder_149)
 
+    /// Annual billing (2 months free = monthly price x10) — see toggle in
+    /// AllSubscriptionScreen. Null si le plan n'a pas de version annuelle.
+    final String? annualPrice;
+    final List<String>? perks;    // bullet points affiches sous le prix annuel
+
     Subscription({
         this.id,
         this.title,
@@ -70,6 +75,8 @@ class Subscription {
         this.publicPrice,
         this.badge,
         this.iapProductId,
+        this.annualPrice,
+        this.perks,
     });
 
     factory Subscription.fromJson(Map<String, dynamic> json) => Subscription(
@@ -91,6 +98,8 @@ class Subscription {
         publicPrice: json["public_price"]?.toString(),
         badge: json["badge"],
         iapProductId: json["iap_product_id"],
+        annualPrice: json["annual_price"]?.toString(),
+        perks: json["perks"] == null ? [] : List<String>.from(json["perks"].map((x) => x.toString())),
     );
 
     Map<String, dynamic> toJson() => {
@@ -112,5 +121,7 @@ class Subscription {
         "public_price": publicPrice,
         "badge": badge,
         "iap_product_id": iapProductId,
+        "annual_price": annualPrice,
+        "perks": perks == null ? [] : List<dynamic>.from(perks!.map((x) => x)),
     };
 }
