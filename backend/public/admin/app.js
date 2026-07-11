@@ -364,7 +364,7 @@ async function pageUsers() {
     { label: 'Adresse', render: (r) => esc(r.address || 'N/A') },
     { label: 'Statut', render: (r) => badge(r.status) },
     { label: 'Date', render: (r) => fmtDate(r.created_at) },
-    { label: 'Action', render: (r) => `<button class="btn edit" data-edit="user:${r.id}">Modifier</button><button class="btn status" data-status="${r.id}">Statut</button><button class="btn" data-grantsub="${r.id}">Abonner</button><button class="btn del" data-del="/users/${r.id}">Supprimer</button>` },
+    { label: 'Action', render: (r) => `<button class="btn edit" data-edit="user:${r.id}">Modifier</button><button class="btn status" data-status="${r.id}">Statut</button><button class="btn grant" data-grantsub="${r.id}">Abonner</button><button class="btn del" data-del="/users/${r.id}">Supprimer</button>` },
   ];
   view().innerHTML = `<div class="head-row"><h1 class="page-title">Utilisateurs</h1><button class="add-btn" id="adduser">+ Ajouter</button></div>
     <div class="tabs">
@@ -563,18 +563,49 @@ function subForm(row, { duplicate = false } = {}) {
     onSave: async (d) => { if (row && !duplicate) { await api('PUT', '/subscriptions/' + row.id, d); toast('Modifié'); } else { await api('POST', '/subscriptions', d); toast(duplicate ? 'Dupliqué' : 'Ajouté'); } route(); },
   });
 }
+// Panneau "Gérer l'abonnement" : montre le palier actuel du user (s'il y en
+// a un) avec un bouton "Retirer", et un select pour attribuer/rétrograder
+// vers un autre palier — remplace l'abonnement actif existant (pas de doublon).
 async function openGrantSubModal(userId) {
-  const { data: subs } = await api('GET', '/subscriptions');
+  const [{ data: subs }, { data: userSubs }] = await Promise.all([
+    api('GET', '/subscriptions'),
+    api('GET', '/user-subscriptions?user_id=' + userId),
+  ]);
   const activeSubs = subs.filter((s) => s.active);
   if (!activeSubs.length) { toast('Aucun abonnement actif à attribuer.'); return; }
-  modal({
-    title: 'Attribuer un abonnement',
-    fields: [
-      { name: 'subscriptions_id', label: 'Abonnement', type: 'select', options: activeSubs.map((s) => ({ value: s.id, label: `${s.name} (${s.tier}) — $${s.price}` })) },
-      { name: 'status', label: 'Statut', type: 'select', value: 'active', options: [{ value: 'active', label: 'Actif' }, { value: 'expired', label: 'Expiré' }, { value: 'cancelled', label: 'Annulé' }] },
-    ],
-    onSave: async (d) => { await api('POST', '/user-subscriptions', { user_id: userId, ...d }); toast('Abonnement attribué'); route(); },
+  const current = userSubs.filter((u) => u.status === 'active');
+
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  const currentHtml = current.length
+    ? current.map((u) => `<div class="kv" style="margin-bottom:8px"><span>${esc(u.subscription_name || ('Abonnement #' + u.subscriptions_id))}</span><span><button class="btn del" data-revoke="${u.id}" style="margin:0">Retirer</button></span></div>`).join('')
+    : `<p style="color:var(--muted);font-size:13px;margin:6px 0 16px">Aucun abonnement actif pour l'instant.</p>`;
+  bg.innerHTML = `<div class="modal">
+    <h3>Gérer l'abonnement</h3>
+    <label>Actuellement</label>
+    ${currentHtml}
+    <label>Attribuer / rétrograder vers</label>
+    <select id="gs-sub">${activeSubs.map((s) => `<option value="${esc(s.id)}">${esc(s.name)} (${esc(s.tier)}) — $${esc(s.price)}</option>`).join('')}</select>
+    <div class="modal-actions"><button class="cancel">Annuler</button><button class="btn gold save">${current.length ? 'Changer de palier' : 'Attribuer'}</button></div>
+  </div>`;
+  document.body.appendChild(bg);
+  bg.querySelector('.cancel').onclick = () => bg.remove();
+  bg.onclick = (e) => { if (e.target === bg) bg.remove(); };
+  bg.querySelectorAll('[data-revoke]').forEach((btn) => btn.onclick = async () => {
+    if (!confirm('Retirer cet abonnement ?')) return;
+    try { await api('DELETE', '/user-subscriptions/' + btn.dataset.revoke); toast('Abonnement retiré'); bg.remove(); route(); }
+    catch (e) { toast(e.message); }
   });
+  bg.querySelector('.save').onclick = async () => {
+    const subId = bg.querySelector('#gs-sub').value;
+    try {
+      for (const u of current) { await api('DELETE', '/user-subscriptions/' + u.id); }
+      await api('POST', '/user-subscriptions', { user_id: userId, subscriptions_id: subId, status: 'active' });
+      toast('Abonnement mis à jour');
+      bg.remove();
+      route();
+    } catch (e) { toast(e.message); }
+  };
 }
 function pageSubscriptions() {
   EDIT.sub = (id) => { const r = currentRows.find((x) => x.id == id); if (r) subForm(r); };

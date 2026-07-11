@@ -90,6 +90,8 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .btn.edit{background:var(--blue)}
 .btn.del{background:var(--red)}
 .btn.status{background:#475569}
+.btn.dup{background:var(--amber)}
+.btn.grant{background:var(--green)}
 .btn.gold{background:linear-gradient(160deg,var(--gold-light),var(--gold-2));color:#1a1206;font-weight:700}
 .tcard-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:14px;color:var(--muted);font-size:13px}
 .pager button{border:1px solid var(--line);background:var(--navy-2);color:var(--ivory);padding:6px 11px;border-radius:6px;margin-left:5px;font-size:13px}

@@ -40,7 +40,7 @@ class Genre {
 
   factory Genre.fromJson(Map<String, dynamic> json) => Genre(
     id: json["id"],
-    genre: json["genre"],
+    genre: json["name"] ?? json["genre"],
     createdAt: json["created_at"] == null
         ? null
         : DateTime.parse(json["created_at"]),

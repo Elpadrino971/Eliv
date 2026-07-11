@@ -436,13 +436,22 @@ router.delete('/subscriptions/:id', requireAdmin, (req, res) => {
 // Sert tant que /subscription/buy n'enregistre pas encore un vrai achat
 // RevenueCat/IAP en base — permet de simuler/attribuer un abonnement actif.
 router.get('/user-subscriptions', requireAdmin, (req, res) => {
-  const rows = db.prepare(`
-    SELECT us.*, COALESCE(u.artist_name, u.full_name, u.email) AS user_name, s.name AS subscription_name
-    FROM user_subscriptions us
-    LEFT JOIN users u ON u.id = us.user_id
-    LEFT JOIN subscriptions s ON s.id = us.subscriptions_id
-    ORDER BY us.id DESC
-  `).all();
+  const rows = req.query.user_id
+    ? db.prepare(`
+        SELECT us.*, COALESCE(u.artist_name, u.full_name, u.email) AS user_name, s.name AS subscription_name
+        FROM user_subscriptions us
+        LEFT JOIN users u ON u.id = us.user_id
+        LEFT JOIN subscriptions s ON s.id = us.subscriptions_id
+        WHERE us.user_id = ?
+        ORDER BY us.id DESC
+      `).all(req.query.user_id)
+    : db.prepare(`
+        SELECT us.*, COALESCE(u.artist_name, u.full_name, u.email) AS user_name, s.name AS subscription_name
+        FROM user_subscriptions us
+        LEFT JOIN users u ON u.id = us.user_id
+        LEFT JOIN subscriptions s ON s.id = us.subscriptions_id
+        ORDER BY us.id DESC
+      `).all();
   return res.json({ status: 'success', data: rows });
 });
 router.post('/user-subscriptions', requireAdmin, (req, res) => {
