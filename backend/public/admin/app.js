@@ -87,6 +87,7 @@ const NAV = [
     { id: 'genres', label: 'Genres', ic: '🎵' },
     { id: 'user-genres', label: 'Genres par user', ic: '🏷️' },
     { id: 'events', label: 'Concerts', ic: '📅' },
+    { id: 'feed-clips', label: 'Clips (Feeds)', ic: '🎬' },
     { id: 'packages', label: 'Packages', ic: '📦' },
     { id: 'subscriptions', label: 'Abonnements', ic: '💳' },
     { id: 'referrals', label: 'Parrainages', ic: '🤝' },
@@ -489,6 +490,42 @@ function pageEvents() {
   });
 }
 
+function feedClipForm(row, { duplicate = false } = {}) {
+  modal({
+    title: duplicate ? 'Dupliquer le clip' : (row ? 'Modifier le clip' : 'Ajouter un clip'),
+    fields: [
+      { name: 'feed', label: 'Feed', type: 'select', value: row?.feed || 'for_you', options: [{ value: 'for_you', label: 'Pour toi' }, { value: 'clips', label: 'Clips' }] },
+      { name: 'title', label: 'Titre / légende (optionnel)', value: row?.title },
+      { name: 'video', label: 'Fichier vidéo (upload direct)', type: 'file', accept: 'video/*' },
+      { name: 'mux_playback_id', label: 'Ou Mux Playback ID (si déjà sur Mux)', value: row?.mux_playback_id, placeholder: 'laisse vide si tu uploades un fichier' },
+      { name: 'position', label: 'Ordre (0 = premier)', type: 'number', value: row?.position ?? 0 },
+      { name: 'active', label: 'Actif ?', type: 'checkbox', value: row ? !!row.active : true, hint: 'Visible dans l\'app' },
+    ],
+    onSave: async (d) => {
+      if (row && !duplicate) { await api('PUT', '/feed-clips/' + row.id, d); toast('Clip modifié'); }
+      else { await api('POST', '/feed-clips', d); toast(duplicate ? 'Clip dupliqué' : 'Clip ajouté'); }
+      route();
+    },
+  });
+}
+function pageFeedClips() {
+  EDIT.feedclip = (id) => { const r = currentRows.find((x) => x.id == id); if (r) feedClipForm(r); };
+  DUP.feedclip = (id) => { const r = currentRows.find((x) => x.id == id); if (r) feedClipForm(r, { duplicate: true }); };
+  listPage({
+    title: 'Clips (Feeds Pour toi / Clips)', endpoint: '/feed-clips', addLabel: '+ Ajouter un clip',
+    onAdd: () => feedClipForm(null),
+    columns: [
+      { label: '#', render: (r) => r.id },
+      { label: 'Feed', render: (r) => r.feed === 'clips' ? 'Clips' : 'Pour toi' },
+      { label: 'Titre', render: (r) => esc(r.title || '—') },
+      { label: 'Source', render: (r) => r.mux_playback_id ? '🎬 Mux' : (r.video_url ? '📁 Fichier' : '—') },
+      { label: 'Ordre', render: (r) => r.position ?? 0 },
+      { label: 'Actif', render: (r) => badge(r.active ? 'active' : 'pending') },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="feedclip:${r.id}">Modifier</button><button class="btn dup" data-dup="feedclip:${r.id}">Dupliquer</button><button class="btn del" data-del="/feed-clips/${r.id}">Supprimer</button>` },
+    ],
+  });
+}
+
 function pagePackages() {
   EDIT.pkg = (id) => {
     const r = currentRows.find((x) => x.id == id); if (!r) return;
@@ -788,7 +825,7 @@ document.addEventListener('click', (e) => {
 
 const ROUTES = {
   dashboard: pageDashboard, users: pageUsers, genres: pageGenres, 'user-genres': pageUserGenres,
-  events: pageEvents, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
+  events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
 };

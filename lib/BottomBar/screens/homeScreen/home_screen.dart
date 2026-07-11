@@ -59,6 +59,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     /// User Joined Events
     await eventController.getUserJoinedEvents();
+
+    /// Clips des feeds "Pour toi" / "Clips" (gérés depuis l'admin)
+    await eventController.loadFeedClips();
   }
 
   @override

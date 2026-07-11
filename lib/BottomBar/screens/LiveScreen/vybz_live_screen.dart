@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/api.dart';
-import 'package:artist/Global/mux.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Global/live_router.dart';
@@ -215,8 +214,8 @@ class _ForYouFeedState extends State<_ForYouFeed> {
           : PageView.builder(
               scrollDirection: Axis.vertical,
               onPageChanged: eventController.onPageChanged,
-              itemCount: APIs.muxDemoPlaybackIds.isNotEmpty
-                  ? APIs.muxDemoPlaybackIds.length
+              itemCount: eventController.forYouClipUrls.isNotEmpty
+                  ? eventController.forYouClipUrls.length
                   : events.length,
               itemBuilder: (context, index) {
                 final event = events[index % events.length];
@@ -942,11 +941,12 @@ class _ClipsFeed extends StatefulWidget {
 }
 
 class _ClipsFeedState extends State<_ClipsFeed> {
+  final eventController = Get.find<EventController>();
   final PageController _pageController = PageController();
   VideoPlayerController? _controller;
   int _index = 0;
 
-  List<String> get _ids => APIs.muxShortsPlaybackIds;
+  List<String> get _ids => eventController.clipsFeedUrls;
 
   @override
   void initState() {
@@ -968,10 +968,10 @@ class _ClipsFeedState extends State<_ClipsFeed> {
     }
   }
 
-  void _initVideo(String playbackId) {
+  void _initVideo(String videoUrl) {
     _controller?.dispose();
     _controller = null;
-    final c = VideoPlayerController.networkUrl(Uri.parse(Mux.hlsUrl(playbackId)))
+    final c = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
       ..initialize().then((_) {
         if (mounted) setState(() {});
       });

@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/global.dart';
-import 'package:artist/Global/mux.dart';
 import 'package:artist/Models/abusive_words_model.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/Models/follow_model.dart';
@@ -63,10 +62,10 @@ class EventController extends GetxController {
 
   void onPageChanged(int index) {
     currentVideoIndex.value = index;
-    final ids = APIs.muxDemoPlaybackIds;
+    final ids = forYouClipUrls;
     String? url;
     if (ids.isNotEmpty) {
-      url = Mux.hlsUrl(ids[index % ids.length]);
+      url = ids[index % ids.length];
     } else {
       final reel = allEvents.value.data?[index]?.videoReel;
       url = (reel != null && reel.isNotEmpty) ? reel : null;
@@ -80,14 +79,41 @@ class EventController extends GetxController {
     update();
   }
 
-  /// URL du 1er reel (init du feed). Priorite a Mux (demos aujourd'hui ;
-  /// id par event/short quand le backend le fournira) ; sinon video backend.
+  /// URL du 1er reel (init du feed). Priorite aux clips geres depuis
+  /// l'admin (rubrique "Clips (Feeds)") ; sinon video de l'event backend.
   String? reelUrlFor(Event? event) {
-    if (APIs.muxDemoPlaybackIds.isNotEmpty) {
-      return Mux.hlsUrl(APIs.muxDemoPlaybackIds.first);
+    if (forYouClipUrls.isNotEmpty) {
+      return forYouClipUrls.first;
     }
     final reel = event?.videoReel;
     return (reel != null && reel.isNotEmpty) ? reel : null;
+  }
+
+  /// Clips geres depuis l'admin (rubrique "Clips (Feeds)") pour les onglets
+  /// "Pour toi" et "Clips" de l'ecran Live — plus besoin d'editer une liste
+  /// en dur dans le code, tout se gere depuis le backend.
+  RxList<String> forYouClipUrls = <String>[].obs;
+  RxList<String> clipsFeedUrls = <String>[].obs;
+
+  Future<List<String>> _fetchFeedClipUrls(String feed) async {
+    response.typeSetter = 'get';
+    response.urlSetter = '${APIs.feedClipsAPI}?feed=$feed';
+    final value = await response.hitAPI();
+    if (value == null || value.toString().split(' ').first == 'error') {
+      return [];
+    }
+    final decoded = jsonDecode(value) as Map<String, dynamic>;
+    final list = (decoded['list'] as List?) ?? [];
+    return list
+        .map((x) => x['video_url']?.toString())
+        .where((u) => u != null && u.isNotEmpty)
+        .map((u) => u!)
+        .toList();
+  }
+
+  Future<void> loadFeedClips() async {
+    forYouClipUrls.value = await _fetchFeedClipUrls('for_you');
+    clipsFeedUrls.value = await _fetchFeedClipUrls('clips');
   }
 
   void toggleVideoControls() {

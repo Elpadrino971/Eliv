@@ -186,6 +186,20 @@ function init() {
       created_at TEXT DEFAULT (datetime('now'))
     );
 
+    -- Clips des feeds "Pour toi" / "Clips" (contenu curaté, indépendant des
+    -- concerts) : uploadés directement depuis l'admin, ou renseignés via un
+    -- Mux Playback ID déjà existant.
+    CREATE TABLE IF NOT EXISTS feed_clips (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      feed TEXT DEFAULT 'for_you',
+      title TEXT,
+      video_url TEXT,
+      mux_playback_id TEXT,
+      position INTEGER DEFAULT 0,
+      active INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS reviews (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER,

@@ -459,6 +459,42 @@ router.delete('/user-subscriptions/:id', requireAdmin, (req, res) => {
   return res.json({ status: 'success', message: 'Abonnement retiré.' });
 });
 
+// ─── Feed Clips ("Pour toi" / "Clips") : upload direct depuis l'admin, ou
+// Mux Playback ID si la vidéo est déjà sur Mux. Voir /api/feed-clips (public).
+router.get('/feed-clips', requireAdmin, (req, res) => {
+  return res.json({ status: 'success', data: db.prepare('SELECT * FROM feed_clips ORDER BY feed, position, id').all() });
+});
+router.post('/feed-clips', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const video = saveUpload(req, ['video', 'file'], 'videos', 'events/videos') || b.video_url || null;
+  if (!video && !b.mux_playback_id) {
+    return res.status(422).json({ status: 'error', message: 'Ajoute un fichier vidéo ou un Mux Playback ID.' });
+  }
+  db.prepare(
+    'INSERT INTO feed_clips (feed, title, video_url, mux_playback_id, position, active) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(
+    b.feed === 'clips' ? 'clips' : 'for_you', b.title || null, video, b.mux_playback_id || null,
+    Number(b.position) || 0, b.active === undefined ? 1 : (truthy(b.active) ? 1 : 0)
+  );
+  return res.json({ status: 'success', message: 'Clip ajouté.' });
+});
+router.put('/feed-clips/:id', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const video = saveUpload(req, ['video', 'file'], 'videos', 'events/videos') || b.video_url || null;
+  db.prepare(
+    `UPDATE feed_clips SET feed = ?, title = ?, video_url = COALESCE(?, video_url), mux_playback_id = ?,
+        position = ?, active = ? WHERE id = ?`
+  ).run(
+    b.feed === 'clips' ? 'clips' : 'for_you', b.title || null, video, b.mux_playback_id || null,
+    Number(b.position) || 0, truthy(b.active) ? 1 : 0, req.params.id
+  );
+  return res.json({ status: 'success', message: 'Clip modifié.' });
+});
+router.delete('/feed-clips/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM feed_clips WHERE id = ?').run(req.params.id);
+  return res.json({ status: 'success', message: 'Clip supprimé.' });
+});
+
 // ─── Graphiques + Objectifs (Dashboard) ───
 const MONTHS_FR = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 router.get('/chart-data', requireAdmin, (req, res) => {

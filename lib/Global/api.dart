@@ -61,6 +61,12 @@ class APIs {
   // ───────────────────────────────────────────────────────────────────────
   static const String createShortUploadAPI = '$baseAPI/shorts/create-upload';
 
+  // ───────────────────────────────────────────────────────────────────────
+  // FEED CLIPS ("Pour toi" / "Clips") — géré depuis l'admin (rubrique
+  // "Clips (Feeds)"), plus besoin d'éditer des listes en dur ici.
+  // ───────────────────────────────────────────────────────────────────────
+  static const String feedClipsAPI = '$baseAPI/feed-clips';
+
   //Auth
   static const String loginAPI = '$baseAPI/login';
   static const String signupAPI = '$baseAPI/sign-up';

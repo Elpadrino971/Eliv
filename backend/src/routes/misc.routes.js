@@ -118,6 +118,23 @@ router.post('/subscription/buy', optionalAuth, (req, res) => {
   return res.json({ status: 'success', message: 'Subscription recorded (demo).' });
 });
 
+// ─── Feed Clips ("Pour toi" / "Clips") — contenu curaté depuis l'admin,
+// indépendant des concerts. Voir /api/admin/feed-clips pour la gestion. ───
+const feedMuxHls = (id) => (id ? `https://stream.mux.com/${id}.m3u8` : null);
+router.get('/feed-clips', (req, res) => {
+  const feed = req.query.feed === 'clips' ? 'clips' : 'for_you';
+  const rows = db
+    .prepare('SELECT * FROM feed_clips WHERE feed = ? AND active = 1 ORDER BY position ASC, id ASC')
+    .all(feed);
+  const list = rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    video_url: r.mux_playback_id ? feedMuxHls(r.mux_playback_id) : r.video_url,
+    mux_playback_id: r.mux_playback_id,
+  }));
+  return res.json({ status: 'success', count: list.length, list });
+});
+
 // ─── Packages (points / gifts) ───
 router.get('/packages/list', (req, res) => ok(res, []));
 router.post('/packages/buy', optionalAuth, (req, res) =>
