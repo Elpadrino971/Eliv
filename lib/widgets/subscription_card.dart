@@ -17,6 +17,7 @@ class SubscriptionCard extends StatelessWidget {
   final bool isAnnual;
   final String? purchasedDate;
   final VoidCallback? onPurchaseTap;
+  final VoidCallback? onWebPurchaseTap;
 
   const SubscriptionCard({
     super.key,
@@ -24,6 +25,7 @@ class SubscriptionCard extends StatelessWidget {
     this.showButton = true,
     this.isAnnual = false,
     this.onPurchaseTap,
+    this.onWebPurchaseTap,
     this.purchasedDate,
   });
 
@@ -130,6 +132,10 @@ class SubscriptionCard extends StatelessWidget {
                     if (showButton) ...[
                       const SizedBox(height: 16),
                       _chooseButton(),
+                    ],
+                    if (onWebPurchaseTap != null) ...[
+                      const SizedBox(height: 10),
+                      _webPurchaseLink(),
                     ],
                   ],
                 ),
@@ -384,6 +390,27 @@ class SubscriptionCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  /// Chemin "web" (Stripe, 0% commission Apple/Google) — lien secondaire
+  /// sous le bouton principal. Le call site ne le passe que sur Android
+  /// (anti-steering Apple 3.1.1 : interdit dans l'app iOS).
+  Widget _webPurchaseLink() {
+    return GestureDetector(
+      onTap: onWebPurchaseTap,
+      child: Center(
+        child: Text(
+          'Payer par carte (meilleur prix, web)',
+          style: TextStyle(
+            color: goldPrimary,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            decoration: TextDecoration.underline,
+            decorationColor: goldPrimary,
+          ),
+        ),
+      ),
     );
   }
 

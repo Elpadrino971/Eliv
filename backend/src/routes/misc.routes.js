@@ -5,8 +5,9 @@ const router = express.Router();
 const { db } = require('../db');
 const { ok, list, fail } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
-const { saveUpload } = require('../uploads');
+const { saveUpload, PUBLIC_BASE_URL } = require('../uploads');
 const mux = require('../services/mux');
+const stripeService = require('../services/stripe');
 
 // GET /api/genres -> { status, data: [...] }
 router.get('/genres', (req, res) => {
@@ -116,8 +117,44 @@ router.get('/subscription/get', (req, res) => {
   });
   return res.json({ status: 'success', count: list.length, list });
 });
+// Ancien endpoint IAP (RevenueCat côté app valide l'achat en natif) : ne
+// touche plus jamais la base tout seul — un abonnement ne devient actif que
+// via un vrai paiement confirmé (webhook Stripe ci-dessous, ou reçu IAP côté
+// RevenueCat webhook, à brancher séparément).
 router.post('/subscription/buy', optionalAuth, (req, res) => {
   return res.json({ status: 'success', message: 'Subscription recorded (demo).' });
+});
+
+// POST /api/subscription/checkout — paiement carte (Stripe Checkout), chemin
+// web "0% commission Apple". Renvoie l'URL à ouvrir dans le navigateur ; le
+// webhook Stripe active l'abonnement dès le paiement confirmé.
+router.post('/subscription/checkout', requireAuth, (req, res) => {
+  if (!stripeService.isConfigured()) {
+    return res.status(503).json({ status: 'error', message: 'Paiement carte indisponible pour le moment.' });
+  }
+  const subscriptionsId = Number(req.body?.subscriptions_id);
+  const annual = req.body?.annual === true || req.body?.annual === '1' || req.body?.annual === 'true';
+  const sub = db.prepare('SELECT * FROM subscriptions WHERE id = ? AND active = 1').get(subscriptionsId);
+  if (!sub) return res.status(404).json({ status: 'error', message: 'Abonnement introuvable.' });
+
+  const priceId = annual ? sub.stripe_price_id_annual : sub.stripe_price_id;
+  if (!priceId) {
+    return res.status(422).json({ status: 'error', message: "Ce plan n'a pas encore de tarif Stripe configuré." });
+  }
+
+  stripeService.createSubscriptionCheckout({
+    priceId,
+    userId: req.user.id,
+    subscriptionsId,
+    customerEmail: req.user.email,
+    successUrl: `${PUBLIC_BASE_URL}/subscribe/merci`,
+    cancelUrl: `${PUBLIC_BASE_URL}/subscribe/annule`,
+  })
+    .then((session) => res.json({ status: 'success', data: { checkout_url: session.url } }))
+    .catch((e) => {
+      console.error('[stripe checkout]', e.message);
+      res.status(502).json({ status: 'error', message: `Erreur Stripe : ${e.message}` });
+    });
 });
 
 // ─── Feed Clips ("Pour toi" / "Clips") — contenu curaté depuis l'admin,

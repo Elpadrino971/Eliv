@@ -69,30 +69,52 @@ class SubscriptionController extends GetxController {
   }
 
   /// MODELE HYBRIDE — chemin "web" (Stripe), sans commission Apple/Google.
-  /// Ouvre le Stripe Checkout dans le navigateur, en passant l'utilisateur et le
-  /// plan pour que le backend relie le paiement. C'est le chemin "marge" : on le
-  /// propose EN PLUS de l'IAP (qui reste le chemin instantane).
-  ///
-  /// [SCAFFOLD] Tant que APIs.webSubscribeUrl est vide (backend pas encore pret),
-  /// on informe l'utilisateur au lieu de planter.
-  Future<void> subscribeOnWeb({String subscriptionId = ''}) async {
-    if (APIs.webSubscribeUrl.isEmpty) {
+  /// Demande une session Checkout au backend (liée au user + au palier +
+  /// mensuel/annuel), puis l'ouvre dans le navigateur. C'est le chemin
+  /// "marge" : on le propose EN PLUS de l'IAP (qui reste le chemin instantané).
+  /// N'appeler ce chemin QUE sur Android (anti-steering Apple 3.1.1 : interdit
+  /// de proposer un paiement externe dans l'app iOS).
+  Future<void> subscribeOnWeb({
+    required String subscriptionId,
+    bool annual = false,
+  }) async {
+    myLoadingDialog();
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.subscriptionCheckoutAPI;
+    response.bodySetter = {
+      'subscriptions_id': subscriptionId,
+      'annual': annual.toString(),
+    };
+
+    final value = await response.hitAPI();
+    Get.back(); // ferme le loader
+
+    if (value.split(' ').first == 'error') {
+      final data = jsonDecode(value.split('error ').last);
       myWarningDialog(
-        title: 'Bientôt disponible',
+        title: 'common_error'.tr,
         subtitle:
-            "Le paiement web arrive très bientôt. En attendant, tu peux t'abonner directement dans l'app.",
+            data['message'] ?? "Le paiement web n'est pas encore disponible.",
       );
       return;
     }
 
-    final params = {'user_id': '${userModel.value.user?.id}'};
-    if (subscriptionId.isNotEmpty) params['subscription_id'] = subscriptionId;
-    final uri = Uri.parse(APIs.webSubscribeUrl).replace(queryParameters: params);
+    final checkoutUrl = jsonDecode(value)['data']?['checkout_url'] as String?;
+    if (checkoutUrl == null) {
+      myWarningDialog(
+        title: 'common_error'.tr,
+        subtitle: "Impossible d'ouvrir la page de paiement. Réessaie.",
+      );
+      return;
+    }
 
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final ok = await launchUrl(
+      Uri.parse(checkoutUrl),
+      mode: LaunchMode.externalApplication,
+    );
     if (!ok) {
       myWarningDialog(
-        title: 'Error',
+        title: 'common_error'.tr,
         subtitle: "Impossible d'ouvrir la page de paiement. Réessaie.",
       );
     }

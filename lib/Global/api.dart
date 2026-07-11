@@ -12,16 +12,6 @@ class APIs {
   static const String baseAPI = '$mainIP/api';
 
   // ───────────────────────────────────────────────────────────────────────
-  // ABONNEMENT WEB (Stripe) — abos ARTISTES, modele hybride (IAP + Web).
-  //
-  // Page generique vybzzz.com qui gere les 3 paliers fondateurs (1->200) ET le
-  // Pro (200+) via current_founder_plan() cote Supabase, puis lance le Stripe
-  // Checkout avec le bon price_id. L'app y ajoute ?user_id=... (a mapper en
-  // client_reference_id cote web -> webhook). Voir docs/STRIPE_HYBRID_SETUP.md
-  // ───────────────────────────────────────────────────────────────────────
-  static const String webSubscribeUrl = 'https://vybzzz.com/subscribe';
-
-  // ───────────────────────────────────────────────────────────────────────
   // MUX — REPLAY (VOD). Le PLAYBACK ID est PUBLIC (pas un secret).
   // CAROUSEL / concert vedette du 1er écran Home (16:9).
   // En prod, ce champ viendra du backend par event (signed playback id).
@@ -144,6 +134,10 @@ class APIs {
   //Subscription
   static const String getSubscriptionsAPI = '$baseAPI/subscription/get';
   static const String buySubscriptionAPI = '$baseAPI/subscription/buy';
+  // Paiement carte (Stripe Checkout) : renvoie { checkout_url } à ouvrir
+  // dans le navigateur. Remplace l'ancien webSubscribeUrl figé (Payment Link
+  // statique) par une session Checkout dynamique, liée au user + au palier.
+  static const String subscriptionCheckoutAPI = '$baseAPI/subscription/checkout';
 
   // Abusive Words
   static const String getAbusiveWordsAPI = '$baseAPI/get-abusive-words';

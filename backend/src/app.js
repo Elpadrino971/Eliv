@@ -11,15 +11,17 @@ const eventRoutes = require('./routes/events.routes');
 const miscRoutes = require('./routes/misc.routes');
 const adminRoutes = require('./routes/admin.routes');
 const muxWebhookRoutes = require('./routes/mux.routes');
+const stripeWebhookRoutes = require('./routes/stripe.routes');
 
 init();
 
 const app = express();
 app.use(cors());
 
-// Webhook Mux : monté AVANT express.json() car la vérification de signature
-// a besoin du corps brut exact (Buffer), pas du JSON déjà parsé.
+// Webhooks Mux/Stripe : montés AVANT express.json() car la vérification de
+// signature a besoin du corps brut exact (Buffer), pas du JSON déjà parsé.
 app.use('/api/mux/webhook', express.raw({ type: '*/*' }), muxWebhookRoutes);
+app.use('/api/stripe/webhook', express.raw({ type: '*/*' }), stripeWebhookRoutes);
 
 // L'app Flutter envoie soit du form-urlencoded (Map<String,String>),
 // soit du JSON, soit du multipart (uploads). On gère les trois.
@@ -41,6 +43,15 @@ app.use('/giftImages', express.static(path.join(__dirname, '..', 'storage', 'gif
 // Santé
 app.get('/', (req, res) => res.json({ status: 'success', service: 'vybzzz-backend', version: '1.0.0' }));
 app.get('/api', (req, res) => res.json({ status: 'success', message: 'VYBZZZ API up' }));
+
+// Pages de retour Stripe Checkout (success_url / cancel_url) — le webhook
+// active déjà l'abonnement en tâche de fond, ces pages ne font qu'informer.
+app.get('/subscribe/merci', (req, res) => res.send(
+  '<html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#071426;color:#f4efe6"><h1>Merci ! 🎉</h1><p>Ton abonnement est en cours d\'activation, retourne sur l\'app VybzzZ.</p></body></html>'
+));
+app.get('/subscribe/annule', (req, res) => res.send(
+  '<html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#071426;color:#f4efe6"><h1>Paiement annulé</h1><p>Aucun montant n\'a été prélevé. Retourne sur l\'app VybzzZ pour réessayer.</p></body></html>'
+));
 
 // Dashboard admin web (statique) sous /admin
 app.use('/admin', express.static(path.join(__dirname, '..', 'public', 'admin')));

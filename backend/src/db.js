@@ -291,6 +291,14 @@ function init() {
     "ALTER TABLE feed_clips ADD COLUMN mux_upload_id TEXT",
     "ALTER TABLE feed_clips ADD COLUMN upload_status TEXT",
     "ALTER TABLE feed_clips ADD COLUMN expires_at TEXT",
+    // Stripe Checkout (paiement carte web, en plus de l'IAP) : Price ID
+    // colle a la main dans l'admin (pas de creation auto depuis le backend,
+    // pour eviter de dupliquer des objets Stripe a chaque edition).
+    "ALTER TABLE subscriptions ADD COLUMN stripe_price_id TEXT",
+    "ALTER TABLE subscriptions ADD COLUMN stripe_price_id_annual TEXT",
+    "ALTER TABLE user_subscriptions ADD COLUMN stripe_customer_id TEXT",
+    "ALTER TABLE user_subscriptions ADD COLUMN stripe_subscription_id TEXT",
+    "ALTER TABLE user_subscriptions ADD COLUMN stripe_checkout_session_id TEXT",
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }
