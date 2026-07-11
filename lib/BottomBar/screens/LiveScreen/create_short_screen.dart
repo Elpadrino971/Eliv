@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
@@ -6,6 +9,7 @@ import 'package:artist/widgets/my_appBar.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
 /// Créer un short : n'importe quel utilisateur connecté peut soumettre une
@@ -38,20 +42,57 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
     if (v != null) setState(() => _video = v);
   }
 
+  /// Envoi direct vers Mux : le fichier PUT directement sur Mux, jamais sur
+  /// notre serveur. Renvoie false (sans lever d'exception) si Mux n'est pas
+  /// configuré côté serveur ou si l'upload échoue, pour laisser _publish()
+  /// basculer sur l'ancien flux (upload vers notre serveur).
+  Future<bool> _publishViaMuxDirect() async {
+    final directResp = ApiResponse();
+    directResp.typeSetter = 'post';
+    directResp.urlSetter = APIs.feedClipSubmitDirectAPI;
+    directResp.bodySetter = {
+      'feed': _feed,
+      if (_titleController.text.trim().isNotEmpty)
+        'title': _titleController.text.trim(),
+    };
+    final res = await directResp.hitAPI();
+    if (res is! String || res.split(' ').first == 'error') return false;
+
+    final uploadUrl = jsonDecode(res)['data']?['upload_url'] as String?;
+    if (uploadUrl == null) return false;
+
+    final bytes = await File(_video!.path).readAsBytes();
+    final put = await http.put(Uri.parse(uploadUrl), body: bytes);
+    return put.statusCode >= 200 && put.statusCode < 300;
+  }
+
   Future<void> _publish() async {
     if (_video == null) return;
     setState(() => _busy = true);
     try {
-      _response.typeSetter = 'post';
-      _response.urlSetter = APIs.feedClipSubmitAPI;
-      _response.bodySetter = {
-        'feed': _feed,
-        if (_titleController.text.trim().isNotEmpty)
-          'title': _titleController.text.trim(),
-      };
-      final res = await _response.hitMultipartAPI(_video!.path, key: 'video');
+      bool sent = false;
+      try {
+        sent = await _publishViaMuxDirect();
+      } catch (_) {
+        sent = false;
+      }
 
-      if (res.split(' ').first == 'error') {
+      if (!sent) {
+        _response.typeSetter = 'post';
+        _response.urlSetter = APIs.feedClipSubmitAPI;
+        _response.bodySetter = {
+          'feed': _feed,
+          if (_titleController.text.trim().isNotEmpty)
+            'title': _titleController.text.trim(),
+        };
+        final res = await _response.hitMultipartAPI(
+          _video!.path,
+          key: 'video',
+        );
+        sent = res.split(' ').first != 'error';
+      }
+
+      if (!sent) {
         myWarningDialog(
           title: 'common_error'.tr,
           subtitle: "Échec de l'envoi. Réessaie.",

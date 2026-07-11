@@ -280,6 +280,17 @@ function init() {
     "ALTER TABLE subscriptions ADD COLUMN perks TEXT",
     "ALTER TABLE subscriptions ADD COLUMN price_annual TEXT",
     "ALTER TABLE feed_clips ADD COLUMN user_id INTEGER",
+    // Intégration Mux réelle (Direct Upload + Live Stream + expiration replay)
+    "ALTER TABLE events ADD COLUMN mux_asset_id TEXT",
+    "ALTER TABLE events ADD COLUMN mux_upload_id TEXT",
+    "ALTER TABLE events ADD COLUMN mux_upload_status TEXT",
+    "ALTER TABLE events ADD COLUMN replay_expires_at TEXT",
+    "ALTER TABLE events ADD COLUMN mux_live_stream_id TEXT",
+    "ALTER TABLE events ADD COLUMN mux_stream_key TEXT",
+    "ALTER TABLE feed_clips ADD COLUMN mux_asset_id TEXT",
+    "ALTER TABLE feed_clips ADD COLUMN mux_upload_id TEXT",
+    "ALTER TABLE feed_clips ADD COLUMN upload_status TEXT",
+    "ALTER TABLE feed_clips ADD COLUMN expires_at TEXT",
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }

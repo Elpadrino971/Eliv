@@ -67,6 +67,10 @@ class APIs {
   // ───────────────────────────────────────────────────────────────────────
   static const String feedClipsAPI = '$baseAPI/feed-clips';
   static const String feedClipSubmitAPI = '$baseAPI/feed-clips/submit';
+  // Upload direct Mux (le fichier PUT directement sur Mux, jamais sur notre
+  // serveur) : renvoie { upload_url, clip_id }. Repli auto sur
+  // feedClipSubmitAPI si Mux n'est pas configuré côté serveur (503).
+  static const String feedClipSubmitDirectAPI = '$baseAPI/feed-clips/submit-direct';
 
   //Auth
   static const String loginAPI = '$baseAPI/login';

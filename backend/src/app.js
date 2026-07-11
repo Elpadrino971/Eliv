@@ -10,11 +10,16 @@ const authRoutes = require('./routes/auth.routes');
 const eventRoutes = require('./routes/events.routes');
 const miscRoutes = require('./routes/misc.routes');
 const adminRoutes = require('./routes/admin.routes');
+const muxWebhookRoutes = require('./routes/mux.routes');
 
 init();
 
 const app = express();
 app.use(cors());
+
+// Webhook Mux : monté AVANT express.json() car la vérification de signature
+// a besoin du corps brut exact (Buffer), pas du JSON déjà parsé.
+app.use('/api/mux/webhook', express.raw({ type: '*/*' }), muxWebhookRoutes);
 
 // L'app Flutter envoie soit du form-urlencoded (Map<String,String>),
 // soit du JSON, soit du multipart (uploads). On gère les trois.

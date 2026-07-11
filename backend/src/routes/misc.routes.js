@@ -6,6 +6,7 @@ const { db } = require('../db');
 const { ok, list, fail } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
+const mux = require('../services/mux');
 
 // GET /api/genres -> { status, data: [...] }
 router.get('/genres', (req, res) => {
@@ -153,6 +154,33 @@ router.post('/feed-clips/submit', requireAuth, (req, res) => {
   return res.json({ status: 'success', message: 'Envoyé ! Ton clip sera visible après validation.' });
 });
 
+// POST /api/feed-clips/submit-direct — variante Mux : le fichier est PUT
+// directement sur Mux (le serveur ne touche jamais la vidéo), utile pour de
+// gros fichiers. Renvoie une upload_url à PUT depuis l'app, plus rien à faire
+// côté client ensuite : le webhook Mux finalise le clip automatiquement.
+router.post('/feed-clips/submit-direct', requireAuth, (req, res) => {
+  if (!mux.isConfigured()) {
+    return res.status(503).json({ status: 'error', message: 'Upload direct indisponible pour le moment.' });
+  }
+  const b = req.body || {};
+  const feed = b.feed === 'for_you' ? 'for_you' : 'clips';
+  const info = db.prepare(
+    'INSERT INTO feed_clips (feed, title, active, user_id, upload_status) VALUES (?, ?, 0, ?, ?)'
+  ).run(feed, b.title || null, req.user.id, 'waiting');
+  const clipId = info.lastInsertRowid;
+
+  mux.createDirectUpload({ passthrough: { kind: 'clip', id: clipId } })
+    .then(({ uploadId, uploadUrl }) => {
+      db.prepare('UPDATE feed_clips SET mux_upload_id = ? WHERE id = ?').run(uploadId, clipId);
+      return res.json({ status: 'success', data: { upload_url: uploadUrl, clip_id: clipId } });
+    })
+    .catch((e) => {
+      db.prepare('DELETE FROM feed_clips WHERE id = ?').run(clipId);
+      console.error('[mux submit-direct]', e.message);
+      return res.status(502).json({ status: 'error', message: `Erreur Mux : ${e.message}` });
+    });
+});
+
 // ─── Packages (points / gifts) ───
 router.get('/packages/list', (req, res) => ok(res, []));
 router.post('/packages/buy', optionalAuth, (req, res) =>
@@ -295,18 +323,15 @@ router.get('/event/:id/pulse', requireAuth, (req, res) => {
   });
 });
 
-// ─── Shorts UGC (Mux Direct Upload) ───
-// En prod : appeler l'API Mux avec le token secret pour créer un upload direct.
-// Ici (démo) : on renvoie une URL factice pour ne pas exposer de secret.
-router.post('/shorts/create-upload', optionalAuth, (req, res) => {
-  return res.json({
-    status: 'success',
-    data: {
-      upload_url: 'https://example.com/mux-direct-upload-placeholder',
-      upload_id: `up_${Date.now()}`,
-      note: 'Brancher l\'API Mux (POST https://api.mux.com/video/v1/uploads) côté serveur avec MUX_TOKEN_SECRET.',
-    },
-  });
+// ─── Shorts UGC (Mux Direct Upload) — alias générique, voir aussi
+// /feed-clips/submit-direct qui crée déjà la ligne feed_clips associée. ───
+router.post('/shorts/create-upload', requireAuth, (req, res) => {
+  if (!mux.isConfigured()) {
+    return res.status(503).json({ status: 'error', message: 'Mux non configuré côté serveur.' });
+  }
+  mux.createDirectUpload({ passthrough: { kind: 'shorts', id: req.user.id } })
+    .then(({ uploadId, uploadUrl }) => res.json({ status: 'success', data: { upload_url: uploadUrl, upload_id: uploadId } }))
+    .catch((e) => res.status(502).json({ status: 'error', message: `Erreur Mux : ${e.message}` }));
 });
 
 module.exports = router;

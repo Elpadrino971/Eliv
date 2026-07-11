@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const { db } = require('../db');
 const { hash, compare, SECRET } = require('../auth');
 const { saveUpload } = require('../uploads');
+const mux = require('../services/mux');
 const truthy = (v) => v === true || v === 1 || v === '1' || v === 'true' || v === 'on';
 
 /** Auth admin : exige un token dont le user a role='admin'. */
@@ -165,7 +166,8 @@ router.get('/events', requireAdmin, (req, res) => {
   const rows = db.prepare(
     `SELECT e.id, e.name, e.status, e.ticket_price, e.start_date_time, e.likes_count,
             e.artist_id, e.genre_id, e.description, e.cover_image, e.mux_playback_id,
-            e.is_banner, e.tz_offset_minutes, u.artist_name AS artist
+            e.is_banner, e.tz_offset_minutes, e.mux_upload_status, e.mux_asset_id,
+            e.replay_expires_at, e.mux_live_stream_id, u.artist_name AS artist
      FROM events e LEFT JOIN users u ON u.id = e.artist_id
      ORDER BY e.id DESC`
   ).all();
@@ -222,6 +224,84 @@ router.put('/events/:id', requireAdmin, (req, res) => {
 router.delete('/events/:id', requireAdmin, (req, res) => {
   db.prepare('DELETE FROM events WHERE id = ?').run(req.params.id);
   return res.json({ status: 'success', message: 'Concert supprimé.' });
+});
+
+// ─── Mux : Direct Upload (replay/vidéo event ou clip) ───
+// Le fichier ne transite JAMAIS par notre serveur : l'admin PUT le fichier
+// brut directement sur l'URL Mux renvoyée ici. Mux prévient ensuite via
+// webhook (`video.asset.ready`) et le backend attache le playback_id à la
+// ligne visée (voir routes/mux.routes.js).
+router.post('/mux/direct-upload', requireAdmin, (req, res) => {
+  if (!mux.isConfigured()) {
+    return res.status(503).json({ status: 'error', message: 'Mux non configuré côté serveur (MUX_TOKEN_ID/MUX_TOKEN_SECRET manquants).' });
+  }
+  const b = req.body || {};
+  const kind = b.kind === 'clip' ? 'clip' : 'event';
+
+  let refId = Number(b.ref_id) || null;
+  if (kind === 'clip' && !refId) {
+    // Nouveau clip : on crée la ligne tout de suite (inactive tant que non prête + non approuvée).
+    const info = db.prepare(
+      'INSERT INTO feed_clips (feed, title, active, upload_status) VALUES (?, ?, 0, ?)'
+    ).run(b.feed === 'clips' ? 'clips' : 'for_you', b.title || null, 'waiting');
+    refId = info.lastInsertRowid;
+  }
+  if (!refId) {
+    return res.status(422).json({ status: 'error', message: 'ref_id requis (event ou clip existant).' });
+  }
+
+  mux.createDirectUpload({ passthrough: { kind, id: refId } })
+    .then(({ uploadId, uploadUrl }) => {
+      if (kind === 'event') {
+        db.prepare("UPDATE events SET mux_upload_id = ?, mux_upload_status = 'waiting' WHERE id = ?").run(uploadId, refId);
+      } else {
+        db.prepare("UPDATE feed_clips SET mux_upload_id = ?, upload_status = 'waiting' WHERE id = ?").run(uploadId, refId);
+      }
+      return res.json({ status: 'success', data: { upload_url: uploadUrl, upload_id: uploadId, ref_id: refId } });
+    })
+    .catch((e) => {
+      console.error('[mux direct-upload]', e.message);
+      return res.status(502).json({ status: 'error', message: `Erreur Mux : ${e.message}` });
+    });
+});
+
+// ─── Mux : Live Stream (mode "Concert PRO" — régie -> encodeur -> Mux) ───
+router.post('/events/:id/mux/live-stream', requireAdmin, (req, res) => {
+  if (!mux.isConfigured()) {
+    return res.status(503).json({ status: 'error', message: 'Mux non configuré côté serveur.' });
+  }
+  const event = db.prepare('SELECT id FROM events WHERE id = ?').get(req.params.id);
+  if (!event) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+
+  mux.createLiveStream({ passthrough: { kind: 'event', id: event.id } })
+    .then(({ liveStreamId, streamKey, playbackId, ingestUrl }) => {
+      db.prepare(
+        `UPDATE events SET mux_live_stream_id = ?, mux_stream_key = ?, mux_live_playback_id = ?
+         WHERE id = ?`
+      ).run(liveStreamId, streamKey, playbackId, event.id);
+      return res.json({
+        status: 'success',
+        data: { live_stream_id: liveStreamId, stream_key: streamKey, playback_id: playbackId, ingest_url: ingestUrl },
+      });
+    })
+    .catch((e) => {
+      console.error('[mux live-stream]', e.message);
+      return res.status(502).json({ status: 'error', message: `Erreur Mux : ${e.message}` });
+    });
+});
+
+router.delete('/events/:id/mux/live-stream', requireAdmin, (req, res) => {
+  const event = db.prepare('SELECT mux_live_stream_id FROM events WHERE id = ?').get(req.params.id);
+  if (!event?.mux_live_stream_id) return res.json({ status: 'success', message: 'Aucun live stream actif.' });
+
+  mux.deleteLiveStream(event.mux_live_stream_id)
+    .catch((e) => console.error('[mux live-stream delete]', e.message))
+    .finally(() => {
+      db.prepare(
+        "UPDATE events SET mux_live_stream_id = NULL, mux_stream_key = NULL, mux_live_playback_id = NULL WHERE id = ?"
+      ).run(req.params.id);
+      return res.json({ status: 'success', message: 'Live stream arrêté.' });
+    });
 });
 
 // ─── Packages ───
@@ -485,9 +565,8 @@ router.post('/feed-clips/:id/approve', requireAdmin, (req, res) => {
 router.post('/feed-clips', requireAdmin, (req, res) => {
   const b = req.body || {};
   const video = saveUpload(req, ['video', 'file'], 'videos', 'events/videos') || b.video_url || null;
-  if (!video && !b.mux_playback_id) {
-    return res.status(422).json({ status: 'error', message: 'Ajoute un fichier vidéo ou un Mux Playback ID.' });
-  }
+  // Pas de vidéo à la création ? OK : elle peut être attachée ensuite via le
+  // bouton "🎬 Upload" (Mux Direct Upload) depuis la liste.
   db.prepare(
     'INSERT INTO feed_clips (feed, title, video_url, mux_playback_id, position, active) VALUES (?, ?, ?, ?, ?, ?)'
   ).run(

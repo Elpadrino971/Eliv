@@ -258,6 +258,72 @@ async function confirmDelete(fn) {
   try { await fn(); } catch (e) { toast(e.message); }
 }
 
+// ─── Mux : upload direct (le fichier PUT directement sur Mux, jamais sur
+// notre serveur) + badge de statut + mode "Concert PRO" (live stream régie). ───
+function muxDirectUpload(uploadUrl, file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', uploadUrl);
+    xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100)); };
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300) ? resolve() : reject(new Error(`Échec upload Mux (${xhr.status})`));
+    xhr.onerror = () => reject(new Error('Erreur réseau pendant l\'upload Mux.'));
+    xhr.send(file);
+  });
+}
+function muxBadge(status) {
+  const map = { waiting: ['pending', 'Mux : en traitement…'], ready: ['active', 'Mux : prêt ✓'], errored: ['rejected', 'Mux : erreur'], expired: ['completed', 'Mux : expiré'] };
+  const [cls, label] = map[status] || [];
+  return cls ? `<span class="badge ${cls}">${esc(label)}</span>` : '';
+}
+function openMuxUploadDialog(kind, refId) {
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal"><h3>Uploader la vidéo vers Mux</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:10px">Le fichier part directement vers Mux (jamais stocké sur notre serveur). Pour un concert long, laisse l'onglet ouvert le temps de l'envoi.</p>
+    <label>Fichier vidéo</label><input type="file" id="muxfile" accept="video/*">
+    <div id="muxprogress" style="margin-top:14px;color:var(--muted);font-size:13px">En attente du fichier…</div>
+    <div class="modal-actions"><button class="cancel">Fermer</button><button class="btn gold" id="muxstart">Envoyer</button></div></div>`;
+  document.body.appendChild(bg);
+  bg.querySelector('.cancel').onclick = () => bg.remove();
+  bg.onclick = (e) => { if (e.target === bg) bg.remove(); };
+  bg.querySelector('#muxstart').onclick = async () => {
+    const file = bg.querySelector('#muxfile').files[0];
+    const prog = bg.querySelector('#muxprogress');
+    if (!file) { toast('Choisis un fichier vidéo'); return; }
+    try {
+      prog.textContent = 'Préparation de l\'upload…';
+      const { data } = await api('POST', '/mux/direct-upload', { kind, ref_id: refId });
+      await muxDirectUpload(data.upload_url, file, (pct) => { prog.textContent = `Envoi en cours… ${pct}%`; });
+      prog.textContent = 'Envoyé ! Traitement Mux en cours (quelques minutes pour un concert). Rafraîchis la liste ensuite.';
+      toast('Vidéo envoyée à Mux — traitement en cours');
+      route();
+    } catch (e) { prog.textContent = ''; toast(e.message); }
+  };
+}
+async function toggleMuxLiveStream(eventId, hasLive) {
+  try {
+    if (hasLive) {
+      await api('DELETE', `/events/${eventId}/mux/live-stream`);
+      toast('Live stream arrêté');
+      route();
+      return;
+    }
+    const { data } = await api('POST', `/events/${eventId}/mux/live-stream`);
+    const bg = document.createElement('div');
+    bg.className = 'modal-bg';
+    bg.innerHTML = `<div class="modal"><h3>Live stream Mux créé</h3>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:10px">Colle ces infos dans l'encodeur de la régie (OBS / vMix / Teradek…).</p>
+      <label>URL d'ingest (RTMP)</label><input value="${esc(data.ingest_url)}" readonly onclick="this.select()">
+      <label>Clé de stream (secrète)</label><input value="${esc(data.stream_key)}" readonly onclick="this.select()">
+      <label>Playback ID</label><input value="${esc(data.playback_id)}" readonly onclick="this.select()">
+      <div class="modal-actions"><button class="btn gold cancel">Fermer</button></div></div>`;
+    document.body.appendChild(bg);
+    bg.querySelector('.cancel').onclick = () => { bg.remove(); route(); };
+    bg.onclick = (e) => { if (e.target === bg) { bg.remove(); route(); } };
+  } catch (e) { toast(e.message); }
+}
+
 const view = () => $('view');
 
 // ════════════════════════════════════════════════════════════════════
@@ -484,8 +550,9 @@ function pageEvents() {
       { label: 'Artiste', render: (r) => esc(r.artist || '—') },
       { label: 'Prix', render: (r) => '$' + esc(r.ticket_price || '0') },
       { label: 'Statut', render: (r) => badge(r.status) },
+      { label: 'Vidéo', render: (r) => `${muxBadge(r.mux_upload_status)}${r.mux_live_stream_id ? '<div class="em">🔴 live en cours</div>' : ''}${r.replay_expires_at ? `<div class="em">replay jusqu'au ${fmtDate(r.replay_expires_at)}</div>` : ''}` },
       { label: 'Date', render: (r) => fmtDate(r.start_date_time) },
-      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="event:${r.id}">🎬 Upload</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
     ],
   });
 }
@@ -519,10 +586,10 @@ function pageFeedClips() {
       { label: 'Feed', render: (r) => r.feed === 'clips' ? 'Clips' : 'Pour toi' },
       { label: 'Titre', render: (r) => esc(r.title || '—') },
       { label: 'Soumis par', render: (r) => r.user_id ? esc(r.submitted_by || ('user #' + r.user_id)) : '<span style="color:var(--muted)">Admin (officiel)</span>' },
-      { label: 'Source', render: (r) => r.mux_playback_id ? '🎬 Mux' : (r.video_url ? '📁 Fichier' : '—') },
+      { label: 'Source', render: (r) => `${r.mux_playback_id ? '🎬 Mux' : (r.video_url ? '📁 Fichier' : '—')}${muxBadge(r.upload_status)}${r.expires_at ? `<div class="em">expire le ${fmtDate(r.expires_at)}</div>` : ''}` },
       { label: 'Ordre', render: (r) => r.position ?? 0 },
       { label: 'Statut', render: (r) => badge(r.active ? 'active' : 'pending') },
-      { label: 'Action', render: (r) => `${!r.active ? `<button class="btn status" data-approveclip="${r.id}">Approuver</button>` : ''}<button class="btn edit" data-edit="feedclip:${r.id}">Modifier</button><button class="btn dup" data-dup="feedclip:${r.id}">Dupliquer</button><button class="btn del" data-del="/feed-clips/${r.id}">Supprimer</button>` },
+      { label: 'Action', render: (r) => `${!r.active ? `<button class="btn status" data-approveclip="${r.id}">Approuver</button>` : ''}<button class="btn edit" data-edit="feedclip:${r.id}">Modifier</button><button class="btn dup" data-dup="feedclip:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="clip:${r.id}">🎬 Upload</button><button class="btn del" data-del="/feed-clips/${r.id}">Supprimer</button>` },
     ],
   });
 }
@@ -848,6 +915,10 @@ document.addEventListener('click', (e) => {
   if (gs) { openGrantSubModal(gs.dataset.grantsub); return; }
   const ac = e.target.closest('[data-approveclip]');
   if (ac) { api('POST', `/feed-clips/${ac.dataset.approveclip}/approve`).then(() => { toast('Clip approuvé'); route(); }).catch((err) => toast(err.message)); return; }
+  const mu = e.target.closest('[data-muxupload]');
+  if (mu) { const [kind, id] = mu.dataset.muxupload.split(':'); openMuxUploadDialog(kind, id); return; }
+  const ml = e.target.closest('[data-muxlive]');
+  if (ml) { const [, id, hasLive] = ml.dataset.muxlive.split(':'); toggleMuxLiveStream(id, hasLive === '1'); return; }
   const st = e.target.closest('[data-status]');
   if (st) {
     const r = currentRows.find((x) => x.id == st.dataset.status);
