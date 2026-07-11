@@ -9,6 +9,40 @@
 
 const { db } = require('./db');
 
+// Convertit une ligne `subscriptions` au format Subscription.fromJson (Flutter).
+// Réutilisé par /api/subscription/get et par serializeUser (abonnement du user).
+function subscriptionToJson(r) {
+  if (!r) return null;
+  const seatsTotal = r.slot_from != null && r.slot_to != null ? r.slot_to - r.slot_from + 1 : null;
+  const perks = (r.perks || '')
+    .split('\n')
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+  return {
+    id: r.id,
+    title: r.name,
+    price: r.price,
+    price_type: r.period === 'year' ? 'yearly' : 'monthly',
+    annual_price: r.price_annual || null,
+    perks,
+    commission_type: r.commission != null ? 'percentage' : null,
+    commission: r.commission != null ? String(r.commission) : null,
+    artists_count: null,
+    status: r.active ? 'active' : 'inactive',
+    created_at: r.created_at,
+    updated_at: r.created_at,
+    is_founder: (r.tier || '').toLowerCase() === 'founder',
+    seats_total: seatsTotal,
+    seats_remaining: seatsTotal,
+    next_price: null,
+    next_price_in_seats: null,
+    public_price: null,
+    badge: r.badge,
+    iap_product_id: null,
+    image: r.image,
+  };
+}
+
 function serializeUser(row, { withPassword = false } = {}) {
   if (!row) return null;
   const genres = db
@@ -18,6 +52,34 @@ function serializeUser(row, { withPassword = false } = {}) {
        WHERE ug.user_id = ?`
     )
     .all(row.id);
+
+  const userSubscription = db
+    .prepare(
+      `SELECT us.id, us.user_id, us.subscriptions_id, us.status, us.start_date, us.end_date, us.created_at,
+              s.name, s.tier, s.price, s.price_annual, s.period, s.active, s.image,
+              s.slot_from, s.slot_to, s.commission, s.badge, s.perks, s.created_at AS sub_created_at
+       FROM user_subscriptions us
+       JOIN subscriptions s ON s.id = us.subscriptions_id
+       WHERE us.user_id = ?
+       ORDER BY us.id DESC`
+    )
+    .all(row.id)
+    .map((us) => ({
+      id: us.id,
+      user_id: us.user_id,
+      subscriptions_id: us.subscriptions_id,
+      start_date: us.start_date,
+      end_date: us.end_date,
+      status: us.status,
+      created_at: us.created_at,
+      updated_at: us.created_at,
+      subscription: subscriptionToJson({
+        id: us.subscriptions_id, name: us.name, tier: us.tier, price: us.price,
+        price_annual: us.price_annual, period: us.period, active: us.active, image: us.image,
+        slot_from: us.slot_from, slot_to: us.slot_to, commission: us.commission, badge: us.badge,
+        perks: us.perks, created_at: us.sub_created_at,
+      }),
+    }));
 
   const out = {
     id: row.id,
@@ -45,6 +107,7 @@ function serializeUser(row, { withPassword = false } = {}) {
     is_artist: !!row.is_artist,
     referral_code: row.referral_code,
     genres,
+    user_subscription: userSubscription,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -155,6 +218,7 @@ module.exports = {
   serializeUser,
   serializeEvent,
   serializeTicket,
+  subscriptionToJson,
   ok,
   list,
   fail,

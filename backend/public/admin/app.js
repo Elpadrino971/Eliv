@@ -363,7 +363,7 @@ async function pageUsers() {
     { label: 'Adresse', render: (r) => esc(r.address || 'N/A') },
     { label: 'Statut', render: (r) => badge(r.status) },
     { label: 'Date', render: (r) => fmtDate(r.created_at) },
-    { label: 'Action', render: (r) => `<button class="btn edit" data-edit="user:${r.id}">Modifier</button><button class="btn status" data-status="${r.id}">Statut</button><button class="btn del" data-del="/users/${r.id}">Supprimer</button>` },
+    { label: 'Action', render: (r) => `<button class="btn edit" data-edit="user:${r.id}">Modifier</button><button class="btn status" data-status="${r.id}">Statut</button><button class="btn" data-grantsub="${r.id}">Abonner</button><button class="btn del" data-del="/users/${r.id}">Supprimer</button>` },
   ];
   view().innerHTML = `<div class="head-row"><h1 class="page-title">Utilisateurs</h1><button class="add-btn" id="adduser">+ Ajouter</button></div>
     <div class="tabs">
@@ -523,6 +523,19 @@ function subForm(row, { duplicate = false } = {}) {
       { name: 'active', label: 'Actif ?', type: 'checkbox', value: row ? !!row.active : true, hint: 'Visible dans l\'app' },
     ],
     onSave: async (d) => { if (row && !duplicate) { await api('PUT', '/subscriptions/' + row.id, d); toast('Modifié'); } else { await api('POST', '/subscriptions', d); toast(duplicate ? 'Dupliqué' : 'Ajouté'); } route(); },
+  });
+}
+async function openGrantSubModal(userId) {
+  const { data: subs } = await api('GET', '/subscriptions');
+  const activeSubs = subs.filter((s) => s.active);
+  if (!activeSubs.length) { toast('Aucun abonnement actif à attribuer.'); return; }
+  modal({
+    title: 'Attribuer un abonnement',
+    fields: [
+      { name: 'subscriptions_id', label: 'Abonnement', type: 'select', options: activeSubs.map((s) => ({ value: s.id, label: `${s.name} (${s.tier}) — $${s.price}` })) },
+      { name: 'status', label: 'Statut', type: 'select', value: 'active', options: [{ value: 'active', label: 'Actif' }, { value: 'expired', label: 'Expiré' }, { value: 'cancelled', label: 'Annulé' }] },
+    ],
+    onSave: async (d) => { await api('POST', '/user-subscriptions', { user_id: userId, ...d }); toast('Abonnement attribué'); route(); },
   });
 }
 function pageSubscriptions() {
@@ -762,6 +775,8 @@ document.addEventListener('click', (e) => {
   if (ed) { const [type, id] = ed.dataset.edit.split(':'); EDIT[type]?.(id); return; }
   const dup = e.target.closest('[data-dup]');
   if (dup) { const [type, id] = dup.dataset.dup.split(':'); DUP[type]?.(id); return; }
+  const gs = e.target.closest('[data-grantsub]');
+  if (gs) { openGrantSubModal(gs.dataset.grantsub); return; }
   const st = e.target.closest('[data-status]');
   if (st) {
     const r = currentRows.find((x) => x.id == st.dataset.status);

@@ -432,6 +432,33 @@ router.delete('/subscriptions/:id', requireAdmin, (req, res) => {
   return res.json({ status: 'success', message: 'Abonnement supprimé.' });
 });
 
+// ─── Abonnements attribués (grant manuel à un utilisateur/artiste) ───
+// Sert tant que /subscription/buy n'enregistre pas encore un vrai achat
+// RevenueCat/IAP en base — permet de simuler/attribuer un abonnement actif.
+router.get('/user-subscriptions', requireAdmin, (req, res) => {
+  const rows = db.prepare(`
+    SELECT us.*, COALESCE(u.artist_name, u.full_name, u.email) AS user_name, s.name AS subscription_name
+    FROM user_subscriptions us
+    LEFT JOIN users u ON u.id = us.user_id
+    LEFT JOIN subscriptions s ON s.id = us.subscriptions_id
+    ORDER BY us.id DESC
+  `).all();
+  return res.json({ status: 'success', data: rows });
+});
+router.post('/user-subscriptions', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  if (!b.user_id || !b.subscriptions_id) {
+    return res.status(422).json({ status: 'error', message: 'Utilisateur et abonnement requis.' });
+  }
+  db.prepare('INSERT INTO user_subscriptions (user_id, subscriptions_id, status) VALUES (?, ?, ?)')
+    .run(b.user_id, b.subscriptions_id, b.status || 'active');
+  return res.json({ status: 'success', message: 'Abonnement attribué.' });
+});
+router.delete('/user-subscriptions/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM user_subscriptions WHERE id = ?').run(req.params.id);
+  return res.json({ status: 'success', message: 'Abonnement retiré.' });
+});
+
 // ─── Graphiques + Objectifs (Dashboard) ───
 const MONTHS_FR = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 router.get('/chart-data', requireAdmin, (req, res) => {

@@ -227,6 +227,18 @@ function init() {
       updated_at TEXT DEFAULT (datetime('now'))
     );
 
+    -- Abonnements attribués à un utilisateur (grant manuel tant que le vrai
+    -- achat RevenueCat/IAP n'écrit pas encore ici) : simule un abonné actif.
+    CREATE TABLE IF NOT EXISTS user_subscriptions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      subscriptions_id INTEGER,
+      status TEXT DEFAULT 'active',
+      start_date TEXT DEFAULT (datetime('now')),
+      end_date TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
     -- Boîte à idées (suggestions des utilisateurs/artistes)
     CREATE TABLE IF NOT EXISTS ideas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
