@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
@@ -9,14 +6,12 @@ import 'package:artist/widgets/my_appBar.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
-/// [SCAFFOLD UGC] Créer un short : l'utilisateur choisit/film une vidéo
-/// verticale, l'app demande au backend une URL d'upload Mux (Direct Upload)
-/// puis envoie le fichier. Le short apparaîtra dans le feed "Pour toi" après
-/// traitement par Mux. Tant que l'endpoint backend n'existe pas, on informe
-/// proprement ("bientôt disponible").
+/// Créer un short : n'importe quel utilisateur connecté peut soumettre une
+/// vidéo pour le feed "Pour toi" ou "Clips". Elle reste invisible tant que
+/// l'admin ne l'a pas approuvée (rubrique "Clips (Feeds)" du backend) —
+/// pas de modération automatique, donc validation manuelle avant publication.
 class CreateShortScreen extends StatefulWidget {
   const CreateShortScreen({super.key});
 
@@ -27,8 +22,16 @@ class CreateShortScreen extends StatefulWidget {
 class _CreateShortScreenState extends State<CreateShortScreen> {
   final _picker = ImagePicker();
   final _response = ApiResponse();
+  final _titleController = TextEditingController();
   XFile? _video;
+  String _feed = 'clips';
   bool _busy = false;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
+  }
 
   Future<void> _pick() async {
     final v = await _picker.pickVideo(source: ImageSource.gallery);
@@ -39,58 +42,79 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
     if (_video == null) return;
     setState(() => _busy = true);
     try {
-      // 1) Demander une URL d'upload Mux au backend.
       _response.typeSetter = 'post';
-      _response.urlSetter = APIs.createShortUploadAPI;
-      _response.bodySetter = {'user_id': '${userModel.value.user?.id}'};
-      final res = await _response.hitAPI();
+      _response.urlSetter = APIs.feedClipSubmitAPI;
+      _response.bodySetter = {
+        'feed': _feed,
+        if (_titleController.text.trim().isNotEmpty)
+          'title': _titleController.text.trim(),
+      };
+      final res = await _response.hitMultipartAPI(_video!.path, key: 'video');
 
       if (res.split(' ').first == 'error') {
-        _comingSoon();
-        return;
-      }
-      final data = jsonDecode(res);
-      final uploadUrl = data['upload_url'];
-      if (uploadUrl == null || '$uploadUrl'.isEmpty) {
-        _comingSoon();
-        return;
-      }
-
-      // 2) Envoyer la vidéo directement à Mux (PUT du fichier brut).
-      final bytes = await File(_video!.path).readAsBytes();
-      final put = await http.put(
-        Uri.parse(uploadUrl),
-        headers: const {'Content-Type': 'video/mp4'},
-        body: bytes,
-      );
-
-      if (put.statusCode >= 200 && put.statusCode < 300) {
-        mySuccessDialog(
-          title: 'Short publié !',
-          subtitle: 'Il apparaîtra dans le feed après traitement.',
-          ontap: () {
-            Get.back();
-            Get.back();
-          },
-        );
-      } else {
         myWarningDialog(
           title: 'common_error'.tr,
           subtitle: "Échec de l'envoi. Réessaie.",
         );
+        return;
       }
+
+      mySuccessDialog(
+        title: 'Envoyé !',
+        subtitle:
+            "Ton clip est en attente de validation avant d'apparaître dans le feed.",
+        ontap: () {
+          Get.back();
+          Get.back();
+        },
+      );
     } catch (_) {
-      _comingSoon();
+      myWarningDialog(
+        title: 'common_error'.tr,
+        subtitle: "Échec de l'envoi. Réessaie.",
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
-  void _comingSoon() {
-    myWarningDialog(
-      title: 'Bientôt disponible',
-      subtitle:
-          "L'upload de shorts arrive très bientôt (branchement Mux côté serveur).",
+  Widget _feedToggle() {
+    Widget option(String value, String label) {
+      final active = _feed == value;
+      return Expanded(
+        child: GestureDetector(
+          onTap: _busy ? null : () => setState(() => _feed = value),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: active ? goldPrimary : Colors.transparent,
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: active ? midnightPrimary : ivory,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: cardDeep,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: goldPrimary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [option('for_you', 'Pour toi'), option('clips', 'Clips')],
+      ),
     );
   }
 
@@ -105,10 +129,18 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             height(0.02),
+            _feedToggle(),
+            height(0.015),
+            Text(
+              "En lien avec la scène : danse, stand-up, chant, sport, gospel… "
+              "(le hors-sujet ne sera pas validé)",
+              style: TextStyle(color: textMuted, fontSize: 12, height: 1.4),
+            ),
+            height(0.02),
             GestureDetector(
               onTap: _busy ? null : _pick,
               child: Container(
-                height: Get.height * 0.5,
+                height: Get.height * 0.42,
                 decoration: BoxDecoration(
                   color: cardDeep,
                   borderRadius: BorderRadius.circular(18),
@@ -150,6 +182,22 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
                       ],
                     ],
                   ),
+                ),
+              ),
+            ),
+            height(0.02),
+            TextField(
+              controller: _titleController,
+              enabled: !_busy,
+              style: TextStyle(color: ivory),
+              decoration: InputDecoration(
+                hintText: 'Titre / légende (optionnel)',
+                hintStyle: TextStyle(color: textMuted),
+                filled: true,
+                fillColor: cardDeep,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),

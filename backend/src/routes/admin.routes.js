@@ -462,7 +462,16 @@ router.delete('/user-subscriptions/:id', requireAdmin, (req, res) => {
 // ─── Feed Clips ("Pour toi" / "Clips") : upload direct depuis l'admin, ou
 // Mux Playback ID si la vidéo est déjà sur Mux. Voir /api/feed-clips (public).
 router.get('/feed-clips', requireAdmin, (req, res) => {
-  return res.json({ status: 'success', data: db.prepare('SELECT * FROM feed_clips ORDER BY feed, position, id').all() });
+  const rows = db.prepare(`
+    SELECT fc.*, COALESCE(u.artist_name, u.full_name, u.email) AS submitted_by
+    FROM feed_clips fc LEFT JOIN users u ON u.id = fc.user_id
+    ORDER BY fc.active ASC, fc.feed, fc.position, fc.id DESC
+  `).all();
+  return res.json({ status: 'success', data: rows });
+});
+router.post('/feed-clips/:id/approve', requireAdmin, (req, res) => {
+  db.prepare('UPDATE feed_clips SET active = 1 WHERE id = ?').run(req.params.id);
+  return res.json({ status: 'success', message: 'Clip approuvé.' });
 });
 router.post('/feed-clips', requireAdmin, (req, res) => {
   const b = req.body || {};

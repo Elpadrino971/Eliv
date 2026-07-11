@@ -518,10 +518,11 @@ function pageFeedClips() {
       { label: '#', render: (r) => r.id },
       { label: 'Feed', render: (r) => r.feed === 'clips' ? 'Clips' : 'Pour toi' },
       { label: 'Titre', render: (r) => esc(r.title || '—') },
+      { label: 'Soumis par', render: (r) => r.user_id ? esc(r.submitted_by || ('user #' + r.user_id)) : '<span style="color:var(--muted)">Admin (officiel)</span>' },
       { label: 'Source', render: (r) => r.mux_playback_id ? '🎬 Mux' : (r.video_url ? '📁 Fichier' : '—') },
       { label: 'Ordre', render: (r) => r.position ?? 0 },
-      { label: 'Actif', render: (r) => badge(r.active ? 'active' : 'pending') },
-      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="feedclip:${r.id}">Modifier</button><button class="btn dup" data-dup="feedclip:${r.id}">Dupliquer</button><button class="btn del" data-del="/feed-clips/${r.id}">Supprimer</button>` },
+      { label: 'Statut', render: (r) => badge(r.active ? 'active' : 'pending') },
+      { label: 'Action', render: (r) => `${!r.active ? `<button class="btn status" data-approveclip="${r.id}">Approuver</button>` : ''}<button class="btn edit" data-edit="feedclip:${r.id}">Modifier</button><button class="btn dup" data-dup="feedclip:${r.id}">Dupliquer</button><button class="btn del" data-del="/feed-clips/${r.id}">Supprimer</button>` },
     ],
   });
 }
@@ -814,6 +815,8 @@ document.addEventListener('click', (e) => {
   if (dup) { const [type, id] = dup.dataset.dup.split(':'); DUP[type]?.(id); return; }
   const gs = e.target.closest('[data-grantsub]');
   if (gs) { openGrantSubModal(gs.dataset.grantsub); return; }
+  const ac = e.target.closest('[data-approveclip]');
+  if (ac) { api('POST', `/feed-clips/${ac.dataset.approveclip}/approve`).then(() => { toast('Clip approuvé'); route(); }).catch((err) => toast(err.message)); return; }
   const st = e.target.closest('[data-status]');
   if (st) {
     const r = currentRows.find((x) => x.id == st.dataset.status);

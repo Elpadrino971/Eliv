@@ -188,7 +188,8 @@ function init() {
 
     -- Clips des feeds "Pour toi" / "Clips" (contenu curaté, indépendant des
     -- concerts) : uploadés directement depuis l'admin, ou renseignés via un
-    -- Mux Playback ID déjà existant.
+    -- Mux Playback ID déjà existant. Aussi utilisée pour les soumissions
+    -- utilisateur (user_id renseigné, active=0 tant que non validé par l'admin).
     CREATE TABLE IF NOT EXISTS feed_clips (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       feed TEXT DEFAULT 'for_you',
@@ -197,6 +198,7 @@ function init() {
       mux_playback_id TEXT,
       position INTEGER DEFAULT 0,
       active INTEGER DEFAULT 1,
+      user_id INTEGER,
       created_at TEXT DEFAULT (datetime('now'))
     );
 
@@ -277,6 +279,7 @@ function init() {
     "ALTER TABLE subscriptions ADD COLUMN badge TEXT",
     "ALTER TABLE subscriptions ADD COLUMN perks TEXT",
     "ALTER TABLE subscriptions ADD COLUMN price_annual TEXT",
+    "ALTER TABLE feed_clips ADD COLUMN user_id INTEGER",
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }

@@ -5,6 +5,7 @@ const router = express.Router();
 const { db } = require('../db');
 const { ok, list, fail } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
+const { saveUpload } = require('../uploads');
 
 // GET /api/genres -> { status, data: [...] }
 router.get('/genres', (req, res) => {
@@ -133,6 +134,23 @@ router.get('/feed-clips', (req, res) => {
     mux_playback_id: r.mux_playback_id,
   }));
   return res.json({ status: 'success', count: list.length, list });
+});
+
+// POST /api/feed-clips/submit — n'importe quel user connecté peut soumettre
+// un short pour "Pour toi" ou "Clips" ; reste invisible (active=0) tant que
+// l'admin ne l'a pas approuvé depuis "Clips (Feeds)" (contenu hors-scène
+// filtré manuellement, pas de modération automatique).
+router.post('/feed-clips/submit', requireAuth, (req, res) => {
+  const b = req.body || {};
+  const feed = b.feed === 'for_you' ? 'for_you' : 'clips';
+  const video = saveUpload(req, ['video', 'file'], 'videos', 'events/videos');
+  if (!video) {
+    return res.status(422).json({ status: 'error', message: 'Fichier vidéo requis.' });
+  }
+  db.prepare(
+    'INSERT INTO feed_clips (feed, title, video_url, active, user_id) VALUES (?, ?, ?, 0, ?)'
+  ).run(feed, b.title || null, video, req.user.id);
+  return res.json({ status: 'success', message: 'Envoyé ! Ton clip sera visible après validation.' });
 });
 
 // ─── Packages (points / gifts) ───

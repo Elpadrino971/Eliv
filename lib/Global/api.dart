@@ -66,6 +66,7 @@ class APIs {
   // "Clips (Feeds)"), plus besoin d'éditer des listes en dur ici.
   // ───────────────────────────────────────────────────────────────────────
   static const String feedClipsAPI = '$baseAPI/feed-clips';
+  static const String feedClipSubmitAPI = '$baseAPI/feed-clips/submit';
 
   //Auth
   static const String loginAPI = '$baseAPI/login';
