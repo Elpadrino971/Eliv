@@ -12,6 +12,12 @@ class APIs {
   static const String baseAPI = '$mainIP/api';
 
   // ───────────────────────────────────────────────────────────────────────
+  // ZEGOCLOUD — token de connexion généré côté serveur (remplace l'ancien
+  // appSign en dur dans l'app, faille de sécurité). Voir ZegoController.
+  // ───────────────────────────────────────────────────────────────────────
+  static const String zegoTokenAPI = '$baseAPI/live/zego-token';
+
+  // ───────────────────────────────────────────────────────────────────────
   // MUX — REPLAY (VOD). Le PLAYBACK ID est PUBLIC (pas un secret).
   // CAROUSEL / concert vedette du 1er écran Home (16:9).
   // En prod, ce champ viendra du backend par event (signed playback id).

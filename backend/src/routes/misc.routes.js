@@ -8,10 +8,27 @@ const { requireAuth, optionalAuth } = require('../auth');
 const { saveUpload, PUBLIC_BASE_URL } = require('../uploads');
 const mux = require('../services/mux');
 const stripeService = require('../services/stripe');
+const zegoService = require('../services/zego');
 
 // GET /api/genres -> { status, data: [...] }
 router.get('/genres', (req, res) => {
   return ok(res, db.prepare('SELECT * FROM genres').all());
+});
+
+// POST /api/live/zego-token — token ZegoCloud généré côté serveur (jamais
+// d'AppSign/ServerSecret dans l'app). Valable 4h (durée d'un concert), à
+// refaire si le live dépasse cette fenêtre.
+router.post('/live/zego-token', requireAuth, (req, res) => {
+  if (!zegoService.isConfigured()) {
+    return res.status(503).json({ status: 'error', message: 'Live indisponible pour le moment.' });
+  }
+  try {
+    const { token, appId, expiresAt } = zegoService.generateToken04(req.user.id);
+    return res.json({ status: 'success', data: { token, app_id: appId, expires_at: expiresAt } });
+  } catch (e) {
+    console.error('[zego token]', e.message);
+    return res.status(502).json({ status: 'error', message: `Erreur Zego : ${e.message}` });
+  }
 });
 
 // POST /api/ideas — Boîte à idées (soumission depuis l'app)

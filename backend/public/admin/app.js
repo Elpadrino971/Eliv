@@ -204,7 +204,7 @@ function tableShellInner(columns) {
 }
 
 // ─── Modale (supporte text / textarea / checkbox / select / date / number) ───
-function modal({ title, fields, onSave, wide }) {
+function modal({ title, fields, onSave, wide, afterRender }) {
   const bg = document.createElement('div');
   bg.className = 'modal-bg';
   const fieldHtml = (f) => {
@@ -227,6 +227,7 @@ function modal({ title, fields, onSave, wide }) {
   document.body.appendChild(bg);
   bg.querySelector('.cancel').onclick = () => bg.remove();
   bg.onclick = (e) => { if (e.target === bg) bg.remove(); };
+  afterRender?.(bg);
   bg.querySelector('.save').onclick = async () => {
     const els = [...bg.querySelectorAll('[data-k]')];
     const hasFile = els.some((el) => el.type === 'file' && el.files && el.files.length);
@@ -531,12 +532,45 @@ async function openEventForm(row, { duplicate = false } = {}) {
       { name: 'description', label: 'Description', type: 'textarea', value: row?.description },
       { name: 'is_banner', label: 'Mettre en bannière (carrousel accueil) ?', type: 'checkbox', value: !!row?.is_banner, hint: 'Afficher dans le carrousel' },
     ],
+    afterRender: (bg) => attachAiDescriptionButton(bg, 'event'),
     onSave: async (d) => {
       if (row && !duplicate) { await api('PUT', '/events/' + row.id, d); toast('Concert mis à jour'); }
       else { await api('POST', '/events', d); toast(duplicate ? 'Concert dupliqué' : 'Concert créé'); }
       route();
     },
   });
+}
+
+// Ajoute un bouton "✨ Générer avec IA" juste après le champ description du
+// modal en cours (event ou artist) : lit nom/genre/artiste déjà saisis dans
+// le formulaire, appelle Claude côté backend, remplit le textarea.
+function attachAiDescriptionButton(bg, kind) {
+  const textarea = bg.querySelector('[data-k="description"]') || bg.querySelector('[data-k="artist_bio"]');
+  if (!textarea) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn dup';
+  btn.style.marginTop = '8px';
+  btn.textContent = '✨ Générer avec IA';
+  btn.onclick = async () => {
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Génération…';
+    try {
+      const nameEl = bg.querySelector('[data-k="name"]') || bg.querySelector('[data-k="artist_name"]');
+      const artistEl = bg.querySelector('[data-k="artist_id"]');
+      const genreEl = bg.querySelector('[data-k="genre_id"]');
+      const { data } = await api('POST', '/ai/generate-description', {
+        kind,
+        name: nameEl?.value,
+        artist_name: kind === 'artist' ? nameEl?.value : artistEl?.selectedOptions?.[0]?.textContent,
+        genre: genreEl?.selectedOptions?.[0]?.textContent,
+      });
+      textarea.value = data.text;
+    } catch (e) { toast(e.message); }
+    finally { btn.disabled = false; btn.textContent = label; }
+  };
+  textarea.insertAdjacentElement('afterend', btn);
 }
 function pageEvents() {
   EDIT.event = (id) => { const r = currentRows.find((x) => x.id == id); if (r) openEventForm(r); };

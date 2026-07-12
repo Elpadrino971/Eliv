@@ -1,5 +1,9 @@
+/// AppID uniquement (public, pas un secret). Le token de connexion (qui
+/// remplace l'ancien `appSign`) est désormais généré côté serveur — voir
+/// `ZegoController.fetchZegoToken()` + POST /api/live/zego-token. L'AppSign
+/// ne doit JAMAIS revenir ici : c'est le secret maître du compte Zego, et le
+/// laisser dans l'app compilée permet à quiconque la décompile de générer
+/// des tokens illimités sur ton compte (facturation frauduleuse).
 class ZegoCloudKeys {
   static const int appId = 1112572789;
-  static const String appSign =
-      '91bb6aee4ce44b33f7c390586062800656e0bc45df9412190223b489bca7a7c8';
 }

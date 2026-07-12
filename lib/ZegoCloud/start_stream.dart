@@ -55,6 +55,13 @@ class _StartStreamState extends State<StartStream> {
   }
 
   Future<void> _initData() async {
+    final zegoTokenOk = await zegoController.fetchZegoToken();
+    if (!zegoTokenOk && mounted) {
+      myWarningDialog(
+        title: 'common_error'.tr,
+        subtitle: "Connexion au live impossible. Réessaie.",
+      );
+    }
     await eventController.getAbusiveWords();
     currentEvent = widget.event;
     final activities = await eventController.getEventLogs(
@@ -207,12 +214,19 @@ class _StartStreamState extends State<StartStream> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
+      body: Obx(() {
+        final zegoToken = zegoController.zegoToken.value;
+        if (zegoToken == null) {
+          return const Center(
+            child: CircularProgressIndicator(color: goldPrimary),
+          );
+        }
+        return Stack(
         children: [
           // ── Zego Live Streaming Background ──────────────────────────
           ZegoUIKitPrebuiltLiveStreaming(
             appID: ZegoCloudKeys.appId,
-            appSign: ZegoCloudKeys.appSign,
+            token: zegoToken,
             userID: zegoController.userId,
             userName: zegoController.userName,
             liveID: currentEvent.id.toString(),
@@ -251,7 +265,8 @@ class _StartStreamState extends State<StartStream> {
           // ── Custom Overlay UI ────────────────────────────────────────
           if (_isLive) _buildOverlayUI(),
         ],
-      ),
+        );
+      }),
     );
   }
 

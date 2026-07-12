@@ -7,6 +7,7 @@ const { db } = require('../db');
 const { hash, compare, SECRET } = require('../auth');
 const { saveUpload } = require('../uploads');
 const mux = require('../services/mux');
+const anthropic = require('../services/anthropic');
 const truthy = (v) => v === true || v === 1 || v === '1' || v === 'true' || v === 'on';
 
 /** Auth admin : exige un token dont le user a role='admin'. */
@@ -26,6 +27,36 @@ function requireAdmin(req, res, next) {
     return res.status(401).json({ status: 'error', message: 'Invalid token.' });
   }
 }
+
+// ─── IA (Claude) : rédaction assistée des descriptions concert / bio artiste ───
+router.post('/ai/generate-description', requireAdmin, async (req, res) => {
+  if (!anthropic.isConfigured()) {
+    return res.status(503).json({ status: 'error', message: 'IA non configurée côté serveur (ANTHROPIC_API_KEY manquant).' });
+  }
+  const b = req.body || {};
+  const kind = b.kind === 'artist' ? 'artist' : 'event';
+  const hint = (b.hint || '').trim() || '(aucune info supplémentaire)';
+  const prompt = kind === 'artist'
+    ? `Rédige une bio d'artiste courte et percutante (3 à 4 phrases, en français, ton chaleureux et professionnel) pour la plateforme de concerts en streaming VybzzZ.
+Nom d'artiste : ${b.artist_name || b.name || ''}
+Genre musical : ${b.genre || ''}
+Infos données par l'admin : ${hint}
+Réponds uniquement avec le texte de la bio, sans titre ni guillemets.`
+    : `Rédige une description de concert courte et vendeuse (3 à 4 phrases, en français, ton enthousiaste) pour la plateforme de concerts en streaming VybzzZ.
+Nom du concert : ${b.name || ''}
+Artiste : ${b.artist_name || ''}
+Genre musical : ${b.genre || ''}
+Infos données par l'admin : ${hint}
+Réponds uniquement avec le texte de la description, sans titre ni guillemets.`;
+
+  try {
+    const text = await anthropic.generateText(prompt, { maxTokens: 250 });
+    return res.json({ status: 'success', data: { text } });
+  } catch (e) {
+    console.error('[ai generate-description]', e.message);
+    return res.status(502).json({ status: 'error', message: `Erreur IA : ${e.message}` });
+  }
+});
 
 // POST /api/admin/login
 router.post('/login', (req, res) => {

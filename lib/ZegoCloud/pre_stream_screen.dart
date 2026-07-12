@@ -38,6 +38,13 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
   String _formattedWaitTime = "00:00:00";
 
   Future myInitMethod() async {
+    final zegoTokenOk = await zegoController.fetchZegoToken();
+    if (!zegoTokenOk && mounted) {
+      myWarningDialog(
+        title: 'common_error'.tr,
+        subtitle: "Connexion au live impossible. Réessaie.",
+      );
+    }
     await eventController.getAbusiveWords();
     currentEvent = widget.event;
     final data = await eventController.getEventLogs(
@@ -183,12 +190,19 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
+      body: Obx(() {
+        final zegoToken = zegoController.zegoToken.value;
+        if (zegoToken == null) {
+          return const Center(
+            child: CircularProgressIndicator(color: goldPrimary),
+          );
+        }
+        return Stack(
         children: [
           // ── Zego Live Streaming Background ──────────────────────────
           ZegoUIKitPrebuiltLiveStreaming(
             appID: ZegoCloudKeys.appId,
-            appSign: ZegoCloudKeys.appSign,
+            token: zegoToken,
             userID: zegoController.userId,
             userName: zegoController.userName,
             liveID: currentEvent.id.toString(),
@@ -211,7 +225,8 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
           // ── Custom Overlay UI ────────────────────────────────────────
           _buildOverlayUI(),
         ],
-      ),
+        );
+      }),
     );
   }
 
