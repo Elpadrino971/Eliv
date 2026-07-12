@@ -120,6 +120,31 @@ class SubscriptionController extends GetxController {
     }
   }
 
+  /// Aligne l'identité RevenueCat sur notre users.id (au lieu de l'ID anonyme
+  /// généré par défaut) : c'est ce qui permet au webhook RevenueCat
+  /// (routes/revenuecat.routes.js) de savoir QUEL utilisateur vient d'acheter
+  /// et d'écrire dans user_subscriptions. À appeler après chaque connexion
+  /// réussie et après restauration de session (voir spalash_screen.dart,
+  /// auth_controller.dart). Non bloquant : une erreur ici ne doit jamais
+  /// empêcher l'utilisateur d'utiliser l'app.
+  static Future<void> syncIdentity(int userId) async {
+    try {
+      await Purchases.logIn(userId.toString());
+    } catch (e) {
+      myPrint('⚠️ RevenueCat logIn échoué (app continue): $e');
+    }
+  }
+
+  /// À appeler à la déconnexion pour ne pas laisser l'identité RevenueCat
+  /// d'un utilisateur "collée" au prochain qui se connecte sur l'appareil.
+  static Future<void> clearIdentity() async {
+    try {
+      await Purchases.logOut();
+    } catch (e) {
+      myPrint('⚠️ RevenueCat logOut échoué (app continue): $e');
+    }
+  }
+
   static Future init() async {
     await Purchases.setLogLevel(LogLevel.debug);
 

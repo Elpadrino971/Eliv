@@ -12,6 +12,7 @@ const miscRoutes = require('./routes/misc.routes');
 const adminRoutes = require('./routes/admin.routes');
 const muxWebhookRoutes = require('./routes/mux.routes');
 const stripeWebhookRoutes = require('./routes/stripe.routes');
+const revenuecatWebhookRoutes = require('./routes/revenuecat.routes');
 
 init();
 
@@ -63,6 +64,10 @@ app.use('/api/admin', adminRoutes);
 app.use('/api', authRoutes);
 app.use('/api', eventRoutes);
 app.use('/api', miscRoutes);
+
+// Webhook RevenueCat : pas de signature HMAC (juste un header Authorization
+// fixe), donc pas besoin de corps brut -> monté normalement après express.json().
+app.use('/api/revenuecat/webhook', revenuecatWebhookRoutes);
 
 // 404 JSON propre
 app.use((req, res) => res.status(404).json({ status: 'error', message: `Not found: ${req.method} ${req.path}` }));

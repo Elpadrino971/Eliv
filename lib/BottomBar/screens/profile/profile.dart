@@ -11,6 +11,7 @@ import 'package:artist/BottomBar/screens/profile/idea_box_screen.dart';
 import 'package:artist/BottomBar/screens/profile/manage_subscription_screen.dart';
 import 'package:artist/BottomBar/screens/profile/user_wallet.dart';
 import 'package:artist/Controllers/controller.dart';
+import 'package:artist/Controllers/subscription_controller.dart';
 // import 'package:artist/BottomBar/screens/profile/my_tickets.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
@@ -421,6 +422,7 @@ class _ProfileState extends State<Profile> {
                                 'social') {
                               await GoogleSignIn.instance.signOut();
                             }
+                            await SubscriptionController.clearIdentity();
                             await box.remove('user');
                             await Future.delayed(Duration(seconds: 1));
                             Get.offAll(() => LoginScreen());

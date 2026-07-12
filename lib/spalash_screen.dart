@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:artist/Auth/login_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
+import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
@@ -66,6 +68,8 @@ class _SpalashScreenState extends State<SpalashScreen>
     final hasUser = box.read('user') != null;
     if (hasUser) {
       userModel.value = UserModel.fromJson(box.read('user'));
+      final id = userModel.value.user?.id;
+      if (id != null) unawaited(SubscriptionController.syncIdentity(id));
     }
     Get.offAll(() => hasUser ? MyBottomBar() : LoginScreen());
   }

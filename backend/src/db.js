@@ -299,6 +299,9 @@ function init() {
     "ALTER TABLE user_subscriptions ADD COLUMN stripe_customer_id TEXT",
     "ALTER TABLE user_subscriptions ADD COLUMN stripe_subscription_id TEXT",
     "ALTER TABLE user_subscriptions ADD COLUMN stripe_checkout_session_id TEXT",
+    // RevenueCat (IAP App Store/Play Store) : product_id colle a la main
+    // dans l'admin, meme logique que stripe_price_id.
+    "ALTER TABLE subscriptions ADD COLUMN revenuecat_product_id TEXT",
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }

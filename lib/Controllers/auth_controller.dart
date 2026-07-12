@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:artist/Auth/login_screen.dart';
 import 'package:artist/Auth/otp_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
+import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Models/banks_model.dart';
 import 'package:artist/Models/follow_model.dart';
@@ -40,6 +42,8 @@ class AuthController extends GetxController {
           Get.offAll(() => OtpScreen(email: email));
         } else {
           box.write('user', userModel.value.toJson());
+          final id = userModel.value.user?.id;
+          if (id != null) unawaited(SubscriptionController.syncIdentity(id));
           Get.offAll(() => MyBottomBar());
         }
         Get.back();
@@ -67,6 +71,8 @@ class AuthController extends GetxController {
       if (value.split(' ').first != 'error') {
         userModel.value = userModelFromJson(value);
         box.write('user', userModel.value.toJson());
+        final id = userModel.value.user?.id;
+        if (id != null) unawaited(SubscriptionController.syncIdentity(id));
         update();
         Get.back();
         Get.offAll(() => MyBottomBar());
@@ -123,6 +129,10 @@ class AuthController extends GetxController {
               Get.to(() => CreatePasswrod(fromForget: true, email: email));
             } else {
               box.write('user', userModel.value.toJson());
+              final id = userModel.value.user?.id;
+              if (id != null) {
+                unawaited(SubscriptionController.syncIdentity(id));
+              }
               Get.to(() => CompleteProfile());
             }
           },

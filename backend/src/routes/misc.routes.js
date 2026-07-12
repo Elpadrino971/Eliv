@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
-const { ok, list, fail } = require('../helpers');
+const { ok, list, fail, serializeUser } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
 const { saveUpload, PUBLIC_BASE_URL } = require('../uploads');
 const mux = require('../services/mux');
@@ -117,12 +117,29 @@ router.get('/subscription/get', (req, res) => {
   });
   return res.json({ status: 'success', count: list.length, list });
 });
-// Ancien endpoint IAP (RevenueCat côté app valide l'achat en natif) : ne
-// touche plus jamais la base tout seul — un abonnement ne devient actif que
-// via un vrai paiement confirmé (webhook Stripe ci-dessous, ou reçu IAP côté
-// RevenueCat webhook, à brancher séparément).
-router.post('/subscription/buy', optionalAuth, (req, res) => {
-  return res.json({ status: 'success', message: 'Subscription recorded (demo).' });
+// Appelé par l'app juste après un achat IAP réussi (déjà vérifié par
+// Apple/Google via le SDK RevenueCat côté client) : sert au retour immédiat
+// dans l'UI. Le webhook RevenueCat (routes/revenuecat.routes.js) reste la
+// source de vérité serveur-à-serveur — celui-ci ne fait que réconcilier tout
+// de suite, sans attendre la latence du webhook.
+router.post('/subscription/buy', requireAuth, (req, res) => {
+  const subscriptionsId = Number(req.body?.subscriptions_id);
+  const sub = db.prepare('SELECT id FROM subscriptions WHERE id = ? AND active = 1').get(subscriptionsId);
+  if (!sub) return fail(res, 'Abonnement introuvable.', 404);
+
+  const existing = db.prepare(
+    'SELECT id FROM user_subscriptions WHERE user_id = ? AND subscriptions_id = ?'
+  ).get(req.user.id, subscriptionsId);
+  if (existing) {
+    db.prepare("UPDATE user_subscriptions SET status = 'active' WHERE id = ?").run(existing.id);
+  } else {
+    db.prepare(
+      "INSERT INTO user_subscriptions (user_id, subscriptions_id, status) VALUES (?, ?, 'active')"
+    ).run(req.user.id, subscriptionsId);
+  }
+
+  const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  return res.json({ status: 'success', data: serializeUser(fresh) });
 });
 
 // POST /api/subscription/checkout — paiement carte (Stripe Checkout), chemin
