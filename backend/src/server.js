@@ -3,6 +3,7 @@
 const app = require('./app');
 const { db } = require('./db');
 const { startMuxCleanupJob } = require('./jobs/muxCleanup');
+const { startFirebaseCleanupJob } = require('./jobs/firebaseCleanup');
 
 const PORT = process.env.PORT || 8002;
 
@@ -14,6 +15,7 @@ if (userCount === 0) {
 }
 
 startMuxCleanupJob();
+startFirebaseCleanupJob();
 
 app.listen(PORT, () => {
   console.log(`\n  VYBZZZ backend en écoute sur http://localhost:${PORT}`);

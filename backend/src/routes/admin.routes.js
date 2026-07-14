@@ -5,10 +5,11 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { db } = require('../db');
 const { hash, compare, SECRET } = require('../auth');
-const { saveUpload } = require('../uploads');
+const { saveUpload, saveClipVideo } = require('../uploads');
 const mux = require('../services/mux');
 const anthropic = require('../services/anthropic');
 const truthy = (v) => v === true || v === 1 || v === '1' || v === 'true' || v === 'on';
+const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
 
 /** Auth admin : exige un token dont le user a role='admin'. */
 function requireAdmin(req, res, next) {
@@ -594,28 +595,36 @@ router.post('/feed-clips/:id/approve', requireAdmin, (req, res) => {
   db.prepare('UPDATE feed_clips SET active = 1 WHERE id = ?').run(req.params.id);
   return res.json({ status: 'success', message: 'Clip approuvé.' });
 });
-router.post('/feed-clips', requireAdmin, (req, res) => {
+router.post('/feed-clips', requireAdmin, async (req, res) => {
   const b = req.body || {};
-  const video = saveUpload(req, ['video', 'file'], 'videos', 'events/videos') || b.video_url || null;
+  const uploaded = await saveClipVideo(req, ['video', 'file']);
+  const video = uploaded?.url || b.video_url || null;
+  const firebasePath = uploaded?.firebasePath || null;
+  const expiresAt = firebasePath ? `datetime('now', '+' || ${CLIP_RETENTION_DAYS} || ' days')` : 'NULL';
   // Pas de vidéo à la création ? OK : elle peut être attachée ensuite via le
   // bouton "🎬 Upload" (Mux Direct Upload) depuis la liste.
   db.prepare(
-    'INSERT INTO feed_clips (feed, title, video_url, mux_playback_id, position, active) VALUES (?, ?, ?, ?, ?, ?)'
+    `INSERT INTO feed_clips (feed, title, video_url, mux_playback_id, position, active, firebase_path, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ${expiresAt})`
   ).run(
     b.feed === 'clips' ? 'clips' : 'for_you', b.title || null, video, b.mux_playback_id || null,
-    Number(b.position) || 0, b.active === undefined ? 1 : (truthy(b.active) ? 1 : 0)
+    Number(b.position) || 0, b.active === undefined ? 1 : (truthy(b.active) ? 1 : 0), firebasePath
   );
   return res.json({ status: 'success', message: 'Clip ajouté.' });
 });
-router.put('/feed-clips/:id', requireAdmin, (req, res) => {
+router.put('/feed-clips/:id', requireAdmin, async (req, res) => {
   const b = req.body || {};
-  const video = saveUpload(req, ['video', 'file'], 'videos', 'events/videos') || b.video_url || null;
+  const uploaded = await saveClipVideo(req, ['video', 'file']);
+  const video = uploaded?.url || b.video_url || null;
   db.prepare(
     `UPDATE feed_clips SET feed = ?, title = ?, video_url = COALESCE(?, video_url), mux_playback_id = ?,
-        position = ?, active = ? WHERE id = ?`
+        position = ?, active = ?, firebase_path = COALESCE(?, firebase_path),
+        expires_at = CASE WHEN ? IS NOT NULL THEN datetime('now', '+' || ? || ' days') ELSE expires_at END
+     WHERE id = ?`
   ).run(
     b.feed === 'clips' ? 'clips' : 'for_you', b.title || null, video, b.mux_playback_id || null,
-    Number(b.position) || 0, truthy(b.active) ? 1 : 0, req.params.id
+    Number(b.position) || 0, truthy(b.active) ? 1 : 0, uploaded?.firebasePath || null,
+    uploaded?.firebasePath || null, CLIP_RETENTION_DAYS, req.params.id
   );
   return res.json({ status: 'success', message: 'Clip modifié.' });
 });

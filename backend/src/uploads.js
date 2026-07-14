@@ -8,6 +8,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const firebase = require('./services/firebase');
 
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://api.vybzzz.online').replace(/\/+$/, '');
 
@@ -34,4 +35,34 @@ function saveUpload(req, fieldNames, subfolder, urlPath) {
   return `${PUBLIC_BASE_URL}/${urlPath}/${filename}`;
 }
 
-module.exports = { saveUpload, PUBLIC_BASE_URL };
+/**
+ * Vidéo de clip (feed "Pour toi" / "Clips") : upload vers Firebase Storage
+ * si configuré (léger, pas de transcodage — adapté aux clips courts), sinon
+ * repli sur le disque local (comportement historique, aucune régression si
+ * Firebase n'est pas encore branché).
+ * @returns {Promise<{url: string, firebasePath: string|null}|null>}
+ */
+async function saveClipVideo(req, fieldNames) {
+  const files = req.files || [];
+  const file = files.find((f) => fieldNames.includes(f.fieldname));
+  if (!file) return null;
+
+  if (firebase.isConfigured()) {
+    let ext = path.extname(file.originalname || '').toLowerCase();
+    if (!ext || ext.length > 6) ext = '.mp4';
+    const destPath = `clips/${Date.now()}_${Math.floor(Math.random() * 1e9)}${ext}`;
+    try {
+      const url = await firebase.uploadLocalFile(file.path, destPath, file.mimetype || 'video/mp4');
+      fs.unlinkSync(file.path);
+      return { url, firebasePath: destPath };
+    } catch (e) {
+      console.error('[firebase upload] échec, repli sur le disque local :', e.message);
+      // tombe dans le repli ci-dessous (le fichier temp existe encore)
+    }
+  }
+
+  const url = saveUpload(req, fieldNames, 'videos', 'events/videos');
+  return url ? { url, firebasePath: null } : null;
+}
+
+module.exports = { saveUpload, saveClipVideo, PUBLIC_BASE_URL };

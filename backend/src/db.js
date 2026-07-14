@@ -302,6 +302,9 @@ function init() {
     // RevenueCat (IAP App Store/Play Store) : product_id colle a la main
     // dans l'admin, meme logique que stripe_price_id.
     "ALTER TABLE subscriptions ADD COLUMN revenuecat_product_id TEXT",
+    // Firebase Storage (clips feed, alternative légère à Mux pour les
+    // vidéos courtes) : chemin dans le bucket, nécessaire pour la purge.
+    "ALTER TABLE feed_clips ADD COLUMN firebase_path TEXT",
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }

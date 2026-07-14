@@ -5,10 +5,11 @@ const router = express.Router();
 const { db } = require('../db');
 const { ok, list, fail, serializeUser } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
-const { saveUpload, PUBLIC_BASE_URL } = require('../uploads');
+const { saveUpload, saveClipVideo, PUBLIC_BASE_URL } = require('../uploads');
 const mux = require('../services/mux');
 const stripeService = require('../services/stripe');
 const zegoService = require('../services/zego');
+const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
 
 // GET /api/genres -> { status, data: [...] }
 router.get('/genres', (req, res) => {
@@ -212,16 +213,18 @@ router.get('/feed-clips', (req, res) => {
 // un short pour "Pour toi" ou "Clips" ; reste invisible (active=0) tant que
 // l'admin ne l'a pas approuvé depuis "Clips (Feeds)" (contenu hors-scène
 // filtré manuellement, pas de modération automatique).
-router.post('/feed-clips/submit', requireAuth, (req, res) => {
+router.post('/feed-clips/submit', requireAuth, async (req, res) => {
   const b = req.body || {};
   const feed = b.feed === 'for_you' ? 'for_you' : 'clips';
-  const video = saveUpload(req, ['video', 'file'], 'videos', 'events/videos');
-  if (!video) {
+  const uploaded = await saveClipVideo(req, ['video', 'file']);
+  if (!uploaded) {
     return res.status(422).json({ status: 'error', message: 'Fichier vidéo requis.' });
   }
+  const expiresAt = uploaded.firebasePath ? `datetime('now', '+' || ${CLIP_RETENTION_DAYS} || ' days')` : 'NULL';
   db.prepare(
-    'INSERT INTO feed_clips (feed, title, video_url, active, user_id) VALUES (?, ?, ?, 0, ?)'
-  ).run(feed, b.title || null, video, req.user.id);
+    `INSERT INTO feed_clips (feed, title, video_url, active, user_id, firebase_path, expires_at)
+     VALUES (?, ?, ?, 0, ?, ?, ${expiresAt})`
+  ).run(feed, b.title || null, uploaded.url, req.user.id, uploaded.firebasePath);
   return res.json({ status: 'success', message: 'Envoyé ! Ton clip sera visible après validation.' });
 });
 
