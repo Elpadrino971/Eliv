@@ -204,7 +204,9 @@ class _ForYouFeedState extends State<_ForYouFeed> {
   Widget build(BuildContext context) {
     return Obx(() {
       final events = eventController.allEvents.value.data ?? [];
-      return events.isEmpty
+      final clipUrls = eventController.forYouClipUrls;
+      final hasContent = clipUrls.isNotEmpty || events.isNotEmpty;
+      return !hasContent
           ? Center(
               child: Text(
                 'live_no_reel'.tr,
@@ -214,11 +216,14 @@ class _ForYouFeedState extends State<_ForYouFeed> {
           : PageView.builder(
               scrollDirection: Axis.vertical,
               onPageChanged: eventController.onPageChanged,
-              itemCount: eventController.forYouClipUrls.isNotEmpty
-                  ? eventController.forYouClipUrls.length
-                  : events.length,
+              itemCount: clipUrls.isNotEmpty ? clipUrls.length : events.length,
               itemBuilder: (context, index) {
-                final event = events[index % events.length];
+                // Les clips admin (feed_clips) ne sont pas rattachés à un
+                // concert précis : event peut être null (clips purs), le
+                // bandeau artiste/concert est alors simplement masqué plus bas.
+                final event = events.isNotEmpty
+                    ? events[index % events.length]
+                    : null;
                 return GetBuilder<EventController>(
                   builder: (controller) {
                     final videoController = controller.currentController.value;
@@ -385,7 +390,7 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                                   GestureDetector(
                                     onTap: () => myShare(
                                       message:
-                                          '${event.name?.capitalize ?? 'VybzzZ'} — ${APIs.mainIP}',
+                                          '${event?.name?.capitalize ?? 'VybzzZ'} — ${APIs.mainIP}',
                                     ),
                                     child: Container(
                                       width: 40,
@@ -438,10 +443,14 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // Clip admin pur (feed_clips sans concert
+                                // associé) : pas de bandeau artiste à afficher.
+                                if (event != null) ...[
                                 Row(
                                   children: [
                                     GestureDetector(
                                       onTap: () {
+                                        if (event.artist == null) return;
                                         Get.to(
                                           () => ArtistDetailScreen(
                                             artist: event.artist!,
@@ -490,6 +499,7 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                                     },
                                   ),
                                 ),
+                                ],
                                 height(0.07),
                               ],
                             ),
