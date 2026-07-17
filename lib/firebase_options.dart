@@ -50,19 +50,19 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyATVT1G1M404hdHC3uVdxl1Rlfyh4llRi0',
-    appId: '1:124121302377:android:da423ead85cad449b7a9f8',
-    messagingSenderId: '124121302377',
-    projectId: 'vybzzz',
-    storageBucket: 'vybzzz.firebasestorage.app',
+    apiKey: 'AIzaSyAgsXfrCf8-ZmbVTGUe_MwliTgAhNI76WE',
+    appId: '1:284585255358:android:95556f3692c34fb07699ef',
+    messagingSenderId: '284585255358',
+    projectId: 'vybzzz-app',
+    storageBucket: 'vybzzz-app.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDdMtH0u8_AWm20XtiKrAkXEgaHtsTVxIw',
-    appId: '1:124121302377:ios:c28bc1b06705d78ab7a9f8',
-    messagingSenderId: '124121302377',
-    projectId: 'vybzzz',
-    storageBucket: 'vybzzz.firebasestorage.app',
+    apiKey: 'AIzaSyCfdysq-Kj6vlqF2_pgJsMVN37_rusBlj4',
+    appId: '1:284585255358:ios:97d5d1762438fbe17699ef',
+    messagingSenderId: '284585255358',
+    projectId: 'vybzzz-app',
+    storageBucket: 'vybzzz-app.firebasestorage.app',
     iosBundleId: 'com.app.vybzz',
   );
 }

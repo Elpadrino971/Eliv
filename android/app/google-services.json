@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "124121302377",
-    "project_id": "vybzzz",
-    "storage_bucket": "vybzzz.firebasestorage.app"
+    "project_number": "284585255358",
+    "project_id": "vybzzz-app",
+    "storage_bucket": "vybzzz-app.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:124121302377:android:da423ead85cad449b7a9f8",
+        "mobilesdk_app_id": "1:284585255358:android:95556f3692c34fb07699ef",
         "android_client_info": {
           "package_name": "com.app.vybzz"
         }
@@ -15,7 +15,26 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyATVT1G1M404hdHC3uVdxl1Rlfyh4llRi0"
+          "current_key": "AIzaSyAgsXfrCf8-ZmbVTGUe_MwliTgAhNI76WE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:284585255358:android:a0e76b23aead2fea7699ef",
+        "android_client_info": {
+          "package_name": "com.vybzzz.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgsXfrCf8-ZmbVTGUe_MwliTgAhNI76WE"
         }
       ],
       "services": {

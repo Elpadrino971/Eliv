@@ -15,7 +15,7 @@ Future<void> _ensureGoogleSignInInitialized() async {
       // for specific Google API access or advanced configurations.
       await GoogleSignIn.instance.initialize(
         serverClientId:
-            '124121302377-0tvst2pvbl7rs0t3cfvao4pnuvasasac.apps.googleusercontent.com',
+            '284585255358-raknf147buj3vn5ch4ia67u8742fhgt2.apps.googleusercontent.com',
       );
       // await GoogleSignIn.instance.initialize();
       _isGoogleSignInInitialized = true;
