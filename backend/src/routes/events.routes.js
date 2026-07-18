@@ -5,6 +5,7 @@ const router = express.Router();
 const { db } = require('../db');
 const { serializeEvent, serializeUser, ok, fail, genReceipt } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
+const { saveUpload } = require('../uploads');
 
 // GET /api/events?status=&day=&genre_ids=
 // day: today | future ; status: published | live | completed | …
@@ -54,6 +55,32 @@ router.get('/artist/:id/events', optionalAuth, (req, res) => {
     .prepare('SELECT * FROM events WHERE artist_id = ? ORDER BY datetime(start_date_time) DESC')
     .all(req.params.id);
   return ok(res, rows.map((r) => serializeEvent(r, { currentUserId: req.user?.id })));
+});
+
+// POST /api/events  (multipart: cover_image, video_reel) — création d'un
+// concert par l'artiste connecté (formulaire "Créer un event" côté app).
+// artist_id vient TOUJOURS du token (req.user.id), jamais du user_id envoyé
+// par le client, pour qu'un user ne puisse pas créer un event au nom d'un autre.
+router.post('/events', requireAuth, (req, res) => {
+  const b = req.body || {};
+  if (!b.name) return fail(res, 'Le nom est requis.', 422, { name: ['Le nom est requis.'] });
+
+  const cover = saveUpload(req, ['cover_image', 'cover'], 'covers', 'events/covers');
+  const videoReel = saveUpload(req, ['video_reel', 'visual_video'], 'videos', 'events/videos');
+
+  const info = db.prepare(
+    `INSERT INTO events (artist_id, name, cover_image, ticket_price, start_date_time, end_date_time,
+        genre_id, description, video_reel, is_private, has_live_chat, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'published')`
+  ).run(
+    req.user.id, b.name, cover, b.ticket_price || '0', b.start_date_time || null, b.end_date_time || null,
+    b.genre_id || null, b.description || null, videoReel,
+    (b.is_private === '1' || b.is_private === true) ? 1 : 0,
+    b.has_live_chat === '0' ? 0 : 1
+  );
+
+  const created = db.prepare('SELECT * FROM events WHERE id = ?').get(info.lastInsertRowid);
+  return ok(res, serializeEvent(created, { currentUserId: req.user.id }));
 });
 
 // POST /api/buy-ticket  (body: { event_id, user_id })
