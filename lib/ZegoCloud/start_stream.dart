@@ -39,6 +39,10 @@ class _StartStreamState extends State<StartStream> {
   @override
   void initState() {
     super.initState();
+    // Assigné en synchrone AVANT tout appel async (fetchZegoToken attend un
+    // aller-retour réseau) : sinon build() s'exécute avec currentEvent
+    // encore non initialisé -> LateInitializationError au premier rendu.
+    currentEvent = widget.event;
     _initData();
 
     // Listen for in-room commands (likes, gifts, etc.)

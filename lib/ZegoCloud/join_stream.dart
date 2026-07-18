@@ -69,6 +69,10 @@ class _JoinStreamState extends State<JoinStream> {
   @override
   void initState() {
     super.initState();
+    // Assigné en synchrone AVANT tout appel async (fetchZegoToken attend un
+    // aller-retour réseau) : sinon build() s'exécute avec currentEvent
+    // encore non initialisé -> LateInitializationError au premier rendu.
+    currentEvent = widget.event;
     myInitMethod();
 
     // Listen for in-room commands (likes, gifts, etc.)

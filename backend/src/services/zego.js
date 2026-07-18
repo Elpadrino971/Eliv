@@ -44,9 +44,14 @@ function generateToken04(userId, effectiveSeconds = 4 * 3600, payload = '') {
   const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ZEGO_SERVER_SECRET, 'utf8'), iv);
   const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final()]);
 
-  const buf = Buffer.alloc(2 + 8 + 2 + iv.length + 2 + encrypted.length);
+  // Le buffer binaire NE CONTIENT PAS le numéro de version : "04" n'est
+  // qu'un préfixe texte ajouté après le base64 (cf. implémentation Node.js
+  // officielle ZEGOCLOUD/zego_server_assistant, token/nodejs/server/
+  // zegoServerAssistant.js). Un ancien writeUInt16BE(4, ...) ici décalait
+  // tous les champs suivants de 2 octets -> le serveur Zego rejette le
+  // token (errorCode != 0) même si notre propre décodage restait cohérent.
+  const buf = Buffer.alloc(8 + 2 + iv.length + 2 + encrypted.length);
   let offset = 0;
-  buf.writeUInt16BE(4, offset); offset += 2; // version = 04
   buf.writeBigInt64BE(BigInt(expireTime), offset); offset += 8;
   buf.writeUInt16BE(iv.length, offset); offset += 2;
   iv.copy(buf, offset); offset += iv.length;

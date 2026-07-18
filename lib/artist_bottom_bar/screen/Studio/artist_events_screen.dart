@@ -365,7 +365,8 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
   }
 
   Future completeEvent(Event event) async {
-    if (event.endDateTime!.isAfter(DateTime.now())) {
+    final endDateTime = event.endDateTime;
+    if (endDateTime == null || endDateTime.isAfter(DateTime.now())) {
       await eventController.updateEventStatus(
         eventId: event.id.toString(),
         status: 'completed',
