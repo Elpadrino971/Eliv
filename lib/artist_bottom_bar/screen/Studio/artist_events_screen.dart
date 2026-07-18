@@ -27,7 +27,14 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Get.isDarkMode ? whiteColor : blackColor,
+            size: 20,
+          ),
+          onPressed: () => Get.back(),
+        ),
         title: Row(
           children: [
             Get.isDarkMode
@@ -74,8 +81,15 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                     GetBuilder<ArtistController>(
                       builder: (controller) {
                         final events = controller.artistEvents.value.data ?? [];
+                        // "Mes events" doit aussi montrer les events en cours
+                        // de live (pas seulement "published"), sinon un
+                        // artiste perd de vue son propre concert dès qu'il
+                        // l'a démarré.
                         final published = events
-                            .where((e) => e.status == 'published')
+                            .where(
+                              (e) =>
+                                  e.status == 'published' || e.status == 'live',
+                            )
                             .toList();
                         if (published.isEmpty) {
                           return Center(
