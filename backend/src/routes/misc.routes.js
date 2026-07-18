@@ -264,16 +264,62 @@ router.post('/packages/buy', optionalAuth, (req, res) =>
 // ─── Transactions / Wallet ───
 router.post('/get-transactions', optionalAuth, (req, res) => ok(res, []));
 
-// ─── Artist statistics ───
+// ─── Artist statistics ─── (dashboard "Studio" — anciennement un stub qui
+// renvoyait toujours 0, peu importe les vraies données de l'artiste).
 router.post('/get-artist-statistics', optionalAuth, (req, res) => {
+  const artistId = req.user?.id || req.body?.id;
+  const artist = db.prepare('SELECT * FROM users WHERE id = ?').get(artistId);
+  if (!artist) {
+    return res.json({
+      status: 'success',
+      data: {
+        artist_name: null, total_tickets_sold: 0, current_wallet: '0', total_revenue: 0,
+        followers_count: 0, event_count: 0, upcoming_events_count: 0, past_events_count: 0,
+        average_rating: 0, hourly_velocity: [],
+      },
+    });
+  }
+
+  const eventCount = db.prepare('SELECT COUNT(*) c FROM events WHERE artist_id = ?').get(artistId).c;
+  const upcoming = db.prepare(
+    "SELECT COUNT(*) c FROM events WHERE artist_id = ? AND datetime(start_date_time) >= datetime('now')"
+  ).get(artistId).c;
+  const past = eventCount - upcoming;
+  const ticketsSold = db.prepare(
+    'SELECT COUNT(*) c FROM tickets t JOIN events e ON e.id = t.event_id WHERE e.artist_id = ?'
+  ).get(artistId).c;
+  const revenue = db.prepare(
+    "SELECT COALESCE(SUM(CAST(t.price_paid AS REAL)),0) r FROM tickets t JOIN events e ON e.id = t.event_id WHERE e.artist_id = ?"
+  ).get(artistId).r;
+  const followers = db.prepare('SELECT COUNT(*) c FROM follows WHERE artist_id = ?').get(artistId).c;
+  const avgRating = db.prepare(
+    "SELECT AVG(r.rating) a FROM reviews r JOIN events e ON e.id = r.event_id WHERE e.artist_id = ?"
+  ).get(artistId).a;
+
   return res.json({
     status: 'success',
-    data: { followers: 0, events: 0, tickets_sold: 0, revenue: '0' },
+    data: {
+      artist_name: artist.artist_name || artist.full_name,
+      total_tickets_sold: ticketsSold,
+      current_wallet: artist.wallet || '0',
+      total_revenue: Math.round(revenue),
+      followers_count: followers,
+      event_count: eventCount,
+      upcoming_events_count: upcoming,
+      past_events_count: past,
+      average_rating: avgRating ? Math.round(avgRating * 10) / 10 : 0,
+      hourly_velocity: [],
+    },
   });
 });
-router.post('/get-event-stats-by-user-id', optionalAuth, (req, res) =>
-  res.json({ status: 'success', data: { total_events: 0, total_tickets: 0 } })
-);
+router.post('/get-event-stats-by-user-id', optionalAuth, (req, res) => {
+  const artistId = req.user?.id || req.body?.id;
+  const total_events = db.prepare('SELECT COUNT(*) c FROM events WHERE artist_id = ?').get(artistId).c;
+  const total_tickets = db.prepare(
+    'SELECT COUNT(*) c FROM tickets t JOIN events e ON e.id = t.event_id WHERE e.artist_id = ?'
+  ).get(artistId).c;
+  return res.json({ status: 'success', data: { total_events, total_tickets } });
+});
 
 // ─── Support ───
 router.post('/support/get-subjects', (req, res) =>
