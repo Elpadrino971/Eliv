@@ -5,5 +5,5 @@
 /// laisser dans l'app compilée permet à quiconque la décompile de générer
 /// des tokens illimités sur ton compte (facturation frauduleuse).
 class ZegoCloudKeys {
-  static const int appId = 1112572789;
+  static const int appId = 266313543;
 }
