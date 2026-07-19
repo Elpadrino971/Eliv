@@ -481,7 +481,7 @@ class AuthController extends GetxController {
     response.urlSetter = APIs.getSettingsAPI;
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
-        settings.value = jsonDecode(value)["item"];
+        settings.value = jsonDecode(value)["data"] ?? {};
         update();
       } else {
         parseError(value);
