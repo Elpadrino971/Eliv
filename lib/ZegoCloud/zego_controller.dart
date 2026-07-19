@@ -39,12 +39,19 @@ class ZegoController extends GetxController {
       resp.typeSetter = 'post';
       resp.urlSetter = APIs.zegoTokenAPI;
       final res = await resp.hitAPI();
-      if (res is! String || res.split(' ').first == 'error') return false;
+      if (res is! String || res.split(' ').first == 'error') {
+        myPrint('fetchZegoToken: réponse invalide -> $res');
+        return false;
+      }
       final token = jsonDecode(res)['data']?['token'] as String?;
-      if (token == null) return false;
+      if (token == null) {
+        myPrint('fetchZegoToken: pas de token dans la réponse -> $res');
+        return false;
+      }
       zegoToken.value = token;
       return true;
-    } catch (_) {
+    } catch (e) {
+      myPrint('fetchZegoToken: exception -> $e');
       return false;
     }
   }
