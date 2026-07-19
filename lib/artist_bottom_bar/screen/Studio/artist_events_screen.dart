@@ -134,13 +134,16 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                       ),
                                       width(0.02),
 
-                                      Column(
+                                      Expanded(
+                                        child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
 
                                         children: [
                                           Text(
                                             event.name ?? 'N/A',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
                                               color: Get.isDarkMode
                                                   ? whiteColor
@@ -174,6 +177,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                             ),
                                           ),
                                         ],
+                                        ),
                                       ),
                                     ],
                                   ),
