@@ -84,7 +84,7 @@ class ApiResponse extends ApiService {
           final data = response.body;
           return data;
         } else {
-          myPrint(response);
+          myPrint('HTTP ${response.statusCode} $_url -> ${response.body}');
           return "error ${response.body}";
         }
       }
@@ -125,7 +125,7 @@ class ApiResponse extends ApiService {
         final data = response.body;
         return data;
       } else {
-        myPrint(response);
+        myPrint('HTTP ${response.statusCode} $_url -> ${response.body}');
         return "error ${response.body}";
       }
     } catch (e) {
@@ -159,7 +159,7 @@ class ApiResponse extends ApiService {
         final data = response.body;
         return data;
       } else {
-        myPrint(response);
+        myPrint('HTTP ${response.statusCode} $_url -> ${response.body}');
         return "error ${response.body}";
       }
     } catch (e) {
