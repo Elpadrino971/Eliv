@@ -82,7 +82,7 @@ class ArtistController extends GetxController {
               },
             );
           } else {
-            parseError(value, doBack: false);
+            parseError(value, doBack: true);
           }
         });
   }
