@@ -50,6 +50,8 @@ class ArtistController extends GetxController {
     required String hasLiveChat,
     required String coverImg,
     required String visualVideo,
+    String replayEnabled = '1',
+    String replayDurationDays = '60',
   }) async {
     myLoadingDialog();
     response.typeSetter = 'post';
@@ -64,6 +66,8 @@ class ArtistController extends GetxController {
       'genre_id': genreId,
       'is_private': '0',
       'has_live_chat': hasLiveChat,
+      'replay_enabled': replayEnabled,
+      'replay_duration_days': replayDurationDays,
     };
     await response
         .hitMultipartAPI(

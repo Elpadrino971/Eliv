@@ -134,17 +134,25 @@ function serializeEvent(row, { currentUserId = null } = {}) {
     .all(row.id)
     .map((r) => r.user_id);
 
-  // ─── Fenetre de replay : 60 jours apres la fin du concert ───
-  // Au-dela, le teaser gratuit ET le replay paye s'arretent tous les deux
-  // (meme flux Mux pour les deux usages) : on ne renvoie plus l'ID/URL video.
-  const REPLAY_WINDOW_DAYS = 60;
+  // ─── Fenetre de replay : configurable par event (défaut 60j) ───
+  // L'artiste/l'admin choisit la durée (replay_duration_days, plafonnée à 60j =
+  // fenêtre de hold Apple) et peut désactiver le replay (replay_enabled=0).
+  // Au-dela de la fenetre — ou si le replay est desactive — le teaser gratuit
+  // ET le replay paye s'arretent (meme flux Mux) : on ne renvoie plus l'ID/URL.
+  const replayEnabled = row.replay_enabled === undefined || row.replay_enabled === null
+    ? true
+    : !!row.replay_enabled;
+  let replayWindowDays = parseInt(row.replay_duration_days, 10);
+  if (!Number.isFinite(replayWindowDays) || replayWindowDays < 1) replayWindowDays = 60;
+  if (replayWindowDays > 60) replayWindowDays = 60;
   const referenceDate = row.end_date_time || row.start_date_time;
   const refTime = referenceDate ? new Date(referenceDate).getTime() : NaN;
   const replayExpiresAt = !isNaN(refTime)
-    ? new Date(refTime + REPLAY_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString()
+    ? new Date(refTime + replayWindowDays * 24 * 60 * 60 * 1000).toISOString()
     : null;
   const replayExpired =
-    replayExpiresAt !== null && row.status !== 'live' && Date.now() > new Date(replayExpiresAt).getTime();
+    !replayEnabled ||
+    (replayExpiresAt !== null && row.status !== 'live' && Date.now() > new Date(replayExpiresAt).getTime());
 
   return {
     id: row.id,
@@ -170,6 +178,8 @@ function serializeEvent(row, { currentUserId = null } = {}) {
     mux_live_playback_id: row.mux_live_playback_id,
     replay_expires_at: replayExpiresAt,
     replay_expired: replayExpired,
+    replay_enabled: replayEnabled,
+    replay_duration_days: replayWindowDays,
     teaser_enabled: !!row.teaser_enabled,
     teaser_duration: row.teaser_duration,
     created_at: row.created_at,

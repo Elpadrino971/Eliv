@@ -32,6 +32,11 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
 
   bool liveValue = true;
 
+  // Replay : activé par défaut, durée par défaut 60j (plafond = fenêtre de hold
+  // Apple). L'artiste peut désactiver ou raccourcir.
+  bool replayEnabled = true;
+  int replayDurationDays = 60;
+
   final formKey = GlobalKey<FormState>();
 
   File? coverImage;
@@ -553,6 +558,77 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                     ),
                   ],
                 ),
+
+                // ── Replay (rejouable après le live) ──────────────────────
+                Row(
+                  children: [
+                    Image.asset(
+                      'assets/setting.png',
+                      width: 20,
+                      height: 20,
+                      color: Color(0xffA1A1A1),
+                    ),
+                    width(0.02),
+                    Text(
+                      'replay_enable'.tr,
+                      style: TextStyle(
+                        color: Get.isDarkMode ? whiteColor : blackColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Spacer(),
+                    Switch(
+                      value: replayEnabled,
+                      onChanged: (value) {
+                        setState(() {
+                          replayEnabled = value;
+                        });
+                      },
+                      inactiveThumbColor: whiteColor,
+                      inactiveTrackColor: greyColor,
+                      activeTrackColor: mainThemeColor,
+                      activeThumbColor: whiteColor,
+                    ),
+                  ],
+                ),
+
+                // Durée du replay (visible seulement si activé)
+                if (replayEnabled) ...[
+                  height(0.005),
+                  Text(
+                    'replay_duration_label'.trParams({
+                      'days': '$replayDurationDays',
+                    }),
+                    style: TextStyle(
+                      color: Color(0xff737373),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    children: [7, 14, 30, 60].map((d) {
+                      final selected = replayDurationDays == d;
+                      return ChoiceChip(
+                        label: Text('$d j'),
+                        selected: selected,
+                        onSelected: (_) {
+                          setState(() => replayDurationDays = d);
+                        },
+                        labelStyle: TextStyle(
+                          color: selected ? whiteColor : Color(0xffA1A1A1),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        selectedColor: mainThemeColor,
+                        backgroundColor: Get.isDarkMode
+                            ? midnightSecondary
+                            : Color(0xffEDEDED),
+                      );
+                    }).toList(),
+                  ),
+                ],
+
                 height(0.02),
                 MyButton(
                   label: 'ev_publish'.tr,
@@ -591,6 +667,8 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                         ticketPrice: standardController.text,
                         genreId: selectedGenreId?.toString() ?? '',
                         hasLiveChat: liveValue ? '1' : '0',
+                        replayEnabled: replayEnabled ? '1' : '0',
+                        replayDurationDays: '$replayDurationDays',
                         coverImg: coverImage?.path ?? '',
                         visualVideo: visualVideo?.path ?? '',
                       );

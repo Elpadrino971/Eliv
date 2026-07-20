@@ -531,6 +531,8 @@ async function openEventForm(row, { duplicate = false } = {}) {
       { name: 'cover_image', label: 'Ou nom de fichier / URL', value: row?.cover_image },
       { name: 'description', label: 'Description', type: 'textarea', value: row?.description },
       { name: 'is_banner', label: 'Mettre en bannière (carrousel accueil) ?', type: 'checkbox', value: !!row?.is_banner, hint: 'Afficher dans le carrousel' },
+      { name: 'replay_enabled', label: 'Replay activé (concert rejouable) ?', type: 'checkbox', value: row ? !!row.replay_enabled : true, hint: 'Rejouable après le live' },
+      { name: 'replay_duration_days', label: 'Durée du replay', type: 'select', value: row?.replay_duration_days ?? 60, options: [7, 14, 30, 60].map((d) => ({ value: d, label: d + ' jours' })) },
     ],
     afterRender: (bg) => attachAiDescriptionButton(bg, 'event'),
     onSave: async (d) => {

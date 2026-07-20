@@ -287,6 +287,12 @@ function init() {
     "ALTER TABLE events ADD COLUMN replay_expires_at TEXT",
     "ALTER TABLE events ADD COLUMN mux_live_stream_id TEXT",
     "ALTER TABLE events ADD COLUMN mux_stream_key TEXT",
+    // Replay : l'artiste (à la création) et l'admin choisissent si le concert
+    // est rejouable et pour combien de jours (défaut 60j = fenêtre de hold des
+    // fonds Apple/remboursement). replay_duration_days sert à calculer
+    // replay_expires_at au moment où l'enregistrement Mux devient disponible.
+    "ALTER TABLE events ADD COLUMN replay_enabled INTEGER DEFAULT 1",
+    "ALTER TABLE events ADD COLUMN replay_duration_days INTEGER DEFAULT 60",
     "ALTER TABLE feed_clips ADD COLUMN mux_asset_id TEXT",
     "ALTER TABLE feed_clips ADD COLUMN mux_upload_id TEXT",
     "ALTER TABLE feed_clips ADD COLUMN upload_status TEXT",
