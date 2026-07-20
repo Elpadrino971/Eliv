@@ -84,6 +84,14 @@ class ArtistController extends GetxController {
           } else {
             parseError(value, doBack: true);
           }
+        })
+        .catchError((e) {
+          myPrint('createEvent: exception -> $e');
+          Get.back();
+          myWarningDialog(
+            title: 'common_error'.tr,
+            subtitle: "Connexion impossible. Réessaie.",
+          );
         });
   }
 
