@@ -279,6 +279,9 @@ class _StartStreamState extends State<StartStream> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Décalage sous la barre du haut de Zego (avatar hôte + compteur +
+          // bouton quitter), sinon notre barre perso la chevauche.
+          const SizedBox(height: 54),
           // Top Info Bar
           Padding(
             padding: myPadding,
