@@ -1,8 +1,45 @@
 import 'package:artist/Global/api.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
+
+/// Applique un mode de fusion (BlendMode) entre l'enfant et ce qui est peint
+/// DERRIÈRE (le live). Avec BlendMode.screen, le noir des vidéos de cadeaux
+/// devient transparent et seul l'effet lumineux reste -> l'artiste n'est plus
+/// masqué. Pas de dépendance externe : simple RenderObject qui pousse un
+/// saveLayer avec le blend mode.
+class _BlendMask extends SingleChildRenderObjectWidget {
+  const _BlendMask({required this.blendMode, super.child});
+  final BlendMode blendMode;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderBlendMask(blendMode);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderBlendMask renderObject) {
+    renderObject.blendMode = blendMode;
+  }
+}
+
+class _RenderBlendMask extends RenderProxyBox {
+  _RenderBlendMask(this._blendMode);
+  BlendMode _blendMode;
+  set blendMode(BlendMode v) {
+    if (v == _blendMode) return;
+    _blendMode = v;
+    markNeedsPaint();
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    context.canvas.saveLayer(offset & size, Paint()..blendMode = _blendMode);
+    super.paint(context, offset);
+    context.canvas.restore();
+  }
+}
 
 class GiftAnimationManager {
   // Cadeaux qui disposent d'une vidéo d'animation (assets/animations/<nom>.mp4).
@@ -47,7 +84,9 @@ class GiftAnimationManager {
       showDialog(
         context: context,
         barrierDismissible: true,
-        barrierColor: Colors.black.withValues(alpha: 0.55),
+        // Barrière transparente : l'animation (fond noir rendu invisible par le
+        // blend "screen") passe PAR-DESSUS le live sans masquer l'artiste.
+        barrierColor: Colors.transparent,
         builder: (_) => _GiftVideoOverlay(
           assetPath: 'assets/animations/$key.mp4',
           giftName: giftName,
@@ -186,10 +225,13 @@ class _GiftVideoOverlayState extends State<_GiftVideoOverlay> {
                 maxHeight: size.height * 0.75,
               ),
               child: ready
-                  ? AspectRatio(
-                      aspectRatio:
-                          c.value.aspectRatio == 0 ? 1 : c.value.aspectRatio,
-                      child: VideoPlayer(c),
+                  ? _BlendMask(
+                      blendMode: BlendMode.screen,
+                      child: AspectRatio(
+                        aspectRatio:
+                            c.value.aspectRatio == 0 ? 1 : c.value.aspectRatio,
+                        child: VideoPlayer(c),
+                      ),
                     )
                   : const SizedBox(
                       width: 120,
