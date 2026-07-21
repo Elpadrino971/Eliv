@@ -229,6 +229,9 @@ class _JoinStreamState extends State<JoinStream> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Le clavier ne doit pas redimensionner le fond (vidéo Zego plein écran)
+      // sinon l'overlay du live déborde (overflow) quand on ouvre le chat.
+      resizeToAvoidBottomInset: false,
       body: Obx(() {
         final zegoToken = zegoController.zegoToken.value;
         if (zegoToken == null) {

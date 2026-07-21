@@ -32,6 +32,67 @@ router.post('/live/zego-token', requireAuth, (req, res) => {
   }
 });
 
+// POST /api/live/:eventId/recording/start — enregistrement du concert pour le
+// replay. Crée un Live Stream Mux (si le replay est activé et Mux configuré) et
+// renvoie l'URL RTMP + la clé : l'app relaie le flux Zego vers cette URL, Mux
+// enregistre, et à la fin du live le webhook `video.asset.ready` crée l'asset
+// de replay (durée = replay_duration_days de l'event). Idempotent : si le flux
+// existe déjà pour cet event, on renvoie les mêmes infos sans recréer.
+router.post('/live/:eventId/recording/start', requireAuth, async (req, res) => {
+  const event = db.prepare('SELECT * FROM events WHERE id = ?').get(req.params.eventId);
+  if (!event) return fail(res, 'Event introuvable.', 404);
+  if (event.artist_id !== req.user.id) return fail(res, 'Non autorisé.', 403);
+
+  const replayEnabled = event.replay_enabled === null || event.replay_enabled === undefined
+    ? true : !!event.replay_enabled;
+  if (!replayEnabled) {
+    return res.json({ status: 'success', data: { recording: false, reason: 'replay_disabled' } });
+  }
+  if (!mux.isConfigured()) {
+    return res.json({ status: 'success', data: { recording: false, reason: 'mux_not_configured' } });
+  }
+
+  try {
+    // Déjà un flux pour cet event -> on réutilise (reprise de live, retry app…).
+    if (event.mux_live_stream_id && event.mux_stream_key) {
+      return res.json({ status: 'success', data: {
+        recording: true,
+        ingest_url: mux.LIVE_INGEST_URL,
+        stream_key: event.mux_stream_key,
+        rtmp_url: `${mux.LIVE_INGEST_URL}/${event.mux_stream_key}`,
+      }});
+    }
+    const { liveStreamId, streamKey, playbackId, ingestUrl } = await mux.createLiveStream({
+      passthrough: { kind: 'event', id: event.id },
+    });
+    db.prepare(
+      `UPDATE events SET mux_live_stream_id = ?, mux_stream_key = ?, mux_live_playback_id = ?
+       WHERE id = ?`
+    ).run(liveStreamId, streamKey, playbackId, event.id);
+    return res.json({ status: 'success', data: {
+      recording: true,
+      ingest_url: ingestUrl,
+      stream_key: streamKey,
+      rtmp_url: `${ingestUrl}/${streamKey}`,
+    }});
+  } catch (e) {
+    console.error('[recording start]', e.message);
+    // On n'échoue pas le live pour autant : l'app continue sans replay.
+    return res.json({ status: 'success', data: { recording: false, reason: 'mux_error' } });
+  }
+});
+
+// POST /api/live/:eventId/recording/stop — signal de fin. Mux finalise
+// automatiquement l'enregistrement après l'arrêt du flux RTMP (fenêtre de
+// reconnexion), donc rien de destructif ici : on laisse Mux générer l'asset de
+// replay. Endpoint fourni pour cohérence côté app.
+router.post('/live/:eventId/recording/stop', requireAuth, (req, res) => {
+  const event = db.prepare('SELECT artist_id FROM events WHERE id = ?').get(req.params.eventId);
+  if (!event) return fail(res, 'Event introuvable.', 404);
+  if (event.artist_id !== req.user.id) return fail(res, 'Non autorisé.', 403);
+  return res.json({ status: 'success', data: { stopped: true } });
+});
+
 // POST /api/ideas — Boîte à idées (soumission depuis l'app)
 router.post('/ideas', optionalAuth, (req, res) => {
   const b = req.body || {};

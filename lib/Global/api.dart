@@ -16,6 +16,12 @@ class APIs {
   // appSign en dur dans l'app, faille de sécurité). Voir ZegoController.
   // ───────────────────────────────────────────────────────────────────────
   static const String zegoTokenAPI = '$baseAPI/live/zego-token';
+  // Enregistrement du live pour le replay : le backend crée un flux Mux et
+  // renvoie l'URL RTMP + la clé (rtmp_url) que l'app relaie via Zego.
+  static String recordingStartAPI(String eventId) =>
+      '$baseAPI/live/$eventId/recording/start';
+  static String recordingStopAPI(String eventId) =>
+      '$baseAPI/live/$eventId/recording/stop';
 
   // ───────────────────────────────────────────────────────────────────────
   // MUX — REPLAY (VOD). Le PLAYBACK ID est PUBLIC (pas un secret).

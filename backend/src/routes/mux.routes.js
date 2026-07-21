@@ -55,12 +55,22 @@ router.post('/', (req, res) => {
         || obj.playback_ids?.[0]?.id || null;
 
       if (passthrough?.kind === 'event' && passthrough.id) {
+        // Durée du replay choisie par l'artiste/l'admin pour CE concert
+        // (défaut = rétention globale). Si le replay est désactivé, on stocke
+        // quand même l'asset mais avec une expiration immédiate : serializeEvent
+        // ne le sert pas et le cron de rétention le supprimera.
+        const ev = db.prepare('SELECT replay_enabled, replay_duration_days FROM events WHERE id = ?').get(passthrough.id);
+        const enabled = ev ? (ev.replay_enabled === null || ev.replay_enabled === undefined ? 1 : ev.replay_enabled) : 1;
+        let days = ev ? parseInt(ev.replay_duration_days, 10) : REPLAY_RETENTION_DAYS;
+        if (!Number.isFinite(days) || days < 1) days = REPLAY_RETENTION_DAYS;
+        if (days > 60) days = 60;
+        if (!enabled) days = 0; // expire tout de suite
         db.prepare(
           `UPDATE events SET mux_playback_id = ?, mux_live_playback_id = ?, mux_asset_id = ?,
               mux_upload_status = 'ready', video_reel = ?,
               replay_expires_at = datetime('now', '+' || ? || ' days')
            WHERE id = ?`
-        ).run(playbackId, playbackId, obj.id, muxHls(playbackId), REPLAY_RETENTION_DAYS, passthrough.id);
+        ).run(playbackId, playbackId, obj.id, muxHls(playbackId), days, passthrough.id);
       } else if (passthrough?.kind === 'clip' && passthrough.id) {
         db.prepare(
           `UPDATE feed_clips SET mux_playback_id = ?, mux_asset_id = ?, upload_status = 'ready',

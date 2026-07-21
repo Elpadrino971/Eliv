@@ -55,6 +55,8 @@ class _StartStreamState extends State<StartStream> {
   void dispose() {
     _commandSubscription?.cancel();
     _logTimer?.cancel();
+    // Signale la fin du live -> Mux finalise l'asset de replay.
+    zegoController.stopRecording(widget.event.id.toString());
     super.dispose();
   }
 
@@ -66,6 +68,10 @@ class _StartStreamState extends State<StartStream> {
         subtitle: "Connexion au live impossible. Réessaie.",
       );
     }
+    // Prépare l'enregistrement du replay (crée le flux Mux côté serveur si le
+    // replay est activé pour ce concert). Le relais Zego->Mux (dernière ligne)
+    // reste à brancher/tester en live — voir ZegoController.startRecording.
+    await zegoController.startRecording(widget.event.id.toString());
     await eventController.getAbusiveWords();
     currentEvent = widget.event;
     final activities = await eventController.getEventLogs(
@@ -218,6 +224,9 @@ class _StartStreamState extends State<StartStream> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Le clavier ne doit pas redimensionner le fond (vidéo Zego plein écran)
+      // sinon l'overlay du live déborde (overflow) quand on ouvre le chat.
+      resizeToAvoidBottomInset: false,
       body: Obx(() {
         final zegoToken = zegoController.zegoToken.value;
         if (zegoToken == null) {

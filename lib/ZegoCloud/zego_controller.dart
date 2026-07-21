@@ -21,6 +21,12 @@ class ZegoController extends GetxController {
   // dur). null tant qu'il n'a pas été récupéré : voir fetchZegoToken().
   final Rx<String?> zegoToken = Rx<String?>(null);
 
+  // Cible RTMP Mux pour l'enregistrement du replay (rtmps://.../app/<clé>),
+  // récupérée via startRecording(). null si le replay est désactivé, Mux non
+  // configuré, ou erreur. C'est cette URL que Zego doit relayer (voir la note
+  // relayToMux ci-dessous) pour que Mux enregistre le concert.
+  final Rx<String?> muxRtmpUrl = Rx<String?>(null);
+
   String get userId =>
       currentUser.value?.id?.toString() ??
       "user_${DateTime.now().millisecondsSinceEpoch}";
@@ -53,6 +59,55 @@ class ZegoController extends GetxController {
     } catch (e) {
       myPrint('fetchZegoToken: exception -> $e');
       return false;
+    }
+  }
+
+  /// Démarre l'enregistrement du concert pour le replay : le backend crée un
+  /// flux Live Mux (si le replay est activé pour cet event et Mux configuré) et
+  /// renvoie l'URL RTMP à relayer. Stocke muxRtmpUrl. Retourne l'URL RTMP, ou
+  /// null si pas d'enregistrement (replay off / Mux absent / erreur).
+  ///
+  /// NOTE (dernière étape à brancher + tester en live) : une fois le live Zego
+  /// en cours de diffusion, il faut relayer le flux vers muxRtmpUrl pour que
+  /// Mux enregistre. Avec le SDK Zego Express, l'appel est :
+  ///   ZegoExpressEngine.instance.addPublishCdnUrl(streamID, muxRtmpUrl.value!)
+  /// où streamID est l'ID publié par le UIKit (ex: "<liveID>_<userID>_main").
+  /// À vérifier contre la version installée du package + tester sur un vrai
+  /// live (impossible à valider hors appareil).
+  Future<String?> startRecording(String eventId) async {
+    try {
+      final resp = ApiResponse();
+      resp.typeSetter = 'post';
+      resp.urlSetter = APIs.recordingStartAPI(eventId);
+      final res = await resp.hitAPI();
+      if (res is! String || res.split(' ').first == 'error') {
+        myPrint('startRecording: réponse invalide -> $res');
+        return null;
+      }
+      final data = jsonDecode(res)['data'] as Map<String, dynamic>?;
+      if (data == null || data['recording'] != true) {
+        myPrint('startRecording: pas d\'enregistrement -> ${data?['reason']}');
+        return null;
+      }
+      final rtmp = data['rtmp_url'] as String?;
+      muxRtmpUrl.value = rtmp;
+      myPrint('startRecording: cible RTMP Mux -> $rtmp');
+      return rtmp;
+    } catch (e) {
+      myPrint('startRecording: exception -> $e');
+      return null;
+    }
+  }
+
+  /// Signale la fin de l'enregistrement (Mux finalise l'asset automatiquement).
+  Future<void> stopRecording(String eventId) async {
+    try {
+      final resp = ApiResponse();
+      resp.typeSetter = 'post';
+      resp.urlSetter = APIs.recordingStopAPI(eventId);
+      await resp.hitAPI();
+    } catch (e) {
+      myPrint('stopRecording: exception -> $e');
     }
   }
 
