@@ -68,35 +68,71 @@ class LiveStreamTopBar extends StatelessWidget {
   }
 }
 
-class LiveStatusBadge extends StatelessWidget {
+/// Indicateur "en direct" : un cercle doré plein avec un halo lumineux qui
+/// pulse (clignotement doux), au lieu de l'ancienne pilule rouge/blanche.
+class LiveStatusBadge extends StatefulWidget {
   const LiveStatusBadge({super.key});
 
   @override
+  State<LiveStatusBadge> createState() => _LiveStatusBadgeState();
+}
+
+class _LiveStatusBadgeState extends State<LiveStatusBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 850),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      width: Get.width * 0.23,
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: liveRed,
-        borderRadius: BorderRadius.circular(50),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.asset('assets/dots.png'),
-          width(0.02),
-          Text(
-            'live_badge'.tr,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: whiteColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              letterSpacing: 1,
-            ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            final t = _controller.value; // 0 -> 1 -> 0
+            return Container(
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: goldPrimary,
+                boxShadow: [
+                  BoxShadow(
+                    color: goldPrimary.withValues(alpha: 0.35 + 0.5 * t),
+                    blurRadius: 6 + 14 * t,
+                    spreadRadius: 1 + 3 * t,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'live_badge'.tr,
+          style: const TextStyle(
+            color: goldPrimary,
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            letterSpacing: 1.5,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
