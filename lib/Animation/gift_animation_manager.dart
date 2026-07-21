@@ -171,26 +171,34 @@ class _GiftVideoOverlayState extends State<_GiftVideoOverlay> {
   Widget build(BuildContext context) {
     final c = _controller;
     final ready = c != null && c.value.isInitialized;
+    final size = MediaQuery.of(context).size;
     return GestureDetector(
       onTap: _close,
-      child: SizedBox.expand(
+      child: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            ready
-                ? AspectRatio(
-                    aspectRatio: c.value.aspectRatio == 0
-                        ? 1
-                        : c.value.aspectRatio,
-                    child: VideoPlayer(c),
-                  )
-                : const SizedBox(
-                    width: 120,
-                    height: 120,
-                    child: Center(
-                      child: CircularProgressIndicator(color: Colors.white),
+            // Vidéo bornée à 75 % de l'écran : évite tout débordement quand
+            // l'animation est en format portrait.
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: size.width,
+                maxHeight: size.height * 0.75,
+              ),
+              child: ready
+                  ? AspectRatio(
+                      aspectRatio:
+                          c.value.aspectRatio == 0 ? 1 : c.value.aspectRatio,
+                      child: VideoPlayer(c),
+                    )
+                  : const SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
                     ),
-                  ),
+            ),
             const SizedBox(height: 10),
             Text(
               '${widget.giftName} 🎁',
