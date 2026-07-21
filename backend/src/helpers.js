@@ -9,6 +9,18 @@
 
 const { db } = require('./db');
 
+const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://api.vybzzz.online').replace(/\/+$/, '');
+
+// Normalise une image de profil en URL ABSOLUE : garde les URLs http(s) telles
+// quelles, préfixe les noms de fichiers nus (ex "beyonce.jpg") par /profiles/.
+// null si vide. Évite que l'app reçoive un nom de fichier nu (qu'elle prend à
+// tort pour un asset local -> avatar placeholder pour tout le monde).
+function profileUrl(value) {
+  if (!value) return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${PUBLIC_BASE_URL}/profiles/${String(value).replace(/^\/+/, '')}`;
+}
+
 // Convertit une ligne `subscriptions` au format Subscription.fromJson (Flutter).
 // Réutilisé par /api/subscription/get et par serializeUser (abonnement du user).
 function subscriptionToJson(r) {
@@ -89,7 +101,7 @@ function serializeUser(row, { withPassword = false } = {}) {
     role: row.role,
     full_name: row.full_name,
     artist_name: row.artist_name,
-    profile_image: row.profile_image,
+    profile_image: profileUrl(row.profile_image),
     dob: row.dob,
     bio: row.bio,
     address: row.address,
@@ -100,7 +112,7 @@ function serializeUser(row, { withPassword = false } = {}) {
     status: row.status,
     wallet: row.wallet,
     artist_bio: row.artist_bio,
-    artist_profile: row.artist_profile,
+    artist_profile: profileUrl(row.artist_profile),
     points: row.points,
     is_verified: row.is_verified,
     is_featured: !!row.is_featured,
