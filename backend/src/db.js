@@ -268,8 +268,20 @@ function init() {
     );
   `);
 
+  // Dédup des évènements RevenueCat (les webhooks sont ré-émis) : évite de
+  // créditer deux fois des points pour le même achat consommable.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS rc_processed_events (
+      event_id TEXT PRIMARY KEY,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
   // ─── Migrations : colonnes ajoutées après coup (ignorées si déjà présentes) ───
   for (const sql of [
+    // Packs de points (recharge portefeuille via IAP RevenueCat).
+    "ALTER TABLE packages ADD COLUMN revenuecat_product_id TEXT",
+    "ALTER TABLE packages ADD COLUMN active INTEGER DEFAULT 1",
     "ALTER TABLE subscriptions ADD COLUMN image TEXT",
     "ALTER TABLE subscriptions ADD COLUMN slot_from INTEGER",
     "ALTER TABLE subscriptions ADD COLUMN slot_to INTEGER",

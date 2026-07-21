@@ -317,10 +317,28 @@ router.post('/feed-clips/submit-direct', requireAuth, (req, res) => {
     });
 });
 
-// ─── Packages (points / gifts) ───
-router.get('/packages/list', (req, res) => ok(res, []));
+// ─── Packages / recharge de points (achat via IAP RevenueCat) ───
+// Renvoie les packs actifs. Le vrai crédit de points se fait côté serveur
+// quand RevenueCat notifie l'achat (webhook), jamais ici : /packages/buy ne
+// crédite RIEN (sécurité — pas de crédit sur simple appel client).
+router.get('/packages/list', (req, res) => {
+  const rows = db.prepare(
+    "SELECT * FROM packages WHERE active IS NULL OR active = 1 ORDER BY CAST(price AS REAL) ASC"
+  ).all();
+  const list = rows.map((p) => ({
+    id: p.id,
+    title: p.name,
+    image: p.image || null,
+    points: p.points,
+    price: p.price,
+    revenuecat_product_id: p.revenuecat_product_id || null,
+    created_at: p.created_at,
+  }));
+  return res.json({ status: 'success', count: list.length, list });
+});
+// Conservé pour compat : ne crédite PAS (le crédit passe par le webhook IAP).
 router.post('/packages/buy', optionalAuth, (req, res) =>
-  res.json({ status: 'success', message: 'Package purchased (demo).' })
+  res.json({ status: 'success', message: 'Le crédit se fait après validation du paiement.' })
 );
 
 // ─── Transactions / Wallet ───

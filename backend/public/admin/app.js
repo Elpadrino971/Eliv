@@ -636,7 +636,7 @@ function pageFeedClips() {
 function pagePackages() {
   EDIT.pkg = (id) => {
     const r = currentRows.find((x) => x.id == id); if (!r) return;
-    modal({ title: 'Modifier le package', fields: [{ name: 'name', label: 'Nom', value: r.name }, { name: 'points', label: 'Points', value: r.points }, { name: 'price', label: 'Prix', value: r.price }], onSave: async (d) => { await api('PUT', '/packages/' + id, d); toast('Modifié'); route(); } });
+    modal({ title: 'Modifier le package', fields: [{ name: 'name', label: 'Nom', value: r.name }, { name: 'points', label: 'Points', value: r.points }, { name: 'price', label: 'Prix ($)', value: r.price }, { name: 'revenuecat_product_id', label: 'ID produit RevenueCat (IAP)', value: r.revenuecat_product_id, placeholder: 'ex: vybzz_points_500' }, { name: 'active', label: 'Actif ?', type: 'checkbox', value: r ? !!r.active : true, hint: 'Visible dans l\'app' }], onSave: async (d) => { await api('PUT', '/packages/' + id, d); toast('Modifié'); route(); } });
   };
   listPage({
     title: 'Packages', endpoint: '/packages', addLabel: '+ Ajouter', columns: [
@@ -644,9 +644,10 @@ function pagePackages() {
       { label: 'Nom', render: (r) => esc(r.name) },
       { label: 'Points', render: (r) => esc(r.points) },
       { label: 'Prix', render: (r) => '$' + esc(r.price) },
+      { label: 'IAP', render: (r) => r.revenuecat_product_id ? esc(r.revenuecat_product_id) : '<span class="em" style="color:#c9a24b">non mappé</span>' },
       { label: 'Action', render: (r) => `<button class="btn edit" data-edit="pkg:${r.id}">Modifier</button><button class="btn del" data-del="/packages/${r.id}">Supprimer</button>` },
     ],
-    onAdd: (reload) => modal({ title: 'Ajouter un package', fields: [{ name: 'name', label: 'Nom' }, { name: 'points', label: 'Points' }, { name: 'price', label: 'Prix' }], onSave: async (d) => { await api('POST', '/packages', d); toast('Ajouté'); reload(); } }),
+    onAdd: (reload) => modal({ title: 'Ajouter un package', fields: [{ name: 'name', label: 'Nom' }, { name: 'points', label: 'Points' }, { name: 'price', label: 'Prix ($)' }, { name: 'revenuecat_product_id', label: 'ID produit RevenueCat (IAP)', placeholder: 'ex: vybzz_points_500' }, { name: 'active', label: 'Actif ?', type: 'checkbox', value: true, hint: 'Visible dans l\'app' }], onSave: async (d) => { await api('POST', '/packages', d); toast('Ajouté'); reload(); } }),
   });
 }
 

@@ -379,7 +379,9 @@ router.get('/packages', requireAdmin, (req, res) => {
 });
 router.post('/packages', requireAdmin, (req, res) => {
   const b = req.body || {};
-  db.prepare('INSERT INTO packages (name, points, price) VALUES (?, ?, ?)').run(b.name, b.points || '0', b.price || '0');
+  db.prepare(
+    'INSERT INTO packages (name, points, price, revenuecat_product_id, active) VALUES (?, ?, ?, ?, ?)'
+  ).run(b.name, b.points || '0', b.price || '0', b.revenuecat_product_id || null, truthy(b.active) ? 1 : 0);
   return res.json({ status: 'success', message: 'Package ajouté.' });
 });
 router.delete('/packages/:id', requireAdmin, (req, res) => {
@@ -556,7 +558,9 @@ router.delete('/user-genres', requireAdmin, (req, res) => {
 // ─── Packages : édition ───
 router.put('/packages/:id', requireAdmin, (req, res) => {
   const b = req.body || {};
-  db.prepare('UPDATE packages SET name = ?, points = ?, price = ? WHERE id = ?').run(b.name, b.points || '0', b.price || '0', req.params.id);
+  db.prepare(
+    'UPDATE packages SET name = ?, points = ?, price = ?, revenuecat_product_id = ?, active = ? WHERE id = ?'
+  ).run(b.name, b.points || '0', b.price || '0', b.revenuecat_product_id || null, truthy(b.active) ? 1 : 0, req.params.id);
   return res.json({ status: 'success', message: 'Package modifié.' });
 });
 

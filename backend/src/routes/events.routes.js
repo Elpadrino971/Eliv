@@ -93,12 +93,19 @@ router.post('/events', requireAuth, (req, res) => {
 });
 
 // POST /api/buy-ticket  (body: { event_id, user_id })
+// Achat de billet EN POINTS (monnaie interne, conforme Apple : l'argent réel
+// entre via la recharge IAP RevenueCat, pas ici). Déduit réellement les points
+// de l'acheteur, crédite le portefeuille de l'artiste, refuse si solde
+// insuffisant — le tout en transaction atomique.
 router.post('/buy-ticket', optionalAuth, (req, res) => {
   const b = req.body || {};
   const userId = req.user?.id || b.user_id;
+  if (!userId) return fail(res, 'Authentification requise.', 401);
+
   const event = db.prepare('SELECT * FROM events WHERE id = ?').get(b.event_id);
   if (!event) return fail(res, 'Event not found.', 404);
 
+  // Déjà acheté -> idempotent, aucun nouveau débit.
   const already = db
     .prepare('SELECT * FROM tickets WHERE event_id = ? AND user_id = ?')
     .get(b.event_id, userId);
@@ -106,18 +113,44 @@ router.post('/buy-ticket', optionalAuth, (req, res) => {
     return ok(res, serializeEvent(event, { currentUserId: userId }));
   }
 
-  db.prepare(
-    `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status)
-     VALUES (?, ?, ?, ?, 'active')`
-  ).run(b.event_id, userId, event.ticket_price, genReceipt());
+  const buyer = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+  if (!buyer) return fail(res, 'Utilisateur introuvable.', 404);
 
-  db.prepare(
-    `INSERT INTO activities (user_id, event_id, type, description)
-     VALUES (?, ?, 'ticket', 'bought a ticket')`
-  ).run(userId, b.event_id);
+  const price = parseFloat(event.ticket_price) || 0;
+  const balance = parseFloat(buyer.points) || 0;
+  if (balance < price) {
+    return fail(res, 'Points insuffisants. Rechargez votre portefeuille.', 402, {
+      required: price,
+      balance,
+    });
+  }
 
+  const buy = db.transaction(() => {
+    // Débit acheteur
+    const newBalance = (balance - price).toFixed(2);
+    db.prepare('UPDATE users SET points = ? WHERE id = ?').run(newBalance, userId);
+    // Crédit artiste (revenu du concert)
+    if (event.artist_id) {
+      const artist = db.prepare('SELECT wallet FROM users WHERE id = ?').get(event.artist_id);
+      const artistWallet = (parseFloat(artist?.wallet) || 0) + price;
+      db.prepare('UPDATE users SET wallet = ? WHERE id = ?').run(artistWallet.toFixed(2), event.artist_id);
+    }
+    db.prepare(
+      `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status)
+       VALUES (?, ?, ?, ?, 'active')`
+    ).run(b.event_id, userId, event.ticket_price, genReceipt());
+    db.prepare(
+      `INSERT INTO activities (user_id, event_id, type, description)
+       VALUES (?, ?, 'ticket', 'bought a ticket')`
+    ).run(userId, b.event_id);
+    return newBalance;
+  });
+
+  const newBalance = buy();
   const fresh = db.prepare('SELECT * FROM events WHERE id = ?').get(b.event_id);
-  return ok(res, serializeEvent(fresh, { currentUserId: userId }));
+  const payload = serializeEvent(fresh, { currentUserId: userId });
+  // Solde restant renvoyé pour que l'app rafraîchisse le portefeuille.
+  return ok(res, { ...payload, buyer_points: newBalance });
 });
 
 // POST /api/user-event-history  (body: { user_id })  -> { status, list: [...] }
