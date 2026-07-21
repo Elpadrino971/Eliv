@@ -34,13 +34,16 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
         : base;
   }
 
+  // Prix en POINTS (monnaie interne) : 1 € = 100 points.
+  int get _ticketPoints => (_ticketPrice * 100).round();
+
   List<Map> get textList => [
     {
       'title': 'home_standard_pass'.tr,
       'subTitle': widget.discountPercent > 0
           ? 'Promo -${widget.discountPercent}% appliquée'
           : 'home_4k_uhd_access'.tr,
-      'price': '\$${_ticketPrice.toStringAsFixed(2)}',
+      'price': '$_ticketPoints pts',
     },
   ];
   String selectedAccess = '';

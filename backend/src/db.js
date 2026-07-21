@@ -326,6 +326,22 @@ function init() {
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }
+
+  // Packs de points par défaut (1 € = 100 points) — insérés une seule fois si
+  // la table est vide. Les IDs produits IAP se collent ensuite dans l'admin.
+  const packCount = db.prepare('SELECT COUNT(*) c FROM packages').get().c;
+  if (packCount === 0) {
+    const insPack = db.prepare('INSERT INTO packages (name, points, price, active) VALUES (?, ?, ?, 1)');
+    for (const [name, points, price] of [
+      ['Découverte', '100', '0.99'],
+      ['Fan', '500', '4.99'],
+      ['Super-fan', '1100', '9.99'],
+      ['VIP', '2400', '19.99'],
+      ['Légende', '6500', '49.99'],
+    ]) {
+      insPack.run(name, points, price);
+    }
+  }
 }
 
 module.exports = { db, init, DB_PATH };

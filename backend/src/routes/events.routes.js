@@ -116,7 +116,10 @@ router.post('/buy-ticket', optionalAuth, (req, res) => {
   const buyer = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
   if (!buyer) return fail(res, 'Utilisateur introuvable.', 404);
 
-  const price = parseFloat(event.ticket_price) || 0;
+  // Le prix du billet est saisi en EUROS par l'artiste ; l'acheteur paie en
+  // POINTS (monnaie interne). Ratio : 1 € = 100 points (1 point = 1 centime).
+  const POINTS_PER_EURO = 100;
+  const price = Math.round((parseFloat(event.ticket_price) || 0) * POINTS_PER_EURO);
   const balance = parseFloat(buyer.points) || 0;
   if (balance < price) {
     return fail(res, 'Points insuffisants. Rechargez votre portefeuille.', 402, {
@@ -138,7 +141,7 @@ router.post('/buy-ticket', optionalAuth, (req, res) => {
     db.prepare(
       `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status)
        VALUES (?, ?, ?, ?, 'active')`
-    ).run(b.event_id, userId, event.ticket_price, genReceipt());
+    ).run(b.event_id, userId, String(price), genReceipt());
     db.prepare(
       `INSERT INTO activities (user_id, event_id, type, description)
        VALUES (?, ?, 'ticket', 'bought a ticket')`
@@ -214,14 +217,43 @@ router.get('/gifts', (req, res) => {
 });
 
 // POST /api/event-gift  (body: { event_id, user_id, gift_id }) -> { status, activity: [...] }
+// Envoi d'un cadeau/tip EN POINTS : déduit le coût du portefeuille du fan,
+// crédite l'artiste, refuse si solde insuffisant (transaction atomique).
 router.post('/event-gift', optionalAuth, (req, res) => {
   const b = req.body || {};
   const userId = req.user?.id || b.user_id;
+  if (!userId) return fail(res, 'Authentification requise.', 401);
+
   const gift = db.prepare('SELECT * FROM gifts WHERE id = ?').get(b.gift_id);
-  db.prepare(
-    `INSERT INTO activities (user_id, event_id, type, description, gift, points)
-     VALUES (?, ?, 'gift', ?, ?, ?)`
-  ).run(userId, b.event_id, gift?.name || 'gift', gift?.image || null, gift?.points || '0');
+  if (!gift) return fail(res, 'Cadeau introuvable.', 404);
+  const event = db.prepare('SELECT artist_id FROM events WHERE id = ?').get(b.event_id);
+
+  const cost = Math.round(parseFloat(gift.points) || 0);
+  const sender = db.prepare('SELECT points FROM users WHERE id = ?').get(userId);
+  const balance = parseFloat(sender?.points) || 0;
+  if (balance < cost) {
+    return fail(res, 'Points insuffisants. Rechargez votre portefeuille.', 402, {
+      required: cost,
+      balance,
+    });
+  }
+
+  const send = db.transaction(() => {
+    if (cost > 0) {
+      db.prepare('UPDATE users SET points = ? WHERE id = ?').run((balance - cost).toFixed(2), userId);
+      if (event?.artist_id) {
+        const artist = db.prepare('SELECT wallet FROM users WHERE id = ?').get(event.artist_id);
+        const artistWallet = (parseFloat(artist?.wallet) || 0) + cost;
+        db.prepare('UPDATE users SET wallet = ? WHERE id = ?').run(artistWallet.toFixed(2), event.artist_id);
+      }
+    }
+    db.prepare(
+      `INSERT INTO activities (user_id, event_id, type, description, gift, points)
+       VALUES (?, ?, 'gift', ?, ?, ?)`
+    ).run(userId, b.event_id, gift.name || 'gift', gift.image || null, String(cost));
+  });
+  send();
+
   const activity = db
     .prepare('SELECT * FROM activities WHERE event_id = ? ORDER BY id DESC LIMIT 50')
     .all(b.event_id)
