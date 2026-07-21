@@ -81,7 +81,10 @@ function logout() {
 
 // ─── Navigation (FR) ───
 const NAV = [
-  { group: 'Vue d\'ensemble', items: [{ id: 'dashboard', label: 'Tableau de bord', ic: '🏠' }] },
+  { group: 'Vue d\'ensemble', items: [
+    { id: 'dashboard', label: 'Tableau de bord', ic: '🏠' },
+    { id: 'lives', label: 'Lives en direct', ic: '🔴' },
+  ] },
   { group: 'Gestion', items: [
     { id: 'users', label: 'Utilisateurs', ic: '👥' },
     { id: 'genres', label: 'Genres', ic: '🎵' },
@@ -969,8 +972,73 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// ─── Supervision des lives en direct (modération) ───
+let livesTimer = null;
+async function renderLives() {
+  let rows = [];
+  try { const r = await api('GET', '/live-events'); rows = r.data || []; }
+  catch (e) { view().innerHTML = `<div style="padding:16px;color:#c88">Erreur : ${esc(e.message)}</div>`; return; }
+  const head = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h2 style="margin:0">🔴 Lives en direct</h2>
+      <span class="em">Supervision — actualisé toutes les 15 s</span></div>`;
+  if (!rows.length) {
+    view().innerHTML = head + `<div style="padding:28px;text-align:center;color:#888;border:1px dashed #334;border-radius:12px">Aucun concert en direct actuellement.</div>`;
+    return;
+  }
+  const cards = rows.map((r) => {
+    const canWatch = !!r.mux_live_playback_id;
+    const watch = canWatch
+      ? `<button class="btn edit" data-watchlive="${r.id}">▶ Regarder</button>`
+      : `<span class="em" style="color:#c9a24b">⚠️ Flux vidéo indisponible (relais Zego→Mux à activer)</span>`;
+    return `<div style="padding:14px;margin-bottom:10px;border:1px solid #22314a;border-radius:12px;background:#0d1626">
+      <div class="nm" style="font-size:16px">🔴 ${esc(r.name || '—')}</div>
+      <div class="em">🎤 ${esc(r.artist || r.artist_email || '—')} · 👥 ${r.buyers || 0} billets · ❤️ ${r.likes_count || 0}</div>
+      <div class="em">En direct depuis ${fmtDate(r.start_date_time)}</div>
+      <div style="margin-top:8px">${watch}</div>
+    </div>`;
+  }).join('');
+  view().innerHTML = head + cards;
+  view().querySelectorAll('[data-watchlive]').forEach((b) => {
+    b.onclick = () => { const r = rows.find((x) => x.id == b.dataset.watchlive); if (r) openLivePlayer(r); };
+  });
+}
+async function pageLives() {
+  if (livesTimer) { clearInterval(livesTimer); livesTimer = null; }
+  await renderLives();
+  livesTimer = setInterval(() => {
+    if (location.hash.replace('#', '') !== 'lives') { clearInterval(livesTimer); livesTimer = null; return; }
+    renderLives();
+  }, 15000);
+}
+function openLivePlayer(row) {
+  const url = `https://stream.mux.com/${row.mux_live_playback_id}.m3u8`;
+  const bg = document.createElement('div');
+  bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:1000';
+  bg.innerHTML = `<div style="background:#0b1220;padding:16px;border-radius:12px;max-width:900px;width:92%">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="color:#fff;font-weight:700">🔴 ${esc(row.name || '')} — ${esc(row.artist || '')}</div>
+        <button class="btn del" data-close>Fermer</button></div>
+      <video controls autoplay playsinline style="width:100%;border-radius:8px;background:#000;max-height:70vh"></video>
+    </div>`;
+  document.body.appendChild(bg);
+  const video = bg.querySelector('video');
+  playHls(video, url);
+  const close = () => { try { video.pause(); video.removeAttribute('src'); video.load(); } catch (_) {} bg.remove(); };
+  bg.querySelector('[data-close]').onclick = close;
+  bg.onclick = (e) => { if (e.target === bg) close(); };
+}
+// Lit un flux HLS : natif (Safari) sinon hls.js chargé à la volée (Chrome…).
+function playHls(video, url) {
+  if (video.canPlayType('application/vnd.apple.mpegurl')) { video.src = url; return; }
+  if (window.Hls) { const h = new Hls(); h.loadSource(url); h.attachMedia(video); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js';
+  s.onload = () => { if (window.Hls) { const h = new Hls(); h.loadSource(url); h.attachMedia(video); } };
+  document.head.appendChild(s);
+}
+
 const ROUTES = {
-  dashboard: pageDashboard, users: pageUsers, genres: pageGenres, 'user-genres': pageUserGenres,
+  dashboard: pageDashboard, lives: pageLives, users: pageUsers, genres: pageGenres, 'user-genres': pageUserGenres,
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,

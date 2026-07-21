@@ -219,6 +219,23 @@ router.get('/events', requireAdmin, (req, res) => {
   return res.json({ status: 'success', data: rows });
 });
 
+// Concerts actuellement EN DIRECT — supervision / modération (la plateforme
+// est responsable du contenu diffusé). Renvoie de quoi lister ET regarder via
+// le flux HLS Mux (mux_live_playback_id, disponible une fois le relais
+// Zego->Mux branché).
+router.get('/live-events', requireAdmin, (req, res) => {
+  const rows = db.prepare(
+    `SELECT e.id, e.name, e.start_date_time, e.likes_count,
+            e.mux_live_playback_id, e.mux_live_stream_id,
+            u.artist_name AS artist, u.id AS artist_id, u.email AS artist_email,
+            (SELECT COUNT(DISTINCT t.user_id) FROM tickets t WHERE t.event_id = e.id) AS buyers
+     FROM events e LEFT JOIN users u ON u.id = e.artist_id
+     WHERE e.status = 'live'
+     ORDER BY e.start_date_time DESC`
+  ).all();
+  return res.json({ status: 'success', data: rows });
+});
+
 // Liste des artistes (pour le menu déroulant du formulaire event)
 router.get('/artists-list', requireAdmin, (req, res) => {
   const rows = db.prepare(

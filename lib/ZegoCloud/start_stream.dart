@@ -35,6 +35,9 @@ class _StartStreamState extends State<StartStream> {
   StreamSubscription? _commandSubscription;
   Timer? _logTimer;
   bool _isLive = false;
+  // Contrôles hôte : masquer tout l'overlay (place à la scène) / couper le chat.
+  bool _overlayHidden = false;
+  bool _chatHidden = false;
 
   @override
   void initState() {
@@ -283,6 +286,32 @@ class _StartStreamState extends State<StartStream> {
     );
   }
 
+  // Petit bouton rond de contrôle hôte (œil / chat).
+  Widget _hostToggle({
+    required IconData icon,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(left: 8),
+        padding: const EdgeInsets.all(9),
+        decoration: BoxDecoration(
+          color: active
+              ? goldPrimary
+              : Colors.black.withValues(alpha: 0.35),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: active ? midnightPrimary : ivory,
+        ),
+      ),
+    );
+  }
+
   Widget _buildOverlayUI() {
     return SafeArea(
       child: Column(
@@ -291,102 +320,136 @@ class _StartStreamState extends State<StartStream> {
           // Décalage sous la barre du haut de Zego (avatar hôte + compteur +
           // bouton quitter), sinon notre barre perso la chevauche.
           const SizedBox(height: 54),
-          // Top Info Bar
+
+          // Barre de contrôles hôte — TOUJOURS visible (permet de réafficher
+          // l'overlay après l'avoir masqué).
           Padding(
             padding: myPadding,
-            child: LiveStreamTopBar(event: currentEvent),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // Couper / réafficher le chat
+                _hostToggle(
+                  icon: _chatHidden
+                      ? Icons.chat_bubble_outline
+                      : Icons.chat_bubble,
+                  active: !_chatHidden,
+                  onTap: () => setState(() => _chatHidden = !_chatHidden),
+                ),
+                // Vider l'écran (laisser place à la scène) / réafficher
+                _hostToggle(
+                  icon: _overlayHidden
+                      ? Icons.visibility_off_rounded
+                      : Icons.visibility_rounded,
+                  active: !_overlayHidden,
+                  onTap: () =>
+                      setState(() => _overlayHidden = !_overlayHidden),
+                ),
+              ],
+            ),
           ),
 
-          // Bouton "Lancer une promo" (hote)
-          Padding(
-            padding: myPadding,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: GestureDetector(
-                onTap: _launchPromo,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: goldPrimary,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.local_offer_rounded,
-                        color: midnightPrimary,
-                        size: 16,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'Lancer une promo',
-                        style: TextStyle(
+          // Tout le reste de l'overlay est masquable (place à la scène).
+          if (!_overlayHidden) ...[
+            // Top Info Bar
+            Padding(
+              padding: myPadding,
+              child: LiveStreamTopBar(event: currentEvent),
+            ),
+
+            // Bouton "Lancer une promo" (hote)
+            Padding(
+              padding: myPadding,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: GestureDetector(
+                  onTap: _launchPromo,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: goldPrimary,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.local_offer_rounded,
                           color: midnightPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
+                          size: 16,
                         ),
-                      ),
-                    ],
+                        SizedBox(width: 6),
+                        Text(
+                          'Lancer une promo',
+                          style: TextStyle(
+                            color: midnightPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          const Spacer(),
+            const Spacer(),
 
-          // Bottom Chat + Actions
-          Padding(
-            padding: myPadding,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // Live chat feed
-                    Expanded(
-                      child: LiveStreamChatPreview(
-                        messages: currentEvent.activities ?? [],
+            // Bottom Chat + Actions
+            Padding(
+              padding: myPadding,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // Live chat feed (masquable indépendamment)
+                      Expanded(
+                        child: _chatHidden
+                            ? const SizedBox.shrink()
+                            : LiveStreamChatPreview(
+                                messages: currentEvent.activities ?? [],
+                              ),
                       ),
-                    ),
 
-                    const SizedBox(width: 8),
-                    // Right action buttons
-                    LiveStreamSideActions(
-                      fromArtist: true,
-                      event: currentEvent,
-                      activities: currentEvent.activities ?? [],
-                      onGiftTap: () {
-                        Get.bottomSheet(
-                          ZegoGifts(
-                            eventId: currentEvent.id.toString(),
-                            onGiftSent: (activities) {
-                              setState(() {
-                                currentEvent = currentEvent.copyWith(
-                                  activities: activities,
-                                );
-                              });
-                            },
-                          ),
-                          isScrollControlled: true,
-                        );
-                      },
-                      onHeartTap: () async {
-                        _heartKey.currentState?.addHeart();
-                        await ZegoUIKit().sendInRoomCommand('like', []);
-                      },
-                    ),
-                  ],
-                ),
-                height(0.04),
-              ],
+                      const SizedBox(width: 8),
+                      // Right action buttons
+                      LiveStreamSideActions(
+                        fromArtist: true,
+                        event: currentEvent,
+                        activities: currentEvent.activities ?? [],
+                        onGiftTap: () {
+                          Get.bottomSheet(
+                            ZegoGifts(
+                              eventId: currentEvent.id.toString(),
+                              onGiftSent: (activities) {
+                                setState(() {
+                                  currentEvent = currentEvent.copyWith(
+                                    activities: activities,
+                                  );
+                                });
+                              },
+                            ),
+                            isScrollControlled: true,
+                          );
+                        },
+                        onHeartTap: () async {
+                          _heartKey.currentState?.addHeart();
+                          await ZegoUIKit().sendInRoomCommand('like', []);
+                        },
+                      ),
+                    ],
+                  ),
+                  height(0.04),
+                ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
