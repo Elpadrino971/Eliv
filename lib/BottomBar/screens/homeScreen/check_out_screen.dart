@@ -3,9 +3,9 @@ import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
+import 'package:artist/BottomBar/screens/profile/user_wallet.dart';
 import 'package:artist/widgets/my_appBar.dart';
 import 'package:artist/widgets/my_button.dart';
-import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -177,164 +177,80 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
               ),
               height(0.02),
 
-              GridView.builder(
-                shrinkWrap: true,
-                padding: EdgeInsets.all(0),
-                physics: NeverScrollableScrollPhysics(),
-
-                itemCount: 2,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 1.6,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
+              // Paiement EN POINTS (conforme Apple : aucun formulaire carte
+              // in-app pour du contenu numérique). L'argent réel entre via la
+              // recharge du portefeuille (achat In-App RevenueCat).
+              Container(
+                padding: myPadding,
+                decoration: BoxDecoration(
+                  color: Get.isDarkMode ? darkmodeColor : whiteColor,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: borderGreyColor, width: 2),
                 ),
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedPayment = paymentList[index]['name'];
-                      });
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        image: DecorationImage(
-                          image: Get.isDarkMode
-                              ? paymentList[index]['name'] == selectedPayment
-                                    ? AssetImage('assets/container4.png')
-                                    : AssetImage('assets/container5.png')
-                              : paymentList[index]['name'] == selectedPayment
-                              ? AssetImage('assets/container1.png')
-                              : AssetImage('assets/container2.png'),
-                          fit: BoxFit.cover,
-                        ),
-                        color: Get.isDarkMode
-                            ? selectedPayment == paymentList[index]['name']
-                                  ? goldPrimary
-                                  : darkmodeColor
-                            : selectedPayment == paymentList[index]['name']
-                            ? mainThemeColor.withValues(alpha: 0.2)
-                            : whiteColor,
-                      ),
-
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            paymentList[index]['image'],
-                            width: 20,
-                            height: 20,
-                            color: paymentList[index]['name'] == selectedPayment
-                                ? whiteColor
-                                : Color(0xffA1A1A1),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.account_balance_wallet_rounded,
+                      color: goldPrimary,
+                      size: 28,
+                    ),
+                    width(0.03),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'wallet_available_balance'.tr,
+                          style: const TextStyle(
+                            color: Color(0xffA1A1A1),
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
                           ),
-                          Text(
-                            paymentList[index]['name'],
+                        ),
+                        Obx(
+                          () => Text(
+                            '${userModel.value.user?.points ?? '0'} pts',
                             style: TextStyle(
-                              color:
-                                  paymentList[index]['name'] == selectedPayment
-                                  ? whiteColor
-                                  : Color(0xffA1A1A1),
+                              color: Get.isDarkMode ? whiteColor : blackColor,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
                             ),
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                    Spacer(),
+                    GestureDetector(
+                      onTap: () async {
+                        await Get.to(() => const UserWallet());
+                        setState(() {}); // rafraîchit le solde au retour
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: goldPrimary,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'Recharger',
+                          style: TextStyle(
+                            color: midnightPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
-                  );
-                },
+                  ],
+                ),
               ),
               height(0.02),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'home_cardholder_name'.tr,
-                    style: TextStyle(
-                      color: Color(0xffA1A1A1),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  MyTextField(
-                    hintText: 'Alex Harrison',
-                    controller: cardholderController,
-                  ),
-
-                  height(0.01),
-                  Text(
-                    'home_card_number'.tr,
-                    style: TextStyle(
-                      color: Color(0xffA1A1A1),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  MyTextField(
-                    hintText: '•••• •••• •••• 4242',
-                    controller: numberController,
-                    keyboardType: TextInputType.number,
-                  ),
-
-                  Row(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          height(0.01),
-                          Text(
-                            'home_expiry_date'.tr,
-                            style: TextStyle(
-                              color: Color(0xffA1A1A1),
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          SizedBox(
-                            width: Get.width * 0.44,
-                            child: MyTextField(
-                              hintText: 'MM / YY',
-                              controller: dateController,
-                              keyboardType: TextInputType.datetime,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      Spacer(),
-
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          height(0.01),
-                          Text(
-                            'home_cvv'.tr,
-                            style: TextStyle(
-                              color: Color(0xffA1A1A1),
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          SizedBox(
-                            width: Get.width * 0.44,
-                            child: MyTextField(
-                              hintText: '•••',
-                              controller: cvvController,
-                              keyboardType: TextInputType.text,
-                              isObscure: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                  // (Champs carte retirés : paiement en points uniquement,
+                  // conforme aux règles Apple pour le contenu numérique.)
                   height(0.01),
                   Row(
                     children: [

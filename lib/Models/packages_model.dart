@@ -39,6 +39,7 @@ class Package {
   final String? image;
   final String? points;
   final String? price;
+  final String? revenuecatProductId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -48,6 +49,7 @@ class Package {
     this.image,
     this.points,
     this.price,
+    this.revenuecatProductId,
     this.createdAt,
     this.updatedAt,
   });
@@ -58,6 +60,7 @@ class Package {
     String? image,
     String? points,
     String? price,
+    String? revenuecatProductId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Package(
@@ -66,6 +69,7 @@ class Package {
     image: image ?? this.image,
     points: points ?? this.points,
     price: price ?? this.price,
+    revenuecatProductId: revenuecatProductId ?? this.revenuecatProductId,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -76,6 +80,7 @@ class Package {
     image: json["image"],
     points: json["points"],
     price: json["price"],
+    revenuecatProductId: json["revenuecat_product_id"],
     createdAt: json["created_at"] == null
         ? null
         : DateTime.parse(json["created_at"]),
@@ -90,6 +95,7 @@ class Package {
     "image": image,
     "points": points,
     "price": price,
+    "revenuecat_product_id": revenuecatProductId,
     "created_at": createdAt?.toIso8601String(),
     "updated_at": updatedAt?.toIso8601String(),
   };

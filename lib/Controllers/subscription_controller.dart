@@ -174,4 +174,30 @@ class SubscriptionController extends GetxController {
       return false;
     }
   }
+
+  /// Achète un pack de POINTS via son identifiant produit RevenueCat/App Store
+  /// (recharge du portefeuille, conforme Apple). Cherche le package
+  /// correspondant dans les offerings, l'achète, et laisse le webhook
+  /// RevenueCat créditer les points côté serveur (source de vérité). Retourne
+  /// false si le produit n'est pas trouvé (pas encore configuré dans RevenueCat
+  /// / App Store Connect) ou si l'achat échoue/est annulé.
+  Future<bool> purchasePointPack(String productId) async {
+    if (productId.isEmpty) return false;
+    try {
+      final offerings = await Purchases.getOfferings();
+      for (final offering in offerings.all.values) {
+        for (final pack in offering.availablePackages) {
+          if (pack.storeProduct.identifier == productId) {
+            await Purchases.purchase(PurchaseParams.package(pack));
+            return true;
+          }
+        }
+      }
+      myPrint('purchasePointPack: produit "$productId" introuvable dans les offerings RevenueCat');
+      return false;
+    } catch (e) {
+      myPrint('purchasePointPack: $e');
+      return false;
+    }
+  }
 }

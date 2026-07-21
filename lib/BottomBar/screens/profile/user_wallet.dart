@@ -1,6 +1,7 @@
 import 'package:artist/BottomBar/screens/profile/points_store.dart';
 import 'package:artist/BottomBar/screens/profile/topup_history.dart';
 import 'package:artist/Controllers/auth_controller.dart';
+import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/artist_bottom_bar/screen/Studio/artist_withdraw.dart';
@@ -173,14 +174,41 @@ class _UserWalletState extends State<UserWallet> {
                     final bundle = packages[index];
                     return PointsCard(
                       onTap: () async {
+                        final productId = bundle.revenuecatProductId ?? '';
+                        if (productId.isEmpty) {
+                          myWarningDialog(
+                            subtitle:
+                                "Ce pack n'est pas encore disponible à l'achat.",
+                          );
+                          return;
+                        }
                         await myAlertDialog(
                           title: 'pay_buy_package'.tr,
                           content: 'pay_buy_package_confirm'.tr,
                           onTap: () async {
                             Get.back();
-                            await authController.purchasePackage(
-                              packageId: bundle.id.toString(),
+                            myLoadingDialog();
+                            final sub =
+                                Get.isRegistered<SubscriptionController>()
+                                ? Get.find<SubscriptionController>()
+                                : Get.put(SubscriptionController());
+                            final success = await sub.purchasePointPack(
+                              productId,
                             );
+                            Get.back(); // ferme le loader
+                            if (success) {
+                              // Le webhook RevenueCat crédite les points côté
+                              // serveur : on rafraîchit le solde.
+                              await authController.getUserModel();
+                              mySuccessDialog(
+                                subtitle:
+                                    'Recharge validée ! Tes points arrivent.',
+                              );
+                            } else {
+                              myWarningDialog(
+                                subtitle: 'Achat non complété. Réessaie.',
+                              );
+                            }
                           },
                         );
                       },
