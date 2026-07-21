@@ -81,6 +81,9 @@ function deleteAsset(assetId) {
 }
 
 const LIVE_INGEST_URL = 'rtmps://global-live.mux.com:443/app';
+// RTMP simple (non-TLS, port 5222) : cible plus fiable pour le relais CDN
+// depuis Zego (addPublishCdnUrl accepte du rtmp://). Même stream key.
+const LIVE_INGEST_URL_RTMP = 'rtmp://global-live.mux.com:5222/app';
 
 /**
  * Live Stream Mux (mode "Concert PRO" : régie -> encodeur -> Mux Live).
@@ -149,4 +152,5 @@ module.exports = {
   deleteLiveStream,
   verifyWebhookSignature,
   LIVE_INGEST_URL,
+  LIVE_INGEST_URL_RTMP,
 };

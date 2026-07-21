@@ -57,12 +57,13 @@ router.post('/live/:eventId/recording/start', requireAuth, async (req, res) => {
     if (event.mux_live_stream_id && event.mux_stream_key) {
       return res.json({ status: 'success', data: {
         recording: true,
-        ingest_url: mux.LIVE_INGEST_URL,
+        ingest_url: mux.LIVE_INGEST_URL_RTMP,
         stream_key: event.mux_stream_key,
-        rtmp_url: `${mux.LIVE_INGEST_URL}/${event.mux_stream_key}`,
+        // URL RTMP complète relayée par Zego (addPublishCdnUrl).
+        rtmp_url: `${mux.LIVE_INGEST_URL_RTMP}/${event.mux_stream_key}`,
       }});
     }
-    const { liveStreamId, streamKey, playbackId, ingestUrl } = await mux.createLiveStream({
+    const { liveStreamId, streamKey, playbackId } = await mux.createLiveStream({
       passthrough: { kind: 'event', id: event.id },
     });
     db.prepare(
@@ -71,9 +72,9 @@ router.post('/live/:eventId/recording/start', requireAuth, async (req, res) => {
     ).run(liveStreamId, streamKey, playbackId, event.id);
     return res.json({ status: 'success', data: {
       recording: true,
-      ingest_url: ingestUrl,
+      ingest_url: mux.LIVE_INGEST_URL_RTMP,
       stream_key: streamKey,
-      rtmp_url: `${ingestUrl}/${streamKey}`,
+      rtmp_url: `${mux.LIVE_INGEST_URL_RTMP}/${streamKey}`,
     }});
   } catch (e) {
     console.error('[recording start]', e.message);

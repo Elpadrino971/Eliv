@@ -15,6 +15,8 @@ import 'package:artist/ZegoCloud/zego_gifts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zego_uikit_prebuilt_live_streaming/zego_uikit_prebuilt_live_streaming.dart';
+// ignore: depend_on_referenced_packages
+import 'package:zego_express_engine/zego_express_engine.dart';
 
 import 'dart:async';
 
@@ -38,6 +40,12 @@ class _StartStreamState extends State<StartStream> {
   // Contrôles hôte : masquer tout l'overlay (place à la scène) / couper le chat.
   bool _overlayHidden = false;
   bool _chatHidden = false;
+  // Compteur de durée du live (démarré quand le live diffuse réellement).
+  DateTime? _liveStartedAt;
+  Timer? _durationTimer;
+  String _liveDuration = '00:00';
+  // Relais Zego -> Mux (enregistrement replay) : déclenché une seule fois.
+  bool _relayStarted = false;
 
   @override
   void initState() {
@@ -58,9 +66,54 @@ class _StartStreamState extends State<StartStream> {
   void dispose() {
     _commandSubscription?.cancel();
     _logTimer?.cancel();
+    _durationTimer?.cancel();
     // Signale la fin du live -> Mux finalise l'asset de replay.
     zegoController.stopRecording(widget.event.id.toString());
     super.dispose();
+  }
+
+  // Compteur de durée du live : démarre au premier passage en diffusion.
+  void _startDurationTimer() {
+    if (_durationTimer != null) return;
+    _liveStartedAt = DateTime.now();
+    _durationTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      final d = DateTime.now().difference(_liveStartedAt!);
+      final h = d.inHours;
+      final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+      final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+      setState(() {
+        _liveDuration = h > 0 ? '$h:$m:$s' : '$m:$s';
+      });
+    });
+  }
+
+  // Relais du flux Zego vers Mux (RTMP) pour l'enregistrement du replay.
+  // muxRtmpUrl est fourni par le backend (startRecording) si le replay est
+  // activé pour ce concert. Le streamID suit la convention du UIKit :
+  // "<liveID>_<userID>_main" (confirmé dans les logs Zego). Enveloppé dans un
+  // try/catch : un échec de relais ne doit jamais interrompre le live.
+  Future<void> _relayToMux() async {
+    if (_relayStarted) return;
+    final rtmp = zegoController.muxRtmpUrl.value;
+    if (rtmp == null || rtmp.isEmpty) return;
+    _relayStarted = true;
+    final streamId =
+        '${currentEvent.id}_${zegoController.userId}_main';
+    try {
+      final res = await ZegoExpressEngine.instance
+          .addPublishCdnUrl(streamId, rtmp);
+      myPrint(
+        'relayToMux: addPublishCdnUrl($streamId -> $rtmp) '
+        'errorCode=${res.errorCode}',
+      );
+    } catch (e) {
+      _relayStarted = false; // autorise un nouvel essai
+      myPrint('relayToMux: exception -> $e');
+    }
   }
 
   Future<void> _initData() async {
@@ -261,6 +314,8 @@ class _StartStreamState extends State<StartStream> {
                   setState(() {
                     _isLive = true;
                   });
+                  _startDurationTimer();
+                  _relayToMux();
                 } else if (state == ZegoLiveStreamingState.idle) {
                   setState(() {
                     _isLive = false;
@@ -326,24 +381,60 @@ class _StartStreamState extends State<StartStream> {
           Padding(
             padding: myPadding,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Couper / réafficher le chat
-                _hostToggle(
-                  icon: _chatHidden
-                      ? Icons.chat_bubble_outline
-                      : Icons.chat_bubble,
-                  active: !_chatHidden,
-                  onTap: () => setState(() => _chatHidden = !_chatHidden),
+                // Compteur de durée du live (depuis le début de la diffusion)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.fiber_manual_record,
+                        color: liveRed,
+                        size: 12,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _liveDuration,
+                        style: const TextStyle(
+                          color: ivory,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                // Vider l'écran (laisser place à la scène) / réafficher
-                _hostToggle(
-                  icon: _overlayHidden
-                      ? Icons.visibility_off_rounded
-                      : Icons.visibility_rounded,
-                  active: !_overlayHidden,
-                  onTap: () =>
-                      setState(() => _overlayHidden = !_overlayHidden),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Couper / réafficher le chat
+                    _hostToggle(
+                      icon: _chatHidden
+                          ? Icons.chat_bubble_outline
+                          : Icons.chat_bubble,
+                      active: !_chatHidden,
+                      onTap: () =>
+                          setState(() => _chatHidden = !_chatHidden),
+                    ),
+                    // Vider l'écran (place à la scène) / réafficher
+                    _hostToggle(
+                      icon: _overlayHidden
+                          ? Icons.visibility_off_rounded
+                          : Icons.visibility_rounded,
+                      active: !_overlayHidden,
+                      onTap: () =>
+                          setState(() => _overlayHidden = !_overlayHidden),
+                    ),
+                  ],
                 ),
               ],
             ),
