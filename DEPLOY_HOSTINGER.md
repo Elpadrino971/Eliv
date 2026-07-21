@@ -81,6 +81,7 @@ docker run -d --name vybzzz --restart always \
   -e JWT_SECRET=$(openssl rand -hex 32) \
   -e VYBZZZ_DB=/data/vybzzz.sqlite \
   -v /opt/vybzzz-data:/data \
+  -v /opt/vybzzz-storage:/app/storage \
   vybzzz-backend
 ```
 Vérifie que ça tourne :
@@ -150,7 +151,8 @@ cd backend && docker build -t vybzzz-backend .
 docker rm -f vybzzz
 docker run -d --name vybzzz --restart always -p 127.0.0.1:8002:8002 \
   -e JWT_SECRET=$(cat /opt/vybzzz-data/.jwt 2>/dev/null || openssl rand -hex 32 | tee /opt/vybzzz-data/.jwt) \
-  -e VYBZZZ_DB=/data/vybzzz.sqlite -v /opt/vybzzz-data:/data vybzzz-backend
+  -e VYBZZZ_DB=/data/vybzzz.sqlite -v /opt/vybzzz-data:/data \
+  -v /opt/vybzzz-storage:/app/storage vybzzz-backend
 ```
 (Le JWT est conservé dans `/opt/vybzzz-data/.jwt` pour ne pas déconnecter l'admin.)
 
