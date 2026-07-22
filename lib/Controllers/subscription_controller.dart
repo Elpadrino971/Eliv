@@ -175,13 +175,13 @@ class SubscriptionController extends GetxController {
     }
   }
 
-  /// Achète un pack de POINTS via son identifiant produit RevenueCat/App Store
-  /// (recharge du portefeuille, conforme Apple). Cherche le package
-  /// correspondant dans les offerings, l'achète, et laisse le webhook
-  /// RevenueCat créditer les points côté serveur (source de vérité). Retourne
-  /// false si le produit n'est pas trouvé (pas encore configuré dans RevenueCat
-  /// / App Store Connect) ou si l'achat échoue/est annulé.
-  Future<bool> purchasePointPack(String productId) async {
+  /// Achète un produit IAP par son identifiant (App Store / Play), via son
+  /// package dans les offerings RevenueCat. Utilisé pour les PACKS DE POINTS
+  /// (recharge) ET les BILLETS de concert (achat direct). Conforme Apple.
+  /// Le webhook RevenueCat notifie ensuite le backend (crédit points / ticket).
+  /// Retourne false si le produit est introuvable dans les offerings (pas
+  /// encore configuré) ou si l'achat échoue/est annulé.
+  Future<bool> purchaseByProductId(String productId) async {
     if (productId.isEmpty) return false;
     try {
       final offerings = await Purchases.getOfferings();
@@ -193,11 +193,15 @@ class SubscriptionController extends GetxController {
           }
         }
       }
-      myPrint('purchasePointPack: produit "$productId" introuvable dans les offerings RevenueCat');
+      myPrint('purchaseByProductId: produit "$productId" introuvable dans les offerings RevenueCat');
       return false;
     } catch (e) {
-      myPrint('purchasePointPack: $e');
+      myPrint('purchaseByProductId: $e');
       return false;
     }
   }
+
+  /// Alias historique (packs de points).
+  Future<bool> purchasePointPack(String productId) =>
+      purchaseByProductId(productId);
 }

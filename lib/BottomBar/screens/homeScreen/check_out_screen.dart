@@ -3,7 +3,7 @@ import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
-import 'package:artist/BottomBar/screens/profile/user_wallet.dart';
+import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/widgets/my_appBar.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:flutter/material.dart';
@@ -28,22 +28,19 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   String selectedPayment = '';
 
   double get _ticketPrice {
-    final base = double.tryParse(widget.event.ticketPrice ?? '0') ?? 0;
-    return widget.discountPercent > 0
-        ? base * (1 - widget.discountPercent / 100)
-        : base;
+    return double.tryParse(widget.event.ticketPrice ?? '0') ?? 0;
   }
 
-  // Prix en POINTS (monnaie interne) : 1 € = 100 points.
-  int get _ticketPoints => (_ticketPrice * 100).round();
+  // ID du produit IAP correspondant au palier de prix du billet.
+  // Ex : 49.99 € -> "ticket_49". (Les promos ne s'appliquent pas à l'IAP —
+  // Apple ne permet pas de remise arbitraire sur un consommable.)
+  String get _ticketProductId => 'ticket_${_ticketPrice.floor()}';
 
   List<Map> get textList => [
     {
       'title': 'home_standard_pass'.tr,
-      'subTitle': widget.discountPercent > 0
-          ? 'Promo -${widget.discountPercent}% appliquée'
-          : 'home_4k_uhd_access'.tr,
-      'price': '$_ticketPoints pts',
+      'subTitle': 'home_4k_uhd_access'.tr,
+      'price': '${_ticketPrice.toStringAsFixed(2)} €',
     },
   ];
   String selectedAccess = '';
@@ -168,85 +165,22 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
               height(0.01),
 
-              Text(
-                'home_payment_method'.tr.toUpperCase(),
-                style: const TextStyle(
-                  fontFamily: AppFonts.ui,
-                  color: textMuted,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  letterSpacing: 2.5,
-                ),
-              ),
-              height(0.02),
-
-              // Paiement EN POINTS (conforme Apple : aucun formulaire carte
-              // in-app pour du contenu numérique). L'argent réel entre via la
-              // recharge du portefeuille (achat In-App RevenueCat).
-              Container(
-                padding: myPadding,
-                decoration: BoxDecoration(
-                  color: Get.isDarkMode ? darkmodeColor : whiteColor,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: borderGreyColor, width: 2),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.account_balance_wallet_rounded,
-                      color: goldPrimary,
-                      size: 28,
-                    ),
-                    width(0.03),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'wallet_available_balance'.tr,
-                          style: const TextStyle(
-                            color: Color(0xffA1A1A1),
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Obx(
-                          () => Text(
-                            '${userModel.value.user?.points ?? '0'} pts',
-                            style: TextStyle(
-                              color: Get.isDarkMode ? whiteColor : blackColor,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Spacer(),
-                    GestureDetector(
-                      onTap: () async {
-                        await Get.to(() => const UserWallet());
-                        setState(() {}); // rafraîchit le solde au retour
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: goldPrimary,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          'Recharger',
-                          style: TextStyle(
-                            color: midnightPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+              // Paiement du billet par ACHAT IN-APP (App Store), conforme Apple.
+              Row(
+                children: [
+                  Icon(Icons.lock_rounded, color: goldPrimary, size: 18),
+                  width(0.02),
+                  Expanded(
+                    child: Text(
+                      'Paiement sécurisé via l\'App Store',
+                      style: TextStyle(
+                        color: textMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               height(0.02),
               Column(
@@ -284,51 +218,38 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
                   height(0.01),
                   MyButton(
-                    label: 'home_authorize_payment'.tr,
+                    label:
+                        'Payer ${_ticketPrice.toStringAsFixed(2)} €',
                     labelColor: midnightPrimary,
                     onTap: () async {
                       final eventController = Get.find<EventController>();
-
-                      // 1. Get selected price and parse numeric value
-                      final selectedTier = selectedAccess.isEmpty
-                          ? textList[0]
-                          : textList.firstWhere(
-                              (t) => t['title'] == selectedAccess,
-                            );
-
-                      final String priceStr = selectedTier['price']
-                          .toString()
-                          .replaceAll(RegExp(r'[^0-9.]'), '');
-                      final double price = double.tryParse(priceStr) ?? 0.0;
-
-                      // 2. Check points
-                      final double userPoints =
-                          double.tryParse(
-                            userModel.value.user?.points ?? '0',
-                          ) ??
-                          0.0;
-
-                      if (userPoints < price) {
-                        myAlertDialog(
-                          title: 'home_insufficient_points'.tr,
-                          content: 'home_insufficient_points_msg'.tr,
-                          onTap: () => Get.back(),
-                        );
-                        return;
-                      }
-
-                      // 3. Confirmation and Buy
                       myAlertDialog(
                         title: 'home_confirm_purchase'.tr,
                         content: 'home_confirm_purchase_msg'.trParams({
                           'name': '${widget.event.name}',
                         }),
                         onTap: () async {
-                          Get.back(); // Close alert
+                          Get.back(); // ferme la confirmation
                           myLoadingDialog();
+                          // 1. Achat IAP direct du billet (palier de prix).
+                          final sub = Get.isRegistered<SubscriptionController>()
+                              ? Get.find<SubscriptionController>()
+                              : Get.put(SubscriptionController());
+                          final paid =
+                              await sub.purchaseByProductId(_ticketProductId);
+                          if (!paid) {
+                            Get.back(); // ferme le loader
+                            myWarningDialog(
+                              subtitle:
+                                  "Paiement non complété. Réessaie. (produit $_ticketProductId)",
+                            );
+                            return;
+                          }
+                          // 2. Paiement validé -> enregistre l'accès au concert.
                           await eventController.buyTicket(
                             eventId: widget.event.id.toString(),
                           );
+                          // buyTicket gère son propre dialog succès/erreur.
                         },
                       );
                     },
