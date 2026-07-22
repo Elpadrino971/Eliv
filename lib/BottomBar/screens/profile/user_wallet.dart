@@ -172,7 +172,16 @@ class _UserWalletState extends State<UserWallet> {
                   ),
                   itemBuilder: (context, index) {
                     final bundle = packages[index];
+                    // Badges marketing selon le pack (cf. tarifs optimisés).
+                    String? badge;
+                    final pts = bundle.points ?? '';
+                    if (pts == '1100') {
+                      badge = 'Populaire';
+                    } else if (pts == '6500') {
+                      badge = 'Meilleure valeur';
+                    }
                     return PointsCard(
+                      badge: badge,
                       onTap: () async {
                         final productId = bundle.revenuecatProductId ?? '';
                         if (productId.isEmpty) {
@@ -214,7 +223,7 @@ class _UserWalletState extends State<UserWallet> {
                       },
                       points: bundle.points ?? 'N/A',
                       price: bundle.price ?? 'N/A',
-                      isHighlighted: index == 0,
+                      isHighlighted: badge == 'Populaire',
                     );
                   },
                 );

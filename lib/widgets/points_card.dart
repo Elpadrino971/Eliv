@@ -9,12 +9,16 @@ class PointsCard extends StatelessWidget {
     required this.points,
     required this.price,
     this.isHighlighted = false,
+    this.badge,
     this.onTap,
   });
 
   final String points;
   final String price;
   final bool isHighlighted;
+
+  /// Ruban optionnel : "Populaire", "Meilleure valeur"…
+  final String? badge;
   final VoidCallback? onTap;
 
   @override
@@ -26,15 +30,39 @@ class PointsCard extends StatelessWidget {
           color: Get.isDarkMode ? darkmodeColor : whiteColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: Get.isDarkMode
+            color: badge != null
                 ? goldPrimary
-                : mainThemeColor.withValues(alpha: 0.3),
+                : (Get.isDarkMode
+                      ? goldPrimary
+                      : mainThemeColor.withValues(alpha: 0.3)),
+            width: badge != null ? 2 : 1,
           ),
         ),
         padding: const EdgeInsets.all(15),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            if (badge != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: goldPrimary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  badge!,
+                  style: const TextStyle(
+                    color: midnightPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+              height(0.008),
+            ],
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -75,7 +103,7 @@ class PointsCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '\$$price',
+                '$price €',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: isHighlighted

@@ -30,6 +30,14 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
   final vipController = TextEditingController();
   String? selectedGenre;
 
+  // Paliers de prix des billets — chaque prix correspond à un produit IAP
+  // (ticket_19, ticket_29, …) créé dans les stores. L'artiste choisit un palier.
+  final List<String> _ticketTiers = [
+    '19.99', '29.99', '39.99', '49.99', '59.99',
+    '79.99', '99.99', '129.99', '149.99',
+  ];
+  String? selectedPrice;
+
   bool liveValue = true;
 
   // Replay : activé par défaut, durée par défaut 60j (plafond = fenêtre de hold
@@ -490,17 +498,16 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                   ),
                 ),
 
-                MyTextField(
-                  hintText: '0.00',
-                  controller: standardController,
-                  keyboardType: TextInputType.number,
-                  leading: Icon(
-                    Icons.monetization_on,
-                    size: 20,
-                    color: Color(0xff737373),
-                  ),
+                MyDropDown(
+                  dropdownvalue: selectedPrice,
+                  hintText: 'Choisir un prix',
+                  items: _ticketTiers.map((t) => '$t €').toList(),
+                  onChanged: (value) {
+                    // On stocke la valeur numérique (sans " €").
+                    selectedPrice = value?.replaceAll(' €', '');
+                  },
                   validation: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null) {
                       return 'art_val_ticket_price'.tr;
                     }
                     return null;
@@ -664,7 +671,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                           startDateController.text,
                           endTimeController.text,
                         ),
-                        ticketPrice: standardController.text,
+                        ticketPrice: selectedPrice ?? '0',
                         genreId: selectedGenreId?.toString() ?? '',
                         hasLiveChat: liveValue ? '1' : '0',
                         replayEnabled: replayEnabled ? '1' : '0',
