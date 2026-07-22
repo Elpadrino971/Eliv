@@ -184,6 +184,8 @@ class SubscriptionController extends GetxController {
   Future<bool> purchaseByProductId(String productId) async {
     if (productId.isEmpty) return false;
     try {
+      // 1. Si le produit est dans un offering (ex. abonnements artistes),
+      //    on l'achète via son package.
       final offerings = await Purchases.getOfferings();
       for (final offering in offerings.all.values) {
         for (final pack in offering.availablePackages) {
@@ -193,7 +195,18 @@ class SubscriptionController extends GetxController {
           }
         }
       }
-      myPrint('purchaseByProductId: produit "$productId" introuvable dans les offerings RevenueCat');
+      // 2. Sinon (consommables : billets, packs de points), on récupère le
+      //    produit DIRECTEMENT par son ID -> pas besoin de le mettre dans un
+      //    offering RevenueCat. Le webhook notifie ensuite le backend.
+      final products = await Purchases.getProducts(
+        [productId],
+        productCategory: ProductCategory.nonSubscription,
+      );
+      if (products.isNotEmpty) {
+        await Purchases.purchase(PurchaseParams.storeProduct(products.first));
+        return true;
+      }
+      myPrint('purchaseByProductId: produit "$productId" introuvable (App Store)');
       return false;
     } catch (e) {
       myPrint('purchaseByProductId: $e');
