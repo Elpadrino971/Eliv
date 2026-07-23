@@ -97,7 +97,9 @@ function serializeUser(row, { withPassword = false } = {}) {
     id: row.id,
     email: row.email,
     phone_number: row.phone_number,
-    otp_code: row.otp_code,
+    // otp_code volontairement NON exposé : c'est un secret de vérification
+    // serveur. serializeUser est renvoyé par des routes publiques
+    // (/get-user, /featured-artists, activités…) -> ne jamais fuiter l'OTP.
     role: row.role,
     full_name: row.full_name,
     artist_name: row.artist_name,

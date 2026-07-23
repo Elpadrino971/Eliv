@@ -54,12 +54,21 @@ router.post('/', (req, res) => {
       const playbackId = (obj.playback_ids || []).find((p) => p.policy === 'public')?.id
         || obj.playback_ids?.[0]?.id || null;
 
-      if (passthrough?.kind === 'event' && passthrough.id) {
+      // Rattachement du replay à l'event : par passthrough (nominal) ou, en
+      // secours, via le live_stream_id que Mux fournit sur les assets issus
+      // d'un live -> robuste même si le passthrough de l'asset venait à manquer.
+      let eventId = (passthrough?.kind === 'event' && passthrough.id) ? passthrough.id : null;
+      if (!eventId && obj.live_stream_id) {
+        const evByLs = db.prepare('SELECT id FROM events WHERE mux_live_stream_id = ?').get(obj.live_stream_id);
+        if (evByLs) eventId = evByLs.id;
+      }
+
+      if (eventId) {
         // Durée du replay choisie par l'artiste/l'admin pour CE concert
         // (défaut = rétention globale). Si le replay est désactivé, on stocke
         // quand même l'asset mais avec une expiration immédiate : serializeEvent
         // ne le sert pas et le cron de rétention le supprimera.
-        const ev = db.prepare('SELECT replay_enabled, replay_duration_days FROM events WHERE id = ?').get(passthrough.id);
+        const ev = db.prepare('SELECT replay_enabled, replay_duration_days FROM events WHERE id = ?').get(eventId);
         const enabled = ev ? (ev.replay_enabled === null || ev.replay_enabled === undefined ? 1 : ev.replay_enabled) : 1;
         let days = ev ? parseInt(ev.replay_duration_days, 10) : REPLAY_RETENTION_DAYS;
         if (!Number.isFinite(days) || days < 1) days = REPLAY_RETENTION_DAYS;
@@ -70,7 +79,7 @@ router.post('/', (req, res) => {
               mux_upload_status = 'ready', video_reel = ?,
               replay_expires_at = datetime('now', '+' || ? || ' days')
            WHERE id = ?`
-        ).run(playbackId, playbackId, obj.id, muxHls(playbackId), days, passthrough.id);
+        ).run(playbackId, playbackId, obj.id, muxHls(playbackId), days, eventId);
       } else if (passthrough?.kind === 'clip' && passthrough.id) {
         db.prepare(
           `UPDATE feed_clips SET mux_playback_id = ?, mux_asset_id = ?, upload_status = 'ready',

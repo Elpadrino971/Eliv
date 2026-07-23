@@ -1,7 +1,100 @@
 # VybzzZ — Contexte projet (handoff)
 
 > Ce fichier permet de reprendre le projet dans une **nouvelle conversation** avec
-> tout le contexte. Dernière mise à jour : session monétisation / paiements.
+> tout le contexte. Dernière mise à jour : session **audit sécu + fix replay**.
+
+---
+
+## 0. ⚡ Session « béton » (audit sécu + fix replay) — À LIRE EN PREMIER
+
+> Travail livré sur la branche `claude/test-concert-payments-replay-xr9mh0`
+> (partie de `version-couplee`). À merger dans `version-couplee` puis redéployer
+> le backend (cf. §2). **Ces changements sont backend-only, ne touchent pas au
+> flux client** — pensés pour ne rien casser le jour d'une soumission.
+
+### ✅ Corrigé dans cette session (backend)
+1. **Crédit de points cassé (échec silencieux)** — le webhook RevenueCat crédite
+   via `WHERE revenuecat_product_id = ?`, mais le seed des 5 packs laissait cette
+   colonne NULL → achat réussi, argent pris, **0 point crédité**. Fix `db.js` :
+   back-fill idempotent du mapping (`vybzz_points_100/500/1100/2400/6500`) sur les
+   packs canoniques, sans jamais écraser une valeur admin.
+   👉 **Après déploiement**, vérifier sur le VPS :
+   `docker exec vybzzz node -e "const{db}=require('/app/src/db');console.log(db.prepare('SELECT id,name,points,revenuecat_product_id FROM packages').all())"`
+2. **Replay jamais rattaché à l'event (bug P0)** — `createLiveStream` (Mux) posait
+   `passthrough` seulement au niveau racine, jamais dans `new_asset_settings`. Mux
+   ne recopie PAS le passthrough racine sur l'asset → le webhook `video.asset.ready`
+   recevait `passthrough=null` → l'event n'était jamais mis à jour (le concert
+   s'enregistre mais **le replay n'apparaît jamais**). Fix `services/mux.js` +
+   fallback par `live_stream_id` dans `mux.routes.js`.
+3. **Vol de points / billets gratuits / revenu artiste falsifié** — `event-gift`,
+   `buy-ticket`, `event-comment`, `follow`, `unfollow` prenaient l'identité via
+   `req.user?.id || b.user_id`. Sans token, un attaquant mettait n'importe quel
+   `user_id` dans le corps → débit des points d'autrui, billet gratuit, wallet
+   artiste gonflé. Fix `events.routes.js` : **identité = JWT uniquement** (le
+   client loggé envoie déjà le Bearer partout, cf. `api_services.dart`).
+4. **Fuite d'OTP + PII** — `serializeUser` exposait `otp_code` sur des routes
+   publiques (`/get-user`, `/featured-artists`…). Fix `helpers.js` : OTP retiré.
+5. **Secret JWT faible** — garde-fou au boot (`auth.js`) : **refus de démarrer en
+   `NODE_ENV=production`** si `JWT_SECRET` manque/placeholder/<32c ; avertissement
+   sinon. (Le `docker run` actuel ne fixe pas `NODE_ENV` → aucun risque de blocage ;
+   pour activer l'enforcement, ajouter `-e NODE_ENV=production`.)
+6. **Secret RevenueCat committé** — retiré de `backend/.env.example` (était en clair).
+
+### 🔴 Actions REQUISES (ne peuvent pas être auto-corrigées sans risque)
+- **Roter le secret webhook RevenueCat** : la valeur qui était dans `.env.example`
+  (`bbfe95e4…fd58`) est compromise (historique git public). Dans RevenueCat →
+  Integrations → Webhooks → régénérer le secret, puis mettre à jour
+  `REVENUECAT_WEBHOOK_AUTH` dans `/opt/vybzzz/backend/.env` (les deux doivent
+  matcher, sinon la recharge est rejetée). Purger l'historique git (`git filter-repo`).
+- **Confirmer que `JWT_SECRET` (prod) est une vraie chaîne aléatoire ≥32c** avant
+  d'activer `NODE_ENV=production`.
+- **Vérif reçu serveur (durcissement futur)** : `buy-ticket` et le webhook RC
+  créditent sur confiance (pas de validation du reçu Apple/RevenueCat côté serveur).
+  OK pour tester, à durcir avant montée en charge.
+- **OTP démo** : `otp_code` est codé en dur `'1234'` (sign-up + forget). Le flux
+  reset-password ne vérifie pas de vrai 2e facteur. À remplacer par un OTP
+  aléatoire + envoi SMS/email avant une vraie prod ouverte au public.
+- **Webhooks fail-open si secret absent** (RevenueCat/Mux/Stripe : `if (secret)`).
+  Non modifié ici pour ne pas risquer de casser la recharge/replay le jour J —
+  à passer en fail-closed une fois les 3 secrets confirmés présents en prod.
+- **Uploads non restreints** (`app.js` multer `upload.any()` sans limite de type/
+  taille) : risque XSS stocké (`.html`/`.svg` servis) + DoS disque. À whitelister.
+
+### 📱 Guide de test paiements en sandbox (device requis — À FAIRE par toi)
+Pré-requis : build `flutter run --release -d "iPhone de JS"` (bundle `com.app.vybzz`),
+connecté avec un **compte sandbox testeur** App Store, en tant que **fan** (pas
+l'artiste qui a créé le concert). Produits IAP en état « Prêt à soumettre ».
+1. **Billet** : ouvrir le concert 49,99 € → acheter → pop-up sandbox → succès.
+   Vérifier l'accès au concert. Côté serveur, une ligne `tickets` doit apparaître
+   (`price_paid=49.99`). Le billet **ne dépend pas** du webhook.
+2. **Recharge** : portefeuille → acheter un pack (ex. 4,99 € / 500 pts) → succès.
+   Le crédit passe par le **webhook RevenueCat** (asynchrone, quelques secondes).
+   Vérifier `users.points` augmenté. Logs : `docker logs vybzzz --tail 30` doit
+   montrer `[revenuecat webhook] +500 points -> user X`.
+   ⚠️ Si 0 point : vérifier (a) le mapping packs (§0.1), (b) que RevenueCat envoie
+   bien le header `Authorization: Bearer <REVENUECAT_WEBHOOK_AUTH>`.
+3. **Tip** : envoyer un cadeau pendant un live → points débités, wallet artiste crédité.
+
+### 🎥 Guide de test replay (live réel — À FAIRE par toi)
+Après le fix P0 + déploiement :
+1. Lancer un live. Sur le **dashboard Mux**, confirmer que le live stream passe
+   **`active`** (⚠️ `addPublishCdnUrl` renvoyant `errorCode 0` ne prouve PAS que
+   la vidéo arrive à Mux — c'est le point le plus à risque, cf. §0 « à vérifier »).
+2. Admin « Lives en direct » → le lecteur HLS doit afficher la vidéo pendant le live.
+3. Arrêter le live → attendre l'asset Mux → le **replay** doit apparaître dans
+   l'app (l'event reçoit `mux_playback_id` + `video_reel` via le webhook).
+- **À vérifier côté ZegoCloud** (non confirmable par le code) : que la republication
+  CDN tierce (`addPublishCdnUrl`) est **activée** sur le projet Zego, et que le
+  `streamId` relayé (`${eventId}_${userId}_main`) correspond bien au flux réellement
+  publié par le UIKit (à confirmer dans les logs Zego pendant le live).
+
+### 🐛 Autres findings replay (mineurs, non bloquants — voir historique)
+- Replay VOD affiché avec le badge « EN DIRECT » et sans boucle (`live_router.dart`
+  base `isLive` sur « a un reel Mux » au lieu de `event.status=='live'`).
+- Shorts : `video.asset.ready kind:'shorts'` non géré par le webhook (playback id
+  jamais sauvé) — hors chemin concert.
+- Deux sources d'expiration du replay divergentes (`replay_expires_at` en base vs
+  recalcul dans `serializeEvent`) — à unifier.
 
 ---
 

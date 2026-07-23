@@ -6,7 +6,23 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { db } = require('./db');
 
-const SECRET = process.env.JWT_SECRET || 'vybzzz-dev-secret-change-me';
+// Secret de signature JWT. S'il est manquant ou laissé à un placeholder, la
+// clé est publique/devinable -> n'importe qui peut forger un token (y compris
+// admin). En production on REFUSE de démarrer ; ailleurs on avertit bruyamment.
+const PLACEHOLDER_SECRETS = new Set([
+  'vybzzz-dev-secret-change-me',
+  'change-me-with-a-long-random-string',
+]);
+const RAW_SECRET = process.env.JWT_SECRET;
+const SECRET_IS_WEAK = !RAW_SECRET || PLACEHOLDER_SECRETS.has(RAW_SECRET) || RAW_SECRET.length < 32;
+if (SECRET_IS_WEAK) {
+  const msg = 'JWT_SECRET manquant/faible : définir une chaîne aléatoire >= 32 caractères (openssl rand -hex 32).';
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(`[auth] ${msg} Démarrage refusé en production.`);
+  }
+  console.warn(`[auth] ⚠️  ${msg}`);
+}
+const SECRET = RAW_SECRET || 'vybzzz-dev-secret-change-me';
 
 function hash(pw) {
   return bcrypt.hashSync(String(pw), 10);

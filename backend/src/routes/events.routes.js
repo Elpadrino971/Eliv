@@ -102,7 +102,11 @@ router.post('/events', requireAuth, (req, res) => {
 // price_paid est stocké en EUROS (le revenu artiste se calcule depuis tickets).
 router.post('/buy-ticket', optionalAuth, (req, res) => {
   const b = req.body || {};
-  const userId = req.user?.id || b.user_id;
+  // Identité = JWT uniquement. On n'accepte JAMAIS un user_id du corps : sinon
+  // n'importe qui pourrait s'octroyer (ou octroyer à autrui) un billet gratuit
+  // et fabriquer du revenu artiste (price_paid). Le client loggé envoie le
+  // Bearer token sur toutes ses requêtes (api_services.dart).
+  const userId = req.user?.id;
   if (!userId) return fail(res, 'Authentification requise.', 401);
 
   const event = db.prepare('SELECT * FROM events WHERE id = ?').get(b.event_id);
@@ -152,7 +156,8 @@ router.post('/user-event-history', optionalAuth, (req, res) => {
 // POST /api/event-comment  (body: { event_id, user_id, comment }) -> { status, activity: [...] }
 router.post('/event-comment', optionalAuth, (req, res) => {
   const b = req.body || {};
-  const userId = req.user?.id || b.user_id;
+  const userId = req.user?.id;
+  if (!userId) return fail(res, 'Authentification requise.', 401);
   db.prepare(
     `INSERT INTO activities (user_id, event_id, type, description)
      VALUES (?, ?, 'comment', ?)`
@@ -197,7 +202,9 @@ router.get('/gifts', (req, res) => {
 // crédite l'artiste, refuse si solde insuffisant (transaction atomique).
 router.post('/event-gift', optionalAuth, (req, res) => {
   const b = req.body || {};
-  const userId = req.user?.id || b.user_id;
+  // Identité = JWT uniquement. Accepter un user_id du corps permettrait de
+  // débiter les points d'un autre utilisateur (vol) vers le wallet d'un artiste.
+  const userId = req.user?.id;
   if (!userId) return fail(res, 'Authentification requise.', 401);
 
   const gift = db.prepare('SELECT * FROM gifts WHERE id = ?').get(b.gift_id);
@@ -240,14 +247,16 @@ router.post('/event-gift', optionalAuth, (req, res) => {
 // ─── Follow ───
 router.post('/follow', optionalAuth, (req, res) => {
   const b = req.body || {};
-  const me = req.user?.id || b.user_id;
+  const me = req.user?.id;
+  if (!me) return fail(res, 'Authentification requise.', 401);
   db.prepare('INSERT OR IGNORE INTO follows (follower_id, artist_id) VALUES (?, ?)').run(me, b.artist_id);
   return res.json({ status: 'success', message: 'Followed.' });
 });
 
 router.post('/unfollow', optionalAuth, (req, res) => {
   const b = req.body || {};
-  const me = req.user?.id || b.user_id;
+  const me = req.user?.id;
+  if (!me) return fail(res, 'Authentification requise.', 401);
   db.prepare('DELETE FROM follows WHERE follower_id = ? AND artist_id = ?').run(me, b.artist_id);
   return res.json({ status: 'success', message: 'Unfollowed.' });
 });

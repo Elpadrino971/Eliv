@@ -327,20 +327,41 @@ function init() {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }
 
-  // Packs de points par défaut (1 € = 100 points) — insérés une seule fois si
-  // la table est vide. Les IDs produits IAP se collent ensuite dans l'admin.
+  // Packs de points par défaut (1 € = 100 points). Chaque pack correspond à un
+  // produit consommable IAP (App Store / Play Store) dont l'identifiant DOIT
+  // matcher EXACTEMENT `packages.revenuecat_product_id` : le webhook RevenueCat
+  // crédite les points via `WHERE revenuecat_product_id = ?`. Sans ce mapping,
+  // un achat réussi ne crédite AUCUN point (échec silencieux, argent pris).
+  // [name, points, price(€), revenuecat_product_id (= product_id du store)]
+  const DEFAULT_PACKS = [
+    ['Découverte', '100', '0.99', 'vybzz_points_100'],
+    ['Fan', '500', '4.99', 'vybzz_points_500'],
+    ['Super-fan', '1100', '9.99', 'vybzz_points_1100'],
+    ['VIP', '2400', '19.99', 'vybzz_points_2400'],
+    ['Légende', '6500', '49.99', 'vybzz_points_6500'],
+  ];
+
   const packCount = db.prepare('SELECT COUNT(*) c FROM packages').get().c;
   if (packCount === 0) {
-    const insPack = db.prepare('INSERT INTO packages (name, points, price, active) VALUES (?, ?, ?, 1)');
-    for (const [name, points, price] of [
-      ['Découverte', '100', '0.99'],
-      ['Fan', '500', '4.99'],
-      ['Super-fan', '1100', '9.99'],
-      ['VIP', '2400', '19.99'],
-      ['Légende', '6500', '49.99'],
-    ]) {
-      insPack.run(name, points, price);
+    // Base neuve : on insère les packs déjà mappés à leur produit IAP.
+    const insPack = db.prepare(
+      'INSERT INTO packages (name, points, price, active, revenuecat_product_id) VALUES (?, ?, ?, 1, ?)'
+    );
+    for (const [name, points, price, rcId] of DEFAULT_PACKS) {
+      insPack.run(name, points, price, rcId);
     }
+  } else {
+    // Base existante (seedée avant l'ajout de la colonne) : on back-fill le
+    // mapping IAP sur les packs canoniques UNIQUEMENT s'il est encore vide,
+    // pour ne JAMAIS écraser un identifiant saisi à la main dans l'admin.
+    const fillPack = db.prepare(
+      `UPDATE packages SET revenuecat_product_id = ?
+       WHERE points = ? AND (revenuecat_product_id IS NULL OR revenuecat_product_id = '')`
+    );
+    const backfill = db.transaction(() => {
+      for (const [, points, , rcId] of DEFAULT_PACKS) fillPack.run(rcId, points);
+    });
+    backfill();
   }
 }
 
