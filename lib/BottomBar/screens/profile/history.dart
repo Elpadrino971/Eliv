@@ -9,6 +9,7 @@ import 'package:artist/widgets/shimmer_loaders.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:artist/Global/app_date.dart';
 
 class History extends StatefulWidget {
   const History({super.key});
@@ -197,9 +198,10 @@ class _HistoryState extends State<History> {
                                           ),
                                         ),
                                         child: Text(
-                                          DateFormat(
+                                          AppDate.format(
+                                            event.startDateTime,
                                             'MMM dd',
-                                          ).format(event.startDateTime!),
+                                          ),
                                         ),
                                       ),
                                       height(0.01),

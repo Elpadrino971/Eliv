@@ -10,6 +10,7 @@ import 'package:artist/widgets/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:artist/Global/app_date.dart';
 import 'dart:async';
 
 class ArtistEventsScreen extends StatefulWidget {
@@ -214,9 +215,10 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                               width(0.01),
 
                                               Text(
-                                                DateFormat(
+                                                AppDate.format(
+                                                  event.startDateTime,
                                                   ' yyyy-MM-dd',
-                                                ).format(event.startDateTime!),
+                                                ),
                                                 style: TextStyle(
                                                   color: Get.isDarkMode
                                                       ? whiteColor
@@ -238,9 +240,10 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                               width(0.01),
 
                                               Text(
-                                                DateFormat(
+                                                AppDate.format(
+                                                  event.startDateTime,
                                                   ' HH:mm a',
-                                                ).format(event.startDateTime!),
+                                                ),
                                                 style: TextStyle(
                                                   color: Color(0xffA1A1A1),
                                                   fontSize: 14,
@@ -471,9 +474,10 @@ class _StreamTimerDialogState extends State<StreamTimerDialog> {
                 : _hasStarted
                 ? 'art_stream_can_start'.tr
                 : 'art_stream_scheduled'.trParams({
-                    'date': DateFormat(
+                    'date': AppDate.format(
+                      widget.event.startDateTime,
                       'dd MMM, hh:mm a',
-                    ).format(widget.event.startDateTime!),
+                    ),
                   }),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 14, color: greyColor),
