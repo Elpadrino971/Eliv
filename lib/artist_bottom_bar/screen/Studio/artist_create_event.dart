@@ -25,6 +25,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
   final descriptionController = TextEditingController();
   final startDateController = TextEditingController();
   final startTimeController = TextEditingController();
+  final endDateController = TextEditingController();
   final endTimeController = TextEditingController();
   final standardController = TextEditingController();
   final vipController = TextEditingController();
@@ -430,14 +431,13 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                           width: Get.width * 0.44,
                           child: MyTextField(
                             hintText: 'yyyy-mm-dd',
-                            controller: startDateController,
+                            controller: endDateController,
                             readOnly: true,
                             leading: Image.asset(
                               'assets/date_icon2.png',
                               color: Color(0xffD4D4D4),
                             ),
-                            onTap: () =>
-                                _pickDate(context, startDateController),
+                            onTap: () => _pickDate(context, endDateController),
                             validation: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'art_required'.tr;
@@ -503,8 +503,10 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                   hintText: 'Choisir un prix',
                   items: _ticketTiers.map((t) => '$t €').toList(),
                   onChanged: (value) {
-                    // On stocke la valeur numérique (sans " €").
-                    selectedPrice = value?.replaceAll(' €', '');
+                    // On garde la valeur affichée ("49.99 €") pour qu'elle
+                    // corresponde à un item du dropdown ; le " €" est retiré
+                    // seulement à l'envoi.
+                    setState(() => selectedPrice = value);
                   },
                   validation: (value) {
                     if (value == null) {
@@ -668,10 +670,11 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                           startTimeController.text,
                         ),
                         endDateTime: AppDate.localPartsToUtcIso(
-                          startDateController.text,
+                          endDateController.text,
                           endTimeController.text,
                         ),
-                        ticketPrice: selectedPrice ?? '0',
+                        ticketPrice:
+                            (selectedPrice ?? '0').replaceAll(' €', ''),
                         genreId: selectedGenreId?.toString() ?? '',
                         hasLiveChat: liveValue ? '1' : '0',
                         replayEnabled: replayEnabled ? '1' : '0',
