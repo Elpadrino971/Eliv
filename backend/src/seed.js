@@ -9,17 +9,21 @@
 const { db, init } = require('./db');
 const { hash } = require('./auth');
 
-// Playback IDs Mux (publics, pas des secrets) — alignés sur lib/Global/api.dart
+// Playback IDs Mux des vidéos de démo. VIDES par défaut : à REMPLIR avec TES
+// vidéos LIBRES DE DROITS uniquement (Pexels/Pixabay -> Mux « Create New Asset
+// from URL »). Ne JAMAIS remettre de contenu copyrighté (clips YouTube, musique
+// d'artistes réels) ici. Vide = event sans vidéo (cover seule), aucune lecture
+// cassée.
 const MUX = {
-  carousel: 'Ixf100DM00MIBOSiPjVkEfbToOgso01NuVin19ugUXbjQA', // concert vedette / bannière
-  pourToi1: 'OBFReMrxEbTxZVlQw202hYRSzVxVqu7BisBWWKBM3S18',
-  pourToi2: 'ZIAVh2AYyALPoxxrRW01wIqPDzX5eO1vYx1XSOSbj39o',
-  live1: 'EcO013Q00m3BON019ydIrEUd3YaAES4J9nx02arl7U862P4', // Prince - Purple Rain
-  live2: 'Qz0200nUKYr5025USFnUB9DrK3YzXY2k8jzjWcvq4SukBc', // Hans Zimmer
+  carousel: '', // bannière / concert vedette
+  pourToi1: '',
+  pourToi2: '',
+  live1: '',
+  live2: '',
 };
 
 function hls(id) {
-  return `https://stream.mux.com/${id}.m3u8`;
+  return id ? `https://stream.mux.com/${id}.m3u8` : null;
 }
 
 function daysFromNow(d, hour = 20) {
@@ -33,7 +37,11 @@ function reset() {
   for (const t of [
     'user_genres', 'tickets', 'follows', 'activities', 'events', 'gifts',
     'genres', 'users', 'settings', 'abusive_words', 'referrals', 'ghost_passes', 'event_signals',
-    'packages', 'subscriptions', 'reviews', 'withdrawals', 'contact_leads', 'faqs', 'cms_pages', 'ideas',
+    'packages', 'subscriptions', 'user_subscriptions', 'reviews', 'withdrawals', 'contact_leads',
+    'faqs', 'cms_pages', 'ideas',
+    // feed_clips = clips « Pour toi » (contient les clips YouTube copyrightés
+    // ajoutés via l'admin) -> à vider aussi pour repartir 100% propre.
+    'feed_clips',
   ]) {
     db.exec(`DELETE FROM ${t};`);
   }
@@ -83,12 +91,15 @@ function run() {
      VALUES (@email, @password, @full_name, @artist_name, 'artist', 1, 1, 1,
         @artist_profile, @profile_image, @address, @artist_bio)`
   );
+  // Artistes de démo 100% FICTIFS (aucune vraie célébrité -> pas d'usurpation
+  // d'identité / image). Photos = null (pas de photo de vraie personne) : à
+  // remplacer par des visuels libres de droits (Pexels/Unsplash) via l'admin.
   const artists = [
-    { artist_name: 'The Weeknd', full_name: 'Abel Tesfaye', address: 'Accor Arena, Paris', img: 'weeknd.jpg' },
-    { artist_name: 'Beyoncé', full_name: 'Beyoncé Knowles', address: 'Stade de France', img: 'beyonce.jpg' },
-    { artist_name: 'Billie Eilish', full_name: 'Billie Eilish', address: 'Accor Arena, Paris', img: 'billie.jpg' },
-    { artist_name: 'Burna Boy', full_name: 'Damini Ogulu', address: 'Zénith, Paris', img: 'burna.jpg' },
-    { artist_name: 'KRYS', full_name: 'Krys', address: 'Cayenne, Guyane', img: 'krys.jpg' },
+    { artist_name: 'Nova Sky',   full_name: 'Nadia Okoye',  address: 'Accor Arena, Paris', img: null },
+    { artist_name: 'Echo Vale',  full_name: 'Emma Laurent', address: 'Zénith, Paris',      img: null },
+    { artist_name: 'Kojo Flame', full_name: 'Kojo Mensah',  address: 'Stade de France',    img: null },
+    { artist_name: 'Léo Sway',   full_name: 'Léo Marchand', address: 'Cayenne, Guyane',    img: null },
+    { artist_name: 'Mira Lune',  full_name: 'Mira Dubois',  address: 'Le Dôme, Marseille', img: null },
   ];
   const artistIds = artists.map((a, i) =>
     insArtist.run({
@@ -111,42 +122,46 @@ function run() {
         @video_reel, @status, @mux_playback_id, @mux_live_playback_id, @is_banner, @likes)`
   );
 
+  // Events de démo fictifs. Prix alignés sur les paliers IAP (ticket_XX) : 19.99
+  // -> 149.99. cover_image null = pas de photo de célébrité (à remplacer par des
+  // visuels libres de droits). Vidéos = null tant que MUX n'est pas rempli
+  // (aucune lecture cassée) -> statuts 'published' (pas de live vide).
   const events = [
     {
-      artist_id: artistIds[0], name: 'After Hours Tour', cover_image: 'weeknd.jpg', ticket_price: '560',
+      artist_id: artistIds[0], name: 'Midnight Bloom Tour', cover_image: null, ticket_price: '49.99',
       start: daysFromNow(20), genre_id: genreIds[3], status: 'published',
-      video_reel: hls(MUX.carousel), mux_playback_id: MUX.carousel, is_banner: 1, likes: 1240,
-      description: 'The Weeknd — After Hours Tour, en direct sur VYBZZZ.',
+      video_reel: hls(MUX.carousel), mux_playback_id: MUX.carousel || null, is_banner: 1, likes: 1240,
+      description: 'Nova Sky — Midnight Bloom Tour, en direct sur VYBZZZ.',
     },
     {
-      artist_id: artistIds[1], name: 'Renaissance Live', cover_image: 'beyonce.jpg', ticket_price: '720',
+      artist_id: artistIds[1], name: 'Aurora Live', cover_image: null, ticket_price: '39.99',
       start: daysFromNow(35), genre_id: genreIds[1], status: 'published',
-      video_reel: hls(MUX.carousel), mux_playback_id: MUX.carousel, is_banner: 1, likes: 3120,
-      description: 'Beyoncé — Renaissance World Tour.',
+      video_reel: hls(MUX.carousel), mux_playback_id: MUX.carousel || null, is_banner: 1, likes: 3120,
+      description: 'Echo Vale — Aurora World Tour.',
     },
     {
-      artist_id: artistIds[2], name: 'Happier Than Ever', cover_image: 'billie.jpg', ticket_price: '480',
-      start: daysFromNow(12), genre_id: genreIds[1], status: 'published',
-      video_reel: hls(MUX.pourToi1), mux_playback_id: MUX.pourToi1, is_banner: 0, likes: 980,
-      description: 'Billie Eilish en concert.',
+      artist_id: artistIds[2], name: 'Afro Nation Night', cover_image: null, ticket_price: '29.99',
+      start: daysFromNow(12), genre_id: genreIds[0], status: 'published',
+      video_reel: hls(MUX.pourToi1), mux_playback_id: MUX.pourToi1 || null, is_banner: 0, likes: 980,
+      description: 'Kojo Flame en concert.',
     },
     {
-      artist_id: artistIds[3], name: 'Afro Nation Night', cover_image: 'burna.jpg', ticket_price: '390',
-      start: daysFromNow(0, new Date().getHours()), genre_id: genreIds[0], status: 'live',
-      video_reel: hls(MUX.live1), mux_playback_id: MUX.live1, mux_live_playback_id: MUX.live1, is_banner: 0, likes: 5400,
-      description: 'Burna Boy — LIVE maintenant.',
+      artist_id: artistIds[3], name: 'Guyane Vibes', cover_image: null, ticket_price: '19.99',
+      start: daysFromNow(5), genre_id: genreIds[4], status: 'published',
+      video_reel: hls(MUX.pourToi2), mux_playback_id: MUX.pourToi2 || null, is_banner: 0, likes: 410,
+      description: 'Léo Sway — Dancehall depuis Cayenne.',
     },
     {
-      artist_id: artistIds[4], name: 'Guyane Vibes', cover_image: 'krys.jpg', ticket_price: '150',
-      start: daysFromNow(0, new Date().getHours()), genre_id: genreIds[4], status: 'live',
-      video_reel: hls(MUX.live2), mux_playback_id: MUX.live2, mux_live_playback_id: MUX.live2, is_banner: 0, likes: 410,
-      description: 'KRYS — Dancehall LIVE depuis Cayenne.',
+      artist_id: artistIds[4], name: 'Neon Pulse', cover_image: null, ticket_price: '59.99',
+      start: daysFromNow(8), genre_id: genreIds[5], status: 'published',
+      video_reel: hls(MUX.live1), mux_playback_id: MUX.live1 || null, is_banner: 0, likes: 1500,
+      description: 'Mira Lune — set électro immersif.',
     },
     {
-      artist_id: artistIds[0], name: 'Dawn FM Premiere', cover_image: 'weeknd.jpg', ticket_price: '300',
+      artist_id: artistIds[0], name: 'First Light Premiere', cover_image: null, ticket_price: '29.99',
       start: daysFromNow(-15), end: daysFromNow(-15, 22), genre_id: genreIds[3], status: 'completed',
-      video_reel: hls(MUX.pourToi2), mux_playback_id: MUX.pourToi2, is_banner: 0, likes: 2100,
-      description: 'Replay disponible.',
+      video_reel: hls(MUX.live2), mux_playback_id: MUX.live2 || null, is_banner: 0, likes: 2100,
+      description: 'Nova Sky — replay disponible.',
     },
   ];
   const eventIds = events.map((e) =>
@@ -217,8 +232,16 @@ function run() {
   });
 
   // ── Packages (points) ──
-  const insPkg = db.prepare('INSERT INTO packages (name, points, price) VALUES (?, ?, ?)');
-  [['Starter', '100', '4.99'], ['Pro', '500', '19.99'], ['VIP', '1200', '39.99']].forEach((p) => insPkg.run(...p));
+  // Packs alignés sur les produits IAP (revenuecat_product_id) — cohérent avec
+  // le seed runtime de db.js, pour qu'un reset ne casse pas le crédit de points.
+  const insPkg = db.prepare('INSERT INTO packages (name, points, price, revenuecat_product_id) VALUES (?, ?, ?, ?)');
+  [
+    ['Découverte', '100', '0.99', 'vybzz_points_100'],
+    ['Fan', '500', '4.99', 'vybzz_points_500'],
+    ['Super-fan', '1100', '9.99', 'vybzz_points_1100'],
+    ['VIP', '2400', '19.99', 'vybzz_points_2400'],
+    ['Légende', '6500', '49.99', 'vybzz_points_6500'],
+  ].forEach((p) => insPkg.run(...p));
 
   // ── Subscriptions (paliers artistes) ──
   const insSub = db.prepare('INSERT INTO subscriptions (name, tier, price, period) VALUES (?, ?, ?, ?)');
@@ -272,9 +295,9 @@ function run() {
   const insRef = db.prepare(
     'INSERT INTO referrals (code, referrer_id, referee_id, status, reward) VALUES (?, ?, ?, ?, ?)'
   );
-  insRef.run('THEW1234', artistIds[0], artistIds[1], 'validated', '10%');
-  insRef.run('THEW1234', artistIds[0], artistIds[2], 'validated', '10%');
-  insRef.run('BEYO5678', artistIds[1], artistIds[3], 'pending', '10%');
+  insRef.run('NOVA1234', artistIds[0], artistIds[1], 'validated', '10%');
+  insRef.run('NOVA1234', artistIds[0], artistIds[2], 'validated', '10%');
+  insRef.run('ECHO5678', artistIds[1], artistIds[3], 'pending', '10%');
 
   // ── Fans + billets répartis sur 6 mois (pour revenus & graphiques) ──
   const insFan = db.prepare(
@@ -304,7 +327,7 @@ function run() {
   // ── Boîte à idées (suggestions de démo) ──
   const insIdea = db.prepare('INSERT INTO ideas (user_id, name, email, category, message, status) VALUES (?, ?, ?, ?, ?, ?)');
   insIdea.run(fanIds[0], 'Fan 1', 'fan1@vybzzz.com', 'Fonctionnalité', 'Ajouter un mode hors-ligne pour réécouter les concerts.', 'new');
-  insIdea.run(artistIds[0], 'The Weeknd', 'artist1@vybzzz.com', 'Artiste', 'Pouvoir programmer un live à l\'avance avec un compte à rebours.', 'reviewed');
+  insIdea.run(artistIds[0], 'Nova Sky', 'artist1@vybzzz.com', 'Artiste', 'Pouvoir programmer un live à l\'avance avec un compte à rebours.', 'reviewed');
   insIdea.run(fanIds[2], 'Fan 3', 'fan3@vybzzz.com', 'Cadeaux', 'Plus de cadeaux animés pendant les lives !', 'new');
 
   // ── Objectifs (CA, users, artistes) — éditables dans l'admin ──
