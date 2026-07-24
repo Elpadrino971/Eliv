@@ -98,6 +98,63 @@ Après le fix P0 + déploiement :
 
 ---
 
+## 0bis. 🗺️ Roadmap post-soumission (chantiers identifiés, non bloquants pour la review)
+
+> Priorisés. Aucun n'affecte le binaire soumis à Apple sauf mention « app ».
+> Détails/ancrages issus de l'audit de la session « béton ».
+
+### P1 — Split des commissions AUTOMATIQUE (backend only, moyen)
+- **État actuel** : aucun split. L'artiste touche **100 %** des billets et des cadeaux.
+  - Billet (`events.routes.js` /buy-ticket) : ne crédite pas le wallet artiste ;
+    le revenu est un `SUM(price_paid)` lu au dashboard (à 100 %).
+  - Cadeau (/event-gift) : crédite **la totalité** des points au wallet artiste.
+- **Le taux existe** : `subscriptions.commission` = part artiste (Starter 50 /
+  Growth 60 / Elite 70 / Founder 60). Souvent `NULL` (seed sans valeur) → prévoir
+  un défaut **60**. Résolution : `users → user_subscriptions → subscriptions.commission`
+  (JOIN déjà présent dans `helpers.js`).
+- **À faire** : resolver `resolveArtistCommission(artistId)` + l'appliquer aux 2
+  points de crédit (billet + cadeau, déjà dans des transactions atomiques) +
+  table `platform_earnings` (part plateforme) + **snapshot du taux** par vente
+  (colonnes `tickets.commission_rate/artist_share`) pour ne pas re-tarifer le
+  passé. **Piège** : le revenu billet est un `SUM(price_paid)` lu à ~5 endroits
+  (`misc.routes.js:379`, `admin.routes.js:84/426/681/693`) → choisir un modèle
+  (crédit-à-la-vente vs calcul-à-la-lecture) et aligner TOUS les points de lecture,
+  sinon double comptage.
+- **Motivation** (fondateur) : compta/impôts justes — ne pas apparaître avec un CA
+  de « milliers d'€ » alors que la part réelle plateforme = quelques centaines.
+- **Urgence** : à activer **avant la 1ʳᵉ vente réelle** (aucune vente pendant la
+  review Apple → largement le temps). Backend-only → déployable à chaud.
+
+### P2 — Bug perte de données : collision `events.video_reel`
+- La colonne sert **à la fois** au teaser vidéo uploadé ET à l'URL du replay Mux.
+  Le webhook Mux (`mux.routes.js`) **écrase** le teaser par l'URL HLS du replay, et
+  `replayExpired` (`helpers.js`) le met à `null` à l'expiration → **le teaser
+  uploadé est détruit**.
+- **Fix** : colonne dédiée `promo_video` (ou `teaser_url`) séparée du replay ;
+  webhook + `replayExpired` ne touchent QUE le replay ; exposer les deux dans
+  `serializeEvent` + `event_model.dart`. (migration `db.js` + `events.routes.js`
+  + `mux.routes.js` + `helpers.js` + modèle Dart).
+
+### P3 — Vidéo uploadée dans « Pour toi » (app + backend, petit-moyen)
+- **Décision produit** : la vidéo uploadée à la création d'event va dans le feed
+  **« Pour toi »** (avec lien vers le concert pour inciter à l'achat) ; on
+  **abandonne** le teaser autoplay dans le scroll des concerts (plus simple, et
+  évite le bug P2).
+- **État** : « Pour toi » (`vybz_live_screen.dart` + `event_controller.dart:63-90`)
+  lit surtout les `feed_clips` admin ; le teaser d'event n'apparaît qu'en fallback
+  supprimé dès qu'un clip admin existe. Le seul endroit qui joue déjà le teaser =
+  `HomeBannerCard` (events `is_banner`, autoplay/mute/loop) → template réutilisable.
+- **À faire** : à la création d'event, ranger la vidéo dans le feed « Pour toi »
+  (idéalement via `feed_clips` avec `event_id` → dodge la collision P2), et rendre
+  l'item cliquable vers le concert. Infra vidéo déjà là (`video_player`).
+
+### Autres finitions (cf. §6)
+- Payout/retrait artiste (aujourd'hui des stubs) — à brancher avec le split P1.
+- Android (produits Google Play + clé RevenueCat Google).
+- Vignettes cadeaux 404.
+
+---
+
 ## 1. C'est quoi VybzzZ
 
 App mobile de **concerts live** : des artistes diffusent des concerts en direct,

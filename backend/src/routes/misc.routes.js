@@ -88,9 +88,16 @@ router.post('/live/:eventId/recording/start', requireAuth, async (req, res) => {
 // reconnexion), donc rien de destructif ici : on laisse Mux générer l'asset de
 // replay. Endpoint fourni pour cohérence côté app.
 router.post('/live/:eventId/recording/stop', requireAuth, (req, res) => {
-  const event = db.prepare('SELECT artist_id FROM events WHERE id = ?').get(req.params.eventId);
+  const event = db.prepare('SELECT artist_id, status FROM events WHERE id = ?').get(req.params.eventId);
   if (!event) return fail(res, 'Event introuvable.', 404);
   if (event.artist_id !== req.user.id) return fail(res, 'Non autorisé.', 403);
+  // L'hôte a quitté le live -> on clôt le concert tout de suite. On ne s'appuie
+  // plus uniquement sur le webhook Mux `live_stream.idle` (qui ne se déclenche
+  // pas si le relais n'a jamais poussé de vidéo), sinon l'event resterait
+  // bloqué en `live` (live fantôme). Mux finalise l'asset de replay de son côté
+  // à la fin du flux RTMP (fenêtre de reconnexion).
+  db.prepare("UPDATE events SET status = 'completed' WHERE id = ? AND status = 'live'")
+    .run(req.params.eventId);
   return res.json({ status: 'success', data: { stopped: true } });
 });
 

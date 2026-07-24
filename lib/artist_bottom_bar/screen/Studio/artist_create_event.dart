@@ -62,13 +62,32 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
     }
   }
 
+  // Limites du visuel vidéo : bornent l'upload pour éviter le "chargement dans
+  // le vide" (une vidéo de plusieurs centaines de Mo s'envoie très lentement en
+  // mobile). Durée max 60 s + garde-fou sur la TAILLE réelle en octets, car
+  // maxDuration n'est pas toujours respecté par la galerie iOS. Ajustables.
+  static const int _maxVisualDurationSec = 60;
+  static const int _maxVisualMb = 100;
+
   Future<void> _pickVideo() async {
-    final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
-    if (video != null) {
-      setState(() {
-        visualVideo = video;
-      });
+    final XFile? video = await _picker.pickVideo(
+      source: ImageSource.gallery,
+      maxDuration: const Duration(seconds: _maxVisualDurationSec),
+    );
+    if (video == null) return;
+    final int bytes = await video.length();
+    if (bytes > _maxVisualMb * 1024 * 1024) {
+      final int mb = (bytes / (1024 * 1024)).round();
+      Get.snackbar(
+        'art_error'.tr,
+        'Vidéo trop lourde ($mb Mo, max $_maxVisualMb Mo). '
+        'Choisis un clip plus court ou de moindre qualité.',
+      );
+      return;
     }
+    setState(() {
+      visualVideo = video;
+    });
   }
 
   Future<void> _pickDate(

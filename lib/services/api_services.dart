@@ -119,7 +119,9 @@ class ApiResponse extends ApiService {
                 pic2!,
               ),
             );
-      http.StreamedResponse value = await request.send();
+      http.StreamedResponse value = await request.send().timeout(
+        const Duration(seconds: 300),
+      );
       final response = await http.Response.fromStream(value);
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.body;
@@ -153,7 +155,9 @@ class ApiResponse extends ApiService {
         }
       }
 
-      http.StreamedResponse value = await request.send();
+      http.StreamedResponse value = await request.send().timeout(
+        const Duration(seconds: 300),
+      );
       final response = await http.Response.fromStream(value);
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.body;
