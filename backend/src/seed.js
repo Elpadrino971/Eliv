@@ -15,11 +15,11 @@ const { hash } = require('./auth');
 // d'artistes réels) ici. Vide = event sans vidéo (cover seule), aucune lecture
 // cassée.
 const MUX = {
-  carousel: '', // bannière / concert vedette
-  pourToi1: '',
-  pourToi2: '',
-  live1: '',
-  live2: '',
+  carousel: 'zEL9vcJceKsAd8xvXHTarwp7qi4o7p5Solf825iyKsU', // bannière / concert vedette (libre de droits)
+  pourToi1: 'PjoGaoXHgc16PWgjUQBMJHUwj7o3zWtHQHWvUZPCfN00', // libre de droits
+  pourToi2: 'zEL9vcJceKsAd8xvXHTarwp7qi4o7p5Solf825iyKsU',
+  live1: 'PjoGaoXHgc16PWgjUQBMJHUwj7o3zWtHQHWvUZPCfN00',
+  live2: 'zEL9vcJceKsAd8xvXHTarwp7qi4o7p5Solf825iyKsU',
 };
 
 function hls(id) {
