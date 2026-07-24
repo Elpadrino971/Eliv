@@ -14,13 +14,19 @@ const { hash } = require('./auth');
 // from URL »). Ne JAMAIS remettre de contenu copyrighté (clips YouTube, musique
 // d'artistes réels) ici. Vide = event sans vidéo (cover seule), aucune lecture
 // cassée.
+// Vidéo des CONCERTS / bannière — format PAYSAGE (libre de droits, validée 200).
 const MUX = {
-  carousel: 'zEL9vcJceKsAd8xvXHTarwp7qi4o7p5Solf825iyKsU', // bannière / concert vedette (libre de droits)
-  pourToi1: 'PjoGaoXHgc16PWgjUQBMJHUwj7o3zWtHQHWvUZPCfN00', // libre de droits
-  pourToi2: 'zEL9vcJceKsAd8xvXHTarwp7qi4o7p5Solf825iyKsU',
-  live1: 'PjoGaoXHgc16PWgjUQBMJHUwj7o3zWtHQHWvUZPCfN00',
-  live2: 'zEL9vcJceKsAd8xvXHTarwp7qi4o7p5Solf825iyKsU',
+  concert: 'l2JmgS1n7QrM5FcpDUuHhfHUhUmCTMktB0002QMj3hU5E',
 };
+
+// « Pour toi » (feed vertical) — clips format PORTRAIT (libres de droits, 200).
+// Seedés dans la table feed_clips (source réelle du feed « Pour toi »).
+const FOR_YOU = [
+  'zEL9vcJceKsAd8xvXHTarwp7qi4o7p5Solf825iyKsU',
+  'PjoGaoXHgc16PWgjUQBMJHUwj7o3zWtHQHWvUZPCfN00',
+  'n01jJlZoi013PInBeQRXeZZDqE02x02vhO1pF8Z200kXiixc',
+  'p6m5rIaZQGsSX51YijSB1GZo449uMpudt00JladxxQ6Y',
+];
 
 function hls(id) {
   return id ? `https://stream.mux.com/${id}.m3u8` : null;
@@ -130,37 +136,37 @@ function run() {
     {
       artist_id: artistIds[0], name: 'Midnight Bloom Tour', cover_image: null, ticket_price: '49.99',
       start: daysFromNow(20), genre_id: genreIds[3], status: 'published',
-      video_reel: hls(MUX.carousel), mux_playback_id: MUX.carousel || null, is_banner: 1, likes: 1240,
+      video_reel: hls(MUX.concert), mux_playback_id: MUX.concert || null, is_banner: 1, likes: 1240,
       description: 'Nova Sky — Midnight Bloom Tour, en direct sur VYBZZZ.',
     },
     {
       artist_id: artistIds[1], name: 'Aurora Live', cover_image: null, ticket_price: '39.99',
       start: daysFromNow(35), genre_id: genreIds[1], status: 'published',
-      video_reel: hls(MUX.carousel), mux_playback_id: MUX.carousel || null, is_banner: 1, likes: 3120,
+      video_reel: hls(MUX.concert), mux_playback_id: MUX.concert || null, is_banner: 1, likes: 3120,
       description: 'Echo Vale — Aurora World Tour.',
     },
     {
       artist_id: artistIds[2], name: 'Afro Nation Night', cover_image: null, ticket_price: '29.99',
       start: daysFromNow(12), genre_id: genreIds[0], status: 'published',
-      video_reel: hls(MUX.pourToi1), mux_playback_id: MUX.pourToi1 || null, is_banner: 0, likes: 980,
+      video_reel: hls(MUX.concert), mux_playback_id: MUX.concert || null, is_banner: 0, likes: 980,
       description: 'Kojo Flame en concert.',
     },
     {
       artist_id: artistIds[3], name: 'Guyane Vibes', cover_image: null, ticket_price: '19.99',
       start: daysFromNow(5), genre_id: genreIds[4], status: 'published',
-      video_reel: hls(MUX.pourToi2), mux_playback_id: MUX.pourToi2 || null, is_banner: 0, likes: 410,
+      video_reel: hls(MUX.concert), mux_playback_id: MUX.concert || null, is_banner: 0, likes: 410,
       description: 'Léo Sway — Dancehall depuis Cayenne.',
     },
     {
       artist_id: artistIds[4], name: 'Neon Pulse', cover_image: null, ticket_price: '59.99',
       start: daysFromNow(8), genre_id: genreIds[5], status: 'published',
-      video_reel: hls(MUX.live1), mux_playback_id: MUX.live1 || null, is_banner: 0, likes: 1500,
+      video_reel: hls(MUX.concert), mux_playback_id: MUX.concert || null, is_banner: 0, likes: 1500,
       description: 'Mira Lune — set électro immersif.',
     },
     {
       artist_id: artistIds[0], name: 'First Light Premiere', cover_image: null, ticket_price: '29.99',
       start: daysFromNow(-15), end: daysFromNow(-15, 22), genre_id: genreIds[3], status: 'completed',
-      video_reel: hls(MUX.live2), mux_playback_id: MUX.live2 || null, is_banner: 0, likes: 2100,
+      video_reel: hls(MUX.concert), mux_playback_id: MUX.concert || null, is_banner: 0, likes: 2100,
       description: 'Nova Sky — replay disponible.',
     },
   ];
@@ -172,6 +178,12 @@ function run() {
       mux_live_playback_id: e.mux_live_playback_id || null, is_banner: e.is_banner, likes: e.likes,
     }).lastInsertRowid
   );
+
+  // ── « Pour toi » : clips PORTRAIT libres de droits (source réelle du feed) ──
+  const insFeedClip = db.prepare(
+    "INSERT INTO feed_clips (feed, title, mux_playback_id, position, active) VALUES ('for_you', ?, ?, ?, 1)"
+  );
+  FOR_YOU.forEach((id, i) => insFeedClip.run(`Découverte ${i + 1}`, id, i));
 
   // ── Gifts ──
   const insGift = db.prepare('INSERT INTO gifts (name, image, price, points) VALUES (?, ?, ?, ?)');
