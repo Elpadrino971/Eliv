@@ -189,16 +189,21 @@ router.get('/subscription/get', (req, res) => {
     )
     .get().c || 0;
   const nextSeat = founderSold + 1;
-  const currentFounder =
-    founderRows.find(
-      (r) =>
-        r.slot_from != null &&
-        r.slot_to != null &&
-        nextSeat >= r.slot_from &&
-        nextSeat <= r.slot_to
-    ) ||
-    founderRows[founderRows.length - 1] || // toutes les places vendues -> dernier palier
-    null;
+  // Plafond total Founder = plus grande place définie (ex. 200). Une fois
+  // TOUTES les places vendues, le pack Founder DISPARAÎT (n'est plus servi).
+  const founderCap = founderRows.reduce((m, r) => Math.max(m, r.slot_to || 0), 0);
+  const founderSoldOut = founderCap > 0 && founderSold >= founderCap;
+  const currentFounder = founderSoldOut
+    ? null
+    : founderRows.find(
+        (r) =>
+          r.slot_from != null &&
+          r.slot_to != null &&
+          nextSeat >= r.slot_from &&
+          nextSeat <= r.slot_to
+      ) ||
+      founderRows[0] || // paliers sans plage définie -> premier (rétro-compat)
+      null;
   const nextFounder = currentFounder
     ? founderRows.find((r) => (r.slot_from || 0) > (currentFounder.slot_to || 0))
     : null;
