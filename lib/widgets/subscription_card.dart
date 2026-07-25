@@ -1,3 +1,4 @@
+import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/susbcription_model.dart';
 import 'package:flutter/material.dart';
@@ -94,14 +95,7 @@ class SubscriptionCard extends StatelessWidget {
           child: Stack(
             children: [
               // ── Background image (right-weighted) + dark gradient overlay ──
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/plan_$key.png',
-                  fit: BoxFit.cover,
-                  alignment: Alignment.centerRight,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                ),
-              ),
+              Positioned.fill(child: _backgroundImage(key)),
               Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -489,6 +483,30 @@ class SubscriptionCard extends StatelessWidget {
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
+
+  /// Fond de carte : priorité à l'image uploadée dans l'admin (servie sous
+  /// events/covers), repli sur l'asset local assets/plan_<key>.png, puis rien
+  /// (le dégradé/couleur de la carte reste visible).
+  Widget _backgroundImage(String key) {
+    final img = subscription.image;
+    if (img != null && img.isNotEmpty) {
+      final url = img.startsWith('http') ? img : '${APIs.eventImageIP}/$img';
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        alignment: Alignment.centerRight,
+        errorBuilder: (_, __, ___) => _assetBackground(key),
+      );
+    }
+    return _assetBackground(key);
+  }
+
+  Widget _assetBackground(String key) => Image.asset(
+        'assets/plan_$key.png',
+        fit: BoxFit.cover,
+        alignment: Alignment.centerRight,
+        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+      );
 
   String _planKey(String? title) {
     final t = (title ?? '').toLowerCase();
