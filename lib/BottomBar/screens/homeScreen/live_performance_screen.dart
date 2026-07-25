@@ -127,7 +127,7 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
-                                        '\$${event.ticketPrice}',
+                                        '${event.ticketPrice} €',
                                         style: TextStyle(
                                           color: ivory,
                                           fontSize: 13,

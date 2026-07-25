@@ -213,7 +213,7 @@ class SubscriptionCard extends StatelessWidget {
       if (subscription.publicPrice != null &&
           subscription.publicPrice!.isNotEmpty)
         Text(
-          '\$${subscription.publicPrice}',
+          '${subscription.publicPrice} €',
           style: TextStyle(
             color: textMuted,
             fontSize: 13,
@@ -222,7 +222,7 @@ class SubscriptionCard extends StatelessWidget {
           ),
         ),
       Text(
-        '\$${subscription.price ?? '0'}',
+        '${subscription.price ?? '0'} €',
         style: const TextStyle(
           color: whiteColor,
           fontWeight: FontWeight.w900,
@@ -260,7 +260,7 @@ class SubscriptionCard extends StatelessWidget {
           ),
         ),
       Text(
-        '\$${subscription.annualPrice}',
+        '${subscription.annualPrice} €',
         style: const TextStyle(
           color: whiteColor,
           fontWeight: FontWeight.w900,
@@ -520,7 +520,7 @@ class SubscriptionCard extends StatelessWidget {
     final total = s.seatsTotal ?? 200;
     var label = '$remaining/$total places restantes';
     if (s.nextPrice != null && s.nextPriceInSeats != null) {
-      label += ' · +\$${s.nextPrice} dans ${s.nextPriceInSeats}';
+      label += ' · +${s.nextPrice} € dans ${s.nextPriceInSeats}';
     }
     return label;
   }
