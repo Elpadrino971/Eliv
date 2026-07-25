@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:artist/Controllers/subscription_controller.dart';
+import 'package:artist/Models/susbcription_model.dart';
 import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
@@ -77,6 +78,43 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
 
   Future<void> _loadData() async {
     await subscriptionController.getSubscriptions();
+  }
+
+  /// Identifiant produit App Store ANNUEL selon le plan (déduit du titre).
+  /// Les mensuels passent par les offerings RevenueCat ; l'annuel n'y est pas
+  /// -> on l'achète directement par son ID (getProducts). Doit correspondre aux
+  /// IDs créés dans App Store Connect (durée 1 an).
+  String? _annualProductId(String? title) {
+    final t = (title ?? '').toLowerCase();
+    if (t.contains('founder')) return 'vybzz_79_1y';
+    if (t.contains('growth')) return 'vybzz_199_1y';
+    if (t.contains('elite')) return 'vybzz_299_1y';
+    if (t.contains('starter')) return 'vybzz_99_1y';
+    return null;
+  }
+
+  /// Achat de l'abonnement ANNUEL : achat IAP direct par identifiant produit,
+  /// puis enregistrement du palier côté backend (même endpoint que le mensuel).
+  Future<void> _purchaseAnnual(Subscription sub) async {
+    final annualId = _annualProductId(sub.title);
+    if (annualId == null) {
+      myWarningDialog(subtitle: 'sub_annual_unavailable'.tr);
+      return;
+    }
+    final ok = await subscriptionController.purchaseSubscriptionByProductId(
+      annualId,
+    );
+    if (ok) {
+      await subscriptionController.buySubscription(
+        subscriptionId: sub.id.toString(),
+      );
+    } else {
+      myWarningDialog(
+        title: 'pay_purchasing_failed'.tr,
+        subtitle: 'pay_subscribe_failed'.tr,
+        btnTitle: 'common_continue'.tr,
+      );
+    }
   }
 
   Future fetchOffers({required String id, required String title}) async {
@@ -318,7 +356,14 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
                 showButton: true,
                 isAnnual: _isAnnual,
                 onPurchaseTap: () async {
-                  await fetchOffers(id: sub.id.toString(), title: sub.title!);
+                  if (_isAnnual) {
+                    await _purchaseAnnual(sub);
+                  } else {
+                    await fetchOffers(
+                      id: sub.id.toString(),
+                      title: sub.title!,
+                    );
+                  }
                 },
                 // Lien "Payer par carte" masqué sur iOS (anti-steering Apple
                 // 3.1.1 = risque de rejet). Proposé uniquement sur Android.

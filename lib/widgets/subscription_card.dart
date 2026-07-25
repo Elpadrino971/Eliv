@@ -34,11 +34,21 @@ class SubscriptionCard extends StatelessWidget {
       (subscription.isFounder ?? false) ||
       (subscription.badge != null && subscription.badge!.isNotEmpty);
 
+  /// Prix annuel à afficher : celui envoyé par le backend, sinon repli calculé
+  /// (2 mois offerts = mensuel x10) pour ne jamais afficher un annuel vide.
+  String? get _annualPriceValue {
+    final fromBackend = subscription.annualPrice;
+    if (fromBackend != null && fromBackend.isNotEmpty) return fromBackend;
+    final monthly = double.tryParse(subscription.price ?? '');
+    if (monthly == null) return null;
+    final annual = monthly * 10;
+    return annual % 1 == 0
+        ? annual.toStringAsFixed(0)
+        : annual.toStringAsFixed(2);
+  }
+
   /// Bascule annuelle active ET une equivalence annuelle existe pour ce plan.
-  bool get _showAnnual =>
-      isAnnual &&
-      subscription.annualPrice != null &&
-      subscription.annualPrice!.isNotEmpty;
+  bool get _showAnnual => isAnnual && _annualPriceValue != null;
 
   /// "Economisez $X" (2 mois offerts = 2 x le prix mensuel).
   String? get _annualSavings {
@@ -251,7 +261,7 @@ class SubscriptionCard extends StatelessWidget {
     return [
       if (struckThrough != null)
         Text(
-          '\$$struckThrough',
+          '$struckThrough €',
           style: TextStyle(
             color: textMuted,
             fontSize: 13,
@@ -260,7 +270,7 @@ class SubscriptionCard extends StatelessWidget {
           ),
         ),
       Text(
-        '${subscription.annualPrice} €',
+        '$_annualPriceValue €',
         style: const TextStyle(
           color: whiteColor,
           fontWeight: FontWeight.w900,
@@ -280,7 +290,7 @@ class SubscriptionCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            'SAVE \$$_annualSavings',
+            'SAVE $_annualSavings €',
             style: const TextStyle(
               color: goldPrimary,
               fontSize: 10.5,

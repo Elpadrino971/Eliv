@@ -225,4 +225,31 @@ class SubscriptionController extends GetxController {
   /// Alias historique (packs de points).
   Future<bool> purchasePointPack(String productId) =>
       purchaseByProductId(productId);
+
+  /// Achète un ABONNEMENT par son identifiant produit App Store (ex. annuel
+  /// vybzz_199_1y), via getProducts en catégorie subscription -> pas besoin
+  /// qu'il soit dans un offering RevenueCat. Utilisé pour l'annuel ; le mensuel
+  /// continue de passer par les offerings (fetchOffers). Conforme Apple IAP.
+  /// Retourne false si le produit est introuvable (pas encore approuvé/
+  /// propagé sur l'App Store) ou si l'achat échoue/est annulé.
+  Future<bool> purchaseSubscriptionByProductId(String productId) async {
+    if (productId.isEmpty) return false;
+    try {
+      final products = await Purchases.getProducts(
+        [productId],
+        productCategory: ProductCategory.subscription,
+      );
+      if (products.isNotEmpty) {
+        await Purchases.purchase(PurchaseParams.storeProduct(products.first));
+        return true;
+      }
+      myPrint(
+        'purchaseSubscriptionByProductId: produit "$productId" introuvable (App Store)',
+      );
+      return false;
+    } catch (e) {
+      myPrint('purchaseSubscriptionByProductId: $e');
+      return false;
+    }
+  }
 }
