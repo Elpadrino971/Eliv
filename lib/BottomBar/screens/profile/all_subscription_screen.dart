@@ -344,7 +344,10 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
             _header(),
-            _billingToggle(),
+            // Bascule MONTHLY/ANNUAL masquée sur iOS : les annuels chers
+            // (Elite/Growth) dépassent le plafond de prix des achats intégrés
+            // App Store. L'annuel est vendu sur le web (Stripe, sans plafond).
+            if (!Platform.isIOS) _billingToggle(),
             const SizedBox(height: 18),
             ...list.map(
               (sub) => SubscriptionCard(
