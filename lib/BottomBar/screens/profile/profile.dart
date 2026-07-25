@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:artist/Auth/login_screen.dart';
@@ -65,16 +64,10 @@ class _ProfileState extends State<Profile> {
               'subTitle': 'prof_do_live'.tr,
               'onTap': () {
                 if (userActiveSubscriptions.isEmpty) {
-                  // iOS : l'abonnement artiste (IAP) n'est pas encore
-                  // finalisé sur l'App Store -> on n'envoie PAS vers l'écran
-                  // d'achat (bouton mort = risque de rejet 2.1). Message clair.
-                  if (Platform.isIOS) {
-                    myWarningDialog(
-                      title: 'common_warning'.tr,
-                      subtitle: 'prof_artist_ios_soon'.tr,
-                    );
-                    return;
-                  }
+                  // Pas d'abonnement actif -> on propose de s'abonner.
+                  // In-app = achat Apple IAP (produits vybzz_XX_1m approuvés,
+                  // conforme 3.1.1). Le lien web/Stripe reste masqué sur iOS
+                  // (anti-steering) dans l'écran d'achat lui-même.
                   myWarningDialog(
                     title: 'common_warning'.tr,
                     subtitle:
@@ -115,16 +108,15 @@ class _ProfileState extends State<Profile> {
         'subTitle': 'prof_wallet_sub'.tr,
         'onTap': () => Get.to(() => const UserWallet()),
       },
-      // Achat d'abonnement artiste masqué sur iOS (produits IAP non finalisés
-      // -> flux d'achat non fonctionnel). Réactiver quand les produits
-      // vybzz_XX_1m seront « Ready to Submit » sur l'App Store.
-      if (!Platform.isIOS)
-        {
-          'icon': Icons.workspace_premium_outlined,
-          'title': 'prof_purchase_sub'.tr,
-          'subTitle': 'prof_become_artist_sub'.tr,
-          'onTap': () => Get.to(() => const AllSubscriptionScreen()),
-        },
+      // Achat d'abonnement artiste : in-app via Apple IAP (produits vybzz_XX_1m
+      // approuvés sur l'App Store, conforme 3.1.1). Le paiement web/Stripe
+      // reste proposé côté site et masqué dans l'app iOS (anti-steering).
+      {
+        'icon': Icons.workspace_premium_outlined,
+        'title': 'prof_purchase_sub'.tr,
+        'subTitle': 'prof_become_artist_sub'.tr,
+        'onTap': () => Get.to(() => const AllSubscriptionScreen()),
+      },
       {
         'icon': Icons.card_membership_outlined,
         'title': 'prof_manage_sub'.tr,
