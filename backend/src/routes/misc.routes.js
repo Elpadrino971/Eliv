@@ -436,7 +436,19 @@ router.post('/withdraw/delete-bank', requireAuth, (req, res) =>
 router.post('/withdraw/add', requireAuth, (req, res) =>
   res.json({ status: 'success', message: 'Withdrawal requested.' })
 );
-router.get('/following', optionalAuth, (req, res) => ok(res, []));
+// Liste des artistes suivis par l'utilisateur. L'app fait un POST avec
+// {user_id} ; on accepte aussi GET. Shape attendu par FollowModel :
+// { data: { followers_count, following: [ {id, full_name, profile_image, email} ] } }.
+function followingHandler(req, res) {
+  const userId = req.user?.id || req.body?.user_id;
+  if (!userId) return ok(res, { followers_count: 0, following: [] });
+  const rows = db
+    .prepare('SELECT u.* FROM users u JOIN follows f ON f.artist_id = u.id WHERE f.follower_id = ?')
+    .all(userId);
+  return ok(res, { followers_count: rows.length, following: rows.map((u) => serializeUser(u)) });
+}
+router.get('/following', optionalAuth, followingHandler);
+router.post('/following', optionalAuth, followingHandler);
 
 // ═══════════════════════════════════════════════════════════════════════
 // NOUVELLES FEATURES (docs/BACKEND_CHANGES.md) — ce qui manquait à Hammad
