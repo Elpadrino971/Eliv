@@ -133,8 +133,8 @@ class _ProfileState extends State<Profile> {
       },
       {
         'icon': Icons.lightbulb_outline_rounded,
-        'title': 'Boîte à idées',
-        'subTitle': 'Aidez-nous à améliorer VYBZZZ',
+        'title': 'idea_box_title'.tr,
+        'subTitle': 'idea_box_subtitle'.tr,
         'onTap': () => Get.to(() => const IdeaBoxScreen()),
       },
       {

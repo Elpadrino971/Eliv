@@ -113,8 +113,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          'Aperçu — exemple de billet (aucun '
-                                          'billet réel pour le moment)',
+                                          'tickets_preview_example'.tr,
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: Get.isDarkMode

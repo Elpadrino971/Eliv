@@ -1,6 +1,7 @@
 import 'package:artist/Global/colors.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Bouton "Caster" pour diffuser un concert/replay sur une TV.
 ///
@@ -33,9 +34,9 @@ class CastButton extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cast Chromecast bientôt disponible sur Android.'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text('cast_coming_soon'.tr),
+            duration: const Duration(seconds: 2),
           ),
         );
       },

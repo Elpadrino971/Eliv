@@ -95,15 +95,14 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
       if (!sent) {
         myWarningDialog(
           title: 'common_error'.tr,
-          subtitle: "Échec de l'envoi. Réessaie.",
+          subtitle: 'short_send_failed'.tr,
         );
         return;
       }
 
       mySuccessDialog(
-        title: 'Envoyé !',
-        subtitle:
-            "Ton clip est en attente de validation avant d'apparaître dans le feed.",
+        title: 'short_sent_title'.tr,
+        subtitle: 'short_sent_sub'.tr,
         ontap: () {
           Get.back();
           Get.back();
@@ -112,7 +111,7 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
     } catch (_) {
       myWarningDialog(
         title: 'common_error'.tr,
-        subtitle: "Échec de l'envoi. Réessaie.",
+        subtitle: 'short_send_failed'.tr,
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -163,7 +162,7 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: midnightPrimary,
-      appBar: MyAppbar(title: 'Créer un short'),
+      appBar: MyAppbar(title: 'short_create_title'.tr),
       body: Padding(
         padding: myPadding,
         child: Column(
@@ -173,8 +172,7 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
             _feedToggle(),
             height(0.015),
             Text(
-              "En lien avec la scène : danse, stand-up, chant, sport, gospel… "
-              "(le hors-sujet ne sera pas validé)",
+              'short_create_hint_desc'.tr,
               style: TextStyle(color: textMuted, fontSize: 12, height: 1.4),
             ),
             height(0.02),
@@ -232,7 +230,7 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
               enabled: !_busy,
               style: TextStyle(color: ivory),
               decoration: InputDecoration(
-                hintText: 'Titre / légende (optionnel)',
+                hintText: 'short_caption_hint'.tr,
                 hintStyle: TextStyle(color: textMuted),
                 filled: true,
                 fillColor: cardDeep,
@@ -248,7 +246,7 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
                     child: CircularProgressIndicator(color: goldPrimary),
                   )
                 : MyButton(
-                    label: 'Publier',
+                    label: 'short_publish'.tr,
                     onTap: _video == null ? () {} : _publish,
                   ),
             height(0.03),

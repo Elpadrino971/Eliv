@@ -29,7 +29,7 @@ class _IdeaBoxScreenState extends State<IdeaBoxScreen> {
 
   Future<void> _submit() async {
     if (_message.text.trim().isEmpty) {
-      myWarningDialog(subtitle: 'Écris ton idée avant d\'envoyer.');
+      myWarningDialog(subtitle: 'idea_box_val_empty'.tr);
       return;
     }
     setState(() => _sending = true);
@@ -46,7 +46,7 @@ class _IdeaBoxScreenState extends State<IdeaBoxScreen> {
       if (value.split(' ').first != 'error') {
         _message.clear();
         mySuccessDialog(
-          subtitle: 'Merci ! Ton idée a bien été envoyée. 💡',
+          subtitle: 'idea_box_success'.tr,
           ontap: () {
             Get.back();
             Get.back();
@@ -63,7 +63,7 @@ class _IdeaBoxScreenState extends State<IdeaBoxScreen> {
     final dark = Get.isDarkMode;
     final textColor = dark ? whiteColor : blackColor;
     return Scaffold(
-      appBar: MyAppbar(title: 'Boîte à idées'),
+      appBar: MyAppbar(title: 'idea_box_title'.tr),
       body: SingleChildScrollView(
         padding: myPadding,
         child: Column(
@@ -76,7 +76,7 @@ class _IdeaBoxScreenState extends State<IdeaBoxScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Aide-nous à améliorer VYBZZZ',
+                    'idea_box_subtitle'.tr,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -88,12 +88,12 @@ class _IdeaBoxScreenState extends State<IdeaBoxScreen> {
             ),
             height(0.005),
             Text(
-              'Une idée, une suggestion, un truc qui te manque ? Dis-le nous — on lit tout.',
+              'idea_box_desc'.tr,
               style: TextStyle(color: textMuted, fontSize: 14, height: 1.4),
             ),
             height(0.025),
 
-            Text('Catégorie', style: TextStyle(color: textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
+            Text('idea_box_category'.tr, style: TextStyle(color: textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
             height(0.008),
             Wrap(
               spacing: 8,
@@ -123,7 +123,7 @@ class _IdeaBoxScreenState extends State<IdeaBoxScreen> {
             ),
             height(0.025),
 
-            Text('Ton idée', style: TextStyle(color: textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
+            Text('idea_box_your_idea'.tr, style: TextStyle(color: textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
             height(0.008),
             TextField(
               controller: _message,
@@ -131,7 +131,7 @@ class _IdeaBoxScreenState extends State<IdeaBoxScreen> {
               maxLength: 600,
               style: TextStyle(color: textColor),
               decoration: InputDecoration(
-                hintText: 'Décris ton idée…',
+                hintText: 'idea_box_hint'.tr,
                 hintStyle: TextStyle(color: textMuted),
                 filled: true,
                 fillColor: dark ? cardDeep : boxColor,

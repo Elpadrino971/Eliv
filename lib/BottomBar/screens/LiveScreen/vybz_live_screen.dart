@@ -652,7 +652,7 @@ class _NoLiveState extends StatelessWidget {
                     const Icon(Icons.sensors_rounded, color: liveRed, size: 16),
                     const SizedBox(width: 8),
                     Text(
-                      'Concert pro en direct',
+                      'live_pro_concert'.tr,
                       style: TextStyle(
                         color: whiteColor,
                         fontWeight: FontWeight.w700,
@@ -1105,8 +1105,8 @@ class _NoClipsState extends StatelessWidget {
           Icon(Icons.video_collection_outlined,
               color: whiteColor.withValues(alpha: 0.4), size: 56),
           height(0.02),
-          const Text(
-            'Aucun clip pour l\'instant',
+          Text(
+            'live_no_clips'.tr,
             style: TextStyle(
               color: whiteColor,
               fontSize: 18,
@@ -1115,7 +1115,7 @@ class _NoClipsState extends StatelessWidget {
           ),
           height(0.01),
           Text(
-            'Sois le premier à publier un short',
+            'live_be_first_short'.tr,
             style: TextStyle(
               color: whiteColor.withValues(alpha: 0.6),
               fontSize: 14,
@@ -1130,14 +1130,14 @@ class _NoClipsState extends StatelessWidget {
                 color: goldPrimary,
                 borderRadius: BorderRadius.circular(30),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.add_rounded, color: midnightPrimary, size: 18),
-                  SizedBox(width: 6),
+                  const Icon(Icons.add_rounded, color: midnightPrimary, size: 18),
+                  const SizedBox(width: 6),
                   Text(
-                    'Créer un short',
-                    style: TextStyle(
+                    'short_create_title'.tr,
+                    style: const TextStyle(
                       color: midnightPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 14,

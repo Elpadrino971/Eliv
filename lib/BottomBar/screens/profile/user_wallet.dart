@@ -188,8 +188,7 @@ class _UserWalletState extends State<UserWallet> {
                         final productId = bundle.revenuecatProductId ?? '';
                         if (productId.isEmpty) {
                           myWarningDialog(
-                            subtitle:
-                                "Ce pack n'est pas encore disponible à l'achat.",
+                            subtitle: 'wallet_pack_unavailable'.tr,
                           );
                           return;
                         }
@@ -212,12 +211,11 @@ class _UserWalletState extends State<UserWallet> {
                               // serveur : on rafraîchit le solde.
                               await authController.getUserModel();
                               mySuccessDialog(
-                                subtitle:
-                                    'Recharge validée ! Tes points arrivent.',
+                                subtitle: 'wallet_topup_success'.tr,
                               );
                             } else {
                               myWarningDialog(
-                                subtitle: 'Achat non complété. Réessaie.',
+                                subtitle: 'wallet_purchase_incomplete'.tr,
                               );
                             }
                           },

@@ -1,6 +1,7 @@
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/susbcription_model.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Bright blue used for the featured (Founder) glow + "BEST VALUE" ribbon.
 const Color _featuredBlue = Color(0xff2E9BFF);
@@ -401,7 +402,7 @@ class SubscriptionCard extends StatelessWidget {
       onTap: onWebPurchaseTap,
       child: Center(
         child: Text(
-          'Payer par carte (meilleur prix, web)',
+          'sub_pay_card_web'.tr,
           style: TextStyle(
             color: goldPrimary,
             fontSize: 12.5,

@@ -172,7 +172,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                   width(0.02),
                   Expanded(
                     child: Text(
-                      'Paiement sécurisé via l\'App Store',
+                      'checkout_secure_note'.tr,
                       style: TextStyle(
                         color: textMuted,
                         fontSize: 13,
@@ -218,8 +218,9 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
                   height(0.01),
                   MyButton(
-                    label:
-                        'Payer ${_ticketPrice.toStringAsFixed(2)} €',
+                    label: 'checkout_pay'.trParams({
+                      'price': _ticketPrice.toStringAsFixed(2),
+                    }),
                     labelColor: midnightPrimary,
                     onTap: () async {
                       final eventController = Get.find<EventController>();
@@ -240,8 +241,9 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                           if (!paid) {
                             Get.back(); // ferme le loader
                             myWarningDialog(
-                              subtitle:
-                                  "Paiement non complété. Réessaie. (produit $_ticketProductId)",
+                              subtitle: 'checkout_payment_incomplete'.trParams({
+                                'product': _ticketProductId,
+                              }),
                             );
                             return;
                           }

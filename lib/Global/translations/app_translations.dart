@@ -318,6 +318,46 @@ const Map<String, String> _en = {
   'rev_growth_goal': 'Growth Goal',
   'rev_sales_perf': 'Sales Performance',
   'rev_avg_session': 'Avg Session',
+  // Idea Box
+  'idea_box_title': 'Idea Box',
+  'idea_box_subtitle': 'Help us improve VYBZZZ',
+  'idea_box_desc': 'An idea, a suggestion, something you\'re missing? Tell us — we read everything.',
+  'idea_box_category': 'Category',
+  'idea_box_your_idea': 'Your idea',
+  'idea_box_hint': 'Describe your idea…',
+  'idea_box_val_empty': 'Write your idea before sending.',
+  'idea_box_success': 'Thanks! Your idea has been sent. 💡',
+  // Create short
+  'short_create_title': 'Create a short',
+  'short_create_hint_desc': 'Related to the stage: dance, stand-up, singing, sports, gospel… (off-topic content won\'t be approved)',
+  'short_caption_hint': 'Title / caption (optional)',
+  'short_publish': 'Publish',
+  'short_sent_title': 'Sent!',
+  'short_sent_sub': 'Your clip is awaiting approval before appearing in the feed.',
+  'short_send_failed': 'Upload failed. Try again.',
+  // Checkout
+  'checkout_pay': 'Pay @price €',
+  'checkout_secure_note': 'Secure payment via the App Store',
+  'checkout_payment_incomplete': 'Payment not completed. Try again. (product @product)',
+  // Wallet
+  'wallet_pack_unavailable': 'This pack is not available for purchase yet.',
+  'wallet_topup_success': 'Top-up confirmed! Your points are on the way.',
+  'wallet_purchase_incomplete': 'Purchase not completed. Try again.',
+  // Live / clips
+  'live_pro_concert': 'Pro concert live',
+  'live_be_first_short': 'Be the first to post a short',
+  'live_no_clips': 'No clips yet',
+  // Replay player
+  'replay_send_tip': 'Send a tip 🎁',
+  'replay_tip_thanks': 'Thanks!',
+  'replay_unavailable': 'Replay unavailable',
+  'common_share': 'Share',
+  // Tickets
+  'tickets_preview_example': 'Preview — sample ticket (no real ticket for now)',
+  // Subscription
+  'sub_pay_card_web': 'Pay by card (best price, web)',
+  // Cast
+  'cast_coming_soon': 'Chromecast casting coming soon on Android.',
 };
 
 // ─────────────────────────────── Français ─────────────────────────────────
@@ -589,6 +629,46 @@ const Map<String, String> _fr = {
   'rev_growth_goal': 'Objectif de croissance',
   'rev_sales_perf': 'Performance des ventes',
   'rev_avg_session': 'Session moyenne',
+  // Boîte à idées
+  'idea_box_title': 'Boîte à idées',
+  'idea_box_subtitle': 'Aide-nous à améliorer VYBZZZ',
+  'idea_box_desc': 'Une idée, une suggestion, un truc qui te manque ? Dis-le nous — on lit tout.',
+  'idea_box_category': 'Catégorie',
+  'idea_box_your_idea': 'Ton idée',
+  'idea_box_hint': 'Décris ton idée…',
+  'idea_box_val_empty': 'Écris ton idée avant d\'envoyer.',
+  'idea_box_success': 'Merci ! Ton idée a bien été envoyée. 💡',
+  // Créer un short
+  'short_create_title': 'Créer un short',
+  'short_create_hint_desc': 'En lien avec la scène : danse, stand-up, chant, sport, gospel… (le hors-sujet ne sera pas validé)',
+  'short_caption_hint': 'Titre / légende (optionnel)',
+  'short_publish': 'Publier',
+  'short_sent_title': 'Envoyé !',
+  'short_sent_sub': 'Ton clip est en attente de validation avant d\'apparaître dans le feed.',
+  'short_send_failed': 'Échec de l\'envoi. Réessaie.',
+  // Checkout
+  'checkout_pay': 'Payer @price €',
+  'checkout_secure_note': 'Paiement sécurisé via l\'App Store',
+  'checkout_payment_incomplete': 'Paiement non complété. Réessaie. (produit @product)',
+  // Portefeuille
+  'wallet_pack_unavailable': 'Ce pack n\'est pas encore disponible à l\'achat.',
+  'wallet_topup_success': 'Recharge validée ! Tes points arrivent.',
+  'wallet_purchase_incomplete': 'Achat non complété. Réessaie.',
+  // Live / clips
+  'live_pro_concert': 'Concert pro en direct',
+  'live_be_first_short': 'Sois le premier à publier un short',
+  'live_no_clips': 'Aucun clip pour l\'instant',
+  // Lecteur replay
+  'replay_send_tip': 'Envoyer un pourboire 🎁',
+  'replay_tip_thanks': 'Merci !',
+  'replay_unavailable': 'Replay indisponible',
+  'common_share': 'Partager',
+  // Billets
+  'tickets_preview_example': 'Aperçu — exemple de billet (aucun billet réel pour le moment)',
+  // Abonnement
+  'sub_pay_card_web': 'Payer par carte (meilleur prix, web)',
+  // Cast
+  'cast_coming_soon': 'Cast Chromecast bientôt disponible sur Android.',
 };
 
 // ─────────────────────────────── Español ──────────────────────────────────

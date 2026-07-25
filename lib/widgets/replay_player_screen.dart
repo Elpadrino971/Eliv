@@ -133,8 +133,8 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Envoyer un pourboire 🎁',
-                    style: TextStyle(color: ivory, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text('replay_send_tip'.tr,
+                    style: const TextStyle(color: ivory, fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 14),
                 if (gifts.isEmpty)
                   const Padding(
@@ -153,7 +153,7 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
                         onTap: () async {
                           Get.back();
                           await controller.sendGift(eventId: '${event!.id}', giftId: '${g.id}');
-                          Get.snackbar('Merci !', 'Pourboire "${g.name}" envoyé 🎁',
+                          Get.snackbar('replay_tip_thanks'.tr, 'Pourboire "${g.name}" envoyé 🎁',
                               backgroundColor: cardDeep, colorText: ivory);
                         },
                         child: Container(
@@ -235,7 +235,7 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
             else if (_error)
               Center(
                 child: Text(
-                  'Replay indisponible',
+                  'replay_unavailable'.tr,
                   style: TextStyle(color: whiteColor.withValues(alpha: 0.7)),
                 ),
               )
@@ -290,7 +290,7 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
                     const SizedBox(height: 16),
                     _actionButton(
                       icon: Icons.ios_share_rounded,
-                      label: 'Partager',
+                      label: 'common_share'.tr,
                       onTap: _share,
                     ),
                   ],
@@ -307,13 +307,13 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(color: liveRed, borderRadius: BorderRadius.circular(8)),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.circle, color: Colors.white, size: 7),
-                        SizedBox(width: 5),
-                        Text('EN DIRECT',
-                            style: TextStyle(
+                        const Icon(Icons.circle, color: Colors.white, size: 7),
+                        const SizedBox(width: 5),
+                        Text('live_badge'.tr,
+                            style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
