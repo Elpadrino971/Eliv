@@ -185,15 +185,23 @@ class SubscriptionController extends GetxController {
     if (productId.isEmpty) return false;
     try {
       // 1. Si le produit est dans un offering (ex. abonnements artistes),
-      //    on l'achète via son package.
-      final offerings = await Purchases.getOfferings();
-      for (final offering in offerings.all.values) {
-        for (final pack in offering.availablePackages) {
-          if (pack.storeProduct.identifier == productId) {
-            await Purchases.purchase(PurchaseParams.package(pack));
-            return true;
+      //    on l'achète via son package. ISOLÉ dans son propre try/catch : si
+      //    les offerings sont mal configurés (produits d'abonnement non dispo
+      //    sur l'App Store), getOfferings() lève une CONFIGURATION_ERROR — elle
+      //    ne doit PAS bloquer l'achat direct des consommables (billets / packs
+      //    de points) qui, lui, n'a pas besoin des offerings (étape 2).
+      try {
+        final offerings = await Purchases.getOfferings();
+        for (final offering in offerings.all.values) {
+          for (final pack in offering.availablePackages) {
+            if (pack.storeProduct.identifier == productId) {
+              await Purchases.purchase(PurchaseParams.package(pack));
+              return true;
+            }
           }
         }
+      } catch (e) {
+        myPrint('purchaseByProductId: offerings indisponibles ($e) -> fallback getProducts');
       }
       // 2. Sinon (consommables : billets, packs de points), on récupère le
       //    produit DIRECTEMENT par son ID -> pas besoin de le mettre dans un
