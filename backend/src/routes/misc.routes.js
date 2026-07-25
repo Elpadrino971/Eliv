@@ -134,17 +134,26 @@ router.get('/settings/get-settings', (req, res) => {
   return res.json({ status: 'success', data: obj });
 });
 
-// GET /api/settings/get-management -> { status, data: {...} }
-router.get('/settings/get-management', (req, res) => {
-  return res.json({
-    status: 'success',
-    data: {
-      terms_url: 'https://vybzzz.com/terms',
-      privacy_url: 'https://vybzzz.com/privacy',
-      support_email: 'support@vybzzz.com',
-    },
-  });
-});
+// GET|POST /api/settings/get-management -> { status, count, list: [...] }
+// L'app POST avec {role:'FAQ'} et lit ManagementModel.list (name=question,
+// description=réponse). On sert la FAQ depuis la table faqs. Monté en GET ET
+// POST (l'app fait un POST -> sinon 404 + skeletons infinis sur l'écran FAQ).
+const getManagementHandler = (req, res) => {
+  const rows = db.prepare('SELECT id, question, answer, created_at FROM faqs ORDER BY id ASC').all();
+  const list = rows.map((r) => ({
+    id: r.id,
+    parent_id: null,
+    role: 'FAQ',
+    name: r.question,
+    description: r.answer,
+    image: null,
+    created_at: r.created_at,
+    updated_at: r.created_at,
+  }));
+  return res.json({ status: 'success', count: list.length, list });
+};
+router.get('/settings/get-management', getManagementHandler);
+router.post('/settings/get-management', getManagementHandler);
 
 // ─── Subscriptions (artistes) ───
 // Lit la vraie table `subscriptions` geree dans l'admin (Abonnements) et la
