@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
-const { serializeEvent, serializeUser, ok, fail, genReceipt } = require('../helpers');
+const { serializeEvent, serializeUser, ok, fail, genReceipt, resolveArtistCommission, splitAmount } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
 
@@ -120,15 +120,30 @@ router.post('/buy-ticket', optionalAuth, (req, res) => {
     return ok(res, serializeEvent(event, { currentUserId: userId }));
   }
 
+  // Split commission (billet en EUROS) : la part artiste est créditée à son
+  // wallet, la part plateforme tracée dans platform_earnings. Taux résolu depuis
+  // l'abonnement de l'artiste (défaut 60 %), figé sur la ligne du billet.
+  const price = parseFloat(event.ticket_price) || 0;
+  const rate = resolveArtistCommission(event.artist_id);
+  const { artistShare, platformShare } = splitAmount(price, rate);
   const grant = db.transaction(() => {
-    db.prepare(
-      `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status)
-       VALUES (?, ?, ?, ?, 'active')`
-    ).run(b.event_id, userId, String(event.ticket_price || '0'), genReceipt());
+    const info = db.prepare(
+      `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status, commission_rate, artist_share)
+       VALUES (?, ?, ?, ?, 'active', ?, ?)`
+    ).run(b.event_id, userId, String(event.ticket_price || '0'), genReceipt(), rate, artistShare.toFixed(2));
     db.prepare(
       `INSERT INTO activities (user_id, event_id, type, description)
        VALUES (?, ?, 'ticket', 'bought a ticket')`
     ).run(userId, b.event_id);
+    if (event.artist_id) {
+      const artist = db.prepare('SELECT wallet FROM users WHERE id = ?').get(event.artist_id);
+      const newWallet = ((parseFloat(artist?.wallet) || 0) + artistShare).toFixed(2);
+      db.prepare('UPDATE users SET wallet = ? WHERE id = ?').run(newWallet, event.artist_id);
+      db.prepare(
+        `INSERT INTO platform_earnings (artist_id, source, source_id, gross, artist_share, platform_share, commission_rate)
+         VALUES (?, 'ticket', ?, ?, ?, ?, ?)`
+      ).run(event.artist_id, info.lastInsertRowid, price.toFixed(2), artistShare.toFixed(2), platformShare.toFixed(2), rate);
+    }
   });
   grant();
 
@@ -221,13 +236,21 @@ router.post('/event-gift', optionalAuth, (req, res) => {
     });
   }
 
+  // Split commission (cadeau en POINTS) : l'artiste reçoit sa part, le reste va
+  // à la plateforme (tracé dans platform_earnings). Taux depuis son abonnement.
+  const rate = resolveArtistCommission(event?.artist_id);
+  const { artistShare, platformShare } = splitAmount(cost, rate);
   const send = db.transaction(() => {
     if (cost > 0) {
       db.prepare('UPDATE users SET points = ? WHERE id = ?').run((balance - cost).toFixed(2), userId);
       if (event?.artist_id) {
         const artist = db.prepare('SELECT wallet FROM users WHERE id = ?').get(event.artist_id);
-        const artistWallet = (parseFloat(artist?.wallet) || 0) + cost;
+        const artistWallet = (parseFloat(artist?.wallet) || 0) + artistShare;
         db.prepare('UPDATE users SET wallet = ? WHERE id = ?').run(artistWallet.toFixed(2), event.artist_id);
+        db.prepare(
+          `INSERT INTO platform_earnings (artist_id, source, source_id, gross, artist_share, platform_share, commission_rate)
+           VALUES (?, 'gift', ?, ?, ?, ?, ?)`
+        ).run(event.artist_id, b.event_id, String(cost), artistShare.toFixed(2), platformShare.toFixed(2), rate);
       }
     }
     db.prepare(

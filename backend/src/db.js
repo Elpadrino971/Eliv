@@ -277,8 +277,30 @@ function init() {
     );
   `);
 
+  // Registre des revenus : pour CHAQUE vente (billet / cadeau), on trace le
+  // brut, la part artiste et la part plateforme + le taux appliqué. Source de
+  // vérité pour la compta (part plateforme = revenu réel du fondateur, pas le
+  // brut). Unité : 'ticket' en EUROS, 'gift' en POINTS (1 € = 100 pts).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS platform_earnings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      artist_id INTEGER,
+      source TEXT,
+      source_id INTEGER,
+      gross TEXT,
+      artist_share TEXT,
+      platform_share TEXT,
+      commission_rate INTEGER,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
   // ─── Migrations : colonnes ajoutées après coup (ignorées si déjà présentes) ───
   for (const sql of [
+    // Split commissions : snapshot du taux + part artiste au moment de la vente
+    // du billet (grandfathering : un changement de palier ne re-tarife pas le passé).
+    "ALTER TABLE tickets ADD COLUMN commission_rate INTEGER",
+    "ALTER TABLE tickets ADD COLUMN artist_share TEXT",
     // Packs de points (recharge portefeuille via IAP RevenueCat).
     "ALTER TABLE packages ADD COLUMN revenuecat_product_id TEXT",
     "ALTER TABLE packages ADD COLUMN active INTEGER DEFAULT 1",

@@ -5,6 +5,7 @@ const router = express.Router();
 const { db } = require('../db');
 const { serializeUser, fail } = require('../helpers');
 const { hash, compare, sign, requireAuth } = require('../auth');
+const { saveUpload } = require('../uploads');
 
 function authResponse(res, user, message = 'OK') {
   return res.json({
@@ -144,9 +145,14 @@ router.post('/update-profile', requireAuth, (req, res) => {
   for (const f of fields) {
     if (b[f] !== undefined) { sets.push(`${f} = @${f}`); vals[f] = b[f]; }
   }
-  if (req.files?.profile_picture) {
+  // multer est monté en upload.any() -> req.files est un TABLEAU. On passe par
+  // saveUpload (qui trouve le fichier par nom de champ, le copie dans storage/
+  // et renvoie l'URL absolue). L'ancien `req.files.profile_picture` était
+  // toujours undefined -> la photo n'était jamais enregistrée.
+  const uploadedPhoto = saveUpload(req, ['profile_picture', 'profile_image', 'image', 'photo'], 'profiles', 'profiles');
+  if (uploadedPhoto) {
     sets.push('profile_image = @profile_image');
-    vals.profile_image = req.files.profile_picture;
+    vals.profile_image = uploadedPhoto;
   }
   if (sets.length) {
     vals.id = req.user.id;

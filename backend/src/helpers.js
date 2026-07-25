@@ -238,6 +238,36 @@ function genReceipt() {
   return `VBZ-${n}-${m}`;
 }
 
+// Part ARTISTE par défaut (%) si l'artiste n'a pas d'abonnement / commission NULL.
+// Cf. docs/founder_plan_api_spec.md (Starter 50 / Growth 60 / Elite 70 / Founder 60).
+const DEFAULT_COMMISSION = 60;
+
+// Taux de commission (= part artiste, en %) résolu depuis l'abonnement actif de
+// l'artiste. Toujours calculé côté serveur, jamais fourni par le client.
+function resolveArtistCommission(artistId) {
+  if (!artistId) return DEFAULT_COMMISSION;
+  const row = db
+    .prepare(
+      `SELECT s.commission FROM user_subscriptions us
+       JOIN subscriptions s ON s.id = us.subscriptions_id
+       WHERE us.user_id = ? AND us.status = 'active'
+       ORDER BY us.id DESC LIMIT 1`
+    )
+    .get(artistId);
+  const c = row && row.commission != null ? Number(row.commission) : DEFAULT_COMMISSION;
+  if (!Number.isFinite(c)) return DEFAULT_COMMISSION;
+  return Math.max(0, Math.min(100, c));
+}
+
+// Applique un taux (part artiste %) à un montant -> { artistShare, platformShare }
+// arrondis à 2 décimales. Unité neutre (€ pour billets, points pour cadeaux).
+function splitAmount(amount, rate) {
+  const total = parseFloat(amount) || 0;
+  const artistShare = Math.round(total * rate) / 100;
+  const platformShare = Math.round((total - artistShare) * 100) / 100;
+  return { artistShare, platformShare };
+}
+
 module.exports = {
   serializeUser,
   serializeEvent,
@@ -247,4 +277,7 @@ module.exports = {
   list,
   fail,
   genReceipt,
+  resolveArtistCommission,
+  splitAmount,
+  DEFAULT_COMMISSION,
 };
