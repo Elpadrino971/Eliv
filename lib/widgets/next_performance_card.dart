@@ -91,7 +91,7 @@ class _NextPerformanceCardState extends State<NextPerformanceCard> {
                       _countdownBadge(),
                       const Spacer(),
                       Text(
-                        '\$${widget.event.ticketPrice}',
+                        '${widget.event.ticketPrice} €',
                         style: const TextStyle(
                           color: ivory,
                           fontWeight: FontWeight.w700,

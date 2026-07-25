@@ -223,7 +223,7 @@ class _MyCardState extends State<MyCard> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            '\$${widget.event.ticketPrice}',
+                            '${widget.event.ticketPrice} €',
                             style: TextStyle(
                               color: Get.isDarkMode ? whiteColor : blackColor,
                               fontSize: 13,

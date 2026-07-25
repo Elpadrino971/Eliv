@@ -251,7 +251,7 @@ class _ConcertCard extends StatelessWidget {
                       border: Border.all(color: vybzzzGoldBorder),
                     ),
                     child: Text(
-                      'From \$$price',
+                      'From $price €',
                       style: const TextStyle(
                         color: whiteColor,
                         fontSize: 13,

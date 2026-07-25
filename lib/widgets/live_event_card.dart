@@ -56,7 +56,7 @@ class LiveEventsCards extends StatelessWidget {
                         _viewerCount(),
                         const SizedBox(width: 10),
                         Text(
-                          '\$${event.ticketPrice}',
+                          '${event.ticketPrice} €',
                           style: const TextStyle(
                             color: ivory,
                             fontWeight: FontWeight.w700,

@@ -169,7 +169,7 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
                               const SizedBox(height: 4),
                               Text(g.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(color: ivory, fontSize: 11)),
-                              Text('\$${g.price ?? '0'}',
+                              Text('${g.price ?? '0'} €',
                                   style: const TextStyle(color: textMuted, fontSize: 10)),
                             ],
                           ),
