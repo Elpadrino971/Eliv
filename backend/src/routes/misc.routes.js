@@ -168,19 +168,49 @@ router.post('/settings/get-management', getManagementHandler);
 router.get('/subscription/get', (req, res) => {
   const rows = db.prepare('SELECT * FROM subscriptions WHERE active = 1 ORDER BY CAST(price AS REAL) ASC').all();
 
-  // Un seul palier "Founder" visible a la fois (le moins cher parmi les
-  // paliers actifs = le palier en cours). Les paliers suivants restent en
-  // base, prets a prendre le relais des que l'admin desactive le precedent
-  // (pas encore de suivi automatique des vraies ventes -> bascule manuelle).
-  const founderRows = rows.filter((r) => (r.tier || '').toLowerCase() === 'founder');
+  // Un seul palier "Founder" visible a la fois = le palier COURANT, choisi
+  // automatiquement selon le nombre de Founder deja vendus (voir plus bas).
+  // Les autres paliers restent en base, tries par plage de places.
+  const founderRows = rows
+    .filter((r) => (r.tier || '').toLowerCase() === 'founder')
+    .sort((a, b) => (a.slot_from || 0) - (b.slot_from || 0));
   const otherRows = rows.filter((r) => (r.tier || '').toLowerCase() !== 'founder');
-  const currentFounder = founderRows[0] || null;
-  const nextFounder = founderRows[1] || null;
+
+  // Auto-tiering Founder : le prix monte tout seul selon le nombre de Founder
+  // déjà vendus (tous paliers confondus). On sert le palier dont la plage de
+  // places [slot_from, slot_to] contient la prochaine place à vendre. Les
+  // passages (ex. 24->25, 100->101) sont définis par slot_from/slot_to en
+  // admin ; chaque palier a son propre prix + stripe_price_id.
+  const founderSold = db
+    .prepare(
+      `SELECT COUNT(*) AS c FROM user_subscriptions us
+       JOIN subscriptions s ON s.id = us.subscriptions_id
+       WHERE LOWER(s.tier) = 'founder' AND us.status = 'active'`
+    )
+    .get().c || 0;
+  const nextSeat = founderSold + 1;
+  const currentFounder =
+    founderRows.find(
+      (r) =>
+        r.slot_from != null &&
+        r.slot_to != null &&
+        nextSeat >= r.slot_from &&
+        nextSeat <= r.slot_to
+    ) ||
+    founderRows[founderRows.length - 1] || // toutes les places vendues -> dernier palier
+    null;
+  const nextFounder = currentFounder
+    ? founderRows.find((r) => (r.slot_from || 0) > (currentFounder.slot_to || 0))
+    : null;
   const visibleRows = currentFounder ? [currentFounder, ...otherRows] : otherRows;
 
   const list = visibleRows.map((r) => {
     const seatsTotal = r.slot_from != null && r.slot_to != null ? r.slot_to - r.slot_from + 1 : null;
     const isCurrentFounder = currentFounder && r.id === currentFounder.id;
+    // Places restantes AVANT le prochain palier (= avant que le prix monte).
+    const seatsRemaining = isCurrentFounder && r.slot_to != null
+      ? Math.max(0, r.slot_to - founderSold)
+      : seatsTotal;
     // Prix annuel : champ libre rempli par l'admin (plus de formule auto x10).
     const annualPrice = r.price_annual || null;
     const perks = (r.perks || '')
@@ -202,9 +232,9 @@ router.get('/subscription/get', (req, res) => {
       updated_at: r.created_at,
       is_founder: (r.tier || '').toLowerCase() === 'founder',
       seats_total: seatsTotal,
-      seats_remaining: seatsTotal,
+      seats_remaining: seatsRemaining,
       next_price: isCurrentFounder && nextFounder ? nextFounder.price : null,
-      next_price_in_seats: isCurrentFounder ? seatsTotal : null,
+      next_price_in_seats: isCurrentFounder ? seatsRemaining : null,
       public_price: null,
       badge: r.badge,
       iap_product_id: null,
