@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:artist/BottomBar/screens/profile/points_store.dart';
 import 'package:artist/BottomBar/screens/profile/topup_history.dart';
 import 'package:artist/Controllers/auth_controller.dart';
@@ -230,8 +232,11 @@ class _UserWalletState extends State<UserWallet> {
               }),
               height(0.01),
 
-              // Store Banner
-              GestureDetector(
+              // Store Banner — MASQUÉ sur iOS : PointsStore recharge des points
+              // via le backend (hors App Store) = violation App Store 3.1.1.
+              // La recharge CONFORME (IAP, via PointsCard) reste au-dessus.
+              if (!Platform.isIOS)
+                GestureDetector(
                 onTap: () => Get.to(
                   () => PointsStore(
                     packages: authController.packages.value.list ?? [],

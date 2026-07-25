@@ -311,7 +311,11 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
             ...list.map(
               (sub) => SubscriptionCard(
                 subscription: sub,
-                showButton: true,
+                // Bouton d'achat masqué sur iOS : les produits d'abonnement IAP
+                // ne sont pas encore finalisés sur l'App Store (offerings vides
+                // -> achat non fonctionnel). Défense en profondeur : cet écran
+                // n'est déjà plus atteignable sur iOS.
+                showButton: !Platform.isIOS,
                 isAnnual: _isAnnual,
                 onPurchaseTap: () async {
                   await fetchOffers(id: sub.id.toString(), title: sub.title!);
