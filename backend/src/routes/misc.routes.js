@@ -16,6 +16,21 @@ router.get('/genres', (req, res) => {
   return ok(res, db.prepare('SELECT * FROM genres').all());
 });
 
+// GET /api/splash-settings — fond d'écran + animation de la page de lancement,
+// personnalisables depuis l'admin sans passer par une nouvelle version d'app.
+// Valeurs vides -> le client retombe sur ses assets locaux par défaut.
+router.get('/splash-settings', (req, res) => {
+  const rows = db.prepare(
+    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_animation_style')`
+  ).all();
+  const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  return ok(res, {
+    background_image: map.splash_background_image || null,
+    background_video: map.splash_background_video || null,
+    animation_style: map.splash_animation_style || 'sparkles',
+  });
+});
+
 // POST /api/live/zego-token — token ZegoCloud généré côté serveur (jamais
 // d'AppSign/ServerSecret dans l'app). Valable 4h (durée d'un concert), à
 // refaire si le live dépasse cette fenêtre.

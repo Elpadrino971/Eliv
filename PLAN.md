@@ -112,8 +112,32 @@ Légende effort : S = < 0.5j · M = ~1j · L = 2-3j
 
 ---
 
+## PHASE 7 — CRM interne & agent IA prospection/contrats (post-lancement)
+> Usage interne VybzzZ (pas un produit à revendre) : gérer les prospects business
+> (artistes, salles, sponsors, partenaires), jusqu'à la signature de contrat.
+> Décisions déjà actées : e-signature = **Dropbox Sign (HelloSign)** ; l'IA
+> **rédige** messages de prospection et contrats mais **n'envoie jamais toute
+> seule** (validation humaine à chaque étape) ; vit dans l'admin panel existant
+> (`backend/public/admin/`), même backend/VPS — pas de nouvelle app séparée.
+
+| # | Action | Fichier | Effort |
+|---|--------|---------|--------|
+| 7.1 | Schéma DB : `crm_contacts` (type artiste/salle/sponsor/partenaire, stage du pipeline, coordonnées, notes), `crm_activities` (historique/notes horodatées), `crm_contracts` (contenu, statut, lien Dropbox Sign) | `backend/src/db.js` | M |
+| 7.2 | Routes CRUD contacts + pipeline (`GET/POST/PUT /admin/crm/contacts`, changement de stage) | `backend/src/routes/crm.routes.js` | M |
+| 7.3 | Endpoint IA "rédiger message de prospection" — réutilise `services/anthropic.js` déjà en place (déjà utilisé pour bios/descriptions), aucune nouvelle clé API nécessaire | `backend/src/routes/crm.routes.js` | S |
+| 7.4 | Endpoint IA "rédiger contrat" à partir d'un template + paramètres du deal (type, montant, durée) | `backend/src/routes/crm.routes.js` | M |
+| 7.5 | Intégration **Dropbox Sign** (créer une demande de signature depuis le texte généré, suivi statut envoyé/vu/signé) — **nécessite une clé API Dropbox Sign à obtenir et ajouter au `.env` du VPS** | `backend/src/services/dropbox_sign.js` | M |
+| 7.6 | Webhook Dropbox Sign (mise à jour statut contrat à la signature) | `backend/src/routes/webhooks.routes.js` | S |
+| 7.7 | UI admin : nouvelle section "CRM" — liste/pipeline des contacts, fiche contact (notes, boutons "Générer message" / "Générer contrat" / "Envoyer pour signature") | `backend/public/admin/index.html` + `app.js` | L |
+
+**Critère de sortie :** un prospect peut être ajouté, un message/contrat généré par l'IA et édité, envoyé en signature électronique, et son statut suivi jusqu'à signature — le tout sans quitter l'admin panel.
+**Bloquant à lever avant 7.5/7.6 :** obtenir la clé API Dropbox Sign (compte + clé sur dashboard.hellosign.com).
+
+---
+
 ## Ordre d'exécution résumé
-**0 → 1 → 2 → 3 → 4 → 5 → 6**
+**0 → 1 → 2 → 3 → 4 → 5 → 6 → 7**
 Phases 0-1 = urgence sécurité (à enchaîner immédiatement).
 Phase 4 peut démarrer en parallèle de 2-3 si une personne dédiée release.
 Phases 5-6 = mise en production.
+Phase 7 = post-lancement, dès qu'une clé API Dropbox Sign est disponible.

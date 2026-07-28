@@ -1,16 +1,21 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:artist/Auth/login_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
+import 'package:artist/Global/api.dart';
 import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/user_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:video_player/video_player.dart';
 
 class SpalashScreen extends StatefulWidget {
   const SpalashScreen({super.key});
@@ -55,10 +60,91 @@ class _SpalashScreenState extends State<SpalashScreen>
     duration: const Duration(milliseconds: 650),
   );
 
+  // Fond d'écran / animation personnalisés depuis l'admin (facultatif -> repli
+  // sur les assets locaux si rien n'est configuré ou si le réseau est lent).
+  String? _bgImageUrl;
+  String _animationStyle = 'sparkles';
+  VideoPlayerController? _videoController;
+
   @override
   void initState() {
     super.initState();
     _introController.forward();
+    unawaited(_loadSplashConfig());
+  }
+
+  Future<void> _loadSplashConfig() async {
+    try {
+      final res = await http
+          .get(Uri.parse('${APIs.mainIP}/api/splash-settings'))
+          .timeout(const Duration(seconds: 4));
+      if (res.statusCode != 200) return;
+      final data = (jsonDecode(res.body)?['data'] ?? {}) as Map;
+      final videoUrl = (data['background_video'] as String?)?.trim();
+      final imageUrl = (data['background_image'] as String?)?.trim();
+      final style = (data['animation_style'] as String?)?.trim();
+
+      if (!mounted) return;
+      setState(() {
+        if (style != null && style.isNotEmpty) _animationStyle = style;
+        if (imageUrl != null && imageUrl.isNotEmpty) _bgImageUrl = imageUrl;
+      });
+
+      if (videoUrl != null && videoUrl.isNotEmpty) {
+        final controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
+        await controller.initialize();
+        if (!mounted) {
+          unawaited(controller.dispose());
+          return;
+        }
+        await controller.setLooping(true);
+        await controller.setVolume(0);
+        unawaited(controller.play());
+        setState(() => _videoController = controller);
+      }
+    } catch (e) {
+      // Silencieux : la page de lancement retombe sur ses assets locaux.
+      myPrint('splash-settings: $e');
+    }
+  }
+
+  Widget _localBackgroundFallback() {
+    return Image.asset(
+      'assets/launch_bg.png',
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [midnightSecondary, midnightPrimary],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _background() {
+    final video = _videoController;
+    if (video != null && video.value.isInitialized) {
+      return FittedBox(
+        fit: BoxFit.cover,
+        child: SizedBox(
+          width: video.value.size.width,
+          height: video.value.size.height,
+          child: VideoPlayer(video),
+        ),
+      );
+    }
+    if (_bgImageUrl != null && _bgImageUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: _bgImageUrl!,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => _localBackgroundFallback(),
+        errorWidget: (_, __, ___) => _localBackgroundFallback(),
+      );
+    }
+    return _localBackgroundFallback();
   }
 
   void _onConfirmed() async {
@@ -79,6 +165,7 @@ class _SpalashScreenState extends State<SpalashScreen>
     _introController.dispose();
     _sparkleController.dispose();
     _flashController.dispose();
+    _videoController?.dispose();
     super.dispose();
   }
 
@@ -91,55 +178,45 @@ class _SpalashScreenState extends State<SpalashScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Fond : image foule + spot doré
-          Image.asset(
-            'assets/launch_bg.png',
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [midnightSecondary, midnightPrimary],
-                ),
-              ),
-            ),
-          ),
+          // ── Fond : image/vidéo admin si configurée, sinon assets locaux
+          _background(),
 
           // ── Halo doré central qui respire (comble le vide + met le logo en valeur)
-          AnimatedBuilder(
-            animation: _sparkleController,
-            builder: (context, _) {
-              final pulse =
-                  0.10 + (math.sin(_sparkleController.value * math.pi * 2) + 1) / 2 * 0.10;
-              return Align(
-                alignment: const Alignment(0, -0.35),
-                child: Container(
-                  width: w * 0.9,
-                  height: w * 0.9,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        goldPrimary.withValues(alpha: pulse),
-                        Colors.transparent,
-                      ],
+          if (_animationStyle != 'none')
+            AnimatedBuilder(
+              animation: _sparkleController,
+              builder: (context, _) {
+                final pulse =
+                    0.10 + (math.sin(_sparkleController.value * math.pi * 2) + 1) / 2 * 0.10;
+                return Align(
+                  alignment: const Alignment(0, -0.35),
+                  child: Container(
+                    width: w * 0.9,
+                    height: w * 0.9,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          goldPrimary.withValues(alpha: pulse),
+                          Colors.transparent,
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
 
-          // ── Paillettes dorées animées
-          Positioned.fill(
-            child: AnimatedBuilder(
-              animation: _sparkleController,
-              builder: (context, _) => CustomPaint(
-                painter: _SparklePainter(progress: _sparkleController.value),
+          // ── Paillettes dorées animées (uniquement en style "sparkles")
+          if (_animationStyle == 'sparkles')
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _sparkleController,
+                builder: (context, _) => CustomPaint(
+                  painter: _SparklePainter(progress: _sparkleController.value),
+                ),
               ),
             ),
-          ),
 
           // ── Contenu
           SafeArea(
