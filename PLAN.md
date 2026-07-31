@@ -135,9 +135,25 @@ Légende effort : S = < 0.5j · M = ~1j · L = 2-3j
 
 ---
 
+## PHASE 8 — V3 : croissance & monétisation avancée
+> Capturé tel quel, pas encore cadré en détail — à préciser (maquettes, règles
+> de scoring, périmètre exact) avant de commencer chaque chantier.
+
+| # | Action | Notes | Effort |
+|---|--------|-------|--------|
+| 8.1 | **Widget iOS** (écran d'accueil) + miniatures adaptées par taille de widget (small/medium/large) | Nécessite une **Widget Extension** native (WidgetKit/Swift, pas du Flutter) + un **App Group** pour partager les données concert/artiste entre l'app et le widget | L |
+| 8.2 | **Abonnement sur-mesure** pour artiste "bancable" (deal négocié individuellement, hors grille Starter/Growth/Elite/Founder) | À brancher sur le futur CRM (Phase 7) : le contrat signé définit les termes, l'admin crée l'abonnement custom correspondant | M |
+| 8.3 | **Classement des artistes** — par attraction/traction, par étoiles (`reviews` déjà en base), par notoriété, avec **bonus** (commission boostée ou cash) pour ceux qui ramènent le plus de flux | Formule de score à définir (mix ventes billets + cadeaux + spectateurs live + follows) ; bonus à brancher sur le split de commission déjà en place (P1, `platform_earnings`) | L |
+| 8.4 | **Boutique merch** (produits physiques/digitaux vendus par les artistes) | Nouveau domaine : catalogue produits, stock, expédition/fulfillment, paiement Stripe séparé des billets/abonnements | L |
+
+**Critère de sortie :** chaque sous-chantier cadré individuellement (specs + maquettes) avant tout code — trop flou en l'état pour estimer plus finement.
+
+---
+
 ## Ordre d'exécution résumé
-**0 → 1 → 2 → 3 → 4 → 5 → 6 → 7**
+**0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8**
 Phases 0-1 = urgence sécurité (à enchaîner immédiatement).
 Phase 4 peut démarrer en parallèle de 2-3 si une personne dédiée release.
 Phases 5-6 = mise en production.
 Phase 7 = post-lancement, dès qu'une clé API Dropbox Sign est disponible.
+Phase 8 = V3, à cadrer chantier par chantier avant de démarrer.
