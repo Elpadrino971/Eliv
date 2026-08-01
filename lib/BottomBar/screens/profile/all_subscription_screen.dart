@@ -117,6 +117,35 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
     }
   }
 
+  /// Achat de l'abonnement MENSUEL : achat IAP direct par identifiant produit
+  /// (`iap_product_id` renseigné en admin), même mécanique fiable que l'annuel.
+  /// Évite le matching fragile par titre affiché (fetchOffers ci-dessous),
+  /// qui plantait silencieusement (sheet vide) dès que le titre du produit
+  /// App Store ne correspondait pas mot pour mot au nom en base.
+  Future<void> _purchaseMonthly(Subscription sub) async {
+    final productId = sub.iapProductId;
+    if (productId == null || productId.isEmpty) {
+      // Repli : aucun ID produit mappé en admin pour ce palier -> ancien
+      // parcours par titre (offerings RevenueCat + bottom sheet).
+      await fetchOffers(id: sub.id.toString(), title: sub.title!);
+      return;
+    }
+    final ok = await subscriptionController.purchaseSubscriptionByProductId(
+      productId,
+    );
+    if (ok) {
+      await subscriptionController.buySubscription(
+        subscriptionId: sub.id.toString(),
+      );
+    } else {
+      myWarningDialog(
+        title: 'pay_purchasing_failed'.tr,
+        subtitle: 'pay_subscribe_failed'.tr,
+        btnTitle: 'common_continue'.tr,
+      );
+    }
+  }
+
   Future fetchOffers({required String id, required String title}) async {
     if (Platform.isAndroid) {
       await subscriptionController.buySubscription(subscriptionId: id);
@@ -362,10 +391,7 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
                   if (_isAnnual) {
                     await _purchaseAnnual(sub);
                   } else {
-                    await fetchOffers(
-                      id: sub.id.toString(),
-                      title: sub.title!,
-                    );
+                    await _purchaseMonthly(sub);
                   }
                 },
                 // Lien "Payer par carte" masqué sur iOS (anti-steering Apple

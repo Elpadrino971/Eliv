@@ -257,7 +257,7 @@ router.get('/subscription/get', (req, res) => {
       next_price_in_seats: isCurrentFounder ? seatsRemaining : null,
       public_price: null,
       badge: r.badge,
-      iap_product_id: null,
+      iap_product_id: r.revenuecat_product_id || null,
       image: r.image,
     };
   });
