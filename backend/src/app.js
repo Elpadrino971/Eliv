@@ -77,7 +77,10 @@ app.use((req, res) => res.status(404).json({ status: 'error', message: `Not foun
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error('[ERROR]', err.message);
-  res.status(500).json({ status: 'error', message: err.message });
+  // En prod, err.message peut contenir des détails internes (requête SQL,
+  // chemin de fichier…) -> message générique côté client, détail dans les logs.
+  const message = process.env.NODE_ENV === 'production' ? 'Internal server error.' : err.message;
+  res.status(500).json({ status: 'error', message });
 });
 
 module.exports = app;

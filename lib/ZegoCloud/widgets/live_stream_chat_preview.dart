@@ -65,9 +65,7 @@ class _LiveStreamChatPreviewState extends State<LiveStreamChatPreview> {
                   child: ChatMessageTile(
                     name: msg.userInfo?.fullName ?? '',
                     message: msg.description ?? '',
-                    image:
-                        msg.userInfo?.profileImage ??
-                        'assets/artist_image1.png',
+                    image: msg.userInfo?.profileImage ?? '',
                     type: msg.type ?? 'comment',
                     giftImage: msg.gift,
                   ),
@@ -117,12 +115,7 @@ class ChatMessageTile extends StatelessWidget {
                   fit: BoxFit.cover,
                   errorBuilder: (c, e, s) => _placeholderImage(),
                 )
-              : Image.asset(
-                  image,
-                  width: 40,
-                  height: 40,
-                  errorBuilder: (c, e, s) => _placeholderImage(),
-                ),
+              : _placeholderImage(),
         ),
         title: Text(
           name,
@@ -155,7 +148,15 @@ class ChatMessageTile extends StatelessWidget {
     );
   }
 
+  // Avatar neutre (pas de vraie photo) : une vraie photo stock d'un visage
+  // humain était affichée comme si c'était CELLE de l'utilisateur sans photo
+  // -> icône générique à la place, comme partout ailleurs dans l'app.
   Widget _placeholderImage() {
-    return Image.asset('assets/artist_image1.png', width: 40, height: 40);
+    return Container(
+      width: 40,
+      height: 40,
+      color: greyColor.withValues(alpha: 0.3),
+      child: const Icon(Icons.person, color: whiteColor, size: 24),
+    );
   }
 }

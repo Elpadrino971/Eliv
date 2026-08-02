@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
 const { serializeUser, fail } = require('../helpers');
-const { hash, compare, sign, requireAuth } = require('../auth');
+const { hash, compare, sign, requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
 
 function authResponse(res, user, message = 'OK') {
@@ -12,7 +12,7 @@ function authResponse(res, user, message = 'OK') {
     status: 'success',
     message,
     token: sign(user),
-    data: serializeUser(user),
+    data: serializeUser(user, { full: true }),
   });
 }
 
@@ -110,7 +110,12 @@ router.post('/reset-password', (req, res) => {
   const b = req.body || {};
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get((b.email || '').toLowerCase());
   if (!user) return fail(res, 'User not found.', 404);
-  if (b.otp_code && String(b.otp_code) !== String(user.otp_code)) return fail(res, 'Invalid OTP.', 422);
+  // otp_code était vérifié UNIQUEMENT s'il était fourni -> l'omettre du body
+  // contournait totalement la vérification et permettait de changer le mot de
+  // passe de N'IMPORTE QUEL compte (y compris admin) sans connaître son OTP.
+  if (!b.otp_code || String(b.otp_code) !== String(user.otp_code)) {
+    return fail(res, 'Invalid OTP.', 422);
+  }
   db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash(b.password), user.id);
   return res.json({ status: 'success', message: 'Password updated.' });
 });
@@ -125,12 +130,18 @@ router.post('/update-password', requireAuth, (req, res) => {
   return res.json({ status: 'success', message: 'Password changed.' });
 });
 
-// POST /api/get-user  (body: { id })
-router.post('/get-user', (req, res) => {
+// POST /api/get-user  (body: { id }) — sert à la fois à rafraîchir SON PROPRE
+// profil (auth_controller.getUserModel) et à afficher le profil PUBLIC d'un
+// autre user/artiste (event_controller.getUserModel, page artiste). Aucune
+// auth requise n'est possible (usage public légitime), donc on ne renvoie les
+// champs privés (email/téléphone/wallet/points/adresse) que si l'appelant EST
+// ce user (token valide correspondant au même id) — jamais pour un tiers.
+router.post('/get-user', optionalAuth, (req, res) => {
   const id = req.body?.id;
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
   if (!user) return fail(res, 'User not found.', 404);
-  return res.json({ status: 'success', data: serializeUser(user) });
+  const isSelf = !!(req.user && Number(req.user.id) === Number(id));
+  return res.json({ status: 'success', data: serializeUser(user, { full: isSelf }) });
 });
 
 // POST /api/update-profile  (authentifié ; accepte JSON ou multipart)
@@ -173,7 +184,7 @@ router.post('/update-profile', requireAuth, (req, res) => {
     db.prepare(`UPDATE users SET ${sets.join(', ')}, updated_at = datetime('now') WHERE id = @id`).run(vals);
   }
   const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
-  return res.json({ status: 'success', message: 'Profile updated.', data: serializeUser(fresh) });
+  return res.json({ status: 'success', message: 'Profile updated.', data: serializeUser(fresh, { full: true }) });
 });
 
 // POST /api/delete-account

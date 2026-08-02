@@ -395,7 +395,7 @@ router.post('/subscription/buy', requireAuth, (req, res) => {
   }
 
   const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
-  return res.json({ status: 'success', data: serializeUser(fresh) });
+  return res.json({ status: 'success', data: serializeUser(fresh, { full: true }) });
 });
 
 // POST /api/subscription/checkout — paiement carte (Stripe Checkout), chemin
@@ -552,13 +552,18 @@ router.post('/get-artist-statistics', optionalAuth, (req, res) => {
     "SELECT AVG(r.rating) a FROM reviews r JOIN events e ON e.id = r.event_id WHERE e.artist_id = ?"
   ).get(artistId).a;
 
+  // artistId vient de req.user.id en priorité (l'artiste consulte SES stats) ;
+  // il ne retombe sur req.body.id que pour un appel non authentifié (page
+  // publique d'un artiste). Dans ce cas-là il ne faut jamais renvoyer son
+  // wallet/revenu réel à un tiers non connecté.
+  const isSelf = !!(req.user && Number(req.user.id) === Number(artistId));
   return res.json({
     status: 'success',
     data: {
       artist_name: artist.artist_name || artist.full_name,
       total_tickets_sold: ticketsSold,
-      current_wallet: artist.wallet || '0',
-      total_revenue: Math.round(revenue),
+      current_wallet: isSelf ? (artist.wallet || '0') : null,
+      total_revenue: isSelf ? Math.round(revenue) : null,
       followers_count: followers,
       event_count: eventCount,
       upcoming_events_count: upcoming,

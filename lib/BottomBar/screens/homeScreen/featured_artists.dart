@@ -147,49 +147,6 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
                                 ),
                               ),
 
-                              Row(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Image.asset(
-                                        'assets/user.png',
-                                        width: 12,
-                                        color: whiteColor,
-                                      ),
-                                      width(0.01),
-                                      Text(
-                                        '128k',
-                                        style: TextStyle(
-                                          color: whiteColor,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Spacer(),
-                                  Row(
-                                    children: [
-                                      Image.asset(
-                                        'assets/icon16.png',
-                                        width: 12,
-                                        color: whiteColor,
-                                      ),
-
-                                      Text(
-                                        '128k',
-                                        style: TextStyle(
-                                          color: whiteColor,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              height(0.01),
-
                               Container(
                                 width: Get.width,
                                 padding: EdgeInsets.all(8),

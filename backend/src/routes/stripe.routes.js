@@ -15,6 +15,14 @@ const router = express.Router();
 const { db } = require('../db');
 const stripeService = require('../services/stripe');
 
+if (!process.env.STRIPE_WEBHOOK_SECRET) {
+  console.error(
+    '[stripe webhook] ⚠️⚠️  STRIPE_WEBHOOK_SECRET absent : la signature n\'est pas vérifiée, ' +
+    'n\'importe qui peut simuler un paiement réussi et activer un abonnement gratuitement. ' +
+    'Configure ce secret au plus vite.'
+  );
+}
+
 router.post('/', (req, res) => {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   const sig = req.headers['stripe-signature'];

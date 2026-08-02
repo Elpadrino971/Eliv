@@ -24,6 +24,17 @@ const ACTIVE_EVENTS = new Set([
 // Évènements d'achat qui créditent des points (packs consommables).
 const PURCHASE_EVENTS = new Set(['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE']);
 
+// Sans REVENUECAT_WEBHOOK_AUTH, n'importe qui peut POSTer ce endpoint avec un
+// faux event INITIAL_PURCHASE et s'auto-créditer des points/un abonnement
+// gratuitement -> vérifier au démarrage que le secret est bien configuré.
+if (!process.env.REVENUECAT_WEBHOOK_AUTH) {
+  console.error(
+    '[revenuecat webhook] ⚠️⚠️  REVENUECAT_WEBHOOK_AUTH absent : ce webhook accepte ' +
+    'N\'IMPORTE QUEL appel non authentifié (faux achats/abonnements gratuits possibles). ' +
+    'Configure ce secret côté serveur ET dans le dashboard RevenueCat au plus vite.'
+  );
+}
+
 router.post('/', (req, res) => {
   const secret = process.env.REVENUECAT_WEBHOOK_AUTH;
   if (secret) {

@@ -207,16 +207,19 @@ class _StatsScreenState extends State<StatsScreen> {
               separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final user = participantList[index];
+                final hasPhoto =
+                    user.profileImage != null &&
+                    user.profileImage!.startsWith('http');
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    backgroundImage:
-                        user.profileImage != null &&
-                            user.profileImage!.startsWith('http')
-                        ? NetworkImage(user.profileImage!)
-                        : const AssetImage('assets/artist_image1.png')
-                              as ImageProvider,
-                  ),
+                  // Une vraie photo stock d'un visage humain était utilisée
+                  // comme avatar "par défaut" -> icône générique à la place
+                  // pour les participants sans photo de profil.
+                  leading: hasPhoto
+                      ? CircleAvatar(
+                          backgroundImage: NetworkImage(user.profileImage!),
+                        )
+                      : const CircleAvatar(child: Icon(Icons.person)),
                   title: Text(user.fullName ?? 'art_hidden_name'.tr),
                   subtitle: Text(user.artistName ?? 'art_fan'.tr),
                   // trailing: const Icon(Icons.chevron_right, color: greyColor),

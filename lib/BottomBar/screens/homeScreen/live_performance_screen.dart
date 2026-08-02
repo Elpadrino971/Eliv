@@ -1,5 +1,6 @@
 import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
 import 'package:artist/Global/api.dart';
+import 'package:artist/Global/app_date.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Global/live_router.dart';
@@ -206,7 +207,10 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
                                                 ),
                                                 width(0.02),
                                                 Text(
-                                                  '6:00 PM',
+                                                  AppDate.format(
+                                                    event.startDateTime,
+                                                    'hh:mm a',
+                                                  ),
                                                   style: TextStyle(
                                                     color: textXolor,
                                                     fontSize: 13,

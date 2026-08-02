@@ -48,6 +48,12 @@ function requireAuth(req, res, next) {
     if (!user) {
       return res.status(401).json({ status: 'error', message: 'User not found.' });
     }
+    // Un compte banni/suspendu via l'admin (users.status) gardait un accès
+    // complet (achat, cadeaux, retrait…) tant que son JWT (valable 90j)
+    // n'expirait pas -> le blocage admin n'avait aucun effet réel.
+    if (user.status && user.status !== 'active') {
+      return res.status(403).json({ status: 'error', message: 'Account suspended.' });
+    }
     req.user = user;
     next();
   } catch (e) {

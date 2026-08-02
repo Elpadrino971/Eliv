@@ -25,6 +25,13 @@ function safeParsePassthrough(raw) {
   try { return JSON.parse(raw); } catch (_) { return null; }
 }
 
+if (!process.env.MUX_WEBHOOK_SECRET) {
+  console.error(
+    '[mux webhook] ⚠️⚠️  MUX_WEBHOOK_SECRET absent : la signature n\'est pas vérifiée, ' +
+    'n\'importe qui peut simuler un event Mux. Configure ce secret au plus vite.'
+  );
+}
+
 router.post('/', (req, res) => {
   const secret = process.env.MUX_WEBHOOK_SECRET;
   const raw = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : JSON.stringify(req.body || {});

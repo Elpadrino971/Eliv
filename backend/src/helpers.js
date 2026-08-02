@@ -55,7 +55,13 @@ function subscriptionToJson(r) {
   };
 }
 
-function serializeUser(row, { withPassword = false } = {}) {
+// `full` = true seulement quand le row EST le viewer authentifié (ou l'admin) :
+// email/téléphone/dob/adresse/géoloc/wallet/points sont des données privées et
+// ne doivent JAMAIS être renvoyées quand on sérialise un AUTRE utilisateur
+// (artiste vu depuis un event, liste de followers, artist_name en vedette…).
+// Avant ce flag, ces routes publiques fuitaient wallet/email/téléphone de
+// n'importe qui à partir de son seul id.
+function serializeUser(row, { withPassword = false, full = false } = {}) {
   if (!row) return null;
   const genres = db
     .prepare(
@@ -95,8 +101,6 @@ function serializeUser(row, { withPassword = false } = {}) {
 
   const out = {
     id: row.id,
-    email: row.email,
-    phone_number: row.phone_number,
     // otp_code volontairement NON exposé : c'est un secret de vérification
     // serveur. serializeUser est renvoyé par des routes publiques
     // (/get-user, /featured-artists, activités…) -> ne jamais fuiter l'OTP.
@@ -104,18 +108,12 @@ function serializeUser(row, { withPassword = false } = {}) {
     full_name: row.full_name,
     artist_name: row.artist_name,
     profile_image: profileUrl(row.profile_image),
-    dob: row.dob,
     bio: row.bio,
-    address: row.address,
-    latitude: row.latitude,
-    longitude: row.longitude,
     registration_type: row.registration_type,
     experience: row.experience,
     status: row.status,
-    wallet: row.wallet,
     artist_bio: row.artist_bio,
     artist_profile: profileUrl(row.artist_profile),
-    points: row.points,
     is_verified: row.is_verified,
     is_featured: !!row.is_featured,
     is_artist: !!row.is_artist,
@@ -125,6 +123,16 @@ function serializeUser(row, { withPassword = false } = {}) {
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
+  if (full) {
+    out.email = row.email;
+    out.phone_number = row.phone_number;
+    out.dob = row.dob;
+    out.address = row.address;
+    out.latitude = row.latitude;
+    out.longitude = row.longitude;
+    out.wallet = row.wallet;
+    out.points = row.points;
+  }
   if (withPassword) out.password = row.password;
   return out;
 }

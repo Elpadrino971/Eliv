@@ -625,45 +625,6 @@ class _NoLiveState extends StatelessWidget {
             ),
           ),
 
-          // Accès discret au concert PRO (Mux Live) si configuré
-          if (APIs.muxLivePlaybackId.isNotEmpty) ...[
-            height(0.03),
-            GestureDetector(
-              onTap: () => Get.to(
-                () => const ReplayPlayerScreen(
-                  playbackId: APIs.muxLivePlaybackId,
-                  isLive: true,
-                  title: 'Live',
-                ),
-              ),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: liveRed.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: liveRed),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.sensors_rounded, color: liveRed, size: 16),
-                    const SizedBox(width: 8),
-                    Text(
-                      'live_pro_concert'.tr,
-                      style: TextStyle(
-                        color: whiteColor,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );

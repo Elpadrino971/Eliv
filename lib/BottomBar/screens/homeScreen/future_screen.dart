@@ -167,23 +167,6 @@ class _FutureScreenState extends State<FutureScreen> {
                               size: 18,
                             ),
                           ),
-                          if (APIs.muxDemoPlaybackId.isNotEmpty) ...[
-                            width(0.02),
-                            _glassButton(
-                              onTap: () => Get.to(
-                                () => ReplayPlayerScreen(
-                                  playbackId: APIs.muxDemoPlaybackId,
-                                  title: event.name,
-                                  event: event,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.smart_display_rounded,
-                                color: goldPrimary,
-                                size: 18,
-                              ),
-                            ),
-                          ],
                           const Spacer(),
                           _glassButton(
                             onTap: () => setState(() => like = !like),

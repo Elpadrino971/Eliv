@@ -43,16 +43,6 @@ class LiveStreamTopBar extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          subtitle: Text(
-            'live_followers_count'.trParams({
-              'count': '${event.artist?.experience ?? "0"}',
-            }),
-            style: const TextStyle(
-              color: whiteColor,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
         ),
         Row(
           children: [
