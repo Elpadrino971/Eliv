@@ -44,11 +44,11 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
       return;
     }
 
-    final double points =
-        double.tryParse(userModel.value.user?.points?.toString() ?? '0') ?? 0;
+    final double balance =
+        double.tryParse(userModel.value.user?.wallet?.toString() ?? '0') ?? 0;
     final double withdrawalValue = double.tryParse(amount) ?? 0;
 
-    if (withdrawalValue > points) {
+    if (withdrawalValue > balance) {
       myWarningDialog(
         subtitle: 'art_err_insufficient_points'.tr,
       );
@@ -103,7 +103,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                     height(0.01),
                     Obx(
                       () => Text(
-                        '\$${userModel.value.user?.points ?? 0}',
+                        '${userModel.value.user?.wallet ?? 0} €',
                         style: const TextStyle(
                           color: whiteColor,
                           fontWeight: FontWeight.bold,
@@ -143,16 +143,16 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
 
               // Dynamic Suggestion Pills
               Obx(() {
-                final double currentPoints =
+                final double currentBalance =
                     double.tryParse(
-                      userModel.value.user?.points?.toString() ?? '0',
+                      userModel.value.user?.wallet?.toString() ?? '0',
                     ) ??
                     0;
 
                 final List<String> suggestions = [];
-                if (currentPoints >= 100) suggestions.add('100');
-                if (currentPoints >= 500) suggestions.add('500');
-                if (currentPoints >= 1000) suggestions.add('1000');
+                if (currentBalance >= 100) suggestions.add('100');
+                if (currentBalance >= 500) suggestions.add('500');
+                if (currentBalance >= 1000) suggestions.add('1000');
                 suggestions.add('All');
 
                 return Row(
@@ -161,9 +161,8 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                     return GestureDetector(
                       onTap: () {
                         if (s == 'All') {
-                          priceController.text = currentPoints.toStringAsFixed(
-                            0,
-                          );
+                          priceController.text = currentBalance
+                              .toStringAsFixed(0);
                         } else {
                           priceController.text = s;
                         }
@@ -175,7 +174,7 @@ class _ArtistWithdrawState extends State<ArtistWithdraw> {
                           vertical: 8,
                         ),
                         widget: Text(
-                          s == 'All' ? 'art_all'.tr : '\$$s',
+                          s == 'All' ? 'art_all'.tr : '$s €',
                           style: TextStyle(
                             color: Get.isDarkMode ? whiteColor : blackColor,
                             fontSize: 16,

@@ -11,6 +11,31 @@ const stripeService = require('../services/stripe');
 const zegoService = require('../services/zego');
 const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
 
+// GET /api/artist/revenue-transactions — dernières entrées réelles du ledger
+// (billets + cadeaux) pour l'écran "Revenus" (remplace la liste factice
+// codée en dur "Ticket Sales +$1,240" / "Merch Drop" / "Bank Payout").
+router.get('/artist/revenue-transactions', requireAuth, (req, res) => {
+  const rows = db.prepare(
+    `SELECT pe.*, e.name AS event_name
+     FROM platform_earnings pe
+     LEFT JOIN events e ON e.id = pe.source_id AND pe.source = 'ticket'
+     WHERE pe.artist_id = ?
+     ORDER BY pe.id DESC LIMIT 20`
+  ).all(req.user.id);
+  const list = rows.map((r) => {
+    const isTicket = r.source === 'ticket';
+    const amount = isTicket
+      ? parseFloat(r.artist_share)
+      : parseFloat(r.artist_share) / 100; // cadeaux en points, 1€ = 100 pts
+    return {
+      title: isTicket ? (r.event_name ? `Ticket — ${r.event_name}` : 'Ticket sale') : 'Virtual gift',
+      date: r.created_at,
+      amount: Math.round(amount * 100) / 100,
+    };
+  });
+  return ok(res, list);
+});
+
 // GET /api/artist/dashboard-stats — résumé pour l'onglet Profil version artiste
 // (gains totaux, fans, concerts, billets vendus) + variation vs la période
 // précédente. Source de vérité : platform_earnings (ledger append-only, non
@@ -567,19 +592,63 @@ router.post('/support/resolve', optionalAuth, (req, res) =>
 router.post('/support/store-meta', (req, res) => res.json({ status: 'success' }));
 
 // ─── Bank / Withdraw ───
-router.post('/withdraw/add-bank', requireAuth, (req, res) =>
-  res.json({ status: 'success', message: 'Bank added.' })
-);
-router.post('/withdraw/get-user-banks', requireAuth, (req, res) => ok(res, []));
-router.post('/withdraw/update-bank', requireAuth, (req, res) =>
-  res.json({ status: 'success', message: 'Bank updated.' })
-);
-router.post('/withdraw/delete-bank', requireAuth, (req, res) =>
-  res.json({ status: 'success', message: 'Bank deleted.' })
-);
-router.post('/withdraw/add', requireAuth, (req, res) =>
-  res.json({ status: 'success', message: 'Withdrawal requested.' })
-);
+// Ces 5 routes étaient des stubs : réponse "success" toujours renvoyée sans
+// jamais rien écrire en base (add-bank n'insérait rien, get-user-banks
+// renvoyait [] en dur, withdraw/add ne débitait rien ni ne créait de ligne
+// dans `withdrawals`). Un artiste ajoutant son RIB et demandant un retrait
+// n'était jamais payé. Corrigé pour persister réellement (table `banks` +
+// `withdrawals` déjà utilisée côté admin).
+function serializeBanksList(userId) {
+  const list = db.prepare('SELECT * FROM banks WHERE user_id = ? ORDER BY id DESC').all(userId);
+  return { status: 'success', count: list.length, list };
+}
+
+router.post('/withdraw/add-bank', requireAuth, (req, res) => {
+  const b = req.body || {};
+  db.prepare(
+    `INSERT INTO banks (user_id, bank_name, account_name, account_number, swift_code, routing_number)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).run(req.user.id, b.bank_name || '', b.account_name || '', b.account_number || '', b.swift_code || '', b.routing_number || '');
+  return res.json(serializeBanksList(req.user.id));
+});
+router.post('/withdraw/get-user-banks', requireAuth, (req, res) => {
+  return res.json(serializeBanksList(req.user.id));
+});
+router.post('/withdraw/update-bank', requireAuth, (req, res) => {
+  const b = req.body || {};
+  const bankId = Number(b.bank_id || b.id);
+  const bank = db.prepare('SELECT id FROM banks WHERE id = ? AND user_id = ?').get(bankId, req.user.id);
+  if (!bank) return fail(res, 'Compte bancaire introuvable.', 404);
+  db.prepare(
+    `UPDATE banks SET bank_name = ?, account_name = ?, account_number = ?, swift_code = ?, routing_number = ?, updated_at = datetime('now')
+     WHERE id = ?`
+  ).run(b.bank_name || '', b.account_name || '', b.account_number || '', b.swift_code || '', b.routing_number || '', bankId);
+  return res.json(serializeBanksList(req.user.id));
+});
+router.post('/withdraw/delete-bank', requireAuth, (req, res) => {
+  const bankId = Number(req.body?.bank_id || req.body?.id);
+  db.prepare('DELETE FROM banks WHERE id = ? AND user_id = ?').run(bankId, req.user.id);
+  return res.json(serializeBanksList(req.user.id));
+});
+router.post('/withdraw/add', requireAuth, (req, res) => {
+  const b = req.body || {};
+  const amount = parseFloat(b.amount) || 0;
+  if (amount <= 0) return fail(res, 'Montant invalide.', 422);
+  const bank = db.prepare('SELECT * FROM banks WHERE id = ? AND user_id = ?').get(Number(b.bank_id), req.user.id);
+  if (!bank) return fail(res, 'Compte bancaire introuvable.', 404);
+  const user = db.prepare('SELECT wallet FROM users WHERE id = ?').get(req.user.id);
+  const balance = parseFloat(user?.wallet) || 0;
+  if (amount > balance) return fail(res, 'Solde insuffisant.', 402, { balance });
+  const bankLabel = `${bank.bank_name} •••• ${(bank.account_number || '').slice(-4)}`;
+  const doWithdraw = db.transaction(() => {
+    db.prepare('UPDATE users SET wallet = ? WHERE id = ?').run((balance - amount).toFixed(2), req.user.id);
+    db.prepare(
+      `INSERT INTO withdrawals (user_id, amount, status, bank) VALUES (?, ?, 'pending', ?)`
+    ).run(req.user.id, amount.toFixed(2), bankLabel);
+  });
+  doWithdraw();
+  return res.json({ status: 'success', message: 'Withdrawal requested.' });
+});
 // Liste des artistes suivis par l'utilisateur. L'app fait un POST avec
 // {user_id} ; on accepte aussi GET. Shape attendu par FollowModel :
 // { data: { followers_count, following: [ {id, full_name, profile_image, email} ] } }.

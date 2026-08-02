@@ -1,8 +1,8 @@
 import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
-import 'package:artist/BottomBar/screens/homeScreen/live_broadcast_screen.dart';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/live_router.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:artist/widgets/my_appBar.dart';
@@ -224,7 +224,7 @@ class _LivePerformanceScreenState extends State<LivePerformanceScreen> {
 
                                     GestureDetector(
                                       onTap: () {
-                                        Get.to(() => LiveBroadcastScreen());
+                                        joinLive(event);
                                       },
                                       child: Container(
                                         padding: EdgeInsets.only(

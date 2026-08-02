@@ -1,13 +1,17 @@
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
-import 'package:artist/artist_bottom_bar/screen/Studio/artist_create_event.dart';
 import 'package:artist/widgets/my_appBar.dart';
 import 'package:artist/widgets/transactions_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class TranssactinHistory extends StatefulWidget {
-  const TranssactinHistory({super.key});
+  const TranssactinHistory({super.key, this.transactions = const []});
+
+  /// Transactions réelles (ticket/cadeau) venant de /api/artist/revenue-
+  /// transactions, passées depuis RevenueScreen — plus de liste factice
+  /// codée en dur ("Ticket Sales +$1,240", "Merch Drop", faux virement).
+  final List<Map<String, dynamic>> transactions;
 
   @override
   State<TranssactinHistory> createState() => _TranssactinHistoryState();
@@ -16,12 +20,18 @@ class TranssactinHistory extends StatefulWidget {
 class _TranssactinHistoryState extends State<TranssactinHistory> {
   String selectedText = 'All';
 
-  List<Map> transactionsList = [];
+  List<Map<String, dynamic>> get _filtered {
+    // Toutes les entrées du ledger sont des gains (crédits) pour l'instant ;
+    // les retraits (débits) ne sont pas encore inclus dans ce flux.
+    if (selectedText == 'Debit') return [];
+    return widget.transactions;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filtered = _filtered;
     return Scaffold(
       appBar: MyAppbar(title: 'art_transaction_history'.tr),
-
       body: Padding(
         padding: myPadding,
         child: Column(
@@ -174,7 +184,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                   ),
                 ),
                 Text(
-                  '8 ${'art_total'.tr}',
+                  '${filtered.length} ${'art_total'.tr}',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -185,37 +195,33 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
             ),
 
             height(0.02),
-            GestureDetector(
-              onTap: () {
-                Get.to(() => ArtistCreateEvent());
-              },
-              child: TransactionsCard(
-                title: 'Ticket Sales',
-                price: '+\$1,240',
-                date: 'FEB 20',
-                subTitle: 'Electric Dreams Festival',
-                name: 'rev_concert_revenue'.tr,
+
+            if (filtered.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 30),
+                child: Text(
+                  'art_no_transactions'.tr,
+                  style: const TextStyle(color: greyColor),
+                ),
+              )
+            else
+              Expanded(
+                child: ListView.separated(
+                  itemCount: filtered.length,
+                  separatorBuilder: (context, index) => height(0.01),
+                  itemBuilder: (context, index) {
+                    final tx = filtered[index];
+                    final amount = (tx['amount'] as num?) ?? 0;
+                    return TransactionsCard(
+                      title: '${tx['title'] ?? ''}',
+                      price: '+${amount.toStringAsFixed(2)} €',
+                      date: '${tx['date'] ?? ''}',
+                      subTitle: '${tx['title'] ?? ''}',
+                      name: 'rev_concert_revenue'.tr,
+                    );
+                  },
+                ),
               ),
-            ),
-            height(0.01),
-
-            TransactionsCard(
-              title: 'Merch Drop',
-              price: '+\$650',
-              date: 'FEB 18',
-              subTitle: 'Limited Edition T-Shirts',
-              name: 'rev_merchandise'.tr,
-            ),
-            height(0.01),
-
-            TransactionsCard(
-              isChange: false,
-              title: 'Bank Payout',
-              price: '-\$5,000',
-              date: 'FEB 15',
-              subTitle: 'Chase Business Account',
-              name: 'art_withdrawal'.tr,
-            ),
           ],
         ),
       ),

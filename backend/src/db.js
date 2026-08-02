@@ -266,6 +266,22 @@ function init() {
       status TEXT DEFAULT 'new',
       created_at TEXT DEFAULT (datetime('now'))
     );
+
+    -- Comptes bancaires artiste (retrait des gains). Les routes /withdraw/*
+    -- étaient des stubs qui ne persistaient jamais rien (add-bank répondait
+    -- "success" sans écrire en base, get-user-banks renvoyait toujours []) :
+    -- corrigé pour un vrai retrait d'argent avant la mise en prod.
+    CREATE TABLE IF NOT EXISTS banks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      bank_name TEXT,
+      account_name TEXT,
+      account_number TEXT,
+      swift_code TEXT,
+      routing_number TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 
   // Dédup des évènements RevenueCat (les webhooks sont ré-émis) : évite de

@@ -3,8 +3,6 @@ import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
-// import 'package:artist/BottomBar/screens/my_tIckets/live_tickets_video_screen.dart';
-import 'package:artist/widgets/demo_ticket.dart'; // TEMPORARY: demo ticket preview
 import 'package:artist/widgets/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -83,68 +81,16 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
                     children: [
                       /// Upcoming Events
                       upcomingEvents.isEmpty
-                          // TEMPORARY demo preview: shown only when the user has
-                          // no real ticket yet, so the TicketPassCard design can
-                          // be reviewed. Remove this branch (and demo_ticket.dart)
-                          // once tickets can be purchased in-app.
-                          ? ListView(
-                              padding: EdgeInsets.zero,
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: vybzzzGold.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: vybzzzGold.withValues(alpha: 0.4),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.visibility_outlined,
-                                        size: 16,
-                                        color: vybzzzGold,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          'tickets_preview_example'.tr,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Get.isDarkMode
-                                                ? whiteColor
-                                                : blackColor,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                TicketPassCard(
-                                  event: demoTicketEvent(),
-                                  previewAsset: 'assets/artist_image5.png',
-                                ),
-                                height(0.025),
-                                SizedBox(
-                                  height: 360,
-                                  child: EmptyState(
-                                    icon: Icons.confirmation_number_outlined,
-                                    title: 'No upcoming tickets yet',
-                                    subtitle:
-                                        'Your next concert pass will appear here. '
-                                        'Discover live shows and grab your seat.',
-                                    actionLabel: 'Explore Concerts',
-                                    onAction: () => Get.offAll(
-                                      () => const MyBottomBar(index: 1),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                          ? EmptyState(
+                              icon: Icons.confirmation_number_outlined,
+                              title: 'No upcoming tickets yet',
+                              subtitle:
+                                  'Your next concert pass will appear here. '
+                                  'Discover live shows and grab your seat.',
+                              actionLabel: 'Explore Concerts',
+                              onAction: () => Get.offAll(
+                                () => const MyBottomBar(index: 1),
+                              ),
                             )
                           : ListView.separated(
                               separatorBuilder: (context, index) {
