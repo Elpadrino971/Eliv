@@ -178,13 +178,13 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                   ),
                   height(0.02),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Expanded(
-                        child: SizedBox(
-                          height: 140,
-                          child: MyContainer(
+                        child: MyContainer(
                             color: Get.isDarkMode ? goldPrimary : mainThemeColor,
                             widget: Column(
+                              mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 MyContainer(
@@ -197,7 +197,7 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                                     size: 18,
                                   ),
                                 ),
-                                const Spacer(),
+                                height(0.015),
                                 Text(
                                   'rev_growth_goal'.tr,
                                   style: const TextStyle(
@@ -227,14 +227,12 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                               ],
                             ),
                           ),
-                        ),
                       ),
                       width(0.02),
                       Expanded(
-                        child: SizedBox(
-                          height: 140,
-                          child: MyContainer(
+                        child: MyContainer(
                             widget: Column(
+                              mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 MyContainer(
@@ -250,7 +248,7 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                                     width: 15,
                                   ),
                                 ),
-                                const Spacer(),
+                                height(0.015),
                                 Text(
                                   'rev_avg_session'.tr,
                                   style: const TextStyle(
@@ -272,7 +270,6 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                               ],
                             ),
                           ),
-                        ),
                       ),
                     ],
                   ),
@@ -347,12 +344,16 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                                 color: mainThemeColor,
                               ),
                               width(0.01),
-                              Text(
-                                '${event.likesCount ?? 0} ${'art_likes'.tr}',
-                                style: const TextStyle(
-                                  color: Color(0xffA1A1A1),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                              Flexible(
+                                child: Text(
+                                  '${event.likesCount ?? 0} ${'art_likes'.tr}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xffA1A1A1),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                               width(0.02),
@@ -362,12 +363,16 @@ class _ArtistHistroyScreenState extends State<ArtistHistroyScreen> {
                                 color: Color(0xff00C950),
                               ),
                               width(0.01),
-                              Text(
-                                '${event.joinedUsersCount ?? 0} ${'art_fans'.tr}',
-                                style: const TextStyle(
-                                  color: Color(0xffA1A1A1),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                              Flexible(
+                                child: Text(
+                                  '${event.joinedUsersCount ?? 0} ${'art_fans'.tr}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xffA1A1A1),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
