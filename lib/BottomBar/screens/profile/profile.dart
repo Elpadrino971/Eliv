@@ -243,8 +243,11 @@ class _ProfileState extends State<Profile> {
             ),
             height(0.01),
 
-            widget.fromArtist ? _artistDashboardHeader() : _fanHeaderCard(),
-            height(0.02),
+            // Mode artiste : le dashboard (bannière + gains + croissance) scrolle
+            // avec le reste de la page au lieu d'être figé en haut -> sinon, sur
+            // petit écran, il ne reste presque plus de place pour naviguer vers
+            // le bas (outils, portefeuille, déconnexion...).
+            if (!widget.fromArtist) ...[_fanHeaderCard(), height(0.02)],
 
             Expanded(
               child: SingleChildScrollView(
@@ -252,6 +255,8 @@ class _ProfileState extends State<Profile> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (widget.fromArtist) ...[
+                      _artistDashboardHeader(),
+                      height(0.02),
                       _toolsAndResources(),
                       height(0.02),
                     ],
@@ -541,20 +546,12 @@ class _ProfileState extends State<Profile> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Bannière : photo artiste + bienvenue + badge + notifications
-        ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            width: Get.width,
-            height: 130,
-            decoration: BoxDecoration(
-              gradient: kCardGradient,
-              border: Border.all(
-                color: goldSecondary.withValues(alpha: 0.45),
-                width: 1,
-              ),
-            ),
-            child: Stack(
+        // ── Bannière : sans cadre (pas de bordure/carte), juste la photo
+        // artiste + bienvenue + badge + notifications, à même le fond de l'écran.
+        SizedBox(
+          width: Get.width,
+          height: 130,
+          child: Stack(
               children: [
                 Positioned(
                   right: 0,
@@ -633,7 +630,6 @@ class _ProfileState extends State<Profile> {
                   ),
                 ),
               ],
-            ),
           ),
         ),
         height(0.02),
