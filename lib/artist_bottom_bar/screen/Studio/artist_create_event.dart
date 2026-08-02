@@ -33,9 +33,13 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
 
   // Paliers de prix des billets — chaque prix correspond à un produit IAP
   // (ticket_19, ticket_29, …) créé dans les stores. L'artiste choisit un palier.
+  // 129.99/149.99 retirés : paliers à prix élevé qui avaient causé un souci de
+  // soumission (Apple demande une justification supplémentaire au-delà d'un
+  // certain prix, Guideline 3.1.1). Les produits IAP restent créés dans
+  // App Store Connect/Play Console, juste plus proposés dans ce sélecteur.
   final List<String> _ticketTiers = [
     '19.99', '29.99', '39.99', '49.99', '59.99',
-    '79.99', '99.99', '129.99', '149.99',
+    '79.99', '99.99',
   ];
   String? selectedPrice;
 
