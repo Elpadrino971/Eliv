@@ -611,9 +611,12 @@ class _ProfileState extends State<Profile> {
       children: [
         // ── Bannière : sans cadre (pas de bordure/carte), juste la photo
         // artiste + bienvenue + badge + notifications, à même le fond de l'écran.
+        // Hauteur généreuse (156, pas 130) pour laisser de la marge au texte
+        // sur les noms d'artiste longs + réglages d'accessibilité (police
+        // agrandie) sans déborder.
         SizedBox(
           width: Get.width,
-          height: 130,
+          height: 156,
           child: Stack(
               children: [
                 Positioned(
@@ -621,19 +624,42 @@ class _ProfileState extends State<Profile> {
                   top: 0,
                   bottom: 0,
                   width: Get.width * 0.42,
-                  child: ShaderMask(
-                    shaderCallback: (rect) => LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [midnightPrimary, midnightPrimary.withValues(alpha: 0)],
-                    ).createShader(rect),
-                    blendMode: BlendMode.dstIn,
-                    child: ImageWidget(
-                      url: '${userModel.value.user?.artistProfile}',
-                      width: Get.width * 0.42,
-                      height: 130,
-                      fit: BoxFit.cover,
-                    ),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      ImageWidget(
+                        url: '${userModel.value.user?.artistProfile}',
+                        width: Get.width * 0.42,
+                        height: 156,
+                        fit: BoxFit.cover,
+                      ),
+                      // Vignette sur les 4 côtés : n'importe quelle photo
+                      // (fond clair ou sombre, cadrage quelconque) doit se
+                      // fondre dans le thème, pas seulement les photos déjà
+                      // sombres comme celles du mockup de référence.
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: RadialGradient(
+                            radius: 0.95,
+                            colors: [
+                              Colors.transparent,
+                              midnightPrimary.withValues(alpha: 0.55),
+                            ],
+                            stops: const [0.35, 1.0],
+                          ),
+                        ),
+                      ),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [midnightPrimary, Colors.transparent],
+                            stops: const [0.0, 0.65],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Padding(
