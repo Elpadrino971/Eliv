@@ -87,6 +87,7 @@ class APIs {
   static const String getGenresAPI = '$baseAPI/genres';
   static const String socialLoginAPI = '$baseAPI/social-login';
   static const String deleteAccountAPI = '$baseAPI/delete-account';
+  static const String artistDashboardStatsAPI = '$baseAPI/artist/dashboard-stats';
 
   //Events
   static const String eventsAPI = '$baseAPI/events';
