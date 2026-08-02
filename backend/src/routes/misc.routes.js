@@ -11,9 +11,109 @@ const stripeService = require('../services/stripe');
 const zegoService = require('../services/zego');
 const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
 
+// GET /api/artist/dashboard-stats — résumé pour l'onglet Profil version artiste
+// (gains totaux, fans, concerts, billets vendus) + variation vs la période
+// précédente. Source de vérité : platform_earnings (ledger append-only, non
+// affecté par les retraits), tickets, follows, events.
+router.get('/artist/dashboard-stats', requireAuth, (req, res) => {
+  const artistId = req.user.id;
+
+  const now = new Date();
+  const iso = (d) => d.toISOString().slice(0, 19).replace('T', ' ');
+  const daysAgo = (n) => { const d = new Date(now); d.setDate(d.getDate() - n); return d; };
+  const last30Start = iso(daysAgo(30));
+  const prev30Start = iso(daysAgo(60));
+  const nowIso = iso(now);
+  const monthStart = iso(new Date(now.getFullYear(), now.getMonth(), 1));
+  const prevMonthStart = iso(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+
+  const pct = (current, previous) => {
+    if (previous <= 0) return current > 0 ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 1000) / 10;
+  };
+
+  // Gains artiste (EUR) sur une fenêtre : billets en EUROS + cadeaux en POINTS
+  // (1 € = 100 pts), les deux tracés dans platform_earnings.artist_share.
+  const earningsBetween = (from, to) => {
+    const row = db.prepare(
+      `SELECT
+         COALESCE(SUM(CASE WHEN source = 'ticket' THEN CAST(artist_share AS REAL) ELSE 0 END), 0) AS eur,
+         COALESCE(SUM(CASE WHEN source = 'gift' THEN CAST(artist_share AS REAL) ELSE 0 END), 0) AS pts
+       FROM platform_earnings WHERE artist_id = ? AND created_at >= ? AND created_at < ?`
+    ).get(artistId, from, to);
+    return row.eur + row.pts / 100;
+  };
+  const totalEarningsRow = db.prepare(
+    `SELECT
+       COALESCE(SUM(CASE WHEN source = 'ticket' THEN CAST(artist_share AS REAL) ELSE 0 END), 0) AS eur,
+       COALESCE(SUM(CASE WHEN source = 'gift' THEN CAST(artist_share AS REAL) ELSE 0 END), 0) AS pts
+     FROM platform_earnings WHERE artist_id = ?`
+  ).get(artistId);
+  const totalEarnings = totalEarningsRow.eur + totalEarningsRow.pts / 100;
+  const earningsLast30 = earningsBetween(last30Start, nowIso);
+  const earningsPrev30 = earningsBetween(prev30Start, last30Start);
+
+  // Fans (follows)
+  const fansTotal = db.prepare('SELECT COUNT(*) c FROM follows WHERE artist_id = ?').get(artistId).c;
+  const fansLast30 = db.prepare(
+    'SELECT COUNT(*) c FROM follows WHERE artist_id = ? AND created_at >= ? AND created_at < ?'
+  ).get(artistId, last30Start, nowIso).c;
+  const fansPrev30 = db.prepare(
+    'SELECT COUNT(*) c FROM follows WHERE artist_id = ? AND created_at >= ? AND created_at < ?'
+  ).get(artistId, prev30Start, last30Start).c;
+
+  // Concerts (ce mois-ci vs le mois dernier, sur la date du concert)
+  const showsThisMonth = db.prepare(
+    'SELECT COUNT(*) c FROM events WHERE artist_id = ? AND start_date_time >= ? AND start_date_time < ?'
+  ).get(artistId, monthStart, nowIso).c;
+  const showsPrevMonth = db.prepare(
+    'SELECT COUNT(*) c FROM events WHERE artist_id = ? AND start_date_time >= ? AND start_date_time < ?'
+  ).get(artistId, prevMonthStart, monthStart).c;
+
+  // "Streams" = billets vendus (live + replay confondus, pas de distinction
+  // technique entre les deux : le même billet donne accès aux deux).
+  const ticketsTotal = db.prepare(
+    `SELECT COUNT(*) c FROM tickets t JOIN events e ON e.id = t.event_id WHERE e.artist_id = ?`
+  ).get(artistId).c;
+  const ticketsLast30 = db.prepare(
+    `SELECT COUNT(*) c FROM tickets t JOIN events e ON e.id = t.event_id
+     WHERE e.artist_id = ? AND t.created_at >= ? AND t.created_at < ?`
+  ).get(artistId, last30Start, nowIso).c;
+  const ticketsPrev30 = db.prepare(
+    `SELECT COUNT(*) c FROM tickets t JOIN events e ON e.id = t.event_id
+     WHERE e.artist_id = ? AND t.created_at >= ? AND t.created_at < ?`
+  ).get(artistId, prev30Start, last30Start).c;
+
+  return ok(res, {
+    total_earnings: Math.round(totalEarnings * 100) / 100,
+    total_earnings_change_pct: pct(earningsLast30, earningsPrev30),
+    fans_total: fansTotal,
+    fans_change_pct: pct(fansLast30, fansPrev30),
+    shows_this_month: showsThisMonth,
+    shows_change_pct: pct(showsThisMonth, showsPrevMonth),
+    tickets_total: ticketsTotal,
+    tickets_change_pct: pct(ticketsLast30, ticketsPrev30),
+  });
+});
+
 // GET /api/genres -> { status, data: [...] }
 router.get('/genres', (req, res) => {
   return ok(res, db.prepare('SELECT * FROM genres').all());
+});
+
+// GET /api/splash-settings — fond d'écran + animation de la page de lancement,
+// personnalisables depuis l'admin sans passer par une nouvelle version d'app.
+// Valeurs vides -> le client retombe sur ses assets locaux par défaut.
+router.get('/splash-settings', (req, res) => {
+  const rows = db.prepare(
+    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_animation_style')`
+  ).all();
+  const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  return ok(res, {
+    background_image: map.splash_background_image || null,
+    background_video: map.splash_background_video || null,
+    animation_style: map.splash_animation_style || 'sparkles',
+  });
 });
 
 // POST /api/live/zego-token — token ZegoCloud généré côté serveur (jamais
@@ -242,7 +342,7 @@ router.get('/subscription/get', (req, res) => {
       next_price_in_seats: isCurrentFounder ? seatsRemaining : null,
       public_price: null,
       badge: r.badge,
-      iap_product_id: null,
+      iap_product_id: r.revenuecat_product_id || null,
       image: r.image,
     };
   });

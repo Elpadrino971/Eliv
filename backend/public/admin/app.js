@@ -96,6 +96,7 @@ const NAV = [
     { id: 'referrals', label: 'Parrainages', ic: '🤝' },
     { id: 'abusive', label: 'Mots interdits', ic: '🚫' },
     { id: 'reviews', label: 'Avis', ic: '⭐' },
+    { id: 'splash', label: 'Page de lancement', ic: '🚀' },
   ] },
   { group: 'Finance', items: [
     { id: 'withdrawals', label: 'Retraits', ic: '🏦' },
@@ -948,6 +949,55 @@ async function pageProfile() {
   };
 }
 
+// ─── Page de lancement (splash) : fond d'écran + animation, lus par l'app au
+// démarrage (GET /api/splash-settings, public) sans nouvelle version store.
+async function pageSplash() {
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  const { data } = await api('GET', '/splash-settings');
+  const styles = [
+    { value: 'sparkles', label: 'Paillettes dorées (par défaut)' },
+    { value: 'fade', label: 'Halo simple (sans paillettes)' },
+    { value: 'none', label: 'Aucune animation' },
+  ];
+  const fieldStyle = 'width:100%;background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:8px;padding:11px;margin:6px 0 6px';
+  view().innerHTML = `<h1 class="page-title">Page de lancement</h1>
+    <div class="tcard" style="max-width:560px">
+      <label style="color:var(--muted);font-size:13px">Fond d'écran (image)</label>
+      ${data.background_image ? `<div style="margin:8px 0"><img src="${esc(data.background_image)}" style="max-width:100%;border-radius:8px;max-height:200px;object-fit:cover"></div>` : ''}
+      <input type="file" id="sp-image" accept="image/*" style="${fieldStyle}">
+      ${data.background_image ? `<label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);margin:0 0 14px"><input type="checkbox" id="sp-image-remove" style="width:auto"> Supprimer l'image actuelle (repli sur l'asset par défaut de l'app)</label>` : '<div style="margin-bottom:14px"></div>'}
+
+      <label style="color:var(--muted);font-size:13px">Fond d'écran (vidéo — prioritaire sur l'image si les deux sont présentes)</label>
+      ${data.background_video ? `<div style="margin:8px 0"><video src="${esc(data.background_video)}" muted loop autoplay playsinline style="max-width:100%;border-radius:8px;max-height:200px"></video></div>` : ''}
+      <input type="file" id="sp-video" accept="video/*" style="${fieldStyle}">
+      ${data.background_video ? `<label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);margin:0 0 14px"><input type="checkbox" id="sp-video-remove" style="width:auto"> Supprimer la vidéo actuelle</label>` : '<div style="margin-bottom:14px"></div>'}
+
+      <label style="color:var(--muted);font-size:13px">Style d'animation</label>
+      <select id="sp-style" style="${fieldStyle}margin-bottom:18px">
+        ${styles.map((s) => `<option value="${s.value}" ${s.value === data.animation_style ? 'selected' : ''}>${esc(s.label)}</option>`).join('')}
+      </select>
+
+      <button class="btn gold" id="sp-save">Enregistrer</button>
+      <div class="em" style="margin-top:10px">Pris en compte au prochain lancement de l'app — pas besoin de nouvelle version App Store/Play Store.</div>
+    </div>`;
+
+  view().querySelector('#sp-save').onclick = async () => {
+    const fd = new FormData();
+    const imageFile = view().querySelector('#sp-image').files[0];
+    const videoFile = view().querySelector('#sp-video').files[0];
+    if (imageFile) fd.append('background_image', imageFile);
+    if (videoFile) fd.append('background_video', videoFile);
+    if (view().querySelector('#sp-image-remove')?.checked) fd.append('remove_background_image', '1');
+    if (view().querySelector('#sp-video-remove')?.checked) fd.append('remove_background_video', '1');
+    fd.append('animation_style', view().querySelector('#sp-style').value);
+    try {
+      await api('PUT', '/splash-settings', fd);
+      toast('Page de lancement mise à jour');
+      pageSplash();
+    } catch (e) { toast(e.message); }
+  };
+}
+
 // Délégation globale Supprimer / Modifier / Statut
 document.addEventListener('click', (e) => {
   const del = e.target.closest('[data-del]');
@@ -1043,6 +1093,7 @@ const ROUTES = {
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
+  splash: pageSplash,
 };
 
 window.addEventListener('hashchange', route);

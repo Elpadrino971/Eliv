@@ -748,6 +748,57 @@ router.put('/referral-settings', requireAdmin, (req, res) => {
   return res.json({ status: 'success', message: 'Règle de parrainage enregistrée.' });
 });
 
+// ─── Page de lancement (splash) : fond d'écran + animation personnalisables
+// depuis l'admin, lus par l'app via GET /api/splash-settings (public). Permet
+// de changer le visuel de démarrage sans nouvelle version App Store/Play Store.
+const SPLASH_ANIMATION_STYLES = ['sparkles', 'fade', 'none'];
+
+router.get('/splash-settings', requireAdmin, (req, res) => {
+  const rows = db.prepare(
+    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_animation_style')`
+  ).all();
+  const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  return res.json({
+    status: 'success',
+    data: {
+      background_image: map.splash_background_image || null,
+      background_video: map.splash_background_video || null,
+      animation_style: map.splash_animation_style || 'sparkles',
+    },
+  });
+});
+
+router.put('/splash-settings', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const set = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+
+  const imageUrl = saveUpload(req, ['background_image', 'image'], 'splash', 'splash');
+  if (imageUrl) set.run('splash_background_image', imageUrl);
+  else if (truthy(b.remove_background_image)) set.run('splash_background_image', '');
+
+  const videoUrl = saveUpload(req, ['background_video', 'video'], 'splash', 'splash');
+  if (videoUrl) set.run('splash_background_video', videoUrl);
+  else if (truthy(b.remove_background_video)) set.run('splash_background_video', '');
+
+  if (b.animation_style && SPLASH_ANIMATION_STYLES.includes(b.animation_style)) {
+    set.run('splash_animation_style', b.animation_style);
+  }
+
+  const rows = db.prepare(
+    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_animation_style')`
+  ).all();
+  const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  return res.json({
+    status: 'success',
+    message: 'Page de lancement mise à jour.',
+    data: {
+      background_image: map.splash_background_image || null,
+      background_video: map.splash_background_video || null,
+      animation_style: map.splash_animation_style || 'sparkles',
+    },
+  });
+});
+
 router.post('/referrals', requireAdmin, (req, res) => {
   const b = req.body || {};
   if (!b.referrer_id || !b.referee_id) return res.status(422).json({ status: 'error', message: 'Parrain et filleul requis.' });

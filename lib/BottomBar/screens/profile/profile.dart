@@ -1,6 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:artist/Auth/login_screen.dart';
+import 'package:artist/BottomBar/screens/homeScreen/notification_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/BottomBar/screens/profile/all_subscription_screen.dart';
 import 'package:artist/BottomBar/screens/profile/artist_onboarding_screen.dart';
@@ -13,11 +16,15 @@ import 'package:artist/BottomBar/screens/profile/user_wallet.dart';
 import 'package:artist/Controllers/controller.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 // import 'package:artist/BottomBar/screens/profile/my_tickets.dart';
+import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/BottomBar/screens/profile/settings.dart';
 import 'package:artist/Models/user_model.dart';
 import 'package:artist/artist_bottom_bar/artist_bottom_bar.dart';
+import 'package:artist/artist_bottom_bar/screen/Studio/artist_events_screen.dart';
+import 'package:artist/artist_bottom_bar/screen/Studio/revenue_screen.dart';
+import 'package:artist/services/api_services.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +44,11 @@ class _ProfileState extends State<Profile> {
 
   List<UserSubscription> userActiveSubscriptions = [];
 
+  /// Stats du dashboard artiste (gains, fans, concerts, billets) — null tant
+  /// que non chargées ou si l'appel échoue (l'écran dégrade gracieusement).
+  Map<String, dynamic>? artistStats;
+  bool loadingArtistStats = false;
+
   Future myInitMethod() async {
     final data = userModel.value.user?.userSubscription;
     if (data != null && data.isNotEmpty) {
@@ -45,7 +57,30 @@ class _ProfileState extends State<Profile> {
           .toList();
     }
     await authController.getSettings();
+    if (widget.fromArtist) unawaited(_loadArtistStats());
     if (mounted) setState(() {});
+  }
+
+  Future<void> _loadArtistStats() async {
+    if (mounted) setState(() => loadingArtistStats = true);
+    try {
+      final response = ApiResponse();
+      response.typeSetter = 'get';
+      response.urlSetter = APIs.artistDashboardStatsAPI;
+      final value = await response.hitAPI();
+      if (value is String && value.split(' ').first != 'error') {
+        final decoded = jsonDecode(value);
+        if (mounted) {
+          setState(() {
+            artistStats = decoded['data'] as Map<String, dynamic>?;
+          });
+        }
+      }
+    } catch (e) {
+      myPrint('artist dashboard-stats: $e');
+    } finally {
+      if (mounted) setState(() => loadingArtistStats = false);
+    }
   }
 
   List<Map> get acountList => [
@@ -208,141 +243,7 @@ class _ProfileState extends State<Profile> {
             ),
             height(0.01),
 
-            Container(
-              width: Get.width,
-              padding: myPadding,
-              decoration: BoxDecoration(
-                gradient: kCardGradient,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: goldSecondary.withValues(alpha: 0.45),
-                  width: 1,
-                ),
-              ),
-              child: Stack(
-                children: [
-                  // Traînée de paillettes dorées (forte opacite)
-                  Positioned.fill(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
-                      child: CustomPaint(
-                        painter: _SparkleTrailPainter(),
-                      ),
-                    ),
-                  ),
-                  Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: goldSecondary.withValues(alpha: 0.6),
-                            width: 1.4,
-                          ),
-                        ),
-                        child: ClipOval(
-                          child: ImageWidget(
-                            url: widget.fromArtist
-                                ? '${userModel.value.user?.artistProfile}'
-                                : '${userModel.value.user?.profileImage}',
-                            width: 50,
-                            height: 50,
-                          ),
-                        ),
-                      ),
-
-                      width(0.03),
-
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Container(
-                          //   width: Get.width * 0.35,
-                          //   padding: EdgeInsets.all(6),
-                          //   decoration: BoxDecoration(
-                          //     color: whiteColor,
-                          //     borderRadius: BorderRadius.circular(25),
-                          //   ),
-                          //   child: Text(
-                          //     textAlign: TextAlign.center,
-                          //     'Platinum Member',
-                          //     style: TextStyle(
-                          //       color: Get.isDarkMode
-                          //           ? blackColor
-                          //           : mainThemeColor,
-                          //       fontWeight: FontWeight.w500,
-                          //       fontSize: 14,
-                          //     ),
-                          //   ),
-                          // ),
-                          SizedBox(
-                            width: Get.width * 0.5,
-                            child: Text(
-                              widget.fromArtist
-                                  ? userModel.value.user?.artistName ?? 'N/A'
-                                  : userModel.value.user?.fullName ?? 'N/A',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: ivory,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 20,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: Get.width * 0.5,
-                            child: Text(
-                              userModel.value.user?.email ?? 'N/A',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: textMuted),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  height(0.02),
-
-                  Divider(color: goldSecondary.withValues(alpha: 0.25)),
-                  Row(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'prof_total_points'.tr,
-                            style: TextStyle(
-                              color: textMuted,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                          height(0.005),
-                          Text(
-                            userModel.value.user?.points.toString() ?? 'N/A',
-                            style: TextStyle(
-                              color: goldPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Spacer(),
-                    ],
-                  ),
-                ],
-              ),
-                ],
-              ),
-            ),
+            widget.fromArtist ? _artistDashboardHeader() : _fanHeaderCard(),
             height(0.02),
 
             Expanded(
@@ -350,6 +251,10 @@ class _ProfileState extends State<Profile> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (widget.fromArtist) ...[
+                      _toolsAndResources(),
+                      height(0.02),
+                    ],
                     Text(
                       'prof_account_experience'.tr,
                       style: TextStyle(
@@ -479,6 +384,494 @@ class _ProfileState extends State<Profile> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Carte profil "fan" — inchangée (photo + nom + solde de points).
+  Widget _fanHeaderCard() {
+    return Container(
+      width: Get.width,
+      padding: myPadding,
+      decoration: BoxDecoration(
+        gradient: kCardGradient,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: goldSecondary.withValues(alpha: 0.45),
+          width: 1,
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Traînée de paillettes dorées (forte opacite)
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: CustomPaint(painter: _SparkleTrailPainter()),
+            ),
+          ),
+          Column(
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: goldSecondary.withValues(alpha: 0.6),
+                        width: 1.4,
+                      ),
+                    ),
+                    child: ClipOval(
+                      child: ImageWidget(
+                        url: '${userModel.value.user?.profileImage}',
+                        width: 50,
+                        height: 50,
+                      ),
+                    ),
+                  ),
+                  width(0.03),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: Get.width * 0.5,
+                        child: Text(
+                          userModel.value.user?.fullName ?? 'N/A',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: ivory,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 20,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: Get.width * 0.5,
+                        child: Text(
+                          userModel.value.user?.email ?? 'N/A',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: textMuted),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              height(0.02),
+              Divider(color: goldSecondary.withValues(alpha: 0.25)),
+              Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'prof_total_points'.tr,
+                        style: TextStyle(
+                          color: textMuted,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      height(0.005),
+                      Text(
+                        userModel.value.user?.points.toString() ?? 'N/A',
+                        style: TextStyle(
+                          color: goldPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Spacer(),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Petit badge % de variation (vert si positif, rouge si négatif).
+  Widget _changeBadge(num? pct) {
+    final value = pct ?? 0;
+    final positive = value >= 0;
+    return Text(
+      '${positive ? '+' : ''}${value.toStringAsFixed(1)}%',
+      style: TextStyle(
+        color: positive ? const Color(0xff4ADE80) : const Color(0xffFF6B6B),
+        fontWeight: FontWeight.w700,
+        fontSize: 12.5,
+      ),
+    );
+  }
+
+  Widget _statIcon(IconData icon) {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: goldPrimary.withValues(alpha: 0.15),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: goldPrimary, size: 18),
+    );
+  }
+
+  /// Dashboard artiste (style "GROW AS AN ARTIST") : bannière + gains totaux
+  /// + croissance (fans / concerts / billets) avec variation vs période
+  /// précédente. Les stats se chargent en tâche de fond (myInitMethod) ;
+  /// tant qu'elles ne sont pas là, les cartes affichent "…" sans bloquer l'UI.
+  Widget _artistDashboardHeader() {
+    final stats = artistStats;
+    final totalEarnings = stats?['total_earnings'];
+    final earningsChange = stats?['total_earnings_change_pct'];
+    final fansTotal = stats?['fans_total'];
+    final fansChange = stats?['fans_change_pct'];
+    final showsThisMonth = stats?['shows_this_month'];
+    final showsChange = stats?['shows_change_pct'];
+    final ticketsTotal = stats?['tickets_total'];
+    final ticketsChange = stats?['tickets_change_pct'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Bannière : photo artiste + bienvenue + badge + notifications
+        ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            width: Get.width,
+            height: 130,
+            decoration: BoxDecoration(
+              gradient: kCardGradient,
+              border: Border.all(
+                color: goldSecondary.withValues(alpha: 0.45),
+                width: 1,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: Get.width * 0.42,
+                  child: ShaderMask(
+                    shaderCallback: (rect) => LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [midnightPrimary, midnightPrimary.withValues(alpha: 0)],
+                    ).createShader(rect),
+                    blendMode: BlendMode.dstIn,
+                    child: ImageWidget(
+                      url: '${userModel.value.user?.artistProfile}',
+                      width: Get.width * 0.42,
+                      height: 130,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'prof_welcome_back'.tr,
+                              style: TextStyle(color: textMuted, fontSize: 13),
+                            ),
+                            Text(
+                              userModel.value.user?.artistName ?? 'N/A',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: ivory,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 19,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: goldPrimary),
+                              ),
+                              child: Text(
+                                '★ ${'prof_artist_account'.tr}',
+                                style: TextStyle(
+                                  color: goldPrimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Get.to(() => const NotificationScreen()),
+                        child: Icon(
+                          Icons.notifications_none_rounded,
+                          color: goldPrimary,
+                          size: 24,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        height(0.02),
+
+        // ── Total des gains
+        Container(
+          width: Get.width,
+          padding: myPadding,
+          decoration: BoxDecoration(
+            color: cardDeep,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: goldSecondary.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'prof_total_earnings'.tr,
+                      style: TextStyle(color: textMuted, fontSize: 12.5),
+                    ),
+                    height(0.005),
+                    Text(
+                      totalEarnings != null
+                          ? '${(totalEarnings as num).toStringAsFixed(2)} €'
+                          : '…',
+                      style: TextStyle(
+                        color: goldPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 26,
+                      ),
+                    ),
+                    if (totalEarnings != null) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          _changeBadge(earningsChange as num?),
+                          const SizedBox(width: 6),
+                          Text(
+                            'prof_vs_last_30_days'.tr,
+                            style: TextStyle(color: textMuted, fontSize: 11.5),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              _statIcon(Icons.euro_rounded),
+            ],
+          ),
+        ),
+        height(0.015),
+
+        // ── Croissance : fans / concerts (ce mois) / billets vendus
+        Container(
+          width: Get.width,
+          padding: myPadding,
+          decoration: BoxDecoration(
+            color: cardDeep,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: goldSecondary.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'prof_your_growth'.tr,
+                    style: TextStyle(
+                      color: ivory,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'prof_this_month'.tr,
+                    style: TextStyle(color: textMuted, fontSize: 11.5),
+                  ),
+                ],
+              ),
+              height(0.015),
+              Row(
+                children: [
+                  Expanded(
+                    child: _growthStat(
+                      icon: Icons.confirmation_number_outlined,
+                      label: 'prof_tickets_sold'.tr,
+                      value: ticketsTotal?.toString(),
+                      changePct: ticketsChange as num?,
+                    ),
+                  ),
+                  Expanded(
+                    child: _growthStat(
+                      icon: Icons.favorite_border_rounded,
+                      label: 'prof_fans'.tr,
+                      value: fansTotal != null
+                          ? _compactNumber(fansTotal as num)
+                          : null,
+                      changePct: fansChange as num?,
+                    ),
+                  ),
+                  Expanded(
+                    child: _growthStat(
+                      icon: Icons.graphic_eq_rounded,
+                      label: 'prof_live_shows'.tr,
+                      value: showsThisMonth?.toString(),
+                      changePct: showsChange as num?,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _growthStat({
+    required IconData icon,
+    required String label,
+    required String? value,
+    required num? changePct,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _statIcon(icon),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(color: textMuted, fontSize: 11.5),
+        ),
+        Text(
+          value ?? '…',
+          style: TextStyle(
+            color: ivory,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        if (value != null) _changeBadge(changePct),
+      ],
+    );
+  }
+
+  String _compactNumber(num value) {
+    if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(1)}M';
+    if (value >= 1000) return '${(value / 1000).toStringAsFixed(1)}K';
+    return value.toStringAsFixed(0);
+  }
+
+  /// Section "Outils & Ressources" : raccourcis vers les écrans artiste déjà
+  /// existants (revenus, événements/analytics) — rien de nouveau à créer.
+  Widget _toolsAndResources() {
+    final tools = [
+      {
+        'icon': Icons.event_available_outlined,
+        'title': 'prof_tool_live_manager'.tr,
+        'subtitle': 'prof_tool_live_manager_sub'.tr,
+        'onTap': () => Get.to(() => const ArtistEventsScreen()),
+      },
+      {
+        'icon': Icons.insights_outlined,
+        'title': 'prof_tool_analytics'.tr,
+        'subtitle': 'prof_tool_analytics_sub'.tr,
+        'onTap': () => Get.to(() => const ArtistEventsScreen()),
+      },
+      {
+        'icon': Icons.payments_outlined,
+        'title': 'prof_tool_monetization'.tr,
+        'subtitle': 'prof_tool_monetization_sub'.tr,
+        'onTap': () => Get.to(() => const RevenueScreen()),
+      },
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'prof_tools_resources'.tr,
+          style: TextStyle(
+            color: textMuted,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 2,
+          ),
+        ),
+        height(0.015),
+        ...tools.map(
+          (t) => GestureDetector(
+            onTap: t['onTap'] as VoidCallback,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  _statIcon(t['icon'] as IconData),
+                  width(0.03),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t['title'] as String,
+                          style: TextStyle(
+                            color: ivory,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                        ),
+                        Text(
+                          t['subtitle'] as String,
+                          style: TextStyle(color: textMuted, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_sharp,
+                    size: 14,
+                    color: goldSecondary.withValues(alpha: 0.5),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
