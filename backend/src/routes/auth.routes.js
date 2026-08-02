@@ -145,6 +145,12 @@ router.post('/update-profile', requireAuth, (req, res) => {
   for (const f of fields) {
     if (b[f] !== undefined) { sets.push(`${f} = @${f}`); vals[f] = b[f]; }
   }
+  // Devenir artiste : le parcours "Devenir artiste" (basic_info -> bank info)
+  // envoie artist_name mais rien ne basculait jamais is_artist à 1 -> le compte
+  // restait "fan" pour toujours malgré un profil artiste complet.
+  if (b.artist_name !== undefined && String(b.artist_name).trim() !== '') {
+    sets.push('is_artist = 1');
+  }
   // multer est monté en upload.any() -> req.files est un TABLEAU. On passe par
   // saveUpload (qui trouve le fichier par nom de champ, le copie dans storage/
   // et renvoie l'URL absolue). L'ancien `req.files.profile_picture` était
@@ -153,6 +159,14 @@ router.post('/update-profile', requireAuth, (req, res) => {
   if (uploadedPhoto) {
     sets.push('profile_image = @profile_image');
     vals.profile_image = uploadedPhoto;
+  }
+  // Photo de profil ARTISTE : champ multipart séparé ('artist_profile', cf.
+  // auth_controller.dart:updateProfile -> hitMultipartAPI key2), jamais
+  // recherché avant -> le fichier envoyé était toujours ignoré silencieusement.
+  const uploadedArtistPhoto = saveUpload(req, ['artist_profile'], 'profiles', 'profiles');
+  if (uploadedArtistPhoto) {
+    sets.push('artist_profile = @artist_profile');
+    vals.artist_profile = uploadedArtistPhoto;
   }
   if (sets.length) {
     vals.id = req.user.id;
