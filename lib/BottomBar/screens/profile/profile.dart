@@ -97,8 +97,19 @@ class _ProfileState extends State<Profile> {
               'icon': Icons.mic_none_rounded,
               'title': 'prof_become_artist'.tr,
               'subTitle': 'prof_do_live'.tr,
-              'onTap': () {
-                if (userActiveSubscriptions.isEmpty) {
+              'onTap': () async {
+                // Re-vérifie l'abonnement en direct (pas le cache local
+                // userActiveSubscriptions, calculé une seule fois à
+                // l'ouverture de l'onglet -> restait périmé après un achat
+                // réussi ailleurs tant que l'app n'était pas relancée).
+                myLoadingDialog();
+                await authController.getUserModel();
+                Get.back();
+                final freshActiveSubs = (userModel.value.user?.userSubscription ?? [])
+                    .where((e) => e.status == 'active')
+                    .toList();
+                userActiveSubscriptions = freshActiveSubs;
+                if (freshActiveSubs.isEmpty) {
                   // Pas d'abonnement actif -> on propose de s'abonner.
                   // In-app = achat Apple IAP (produits vybzz_XX_1m approuvés,
                   // conforme 3.1.1). Le lien web/Stripe reste masqué sur iOS
@@ -215,6 +226,58 @@ class _ProfileState extends State<Profile> {
                   ),
                 ),
                 Spacer(),
+
+                // Bascule Fan/Artiste : visible seulement si le compte est déjà
+                // artiste (sinon "Devenir artiste" plus bas reste le point
+                // d'entrée pour lancer l'abonnement + l'onboarding).
+                if (userModel.value.user?.isArtist == true)
+                  GestureDetector(
+                    onTap: () {
+                      if (widget.fromArtist) {
+                        Get.offAll(() => MyBottomBar());
+                      } else {
+                        Get.offAll(() => ArtistBottomBar());
+                      }
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cardDeep,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: goldSecondary.withValues(alpha: 0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            widget.fromArtist
+                                ? Icons.person_outline_rounded
+                                : Icons.mic_none_rounded,
+                            color: goldPrimary,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            widget.fromArtist
+                                ? 'prof_mode_fan'.tr
+                                : 'prof_mode_artist'.tr,
+                            style: TextStyle(
+                              color: goldPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
 
                 GestureDetector(
                   onTap: () async {
