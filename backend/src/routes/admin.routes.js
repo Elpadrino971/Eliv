@@ -103,8 +103,8 @@ router.get('/users', requireAdmin, (req, res) => {
   if (type === 'user') sql += ' AND is_artist = 0';
   if (type === 'artist') sql += ' AND is_artist = 1';
   if (search) {
-    sql += ' AND (full_name LIKE ? OR email LIKE ?)';
-    params.push(`%${search}%`, `%${search}%`);
+    sql += ' AND (full_name LIKE ? OR artist_name LIKE ? OR email LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
   }
   sql += ' ORDER BY id DESC';
   const rows = db.prepare(sql).all(...params).map((u) => ({
