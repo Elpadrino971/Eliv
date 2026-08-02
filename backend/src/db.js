@@ -361,6 +361,10 @@ function init() {
     // Firebase Storage (clips feed, alternative légère à Mux pour les
     // vidéos courtes) : chemin dans le bucket, nécessaire pour la purge.
     "ALTER TABLE feed_clips ADD COLUMN firebase_path TEXT",
+    // OTP réel (envoyé par email via Resend) : avant, otp_code valait
+    // toujours '1234' pour tout le monde, sans expiration. Un vrai code
+    // aléatoire doit expirer -> horodatage de validité.
+    "ALTER TABLE users ADD COLUMN otp_expires_at TEXT",
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }

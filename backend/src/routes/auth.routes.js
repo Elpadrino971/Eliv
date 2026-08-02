@@ -6,6 +6,27 @@ const { db } = require('../db');
 const { serializeUser, fail } = require('../helpers');
 const { hash, compare, sign, requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
+const emailService = require('../services/email');
+
+const OTP_TTL_MINUTES = 15;
+
+// Code démo tant qu'aucun service d'email n'est configuré (voir services/email.js).
+// Une fois RESEND_API_KEY défini, un vrai code aléatoire est généré et envoyé.
+function newOtp() {
+  return emailService.isConfigured() ? emailService.generateOtp() : '1234';
+}
+
+function otpExpiryIso() {
+  return new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000).toISOString();
+}
+
+// otp_expires_at est NULL pour les comptes créés avant ce fix (ou tant que
+// l'email n'est pas configuré) -> pas d'expiration forcée dans ce cas,
+// comportement démo inchangé.
+function otpExpired(user) {
+  if (!user.otp_expires_at) return false;
+  return new Date(user.otp_expires_at).getTime() < Date.now();
+}
 
 function authResponse(res, user, message = 'OK') {
   return res.json({
@@ -32,12 +53,13 @@ router.post('/sign-up', (req, res) => {
   if (existing) return fail(res, 'Validation error', 422, { email: ['The email has already been taken.'] });
 
   const isArtist = b.role === 'artist' || b.is_artist === '1' || b.is_artist === 1;
+  const otp = newOtp();
   const info = db
     .prepare(
       `INSERT INTO users (email, password, full_name, artist_name, phone_number, role, is_artist,
-        registration_type, otp_code, referral_code)
+        registration_type, otp_code, otp_expires_at, referral_code)
        VALUES (@email, @password, @full_name, @artist_name, @phone_number, @role, @is_artist,
-        @registration_type, @otp_code, @referral_code)`
+        @registration_type, @otp_code, @otp_expires_at, @referral_code)`
     )
     .run({
       email,
@@ -48,11 +70,16 @@ router.post('/sign-up', (req, res) => {
       role: isArtist ? 'artist' : 'user',
       is_artist: isArtist ? 1 : 0,
       registration_type: b.registration_type || 'email',
-      otp_code: '1234', // démo : OTP fixe (en prod : envoi SMS/email)
+      otp_code: otp,
+      otp_expires_at: emailService.isConfigured() ? otpExpiryIso() : null,
       referral_code: genReferralCode(b.full_name || b.artist_name),
     });
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
+  if (emailService.isConfigured()) {
+    emailService.sendOtpEmail(email, otp).catch((e) => console.error('[email] OTP sign-up:', e.message));
+    return authResponse(res, user, 'Account created. Check your email for the verification code.');
+  }
   return authResponse(res, user, 'Account created. Verify with OTP 1234 (demo).');
 });
 
@@ -91,17 +118,27 @@ router.post('/verify', (req, res) => {
   const user = db.prepare('SELECT * FROM users WHERE email = ? OR id = ?').get((b.email || '').toLowerCase(), b.user_id || 0);
   if (!user) return fail(res, 'User not found.', 404);
   if (String(b.otp_code || b.otp) !== String(user.otp_code)) return fail(res, 'Invalid OTP code.', 422);
+  if (otpExpired(user)) return fail(res, 'OTP code expired. Request a new one.', 422);
   db.prepare('UPDATE users SET is_verified = 1, updated_at = datetime(\'now\') WHERE id = ?').run(user.id);
   const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
   return authResponse(res, fresh, 'Verified.');
 });
 
-// POST /api/forget  (envoi d'un code — démo : 1234)
+// POST /api/forget  (envoi d'un code de reset)
 router.post('/forget', (req, res) => {
   const email = (req.body?.email || '').toLowerCase();
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
   if (!user) return fail(res, 'No account for this email.', 404);
-  db.prepare('UPDATE users SET otp_code = ? WHERE id = ?').run('1234', user.id);
+  const otp = newOtp();
+  db.prepare('UPDATE users SET otp_code = ?, otp_expires_at = ? WHERE id = ?').run(
+    otp,
+    emailService.isConfigured() ? otpExpiryIso() : null,
+    user.id
+  );
+  if (emailService.isConfigured()) {
+    emailService.sendOtpEmail(email, otp).catch((e) => console.error('[email] OTP forget:', e.message));
+    return res.json({ status: 'success', message: 'Reset code sent to your email.' });
+  }
   return res.json({ status: 'success', message: 'Reset code sent (demo: 1234).' });
 });
 
@@ -116,6 +153,7 @@ router.post('/reset-password', (req, res) => {
   if (!b.otp_code || String(b.otp_code) !== String(user.otp_code)) {
     return fail(res, 'Invalid OTP.', 422);
   }
+  if (otpExpired(user)) return fail(res, 'OTP code expired. Request a new one.', 422);
   db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash(b.password), user.id);
   return res.json({ status: 'success', message: 'Password updated.' });
 });
