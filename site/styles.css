@@ -456,7 +456,7 @@ body{background:radial-gradient(120% 80% at 50% -10%,#0e2438 0%,var(--bg) 55%) f
    ============================================================ */
 /* Bandeau carousel seul, sous le header (header délimité, pas d'overlay dessus) */
 .hero-carousel{position:relative;height:56vh;min-height:380px;max-height:640px;overflow:hidden;margin-top:86px}
-.hero-carousel__slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.4s var(--ease)}
+.hero-carousel__slide{position:absolute;inset:0;background-size:contain;background-repeat:no-repeat;background-position:center;background-color:#050c16;opacity:0;transition:opacity 1.4s var(--ease)}
 .hero-carousel__slide.active{opacity:1}
 
 /* Promotion Founder : section normale sous le carousel, plus d'overlay texte */
