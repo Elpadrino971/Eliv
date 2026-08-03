@@ -20,6 +20,13 @@
 
 <!-- ===== Hero split-screen : pitch Founder + feed live ===== -->
 <section class="split-home">
+  <div class="split-home__bg" id="heroCarousel">
+    <div class="split-home__bg-slide active" style="background-image:url('assets/hero-bg-1.png')"></div>
+    <div class="split-home__bg-slide" style="background-image:url('assets/hero-bg-2.png')"></div>
+    <div class="split-home__bg-slide" style="background-image:url('assets/hero-bg-3.png')"></div>
+    <div class="split-home__bg-slide" style="background-image:url('assets/hero-bg-4.png')"></div>
+    <div class="split-home__bg-slide" style="background-image:url('assets/hero-bg-5.png')"></div>
+  </div>
   <div class="split-home__pitch">
     <div class="reveal">
       <span class="rec-hero__badge" data-i18n="hero_badge">✦ Offre de lancement · le prix monte à chaque vague</span>
@@ -251,6 +258,18 @@
         btn.setAttribute("aria-label", video.muted ? "Activer le son" : "Couper le son");
       });
     });
+  })();
+
+  // Carousel du fond du hero : défile automatiquement entre les visuels
+  (function () {
+    var slides = document.querySelectorAll("#heroCarousel .split-home__bg-slide");
+    if (slides.length < 2) return;
+    var i = 0;
+    setInterval(function () {
+      slides[i].classList.remove("active");
+      i = (i + 1) % slides.length;
+      slides[i].classList.add("active");
+    }, 5000);
   })();
 </script>
 </body>
