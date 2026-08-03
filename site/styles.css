@@ -56,7 +56,7 @@ body>*:not(.grain):not(.aurora){position:relative;z-index:2}
 .verif{display:inline-block;vertical-align:-2px}
 
 /* ===== Nav ===== */
-.nav{position:fixed;top:0;left:0;width:100%;z-index:900;display:flex;align-items:center;gap:22px;padding:16px clamp(16px,4vw,46px);transition:padding .4s var(--ease),background .4s,backdrop-filter .4s,border-color .4s;border-bottom:1px solid transparent;background:linear-gradient(180deg,rgba(8,16,28,.92),rgba(8,16,28,0))}
+.nav{position:fixed;top:0;left:0;width:100%;z-index:900;display:flex;align-items:center;gap:22px;padding:16px clamp(16px,4vw,46px);transition:padding .4s var(--ease),background .4s,backdrop-filter .4s,border-color .4s;border-bottom:1px solid transparent;background:transparent}
 .nav.scrolled{padding:11px clamp(16px,4vw,46px);background:rgba(11,14,20,.78);backdrop-filter:blur(18px) saturate(140%);border-color:var(--panel-line)}
 .nav__brand{display:flex;align-items:center;gap:9px;font-family:"Playfair Display";font-weight:800;font-size:1.2rem}
 .nav__logo{width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(198,167,94,.5))}
@@ -459,7 +459,11 @@ body{background:radial-gradient(120% 80% at 50% -10%,#0e2438 0%,var(--bg) 55%) f
 .split-home__bg-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.4s var(--ease)}
 .split-home__bg-slide.active{opacity:1}
 .split-home__bg::after{content:"";position:absolute;inset:0;z-index:1;background-image:linear-gradient(100deg,rgba(10,24,40,.95) 0%,rgba(10,24,40,.85) 40%,rgba(10,24,40,.6) 75%,rgba(10,24,40,.4) 100%)}
-.split-home__pitch{position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center;padding:140px clamp(20px,5vw,72px) 64px;max-width:680px}
+.split-home__pitch{position:relative;z-index:2;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:center;padding:140px clamp(20px,5vw,72px) 64px}
+.split-home__pitch .hero-perks{max-width:520px;margin-left:auto;margin-right:auto;text-align:left}
+.split-home__pitch .tier-ladder{max-width:640px;width:100%;margin-left:auto;margin-right:auto}
+.split-home__pitch .rec-hero__actions{justify-content:center}
+.split-home__pitch .spots{width:100%;max-width:540px}
 .split-home__feed{position:relative;margin-top:66px;height:calc(100vh - 66px);border-left:1px solid var(--panel-line);overflow:hidden;background:var(--navy-deep);border-radius:18px 0 0 0}
 .feed--embed .feed__item{height:100%}
 .feed--embed{height:100%}
