@@ -18,48 +18,48 @@
 <div class="scroll-progress" id="scrollProgress"></div>
 <div id="site-header"></div>
 
-<!-- ===== Hero split-screen : pitch Founder + feed live ===== -->
-<section class="split-home">
-  <div class="split-home__bg" id="heroCarousel">
-    <div class="split-home__bg-slide active" style="background-image:url('assets/hero-bg-1.png')"></div>
-    <div class="split-home__bg-slide" style="background-image:url('assets/hero-bg-2.png')"></div>
-    <div class="split-home__bg-slide" style="background-image:url('assets/hero-bg-3.png')"></div>
-    <div class="split-home__bg-slide" style="background-image:url('assets/hero-bg-4.png')"></div>
-    <div class="split-home__bg-slide" style="background-image:url('assets/hero-bg-5.png')"></div>
-  </div>
-  <div class="split-home__pitch">
-    <div class="reveal">
-      <span class="rec-hero__badge" data-i18n="hero_badge">✦ Offre de lancement · le prix monte à chaque vague</span>
-      <h1 data-i18n-html="hero_title_html">Sois créateur <span class="grad">Founder</span> avant que le prix monte.</h1>
+<!-- ===== Bandeau visuel : carousel de marque, seul, sous le header ===== -->
+<section class="hero-carousel" id="heroCarousel">
+  <div class="hero-carousel__slide active" style="background-image:url('assets/hero-bg-1.png')"></div>
+  <div class="hero-carousel__slide" style="background-image:url('assets/hero-bg-2.png')"></div>
+  <div class="hero-carousel__slide" style="background-image:url('assets/hero-bg-3.png')"></div>
+  <div class="hero-carousel__slide" style="background-image:url('assets/hero-bg-4.png')"></div>
+  <div class="hero-carousel__slide" style="background-image:url('assets/hero-bg-5.png')"></div>
+</section>
 
-      <div class="tier-ladder" id="tierLadder">
-        <div class="tier" data-tier="0"><b>$79</b><small>24 places</small></div>
-        <span class="tier-arrow">→</span>
-        <div class="tier" data-tier="1"><b>$99</b><small>76 places</small></div>
-        <span class="tier-arrow">→</span>
-        <div class="tier" data-tier="2"><b>$149</b><small>100 places</small></div>
-      </div>
+<!-- ===== Promotion Founder (sous le carousel) ===== -->
+<section class="promo-band">
+  <div class="reveal">
+    <span class="rec-hero__badge" data-i18n="hero_badge">✦ Offre de lancement · le prix monte à chaque vague</span>
+    <h1 data-i18n-html="hero_title_html">Sois créateur <span class="grad">Founder</span> avant que le prix monte.</h1>
 
-      <p class="lead" data-i18n-html="hero_lead_html">Les <strong>24 premières places</strong> sont à <strong>$79/mois</strong>, les 76 suivantes à $99, les 100 dernières à $149. <strong>Tu gardes 60%</strong> de tes revenus, <strong>à vie</strong> tant que ton abonnement reste actif.</p>
-
-      <ul class="hero-perks">
-        <li data-i18n-html="perk1_html">Tu gardes <b>60%</b> de tes revenus, dès le 1ᵉʳ live</li>
-        <li data-i18n-html="perk2_html">Tarif <b>bloqué à vie</b> tant que ton abonnement reste actif</li>
-        <li data-i18n-html="perk3_html"><b>Studio Pro</b> complet : lives, billetterie, cadeaux</li>
-        <li data-i18n-html="perk4_html">Passe à <b>70%</b> quand tu veux (Elite $299)</li>
-      </ul>
-
-      <div class="urgency"><span class="urgency__dot"></span><span id="urgencyMsg">Plus que 24 places à $79/mois.</span></div>
-      <div class="rec-hero__actions">
-        <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_reserve">Réserver ma place Founder</span></a>
-        <a href="dashboard.html" class="btn btn--outline btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_studio">Voir le Studio Pro</span></a>
-      </div>
-      <div class="spots">
-        <div class="spots__row"><b><em id="spotsTaken">0</em> / <span id="spotsTotal">24</span> places à <span id="spotsPrice">$79</span> prises</b><small id="spotsLeft">places restantes</small></div>
-        <div class="spots__bar"><i class="spots__fill" id="spotsFill"></i></div>
-      </div>
-      <p class="hero-reassure" data-i18n="reassure">🔒 Paiement sécurisé · Sans engagement · Annulable à tout moment</p>
+    <div class="tier-ladder" id="tierLadder">
+      <div class="tier" data-tier="0"><b>$79</b><small>24 places</small></div>
+      <span class="tier-arrow">→</span>
+      <div class="tier" data-tier="1"><b>$99</b><small>76 places</small></div>
+      <span class="tier-arrow">→</span>
+      <div class="tier" data-tier="2"><b>$149</b><small>100 places</small></div>
     </div>
+
+    <p class="lead" data-i18n-html="hero_lead_html">Les <strong>24 premières places</strong> sont à <strong>$79/mois</strong>, les 76 suivantes à $99, les 100 dernières à $149. <strong>Tu gardes 60%</strong> de tes revenus, <strong>à vie</strong> tant que ton abonnement reste actif.</p>
+
+    <ul class="hero-perks">
+      <li data-i18n-html="perk1_html">Tu gardes <b>60%</b> de tes revenus, dès le 1ᵉʳ live</li>
+      <li data-i18n-html="perk2_html">Tarif <b>bloqué à vie</b> tant que ton abonnement reste actif</li>
+      <li data-i18n-html="perk3_html"><b>Studio Pro</b> complet : lives, billetterie, cadeaux</li>
+      <li data-i18n-html="perk4_html">Passe à <b>70%</b> quand tu veux (Elite $299)</li>
+    </ul>
+
+    <div class="urgency"><span class="urgency__dot"></span><span id="urgencyMsg">Plus que 24 places à $79/mois.</span></div>
+    <div class="rec-hero__actions">
+      <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_reserve">Réserver ma place Founder</span></a>
+      <a href="dashboard.html" class="btn btn--outline btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_studio">Voir le Studio Pro</span></a>
+    </div>
+    <div class="spots">
+      <div class="spots__row"><b><em id="spotsTaken">0</em> / <span id="spotsTotal">24</span> places à <span id="spotsPrice">$79</span> prises</b><small id="spotsLeft">places restantes</small></div>
+      <div class="spots__bar"><i class="spots__fill" id="spotsFill"></i></div>
+    </div>
+    <p class="hero-reassure" data-i18n="reassure">🔒 Paiement sécurisé · Sans engagement · Annulable à tout moment</p>
   </div>
 </section>
 
@@ -263,7 +263,7 @@
 
   // Carousel du fond du hero : défile automatiquement entre les visuels
   (function () {
-    var slides = document.querySelectorAll("#heroCarousel .split-home__bg-slide");
+    var slides = document.querySelectorAll("#heroCarousel .hero-carousel__slide");
     if (slides.length < 2) return;
     var i = 0;
     setInterval(function () {
