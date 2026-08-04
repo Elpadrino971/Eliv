@@ -150,6 +150,60 @@ Légende effort : S = < 0.5j · M = ~1j · L = 2-3j
 
 ---
 
+## PHASE 9 — Programme Pionnier (statut fondateur, invité — pas un produit vendu)
+> Distinct de la grille Founder (payante, 200 places, auto-tiering par prix
+> croissant). Le Pionnier ne s'achète pas, il se reçoit : invitation
+> nominative, gratuite, à 5 artistes choisis pour couvrir 5 territoires —
+> plus 5 remplaçants en réserve. **Palier créé côté admin** (`Pionnier`,
+> tier `pionnier`, 0€, commission 70%, **inactif/invisible dans l'app** —
+> attribution uniquement via Admin → Abonnements attribués).
+
+### La structure à trois étages
+| Étage | Qui | Condition | Commission | Prix |
+|---|---|---|---|---|
+| 1. Grille standard | Ouverte à tous (plus tard) | Achat libre | 50/60/70% | 99€/199€/299€ mois |
+| 2. Founder (200 places) | Payant, paliers croissants | Places limitées, prix monte par palier | 60% à vie | 79€/mois (vs 199€ normal) |
+| 3. **Pionnier (5 + 5 réserve)** | **Invité, nominatif** | Engagement (voir plus bas) | **70% à vie** | **Offert** |
+
+Les deux systèmes (Founder / Pionnier) sont étanches : un Pionnier ne consomme aucune des 200 places Founder.
+
+### Les 5 noms (+ Kassav' en Parrain honorifique, sans obligation de live)
+| N° | Artiste | Territoire / raison |
+|---|---|---|
+| 01 | Admiral T | Légitimité Guadeloupe |
+| 02 | Kalash | Audience hexagonale |
+| 03 | Fanny J | Audience féminine, Guyane |
+| 04 | Lil Cool | Guyane |
+| 05 | Buchi | Moteur opérationnel (1M vues/vidéo) |
+| — | Kassav' | Parrain honorifique, pas d'obligation de live |
+
+Le **numéro s'attribue par notoriété, pas par ordre de signature** : Admiral T reste n°01 même s'il signe en 4ᵉ. Pas de champ en base pour ça pour l'instant — à suivre à la main (tableur/notes) tant que ce n'est pas trackée en base (voir 9.3).
+
+### L'équilibre donnant-donnant (contrat, pas un cadeau)
+En face des 5 avantages (70% à vie, invitation nominative, statut, etc.), **3 engagements** :
+1. Un live par mois pendant 6 mois
+2. Une annonce publique de leur arrivée
+3. Deux artistes qu'ils présentent eux-mêmes (parrainage)
+
+Statut maintenu tant que l'engagement est tenu — sinon, **rétrogradation réelle** au tarif Founder. Point de vigilance explicite : si la clause n'est jamais appliquée en pratique, elle devient décorative et les 200 Founder (qui payent, eux) s'en rendront compte.
+
+### Mécanique d'entraînement
+Chaque Pionnier amène 2 artistes = 10 arrivées issues du cercle (recommandation, pas prospection), qui rejoignent la grille Founder payante. Les Pionniers financent donc indirectement une partie des 200 places : 5 Pionniers ouvrent la voie, 200 Founder créent le chiffre d'affaires.
+
+### Ordre d'approche recommandé
+**Buchi d'abord** (le plus accessible) → **Lil Cool** → **Admiral T** (avec 2 noms déjà signés en poche) → **Fanny J** et **Kalash** en dernier. Ne jamais approcher le plus gros nom en premier avec une liste vide.
+
+| # | Action | Effort |
+|---|--------|--------|
+| 9.1 | ~~Créer le palier "Pionnier" en base (0€, 70%, inactif)~~ | ✅ Fait (admin panel) |
+| 9.2 | Attribuer le palier à chaque artiste au fur et à mesure de leur signature (Admin → Abonnements attribués) | S (par artiste, manuel) |
+| 9.3 | (optionnel) Champ `pioneer_number` + suivi des 3 engagements (live du mois, annonce faite, parrainages) directement en base plutôt qu'à la main | M |
+| 9.4 | Process de rétrogradation si engagement non tenu (repasse en Founder au tarif normal) | S |
+
+**Critère de sortie :** 5 Pionniers signés et actifs, engagements suivis, aucune confusion avec la grille Founder payante.
+
+---
+
 ## Ordre d'exécution résumé
 **0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8**
 Phases 0-1 = urgence sécurité (à enchaîner immédiatement).
@@ -157,3 +211,4 @@ Phase 4 peut démarrer en parallèle de 2-3 si une personne dédiée release.
 Phases 5-6 = mise en production.
 Phase 7 = post-lancement, dès qu'une clé API Dropbox Sign est disponible.
 Phase 8 = V3, à cadrer chantier par chantier avant de démarrer.
+Phase 9 = programme Pionnier, piste business indépendante (pas de dépendance technique avec 0-8), démarrable dès maintenant.
