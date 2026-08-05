@@ -440,6 +440,36 @@ router.get('/reports', requireAdmin, (req, res) => {
 router.get('/contact-leads', requireAdmin, (req, res) => {
   return res.json({ status: 'success', data: db.prepare('SELECT * FROM contact_leads ORDER BY id DESC').all() });
 });
+// Approuver une candidature = choisir l'abonnement à lui attribuer. Si un
+// compte existe déjà avec cet email, l'abonnement est activé immédiatement.
+// Sinon la candidature reste "approuvée en attente" et /sign-up terminera
+// l'activation tout seul dès que le candidat crée son compte avec ce même
+// email (voir auth.routes.js) : plus besoin de repasser par l'écran
+// "Utilisateurs" pour attribuer l'abonnement à la main.
+router.post('/contact-leads/:id/approve', requireAdmin, (req, res) => {
+  const lead = db.prepare('SELECT * FROM contact_leads WHERE id = ?').get(req.params.id);
+  if (!lead) return res.status(404).json({ status: 'error', message: 'Candidature introuvable.' });
+  const subscriptionsId = Number(req.body?.subscriptions_id);
+  if (!subscriptionsId) return res.status(422).json({ status: 'error', message: 'Choisis un abonnement à attribuer.' });
+
+  const user = db.prepare('SELECT * FROM users WHERE lower(email) = lower(?)').get(lead.email);
+  if (user) {
+    db.prepare("UPDATE users SET is_artist = 1, role = 'artist' WHERE id = ?").run(user.id);
+    db.prepare('INSERT INTO user_subscriptions (user_id, subscriptions_id, status) VALUES (?, ?, ?)')
+      .run(user.id, subscriptionsId, 'active');
+    db.prepare("UPDATE contact_leads SET status = 'converted', approved_subscription_id = ? WHERE id = ?")
+      .run(subscriptionsId, lead.id);
+    return res.json({ status: 'success', message: 'Compte trouvé — abonnement activé immédiatement.' });
+  }
+
+  db.prepare("UPDATE contact_leads SET status = 'approved', approved_subscription_id = ? WHERE id = ?")
+    .run(subscriptionsId, lead.id);
+  return res.json({ status: 'success', message: "Pas encore de compte pour cet email — l'abonnement s'activera automatiquement dès l'inscription du candidat." });
+});
+router.post('/contact-leads/:id/reject', requireAdmin, (req, res) => {
+  db.prepare("UPDATE contact_leads SET status = 'rejected', approved_subscription_id = NULL WHERE id = ?").run(req.params.id);
+  return res.json({ status: 'success', message: 'Candidature refusée.' });
+});
 router.delete('/contact-leads/:id', requireAdmin, (req, res) => {
   db.prepare('DELETE FROM contact_leads WHERE id = ?').run(req.params.id);
   return res.json({ status: 'success', message: 'Lead supprimé.' });

@@ -78,7 +78,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .uinfo .nm{font-weight:600;font-size:14px}
 .uinfo .em{color:var(--muted);font-size:12.5px}
 .badge{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block}
-.badge.active,.badge.approved{background:rgba(31,157,87,.15);color:#4ade80}
+.badge.active,.badge.approved,.badge.converted{background:rgba(31,157,87,.15);color:#4ade80}
 .badge.pending{background:rgba(224,167,58,.15);color:var(--amber)}
 .badge.live,.badge.rejected{background:rgba(224,65,63,.15);color:#ff8a87}
 .badge.published{background:rgba(59,130,246,.15);color:#7eb0ff}

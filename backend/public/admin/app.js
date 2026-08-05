@@ -141,7 +141,7 @@ function avatar(row) {
   if (row.profile_image && /^https?:/.test(row.profile_image)) return `<div class="av"><img src="${esc(row.profile_image)}"></div>`;
   return `<div class="av">${esc(initials(displayName(row), row.email))}</div>`;
 }
-const STATUS_FR = { active: 'Actif', pending: 'En attente', live: 'En direct', published: 'Publié', completed: 'Terminé', cancelled: 'Annulé', approved: 'Approuvé', rejected: 'Refusé', validated: 'Validé', new: 'Nouveau', reviewed: 'Vu', implemented: 'Implémenté' };
+const STATUS_FR = { active: 'Actif', pending: 'En attente', live: 'En direct', published: 'Publié', completed: 'Terminé', cancelled: 'Annulé', approved: 'Approuvé (attente inscription)', rejected: 'Refusé', validated: 'Validé', new: 'Nouveau', reviewed: 'Vu', implemented: 'Implémenté', converted: 'Converti · actif' };
 function badge(status) {
   const s = (status || '').toLowerCase();
   return `<span class="badge ${esc(s)}">${esc(STATUS_FR[s] || status || '—')}</span>`;
@@ -877,18 +877,38 @@ async function pageIdeas() {
   });
 }
 
-function pageLeads() {
-  listPage({
-    title: 'Contacts / Leads', endpoint: '/contact-leads', columns: [
-      { label: '#', render: (r) => r.id },
-      { label: 'Nom', render: (r) => esc(r.name) },
-      { label: 'Email', render: (r) => esc(r.email) },
-      { label: 'Téléphone', render: (r) => esc(r.phone || '—') },
-      { label: 'Message', render: (r) => esc(r.message || '') },
-      { label: 'Date', render: (r) => fmtDate(r.created_at) },
-      { label: 'Action', render: (r) => `<button class="btn del" data-del="/contact-leads/${r.id}">Supprimer</button>` },
-    ],
-  });
+// Candidatures artiste ("Devenir artiste" sur le site) : un seul écran pour
+// tout faire — voir le statut, choisir l'abonnement à attribuer et
+// approuver. Si le candidat a déjà un compte, l'abonnement s'active tout de
+// suite ; sinon il s'activera tout seul dès qu'il s'inscrit avec ce même
+// email (voir POST /admin/contact-leads/:id/approve côté backend).
+async function pageLeads() {
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  const [{ data }, { data: subs }] = await Promise.all([api('GET', '/contact-leads'), api('GET', '/subscriptions')]);
+  currentRows = data;
+  const activeSubs = subs.filter((s) => s.active);
+  const subName = (id) => activeSubs.find((s) => s.id == id)?.name || subs.find((s) => s.id == id)?.name;
+  const cols = [
+    { label: '#', render: (r) => r.id },
+    { label: 'Nom', render: (r) => esc(r.name) },
+    { label: 'Email', render: (r) => esc(r.email) },
+    { label: 'Téléphone', render: (r) => esc(r.phone || '—') },
+    { label: 'Message', render: (r) => esc(r.message || '') },
+    { label: 'Statut', render: (r) => badge(r.status) + (r.approved_subscription_id ? `<div class="em">${esc(subName(r.approved_subscription_id) || '—')}</div>` : '') },
+    { label: 'Date', render: (r) => fmtDate(r.created_at) },
+    {
+      label: 'Action', render: (r) => {
+        if (r.status === 'pending' || !r.status) {
+          return activeSubs.length
+            ? `<select class="lead-sub" data-subfor="${r.id}" style="background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:7px;padding:6px;margin-right:6px">${activeSubs.map((s) => `<option value="${esc(s.id)}">${esc(s.name)} (${esc(s.tier)})</option>`).join('')}</select><button class="btn status" data-approvelead="${r.id}">✓ Approuver</button><button class="btn del" data-rejectlead="${r.id}">Refuser</button>`
+            : `<span class="em">Crée d'abord un abonnement</span>`;
+        }
+        return `<button class="btn del" data-del="/contact-leads/${r.id}">Supprimer</button>`;
+      },
+    },
+  ];
+  view().innerHTML = tableShell('Candidatures artiste', cols);
+  mountTable(view().querySelector('.tcard'), { columns: cols, rows: data });
 }
 
 function pageFaqs() {
@@ -1010,6 +1030,20 @@ document.addEventListener('click', (e) => {
   if (gs) { openGrantSubModal(gs.dataset.grantsub); return; }
   const ac = e.target.closest('[data-approveclip]');
   if (ac) { api('POST', `/feed-clips/${ac.dataset.approveclip}/approve`).then(() => { toast('Clip approuvé'); route(); }).catch((err) => toast(err.message)); return; }
+  const al = e.target.closest('[data-approvelead]');
+  if (al) {
+    const sel = document.querySelector(`.lead-sub[data-subfor="${al.dataset.approvelead}"]`);
+    const subscriptions_id = sel?.value;
+    api('POST', `/contact-leads/${al.dataset.approvelead}/approve`, { subscriptions_id })
+      .then((r) => { toast(r.message || 'Candidature approuvée'); route(); }).catch((err) => toast(err.message));
+    return;
+  }
+  const rl = e.target.closest('[data-rejectlead]');
+  if (rl) {
+    api('POST', `/contact-leads/${rl.dataset.rejectlead}/reject`)
+      .then(() => { toast('Candidature refusée'); route(); }).catch((err) => toast(err.message));
+    return;
+  }
   const mu = e.target.closest('[data-muxupload]');
   if (mu) { const [kind, id] = mu.dataset.muxupload.split(':'); openMuxUploadDialog(kind, id); return; }
   const ml = e.target.closest('[data-muxlive]');

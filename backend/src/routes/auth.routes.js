@@ -75,6 +75,19 @@ router.post('/sign-up', (req, res) => {
       referral_code: genReferralCode(b.full_name || b.artist_name),
     });
 
+  // Candidature artiste approuvée par l'admin avant même l'inscription
+  // (voir POST /admin/contact-leads/:id/approve) -> active l'abonnement
+  // choisi et le statut artiste tout de suite, sans repasser par l'admin.
+  const approvedLead = db.prepare(
+    "SELECT * FROM contact_leads WHERE lower(email) = lower(?) AND status = 'approved' AND approved_subscription_id IS NOT NULL"
+  ).get(email);
+  if (approvedLead) {
+    db.prepare("UPDATE users SET is_artist = 1, role = 'artist' WHERE id = ?").run(info.lastInsertRowid);
+    db.prepare('INSERT INTO user_subscriptions (user_id, subscriptions_id, status) VALUES (?, ?, ?)')
+      .run(info.lastInsertRowid, approvedLead.approved_subscription_id, 'active');
+    db.prepare("UPDATE contact_leads SET status = 'converted' WHERE id = ?").run(approvedLead.id);
+  }
+
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
   if (emailService.isConfigured()) {
     emailService.sendOtpEmail(email, otp).catch((e) => console.error('[email] OTP sign-up:', e.message));

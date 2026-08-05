@@ -365,6 +365,11 @@ function init() {
     // toujours '1234' pour tout le monde, sans expiration. Un vrai code
     // aléatoire doit expirer -> horodatage de validité.
     "ALTER TABLE users ADD COLUMN otp_expires_at TEXT",
+    // Candidature artiste (contact_leads) : suivi + activation auto de
+    // l'abonnement choisi par l'admin dès que le candidat crée son compte
+    // (voir POST /admin/contact-leads/:id/approve et /sign-up).
+    "ALTER TABLE contact_leads ADD COLUMN status TEXT DEFAULT 'pending'",
+    "ALTER TABLE contact_leads ADD COLUMN approved_subscription_id INTEGER",
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }
