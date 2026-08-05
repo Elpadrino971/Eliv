@@ -226,6 +226,24 @@ router.post('/live/:eventId/recording/stop', requireAuth, (req, res) => {
   return res.json({ status: 'success', data: { stopped: true } });
 });
 
+// POST /api/contact-leads — formulaire "Devenir artiste" du site vitrine
+// (public, non authentifié : appelé directement par site/artist.html en
+// fetch()). Alimente la table contact_leads déjà visible dans l'admin
+// (Contacts / Leads) — avant ce endpoint, le formulaire n'envoyait RIEN,
+// juste un faux message de succès côté client.
+router.post('/contact-leads', (req, res) => {
+  const b = req.body || {};
+  if (!b.name || !b.email) {
+    return fail(res, 'Nom et email requis.', 422, {
+      name: !b.name ? ['Le nom est requis.'] : undefined,
+      email: !b.email ? ["L'email est requis."] : undefined,
+    });
+  }
+  db.prepare('INSERT INTO contact_leads (name, email, phone, message) VALUES (?, ?, ?, ?)')
+    .run(b.name, b.email, b.phone || null, b.message || null);
+  return res.json({ status: 'success', message: 'Candidature envoyée.' });
+});
+
 // POST /api/ideas — Boîte à idées (soumission depuis l'app)
 router.post('/ideas', optionalAuth, (req, res) => {
   const b = req.body || {};

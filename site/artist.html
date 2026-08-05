@@ -112,11 +112,44 @@
     UI.toast("Contrat téléchargé ✓");
   });
 
-  // ----- submit application -----
+  // ----- submit application (vraie candidature -> table contact_leads) -----
   document.getElementById("artistForm").addEventListener("submit", function(e){
     e.preventDefault();
     if(!document.getElementById("aAccept").checked){ UI.toast("Merci d'accepter le contrat artiste."); return; }
-    UI.toast("Candidature envoyée ! Notre équipe te recontacte sous 48h 🎉");
+    var form = e.target;
+    var btn = form.querySelector("button[type=submit]");
+    var payload = {
+      name: document.getElementById("aName").value.trim(),
+      email: document.getElementById("aEmail").value.trim(),
+      phone: document.getElementById("aPhone").value.trim(),
+      message: [
+        "Genre principal : " + document.getElementById("aGenre").value,
+        "Expérience scénique : " + document.getElementById("aExp").value,
+        "Réseaux sociaux : " + (document.getElementById("aSocial").value.trim() || "—"),
+        "À propos : " + (document.getElementById("aAbout").value.trim() || "—"),
+      ].join("\n"),
+    };
+    if (btn) btn.disabled = true;
+    fetch("https://api.vybzzz.online/api/contact-leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data && data.status === "success") {
+          UI.toast("Candidature envoyée ! Notre équipe te recontacte sous 48h 🎉");
+          form.reset();
+        } else {
+          UI.toast((data && data.message) || "Erreur, réessaie dans un instant.");
+        }
+      })
+      .catch(function () {
+        UI.toast("Erreur réseau, réessaie dans un instant.");
+      })
+      .finally(function () {
+        if (btn) btn.disabled = false;
+      });
   });
 })();
 </script>
