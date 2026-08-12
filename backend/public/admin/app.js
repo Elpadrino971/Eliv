@@ -1166,6 +1166,14 @@ async function renderApporteurDetail(id) {
     <div class="head-row"><h1 class="page-title">🏢 ${esc(a.structure || a.name)}</h1>
       <div><button class="add-btn" id="apedit" style="margin-right:8px">Modifier le deal</button><button class="add-btn" id="apback">← Retour</button></div></div>
     <p style="color:var(--muted);margin:0 0 16px">${esc(a.name)}${a.email ? ' · ' + esc(a.email) : ''} — Deal : <b style="color:var(--ivory)">${esc(dealLabel(a))}</b> &nbsp;${badge(a.status)}</p>
+    <div style="background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:18px;display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+      <div><div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px">Code de parrainage</div>
+        <div style="font-size:22px;font-weight:800;color:var(--gold);letter-spacing:1px">${esc(a.code || '—')}</div></div>
+      <div style="flex:1;min-width:220px"><div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px">Lien à partager (l'artiste valide → rattaché + 3 mois offerts)</div>
+        <input readonly value="${esc(location.origin + '/rejoindre?code=' + (a.code || ''))}" onclick="this.select()" style="width:100%;background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:8px;padding:8px;margin-top:4px"></div>
+      <button class="btn status" id="apcopy">📋 Copier le lien</button>
+      <button class="btn edit" id="apregen">Régénérer</button>
+    </div>
     <div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Commission récurrente (5% part nette)</div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">${stat('Dû (calculé)', c.due, 'var(--gold)')}${stat('Exigible (facturé)', c.exigible, 'var(--amber)')}${stat('Payé', c.payee, 'var(--green)')}</div>
     <div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Primes de signature (Pionnier 150€ / Fondateur 300€)</div>
@@ -1180,6 +1188,11 @@ async function renderApporteurDetail(id) {
     if (!confirm('Détacher cet artiste ? Il reste sur la plateforme, seule la commission s\'arrête.')) return;
     try { await api('POST', '/apporteurs/detach-artist', { artist_id: +b.dataset.detach }); toast('Artiste détaché'); renderApporteurDetail(id); } catch (e) { toast(e.message); }
   });
+  view().querySelector('#apcopy').onclick = () => { navigator.clipboard.writeText(location.origin + '/rejoindre?code=' + (a.code || '')); toast('Lien copié'); };
+  view().querySelector('#apregen').onclick = async () => {
+    if (!confirm('Régénérer le code ? L\'ancien lien ne fonctionnera plus.')) return;
+    try { await api('POST', '/apporteurs/' + id + '/regenerate-code'); toast('Code régénéré'); renderApporteurDetail(id); } catch (e) { toast(e.message); }
+  };
   view().querySelectorAll('[data-regime]').forEach((s) => s.onchange = async () => {
     try { await api('POST', '/artist/' + s.dataset.regime + '/regime', { regime: s.value }); toast('Régime mis à jour'); } catch (e) { toast(e.message); }
   });

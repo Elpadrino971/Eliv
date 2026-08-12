@@ -871,6 +871,17 @@ router.delete('/ideas/:id', requireAdmin, (req, res) => {
 // "Sous-dossier" = vue filtrée sur users.apporteur_id (pas de dossier figé).
 // ═══════════════════════════════════════════════════════════════════════
 
+// Code de parrainage unique (l'artiste le valide sur /rejoindre pour s'auto-
+// rattacher). Basé sur la structure + un suffixe aléatoire, garanti unique.
+function genApporteurCode(structure, name) {
+  const base = String(structure || name || 'VYB').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6) || 'VYB';
+  for (let i = 0; i < 20; i++) {
+    const code = `${base}${Math.floor(1000 + Math.random() * 9000)}`;
+    if (!db.prepare('SELECT 1 FROM apporteurs WHERE code = ?').get(code)) return code;
+  }
+  return `${base}${Date.now() % 100000}`;
+}
+
 // Liste des apporteurs + nb d'artistes rattachés + total dû (non payé).
 router.get('/apporteurs', requireAdmin, (req, res) => {
   const rows = db.prepare('SELECT * FROM apporteurs ORDER BY id DESC').all();
@@ -944,10 +955,20 @@ router.post('/apporteurs', requireAdmin, (req, res) => {
   if (!b.name) return res.status(422).json({ status: 'error', message: 'Le nom est requis.' });
   const dealType = ['simple', 'paliers', 'fixe_primes'].includes(b.deal_type) ? b.deal_type : 'simple';
   const params = typeof b.deal_params === 'string' ? b.deal_params : JSON.stringify(b.deal_params || {});
+  const code = genApporteurCode(b.structure, b.name);
   const info = db.prepare(
-    "INSERT INTO apporteurs (name, structure, email, deal_type, deal_params, status) VALUES (?, ?, ?, ?, ?, 'active')"
-  ).run(b.name, b.structure || null, b.email || null, dealType, params);
-  return res.json({ status: 'success', data: { id: info.lastInsertRowid } });
+    "INSERT INTO apporteurs (name, structure, email, deal_type, deal_params, status, code) VALUES (?, ?, ?, ?, ?, 'active', ?)"
+  ).run(b.name, b.structure || null, b.email || null, dealType, params, code);
+  return res.json({ status: 'success', data: { id: info.lastInsertRowid, code } });
+});
+
+// Régénérer le code de parrainage d'un apporteur.
+router.post('/apporteurs/:id/regenerate-code', requireAdmin, (req, res) => {
+  const a = db.prepare('SELECT structure, name FROM apporteurs WHERE id = ?').get(req.params.id);
+  if (!a) return res.status(404).json({ status: 'error', message: 'Apporteur introuvable.' });
+  const code = genApporteurCode(a.structure, a.name);
+  db.prepare('UPDATE apporteurs SET code = ? WHERE id = ?').run(code, req.params.id);
+  return res.json({ status: 'success', data: { code } });
 });
 
 // Modifier un apporteur (deal, statut active/suspended…).

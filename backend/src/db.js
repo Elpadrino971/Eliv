@@ -482,9 +482,28 @@ function init() {
     // (voir POST /admin/contact-leads/:id/approve et /sign-up).
     "ALTER TABLE contact_leads ADD COLUMN status TEXT DEFAULT 'pending'",
     "ALTER TABLE contact_leads ADD COLUMN approved_subscription_id INTEGER",
+    // Code de parrainage apporteur : l'artiste le valide (page /rejoindre) pour
+    // être rattaché automatiquement à l'apporteur + démarrer l'offre (3 mois).
+    "ALTER TABLE apporteurs ADD COLUMN code TEXT",
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }
+
+  // Back-fill : un code unique pour tout apporteur qui n'en a pas encore.
+  const genCode = (structure) => {
+    const base = String(structure || 'VYB').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6) || 'VYB';
+    return `${base}${Math.floor(1000 + (Date.now() % 9000))}`;
+  };
+  try {
+    const missing = db.prepare("SELECT id, structure, name FROM apporteurs WHERE code IS NULL OR code = ''").all();
+    const setCode = db.prepare('UPDATE apporteurs SET code = ? WHERE id = ?');
+    for (const ap of missing) {
+      let code, tries = 0;
+      do { code = genCode(ap.structure || ap.name); tries++; }
+      while (db.prepare('SELECT 1 FROM apporteurs WHERE code = ?').get(code) && tries < 20);
+      setCode.run(code, ap.id);
+    }
+  } catch (_) { /* table apporteurs pas encore présente au tout premier init */ }
 
   // Packs de points par défaut (1 € = 100 points). Chaque pack correspond à un
   // produit consommable IAP (App Store / Play Store) dont l'identifiant DOIT
