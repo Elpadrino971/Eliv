@@ -546,7 +546,7 @@ class _ProfileState extends State<Profile> {
                       ),
                       height(0.005),
                       Text(
-                        userModel.value.user?.points.toString() ?? 'N/A',
+                        userModel.value.user?.points?.toString() ?? '0',
                         style: TextStyle(
                           color: goldPrimary,
                           fontWeight: FontWeight.bold,
