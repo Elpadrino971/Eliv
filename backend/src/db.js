@@ -346,12 +346,89 @@ function init() {
     );
   `);
 
+  // ─── Apporteurs (imprésarios / managers) & commissions ─── voir APPORTEURS.md.
+  // Un apporteur amène des artistes et touche une commission sur LA PART
+  // PLATEFORME NETTE de SES artistes. Le deal n'est PAS codé en dur : il vit en
+  // config (deal_type + deal_params JSON) ; le moteur (services/apporteur.js)
+  // ne fait que l'appliquer. Nouveau contrat = de la donnée, pas du code.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS apporteurs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,                 -- personne (ex: Ruddy Séverin)
+      structure TEXT,            -- prod / agence (ex: Alizés Records)
+      email TEXT,
+      deal_type TEXT DEFAULT 'simple',   -- simple | paliers | fixe_primes
+      deal_params TEXT DEFAULT '{}',     -- JSON (rate, tiers, floor/cap, duration_months…)
+      status TEXT DEFAULT 'active',      -- active | suspended
+      wallet TEXT DEFAULT '0',           -- cumul dû (info)
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- Une ligne = une commission apporteur due sur une vente d'un de ses artistes.
+    -- Payable quand encaissed=1 (fonds Apple reçus ~J+60) ET exigible quand
+    -- invoice_status='exigible' (facture reçue). Assiette = platform_share (net).
+    CREATE TABLE IF NOT EXISTS apporteur_commissions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      apporteur_id INTEGER,
+      artist_id INTEGER,
+      source_type TEXT,          -- ticket | gift
+      source_id INTEGER,
+      gross TEXT, store TEXT, net TEXT, artist_share TEXT,
+      platform_share TEXT,       -- l'assiette
+      rate INTEGER,              -- % apporteur figé sur la ligne
+      amount TEXT,               -- commission = platform_share × rate
+      encaissed INTEGER DEFAULT 0,
+      invoice_status TEXT DEFAULT 'due',  -- due | exigible | payée
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- Primes fixes (ex Amandine : 150€ au 1er live, 300€ après 3 mensualités).
+    CREATE TABLE IF NOT EXISTS apporteur_bonuses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      apporteur_id INTEGER,
+      artist_id INTEGER,
+      type TEXT,                 -- pionnier | fondateur | …
+      amount TEXT,
+      status TEXT DEFAULT 'due', -- due | exigible | payée
+      triggered_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- Signalement artiste → apporteur (harcèlement / nuisance) : SUSPEND la
+    -- commission sur cet artiste. La suspension ne vient QUE d'ici (trace),
+    -- jamais d'une action manuelle sans trace. Le rattachement se coupe sans
+    -- supprimer l'artiste (qui reste sur la plateforme).
+    CREATE TABLE IF NOT EXISTS apporteur_reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      artist_id INTEGER,
+      apporteur_id INTEGER,
+      reason TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
   // ─── Migrations : colonnes ajoutées après coup (ignorées si déjà présentes) ───
   for (const sql of [
     // Split commissions : snapshot du taux + part artiste au moment de la vente
     // du billet (grandfathering : un changement de palier ne re-tarife pas le passé).
     "ALTER TABLE tickets ADD COLUMN commission_rate INTEGER",
     "ALTER TABLE tickets ADD COLUMN artist_share TEXT",
+    // ─── Apporteurs : rattachement + phase de l'artiste (voir APPORTEURS.md) ───
+    "ALTER TABLE users ADD COLUMN apporteur_id INTEGER",           // 1 seul apporteur, nullable
+    "ALTER TABLE users ADD COLUMN artist_regime TEXT DEFAULT 'normal'", // normal|pionnier|fondateur|parrain
+    "ALTER TABLE users ADD COLUMN apporteur_attached_at TEXT",
+    "ALTER TABLE users ADD COLUMN sub_free_until TEXT",            // fin des 3 mois d'abo offert
+    "ALTER TABLE users ADD COLUMN commission_end TEXT",            // fin 12/24 mois (modifiable = renouvelable)
+    "ALTER TABLE users ADD COLUMN taux_partage_artiste INTEGER",   // snapshot part artiste courante (info)
+    "ALTER TABLE users ADD COLUMN first_live_at TEXT",             // 1er live (déclencheur prime Pionnier + départ des 24 mois)
+    // Gating encaissement : le paiement de la commission ne s'active qu'une fois
+    // les fonds Apple/Google réellement reçus (~J+60), pas à la vente.
+    "ALTER TABLE tickets ADD COLUMN encaissed INTEGER DEFAULT 0",
+    "ALTER TABLE tickets ADD COLUMN encaissed_at TEXT",
+    // Traçage NET + part apporteur dans le ledger (part plateforme = ta marge réelle).
+    "ALTER TABLE platform_earnings ADD COLUMN store_fee TEXT",
+    "ALTER TABLE platform_earnings ADD COLUMN net TEXT",
+    "ALTER TABLE platform_earnings ADD COLUMN apporteur_id INTEGER",
+    "ALTER TABLE platform_earnings ADD COLUMN apporteur_amount TEXT",
     // Packs de points (recharge portefeuille via IAP RevenueCat).
     "ALTER TABLE packages ADD COLUMN revenuecat_product_id TEXT",
     "ALTER TABLE packages ADD COLUMN active INTEGER DEFAULT 1",
