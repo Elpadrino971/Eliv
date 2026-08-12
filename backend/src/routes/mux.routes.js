@@ -15,6 +15,7 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
 const mux = require('../services/mux');
+const moderation = require('../services/moderation');
 
 const REPLAY_RETENTION_DAYS = Number(process.env.REPLAY_RETENTION_DAYS) || 60;
 const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
@@ -87,12 +88,16 @@ router.post('/', (req, res) => {
               replay_expires_at = datetime('now', '+' || ? || ' days')
            WHERE id = ?`
         ).run(playbackId, playbackId, obj.id, muxHls(playbackId), days, eventId);
+        // Modération du replay (asynchrone) : Sightengine échantillonne l'asset
+        // et rappelle /api/moderation/callback ; sur blocage le replay est masqué.
+        moderation.moderateVideo({ url: muxHls(playbackId), targetType: 'event', targetId: eventId });
       } else if (passthrough?.kind === 'clip' && passthrough.id) {
         db.prepare(
           `UPDATE feed_clips SET mux_playback_id = ?, mux_asset_id = ?, upload_status = 'ready',
               expires_at = datetime('now', '+' || ? || ' days')
            WHERE id = ?`
         ).run(playbackId, obj.id, CLIP_RETENTION_DAYS, passthrough.id);
+        moderation.moderateVideo({ url: muxHls(playbackId), targetType: 'clip', targetId: passthrough.id });
       }
     } else if (type === 'video.asset.errored') {
       const passthrough = safeParsePassthrough(obj.passthrough);
@@ -103,6 +108,18 @@ router.post('/', (req, res) => {
       }
     } else if (type === 'video.live_stream.active') {
       db.prepare("UPDATE events SET status = 'live' WHERE mux_live_stream_id = ?").run(obj.id);
+      // Surveillance du LIVE en direct : on pointe Sightengine sur le flux HLS
+      // Mux du concert (échantillonnage continu, alerte sur callback). C'est la
+      // surface la plus critique (cams artiste + fans co-host en public).
+      const liveEv = db.prepare(
+        'SELECT id, mux_live_playback_id FROM events WHERE mux_live_stream_id = ?'
+      ).get(obj.id);
+      const livePlaybackId = liveEv?.mux_live_playback_id
+        || (obj.playback_ids || []).find((p) => p.policy === 'public')?.id
+        || obj.playback_ids?.[0]?.id;
+      if (liveEv && livePlaybackId) {
+        moderation.startLiveMonitor({ url: muxHls(livePlaybackId), targetType: 'live', targetId: liveEv.id });
+      }
     } else if (type === 'video.live_stream.idle') {
       db.prepare(
         "UPDATE events SET status = 'completed' WHERE mux_live_stream_id = ? AND status = 'live'"
