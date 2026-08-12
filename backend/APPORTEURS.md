@@ -8,12 +8,20 @@
 
 ---
 
-## 0. Règle-cadre (globale)
+## 0. Règle-cadre (globale) — TOUT est config, rien n'est figé
 
-**Le régime apporteur n'est valable que pendant l'ère FOUNDERS.** Une fois les
-places Founders épuisées (ou la date de fin atteinte), plus aucune nouvelle
-commission apporteur n'est générée. C'est un plafond global, en plus des durées
-par artiste. → réglage : `settings.founders_end_date` (ou drapeau `founders_open`).
+Le régime apporteur **ne se ferme pas** à la fin des Founders : ce sont les
+**prix / taux qui évoluent** ensuite. Et comme l'avenir est ouvert (d'autres
+contrats, d'autres modèles « voire plus »), la règle d'or est :
+
+> **Aucune valeur métier n'est codée en dur.** Taux artiste, taux apporteur,
+> durées, prix, paliers, primes : tout vit en base (config) et est **modifiable
+> à tout moment sans redéploiement**. Un changement de prix « après Founders »,
+> un nouvel apporteur, un nouveau type de deal = **de la donnée, pas du code**.
+
+Concrètement : la part artiste dérive de **l'offre en cours de l'artiste** (qui,
+elle, peut changer quand les prix changent) ; le taux apporteur dérive de la
+**config de son deal**. Le moteur ne fait qu'appliquer ce qui est en base.
 
 ---
 
@@ -49,10 +57,11 @@ Durée exclusivité      : ____ mois par contact soumis
 
 ### Exemples déjà connus
 
-**Ruddy**
+**Ruddy Séverin** — apporteur #1 (le nom est une fiche, pas la jauge : la jauge est un `deal_type` générique réutilisable par n'importe quel apporteur)
 ```
-Type de deal    : paliers
-Taux            : 5% / 10% / 15%   → DÉCLENCHEUR À PRÉCISER
+Type de deal    : paliers (JAUGE)
+Taux            : jauge 5% → 15% selon le NOMBRE d'artistes actifs amenés
+                  (plancher 5%, plafond 15%). Actuellement : 15% (assez d'artistes).
 Durée           : 12 mois (renouvelable)
 Primes          : aucune
 Exclusivité     : —
