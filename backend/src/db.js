@@ -419,6 +419,7 @@ function init() {
     "ALTER TABLE users ADD COLUMN sub_free_until TEXT",            // fin des 3 mois d'abo offert
     "ALTER TABLE users ADD COLUMN commission_end TEXT",            // fin 12/24 mois (modifiable = renouvelable)
     "ALTER TABLE users ADD COLUMN taux_partage_artiste INTEGER",   // snapshot part artiste courante (info)
+    "ALTER TABLE users ADD COLUMN first_live_at TEXT",             // 1er live (déclencheur prime Pionnier + départ des 24 mois)
     // Gating encaissement : le paiement de la commission ne s'active qu'une fois
     // les fonds Apple/Google réellement reçus (~J+60), pas à la vente.
     "ALTER TABLE tickets ADD COLUMN encaissed INTEGER DEFAULT 0",

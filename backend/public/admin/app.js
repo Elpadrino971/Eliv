@@ -1152,6 +1152,7 @@ async function renderApporteurDetail(id) {
   view().innerHTML = '<div class="empty">Chargement…</div>';
   const { data } = await api('GET', '/apporteurs/' + id);
   const a = data.apporteur, c = data.commissions;
+  const bt = data.bonuses_totals || { due: 0, exigible: 0, payee: 0 };
   const stat = (label, val, color) => `<div style="flex:1;min-width:140px;background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:16px"><div style="color:var(--muted);font-size:11px;letter-spacing:1px;text-transform:uppercase">${label}</div><div style="color:${color};font-size:24px;font-weight:700;margin-top:6px">${(+val || 0).toFixed(2)} €</div></div>`;
   const cols = [
     { label: '#', render: (r) => r.id },
@@ -1159,13 +1160,16 @@ async function renderApporteurDetail(id) {
     { label: 'Régime', render: (r) => `<select data-regime="${r.id}" style="background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:7px;padding:5px">${['normal', 'pionnier', 'fondateur', 'parrain'].map((x) => `<option ${r.artist_regime === x ? 'selected' : ''}>${x}</option>`).join('')}</select>` },
     { label: 'Abo offert jusqu\'au', render: (r) => fmtDate(r.sub_free_until) },
     { label: 'Fin commission', render: (r) => fmtDate(r.commission_end) },
-    { label: 'Action', render: (r) => `<button class="btn del" data-detach="${r.id}">Détacher</button>` },
+    { label: 'Action', render: (r) => `<button class="btn status" data-fondateur="${r.id}" title="Prime Fondateur (3e mensualité encaissée)">💶 Fondateur</button> <button class="btn del" data-detach="${r.id}">Détacher</button>` },
   ];
   view().innerHTML = `
     <div class="head-row"><h1 class="page-title">🏢 ${esc(a.structure || a.name)}</h1>
       <div><button class="add-btn" id="apedit" style="margin-right:8px">Modifier le deal</button><button class="add-btn" id="apback">← Retour</button></div></div>
     <p style="color:var(--muted);margin:0 0 16px">${esc(a.name)}${a.email ? ' · ' + esc(a.email) : ''} — Deal : <b style="color:var(--ivory)">${esc(dealLabel(a))}</b> &nbsp;${badge(a.status)}</p>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px">${stat('Dû (calculé)', c.due, 'var(--gold)')}${stat('Exigible (facturé)', c.exigible, 'var(--amber)')}${stat('Payé', c.payee, 'var(--green)')}</div>
+    <div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Commission récurrente (5% part nette)</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">${stat('Dû (calculé)', c.due, 'var(--gold)')}${stat('Exigible (facturé)', c.exigible, 'var(--amber)')}${stat('Payé', c.payee, 'var(--green)')}</div>
+    <div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Primes de signature (Pionnier 150€ / Fondateur 300€)</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px">${stat('Dû', bt.due, 'var(--gold)')}${stat('Exigible', bt.exigible, 'var(--amber)')}${stat('Payé', bt.payee, 'var(--green)')}</div>
     <div class="head-row" style="margin-bottom:10px"><h2 style="font-size:17px;margin:0">Artistes rattachés (${data.artists.length})</h2><button class="add-btn" id="apattach">+ Rattacher un artiste</button></div>
     ${tableShellInner(cols)}`;
   mountTable(view().querySelector('.tcard'), { columns: cols, rows: data.artists });
@@ -1178,6 +1182,10 @@ async function renderApporteurDetail(id) {
   });
   view().querySelectorAll('[data-regime]').forEach((s) => s.onchange = async () => {
     try { await api('POST', '/artist/' + s.dataset.regime + '/regime', { regime: s.value }); toast('Régime mis à jour'); } catch (e) { toast(e.message); }
+  });
+  view().querySelectorAll('[data-fondateur]').forEach((b) => b.onclick = async () => {
+    if (!confirm('Enregistrer la prime Fondateur (300€) pour cet artiste ? (3e mensualité encaissée)')) return;
+    try { await api('POST', '/apporteurs/artist/' + b.dataset.fondateur + '/prime-fondateur'); toast('Prime Fondateur enregistrée'); renderApporteurDetail(id); } catch (e) { toast(e.message); }
   });
 }
 
@@ -1194,9 +1202,18 @@ function openApporteurModal(a) {
         { value: 'paliers', label: 'Jauge (paliers selon nb d\'artistes)' },
         { value: 'fixe_primes', label: 'Taux fixe + primes' },
       ] },
-      { name: 'rate', label: 'Taux fixe (%) — si « taux fixe »', type: 'number', value: p.rate ?? 15 },
+      { name: 'rate', label: 'Taux fixe (%) — si « taux fixe » (Amandine : 5)', type: 'number', value: p.rate ?? 15 },
       { name: 'floor', label: 'Jauge : plancher (%)', type: 'number', value: p.floor ?? 5 },
       { name: 'cap', label: 'Jauge : plafond (%)', type: 'number', value: p.cap ?? 15 },
+      { name: 'commission_months', label: 'Durée commission (mois) — Amandine : 24', type: 'number', value: p.commission_months ?? 12 },
+      { name: 'commission_from', label: 'Commission à compter de…', type: 'select', value: p.commission_from || 'attach', options: [
+        { value: 'attach', label: 'Rattachement' },
+        { value: 'first_live', label: 'Premier live (contrat Amandine)' },
+      ] },
+      { name: 'prime_pionnier', label: 'Prime Pionnier (€, au 1er live) — Amandine : 150', type: 'number', value: p.primes?.pionnier?.amount ?? '' },
+      { name: 'prime_fondateur', label: 'Prime Fondateur (€, 3e mensualité) — Amandine : 300', type: 'number', value: p.primes?.fondateur?.amount ?? '' },
+      { name: 'exclusivity_months', label: 'Exclusivité par contact (mois) — Amandine : 6', type: 'number', value: p.exclusivity_months ?? '' },
+      { name: 'prospection_indemnity', label: 'Indemnité prospection (€ forfait) — Amandine : 300', type: 'number', value: p.prospection_indemnity ?? '' },
       { name: 'status', label: 'Statut', type: 'select', value: a?.status || 'active', options: [
         { value: 'active', label: 'Actif' }, { value: 'suspended', label: 'Suspendu' },
       ] },
@@ -1206,6 +1223,16 @@ function openApporteurModal(a) {
       const deal_params = d.deal_type === 'paliers'
         ? { metric: 'artists_count', floor, cap, tiers: [{ min: 1, rate: floor }, { min: 5, rate: Math.round((floor + cap) / 2) }, { min: 10, rate: cap }] }
         : { rate };
+      if (+d.commission_months > 0) deal_params.commission_months = +d.commission_months;
+      if (d.commission_from) deal_params.commission_from = d.commission_from;
+      const pio = +d.prime_pionnier, fon = +d.prime_fondateur;
+      if (pio > 0 || fon > 0) {
+        deal_params.primes = {};
+        if (pio > 0) deal_params.primes.pionnier = { amount: pio, trigger: 'first_live' };
+        if (fon > 0) deal_params.primes.fondateur = { amount: fon, trigger: 'third_payment' };
+      }
+      if (+d.exclusivity_months > 0) deal_params.exclusivity_months = +d.exclusivity_months;
+      if (+d.prospection_indemnity > 0) deal_params.prospection_indemnity = +d.prospection_indemnity;
       const body = { name: d.name, structure: d.structure, email: d.email, deal_type: d.deal_type, deal_params, status: d.status };
       if (a) { await api('POST', '/apporteurs/' + a.id + '/update', body); toast('Apporteur modifié'); renderApporteurDetail(a.id); }
       else { await api('POST', '/apporteurs', body); toast('Apporteur créé'); pageApporteurs(); }

@@ -67,15 +67,26 @@ Primes          : aucune
 Exclusivité     : —
 ```
 
-**Amandine**
+**Amandine Grangé** — apporteur (contrat AXEN DIGITAL, signé)
 ```
 Type de deal    : fixe_primes
-Taux            : 5% fixe
-Durée           : 24 mois
-Primes          : 150€ (au 1er live de l'artiste = "Pionnier")
-                  300€ (après 3 mensualités encaissées = "Fondateur")
-Exclusivité     : 6 mois par contact soumis
+Taux            : 5% de la Part Nette AXEN (= part plateforme nette)
+Durée           : 24 mois À COMPTER DU 1er LIVE de l'artiste (commission_from=first_live)
+Primes          : 150€ "Pionnier"  → au 1er live effectivement diffusé
+                  300€ "Fondateur" → à l'encaissement de la 3e mensualité
+                  (NON-CUMUL art 6.3 : une seule prime par artiste, la plus haute)
+Exclusivité     : 6 mois par contact attribué (renouvelable)
+Indemnité       : 300€ forfait de prospection (60 j, sans condition de résultat)
 ```
+deal_params correspondant :
+`{ "rate":5, "commission_from":"first_live", "commission_months":24,
+   "primes":{ "pionnier":{"amount":150}, "fondateur":{"amount":300} },
+   "exclusivity_months":6, "prospection_indemnity":300 }`
+
+> Câblé : la prime Pionnier + le départ des 24 mois se déclenchent
+> automatiquement au **premier live** (idempotent). La prime Fondateur se
+> déclenche via le bouton « 💶 Fondateur » sur la page agence (à passer en
+> auto sur le webhook d'abonnement quand les mensualités transiteront par lui).
 
 ---
 

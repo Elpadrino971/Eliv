@@ -8,6 +8,7 @@ const { requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
 const moderation = require('../services/moderation');
 const apporteurLedger = require('../services/apporteur_ledger');
+const apporteurBonus = require('../services/apporteur_bonus');
 
 // GET /api/events?status=&day=&genre_ids=
 // day: today | future ; status: published | live | completed | …
@@ -238,8 +239,15 @@ router.post('/event-logs', (req, res) => {
 
 // POST /api/events/update/:id  (body: { status })
 router.post('/events/update/:id', (req, res) => {
+  const status = req.body?.status;
   db.prepare("UPDATE events SET status = ?, updated_at = datetime('now') WHERE id = ?")
-    .run(req.body?.status, req.params.id);
+    .run(status, req.params.id);
+  // Passage EN DIRECT -> déclenche (idempotent) la prime Pionnier de l'apporteur
+  // + le départ des 24 mois de commission au premier live (contrat Amandine).
+  if (status === 'live') {
+    const ev = db.prepare('SELECT artist_id FROM events WHERE id = ?').get(req.params.id);
+    if (ev?.artist_id) { try { apporteurBonus.onFirstLive(ev.artist_id); } catch (e) { console.error('[apporteur onFirstLive]', e.message); } }
+  }
   return res.json({ status: 'success', message: 'Event updated.' });
 });
 

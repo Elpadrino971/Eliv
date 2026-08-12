@@ -8,6 +8,7 @@ const { hash, compare, SECRET } = require('../auth');
 const { saveUpload, saveClipVideo } = require('../uploads');
 const mux = require('../services/mux');
 const anthropic = require('../services/anthropic');
+const apporteurBonus = require('../services/apporteur_bonus');
 const truthy = (v) => v === true || v === 1 || v === '1' || v === 'true' || v === 'on';
 const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
 
@@ -901,11 +902,40 @@ router.get('/apporteurs/:id', requireAdmin, (req, res) => {
      FROM apporteur_commissions WHERE apporteur_id = ?`
   ).get(a.id);
   const r2 = (n) => Math.round(n * 100) / 100;
+  // Primes de signature (Pionnier / Fondateur) — liste + totaux par statut.
+  const bonuses = db.prepare(
+    `SELECT b.*, u.full_name, u.artist_name FROM apporteur_bonuses b
+     LEFT JOIN users u ON u.id = b.artist_id WHERE b.apporteur_id = ? ORDER BY b.id DESC`
+  ).all(a.id);
+  const bs = db.prepare(
+    `SELECT
+       COALESCE(SUM(CASE WHEN status='due'      THEN CAST(amount AS REAL) ELSE 0 END),0) due,
+       COALESCE(SUM(CASE WHEN status='exigible' THEN CAST(amount AS REAL) ELSE 0 END),0) exigible,
+       COALESCE(SUM(CASE WHEN status='payée'    THEN CAST(amount AS REAL) ELSE 0 END),0) payee
+     FROM apporteur_bonuses WHERE apporteur_id = ?`
+  ).get(a.id);
   return res.json({ status: 'success', data: {
     apporteur: { ...a, deal_params: params },
     artists,
     commissions: { due: r2(s.due), exigible: r2(s.exigible), payee: r2(s.payee) },
+    bonuses,
+    bonuses_totals: { due: r2(bs.due), exigible: r2(bs.exigible), payee: r2(bs.payee) },
   }});
+});
+
+// Déclencher manuellement la prime Fondateur d'un artiste (encaissement de la
+// 3e mensualité — à câbler auto sur le webhook d'abonnement ensuite).
+router.post('/apporteurs/artist/:artistId/prime-fondateur', requireAdmin, (req, res) => {
+  apporteurBonus.onFondateurThirdPayment(Number(req.params.artistId));
+  return res.json({ status: 'success' });
+});
+
+// Statut de facturation d'une prime : due -> exigible -> payée.
+router.post('/apporteur-bonuses/:id/status', requireAdmin, (req, res) => {
+  const status = ['due', 'exigible', 'payée'].includes(req.body?.status) ? req.body.status : null;
+  if (!status) return res.status(422).json({ status: 'error', message: 'Statut invalide.' });
+  db.prepare('UPDATE apporteur_bonuses SET status = ? WHERE id = ?').run(status, req.params.id);
+  return res.json({ status: 'success' });
 });
 
 // Créer un apporteur. body: name, structure, email, deal_type, deal_params.
