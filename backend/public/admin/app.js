@@ -1160,11 +1160,11 @@ async function renderApporteurDetail(id) {
     { label: 'Régime', render: (r) => `<select data-regime="${r.id}" style="background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:7px;padding:5px">${['normal', 'pionnier', 'fondateur', 'parrain'].map((x) => `<option ${r.artist_regime === x ? 'selected' : ''}>${x}</option>`).join('')}</select>` },
     { label: 'Abo offert jusqu\'au', render: (r) => fmtDate(r.sub_free_until) },
     { label: 'Fin commission', render: (r) => fmtDate(r.commission_end) },
-    { label: 'Action', render: (r) => `<button class="btn status" data-fondateur="${r.id}" title="Prime Fondateur (3e mensualité encaissée)">💶 Fondateur</button> <button class="btn del" data-detach="${r.id}">Détacher</button>` },
+    { label: 'Action', render: (r) => `<button class="btn edit" data-stmt="${r.id}">🧾 Relevé</button> <button class="btn status" data-fondateur="${r.id}" title="Prime Fondateur (3e mensualité encaissée)">💶 Fondateur</button> <button class="btn del" data-detach="${r.id}">Détacher</button>` },
   ];
   view().innerHTML = `
     <div class="head-row"><h1 class="page-title">🏢 ${esc(a.structure || a.name)}</h1>
-      <div><button class="add-btn" id="apedit" style="margin-right:8px">Modifier le deal</button><button class="add-btn" id="apback">← Retour</button></div></div>
+      <div><button class="add-btn" id="apstmt" style="margin-right:8px">🧾 Relevé du mois</button><button class="add-btn" id="apedit" style="margin-right:8px">Modifier le deal</button><button class="add-btn" id="apback">← Retour</button></div></div>
     <p style="color:var(--muted);margin:0 0 16px">${esc(a.name)}${a.email ? ' · ' + esc(a.email) : ''} — Deal : <b style="color:var(--ivory)">${esc(dealLabel(a))}</b> &nbsp;${badge(a.status)}</p>
     <div style="background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:18px;display:flex;flex-wrap:wrap;gap:14px;align-items:center">
       <div><div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px">Code de parrainage</div>
@@ -1188,6 +1188,8 @@ async function renderApporteurDetail(id) {
     if (!confirm('Détacher cet artiste ? Il reste sur la plateforme, seule la commission s\'arrête.')) return;
     try { await api('POST', '/apporteurs/detach-artist', { artist_id: +b.dataset.detach }); toast('Artiste détaché'); renderApporteurDetail(id); } catch (e) { toast(e.message); }
   });
+  view().querySelector('#apstmt').onclick = () => showApporteurStatement(id);
+  view().querySelectorAll('[data-stmt]').forEach((b) => b.onclick = () => showArtistStatement(b.dataset.stmt));
   view().querySelector('#apcopy').onclick = () => { navigator.clipboard.writeText(location.origin + '/rejoindre?code=' + (a.code || '')); toast('Lien copié'); };
   view().querySelector('#apregen').onclick = async () => {
     if (!confirm('Régénérer le code ? L\'ancien lien ne fonctionnera plus.')) return;
@@ -1267,6 +1269,47 @@ async function openAttachArtist(apId) {
     ],
     onSave: async (d) => { await api('POST', '/apporteurs/' + apId + '/attach-artist', d); toast('Artiste rattaché'); renderApporteurDetail(apId); },
   });
+}
+
+// ─── Relevés mensuels (transparence redistribution) — fenêtre imprimable ───
+function openStatementWindow(title, period, rows) {
+  const w = window.open('', '_blank', 'width=540,height=680');
+  const body = rows.map((rw) => `<div class="r"><span>${esc(String(rw[0]))}</span><b>${esc(String(rw[1]))}</b></div>`).join('');
+  w.document.write('<html><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>'
+    + 'body{font-family:-apple-system,Arial,sans-serif;padding:34px;color:#111}'
+    + '.brand{color:#A9832B;font-weight:800;letter-spacing:2px}'
+    + 'h1{margin:2px 0 2px;font-size:22px}.sub{color:#666;margin:0 0 20px}'
+    + '.r{display:flex;justify-content:space-between;padding:11px 0;border-top:1px solid #eee}'
+    + '.r:last-child{border-top:2px solid #E6C76A;font-size:18px;font-weight:700}'
+    + 'button{margin-top:24px;padding:10px 18px;border:0;border-radius:8px;background:#111;color:#fff;cursor:pointer}'
+    + '@media print{button{display:none}}'
+    + '</style></head><body><div class="brand">VYBZZZ</div><h1>' + esc(title) + '</h1>'
+    + '<p class="sub">Période : ' + esc(period) + '</p>' + body
+    + '<button onclick="window.print()">Imprimer / PDF</button></body></html>');
+  w.document.close();
+}
+async function showArtistStatement(artistId) {
+  const { data: d } = await api('GET', '/artist/' + artistId + '/statement');
+  const e = (n) => (Math.round(n * 100) / 100).toFixed(2) + ' €';
+  openStatementWindow('Relevé artiste — ' + d.artist, d.period, [
+    ['🎟️ Billets vendus', d.tickets.count],
+    ['Montant net billets', e(d.tickets.net_eur)],
+    ['🎁 Tips reçus', d.tips.count + ' (' + d.tips.points + ' pts)'],
+    ['Montant net tips', e(d.tips.net_eur)],
+    ['TOTAL NET À PERCEVOIR', e(d.total_net_eur)],
+  ]);
+}
+async function showApporteurStatement(apId) {
+  const { data: d } = await api('GET', '/apporteurs/' + apId + '/statement');
+  const e = (n) => (Math.round(n * 100) / 100).toFixed(2) + ' €';
+  openStatementWindow('Relevé apporteur — ' + d.apporteur, d.period, [
+    ['Commissions (nb ventes)', d.commission.count],
+    ['Assiette (part plateforme)', e(d.commission.base_eur)],
+    ['Commission', e(d.commission.eur)],
+    ['Primes (nb)', d.primes.count],
+    ['Primes', e(d.primes.eur)],
+    ['TOTAL DÛ', e(d.total_eur)],
+  ]);
 }
 
 const ROUTES = {

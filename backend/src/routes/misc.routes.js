@@ -10,7 +10,14 @@ const mux = require('../services/mux');
 const stripeService = require('../services/stripe');
 const zegoService = require('../services/zego');
 const moderation = require('../services/moderation');
+const statements = require('../services/statements');
 const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
+
+// GET /api/artist/statement?month=YYYY-MM — relevé mensuel de l'artiste connecté
+// (billets vendus + tips + montant net). Transparence de la redistribution.
+router.get('/artist/statement', requireAuth, (req, res) => {
+  return ok(res, statements.artistStatement(req.user.id, req.query.month));
+});
 
 // GET /api/artist/revenue-transactions — dernières entrées réelles du ledger
 // (billets + cadeaux) pour l'écran "Revenus" (remplace la liste factice

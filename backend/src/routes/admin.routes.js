@@ -9,6 +9,7 @@ const { saveUpload, saveClipVideo } = require('../uploads');
 const mux = require('../services/mux');
 const anthropic = require('../services/anthropic');
 const apporteurBonus = require('../services/apporteur_bonus');
+const statements = require('../services/statements');
 const truthy = (v) => v === true || v === 1 || v === '1' || v === 'true' || v === 'on';
 const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
 
@@ -1026,6 +1027,16 @@ router.post('/artist/:id/regime', requireAdmin, (req, res) => {
   const regime = ['normal', 'pionnier', 'fondateur', 'parrain'].includes(req.body?.regime) ? req.body.regime : 'normal';
   db.prepare('UPDATE users SET artist_regime = ? WHERE id = ?').run(regime, req.params.id);
   return res.json({ status: 'success' });
+});
+
+// Relevé mensuel d'un artiste (billets + tips + net). ?month=YYYY-MM (défaut : mois courant).
+router.get('/artist/:id/statement', requireAdmin, (req, res) => {
+  return res.json({ status: 'success', data: statements.artistStatement(req.params.id, req.query.month) });
+});
+
+// Relevé mensuel d'un apporteur (commissions + primes). ?month=YYYY-MM.
+router.get('/apporteurs/:id/statement', requireAdmin, (req, res) => {
+  return res.json({ status: 'success', data: statements.apporteurStatement(req.params.id, req.query.month) });
 });
 
 // Statut de facturation d'une commission : due -> exigible (facture reçue) -> payée.
