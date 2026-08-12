@@ -302,6 +302,12 @@ class _StartStreamState extends State<StartStream> {
             config: ZegoUIKitPrebuiltLiveStreamingConfig.host()
               ..audioVideoViewConfig.useVideoViewAspectFill = true
               ..inRoomMessage.visible = false
+              // ── Co-host "sur scène" (les fans lèvent la main -> l'artiste
+              // valide) ── Jusqu'à 8 fans montent avec caméra + micro, en grille
+              // auto. L'artiste reçoit une demande et accepte/refuse ; rien ne
+              // s'affiche sans son accord. Descendre à 4 pour les très gros
+              // concerts. Fonctionnalité demandée par les artistes (Alizés).
+              ..coHost.maxCoHostCount = 8
               ..bottomMenuBarConfig.hostButtons = [
                 ZegoLiveStreamingMenuBarButtonName.toggleCameraButton,
                 ZegoLiveStreamingMenuBarButtonName.switchAudioOutputButton,

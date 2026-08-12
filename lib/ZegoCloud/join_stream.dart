@@ -274,6 +274,11 @@ class _JoinStreamState extends State<JoinStream> {
       ..inRoomMessage.visible = false
       ..audioVideoViewConfig.useVideoViewAspectFill = true
       ..inRoomMessageConfig = ZegoInRoomMessageConfig(visible: false)
+      // ── Co-host "sur scène" (main levée) ── Même limite que côté hôte. Le
+      // bouton "demander à monter" (lever la main) du SDK envoie la demande à
+      // l'artiste, qui valide avant que la caméra + le micro du fan passent en
+      // direct pour toute la room.
+      ..coHost.maxCoHostCount = 8
       ..topMenuBarConfig = ZegoTopMenuBarConfig(buttons: []);
   }
 
