@@ -238,15 +238,20 @@ router.post('/event-logs', (req, res) => {
 });
 
 // POST /api/events/update/:id  (body: { status })
-router.post('/events/update/:id', (req, res) => {
+router.post('/events/update/:id', optionalAuth, (req, res) => {
   const status = req.body?.status;
   db.prepare("UPDATE events SET status = ?, updated_at = datetime('now') WHERE id = ?")
     .run(status, req.params.id);
-  // Passage EN DIRECT -> déclenche (idempotent) la prime Pionnier de l'apporteur
-  // + le départ des 24 mois de commission au premier live (contrat Amandine).
+  // Passage EN DIRECT -> déclenche (idempotent) la prime Pionnier + le départ des
+  // 24 mois de commission au premier live. IMPACT FINANCIER -> on n'arme le
+  // déclencheur QUE si c'est l'artiste lui-même (JWT) qui passe SON concert en
+  // direct : cet endpoint est ouvert, on ne veut pas qu'un appel anonyme puisse
+  // fabriquer une prime pour un artiste rattaché à un apporteur.
   if (status === 'live') {
     const ev = db.prepare('SELECT artist_id FROM events WHERE id = ?').get(req.params.id);
-    if (ev?.artist_id) { try { apporteurBonus.onFirstLive(ev.artist_id); } catch (e) { console.error('[apporteur onFirstLive]', e.message); } }
+    if (ev?.artist_id && req.user?.id === ev.artist_id) {
+      try { apporteurBonus.onFirstLive(ev.artist_id); } catch (e) { console.error('[apporteur onFirstLive]', e.message); }
+    }
   }
   return res.json({ status: 'success', message: 'Event updated.' });
 });
