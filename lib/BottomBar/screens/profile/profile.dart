@@ -455,110 +455,118 @@ class _ProfileState extends State<Profile> {
     );
   }
 
-  /// Carte profil "fan" — inchangée (photo + nom + solde de points).
+  /// Carte profil "fan" — MÊME design que l'en-tête artiste : grande photo en
+  /// bannière (fondue dans le thème) + "Bon retour" + nom + solde de points.
   Widget _fanHeaderCard() {
-    return Container(
+    return SizedBox(
       width: Get.width,
-      padding: myPadding,
-      decoration: BoxDecoration(
-        gradient: kCardGradient,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: goldSecondary.withValues(alpha: 0.45),
-          width: 1,
-        ),
-      ),
+      height: 156,
       child: Stack(
         children: [
-          // Traînée de paillettes dorées (forte opacite)
+          // Traînée de paillettes dorées (fond)
           Positioned.fill(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(18),
               child: CustomPaint(painter: _SparkleTrailPainter()),
             ),
           ),
-          Column(
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: goldSecondary.withValues(alpha: 0.6),
-                        width: 1.4,
-                      ),
-                    ),
-                    child: ClipOval(
-                      child: ImageWidget(
-                        url: '${userModel.value.user?.profileImage}',
-                        width: 50,
-                        height: 50,
-                      ),
+          // Grande photo avatar à droite, fondue dans le thème (comme l'artiste).
+          Positioned(
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: Get.width * 0.42,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ImageWidget(
+                  url: '${userModel.value.user?.profileImage}',
+                  width: Get.width * 0.42,
+                  height: 156,
+                  fit: BoxFit.cover,
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      radius: 0.95,
+                      colors: [
+                        Colors.transparent,
+                        midnightPrimary.withValues(alpha: 0.55),
+                      ],
+                      stops: const [0.35, 1.0],
                     ),
                   ),
-                  width(0.03),
-                  Column(
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [midnightPrimary, Colors.transparent],
+                      stops: const [0.0, 0.65],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(
-                        width: Get.width * 0.5,
+                      Text(
+                        'prof_welcome_back'.tr,
+                        style: TextStyle(color: textMuted, fontSize: 13),
+                      ),
+                      Text(
+                        userModel.value.user?.fullName ?? 'N/A',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: ivory,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 19,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: goldPrimary),
+                        ),
                         child: Text(
-                          userModel.value.user?.fullName ?? 'N/A',
+                          '★ ${userModel.value.user?.points?.toString() ?? '0'} ${'prof_total_points'.tr}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: ivory,
+                            color: goldPrimary,
                             fontWeight: FontWeight.w600,
-                            fontSize: 20,
+                            fontSize: 11.5,
                           ),
                         ),
                       ),
-                      SizedBox(
-                        width: Get.width * 0.5,
-                        child: Text(
-                          userModel.value.user?.email ?? 'N/A',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: textMuted),
-                        ),
-                      ),
                     ],
                   ),
-                ],
-              ),
-              height(0.02),
-              Divider(color: goldSecondary.withValues(alpha: 0.25)),
-              Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'prof_total_points'.tr,
-                        style: TextStyle(
-                          color: textMuted,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      height(0.005),
-                      Text(
-                        userModel.value.user?.points.toString() ?? 'N/A',
-                        style: TextStyle(
-                          color: goldPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ],
+                ),
+                GestureDetector(
+                  onTap: () => Get.to(() => const NotificationScreen()),
+                  child: Icon(
+                    Icons.notifications_none_rounded,
+                    color: goldPrimary,
+                    size: 24,
                   ),
-                  Spacer(),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -539,6 +539,28 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                   },
                 ),
 
+                height(0.008),
+                // Suggestion de prix (aide à la conversion). La grille est déjà
+                // en charm pricing (.99) ; on met en avant le palier le plus
+                // performant pour guider l'artiste sans le contraindre.
+                Row(
+                  children: [
+                    const Text('💡', style: TextStyle(fontSize: 13)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '49,99 € est le tarif le plus choisi (« Populaire »). '
+                        'Entre 39,99 € et 49,99 €, c\'est le meilleur rapport ventes / revenu.',
+                        style: const TextStyle(
+                          color: Color(0xffE6C76A),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
                 height(0.01),
 
                 Text(
