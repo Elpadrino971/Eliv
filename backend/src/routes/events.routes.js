@@ -284,6 +284,35 @@ router.post('/apporteur/report', requireAuth, (req, res) => {
   return res.json({ status: 'success', message: 'Signalement enregistré. La commission de ton apporteur est suspendue.' });
 });
 
+// POST /api/apporteur/redeem — l'artiste VALIDE un code d'apporteur (page web
+// /rejoindre) : il est rattaché à cet apporteur et l'offre démarre (3 mois
+// d'abonnement offert + fenêtre de commission). Un artiste = UN apporteur.
+router.post('/apporteur/redeem', requireAuth, (req, res) => {
+  const code = String(req.body?.code || '').trim().toUpperCase();
+  if (!code) return fail(res, 'Code requis.', 422);
+  const ap = db.prepare("SELECT * FROM apporteurs WHERE UPPER(code) = ? AND status = 'active'").get(code);
+  if (!ap) return fail(res, 'Code invalide ou apporteur inactif.', 404);
+  const u = db.prepare('SELECT apporteur_id FROM users WHERE id = ?').get(req.user.id);
+  if (u?.apporteur_id) {
+    if (u.apporteur_id === ap.id) return res.json({ status: 'success', message: 'Tu es déjà rattaché à cet apporteur.' });
+    return fail(res, 'Tu es déjà rattaché à un autre apporteur.', 409);
+  }
+  let p = {}; try { p = JSON.parse(ap.deal_params || '{}'); } catch (_) { p = {}; }
+  const freeMonths = Number.isFinite(+p.free_months) ? +p.free_months : 3;
+  const commMonths = Number.isFinite(+p.commission_months) ? +p.commission_months : 12;
+  db.prepare(
+    `UPDATE users SET apporteur_id = ?, apporteur_attached_at = datetime('now'),
+        sub_free_until = datetime('now', '+' || ? || ' months'),
+        commission_end = datetime('now', '+' || ? || ' months')
+     WHERE id = ?`
+  ).run(ap.id, freeMonths, commMonths, req.user.id);
+  return res.json({
+    status: 'success',
+    message: `Rattaché à ${ap.structure || ap.name}. Tes ${freeMonths} mois offerts sont activés !`,
+    data: { apporteur: ap.structure || ap.name, free_months: freeMonths },
+  });
+});
+
 // ─── Gifts ───
 // GET /api/gifts -> { status, data: [...] }
 router.get('/gifts', (req, res) => {

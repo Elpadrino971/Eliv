@@ -56,6 +56,119 @@ app.get('/subscribe/annule', (req, res) => res.send(
   '<html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#071426;color:#f4efe6"><h1>Paiement annulé</h1><p>Aucun montant n\'a été prélevé. Retourne sur l\'app VybzzZ pour réessayer.</p></body></html>'
 ));
 
+// Page publique de validation d'un CODE APPORTEUR (parrainage). L'artiste se
+// connecte + saisit le code -> rattaché à l'apporteur + offre activée. Aucune
+// modif de l'app nécessaire (donc aucune review Apple). Le code peut être
+// pré-rempli via ?code=XXX (lien partageable par l'apporteur).
+app.get('/rejoindre', (req, res) => res.send(`<!doctype html><html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rejoindre VybzzZ</title>
+<style>
+  *{box-sizing:border-box} body{margin:0;min-height:100vh;display:grid;place-items:center;
+   background:#0A1226;color:#F4EFE3;font-family:-apple-system,Helvetica,Arial,sans-serif;padding:20px}
+  .card{width:100%;max-width:380px;background:#111B33;border:1px solid rgba(230,199,106,.25);
+   border-radius:18px;padding:28px}
+  h1{margin:0 0 4px;font-size:24px} h1 span{color:#E6C76A}
+  p{margin:0 0 20px;color:#C9C4B4;font-size:14px}
+  input{width:100%;margin:0 0 12px;padding:13px 14px;border-radius:11px;border:1px solid rgba(230,199,106,.25);
+   background:#0D1528;color:#F4EFE3;font-size:15px}
+  button{width:100%;padding:14px;border:0;border-radius:11px;background:#E6C76A;color:#0A1226;
+   font-weight:800;font-size:16px;cursor:pointer;margin-top:4px}
+  #msg{margin-top:14px;font-size:14px;text-align:center;min-height:20px}
+  #code{text-transform:uppercase;letter-spacing:1px;font-weight:700}
+</style></head><body>
+<div class="card">
+  <h1>Rejoindre <span>VybzzZ</span></h1>
+  <p>Connecte-toi avec ton compte VybzzZ et valide ton code pour activer ton offre.</p>
+  <input id="email" type="email" placeholder="Email" autocomplete="username">
+  <input id="pass" type="password" placeholder="Mot de passe" autocomplete="current-password">
+  <input id="code" placeholder="Code apporteur">
+  <button id="go">Valider mon code</button>
+  <div id="msg"></div>
+</div>
+<script>
+  var q=new URLSearchParams(location.search); if(q.get('code'))document.getElementById('code').value=q.get('code');
+  document.getElementById('go').onclick=async function(){
+    var m=document.getElementById('msg'); m.style.color='#C9C4B4'; m.textContent='Validation…';
+    try{
+      var l=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:document.getElementById('email').value.trim(),password:document.getElementById('pass').value})});
+      var lj=await l.json(); if(!l.ok||!lj.token) throw new Error(lj.message||'Connexion échouée');
+      var r=await fetch('/api/apporteur/redeem',{method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+lj.token},
+        body:JSON.stringify({code:document.getElementById('code').value.trim()})});
+      var rj=await r.json(); if(!r.ok) throw new Error(rj.message||'Échec');
+      m.style.color='#4ADE80'; m.textContent=rj.message||'Rattaché !';
+    }catch(e){ m.style.color='#FF6B6B'; m.textContent=e.message; }
+  };
+</script></body></html>`));
+
+// Page publique « Mon relevé » : l'artiste se connecte et voit / imprime son
+// relevé mensuel (billets vendus + tips + net). Transparence de la
+// redistribution, sans modif de l'app (donc sans review Apple).
+app.get('/mon-releve', (req, res) => res.send(`<!doctype html><html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mon relevé — VybzzZ</title>
+<style>
+  *{box-sizing:border-box} body{margin:0;min-height:100vh;background:#0A1226;color:#F4EFE3;
+   font-family:-apple-system,Helvetica,Arial,sans-serif;display:grid;place-items:start center;padding:20px}
+  .card{width:100%;max-width:440px;background:#111B33;border:1px solid rgba(230,199,106,.25);border-radius:18px;padding:26px;margin-top:24px}
+  h1{margin:0 0 4px;font-size:22px} h1 span{color:#E6C76A} p.sub{margin:0 0 18px;color:#C9C4B4;font-size:14px}
+  input{width:100%;margin:0 0 12px;padding:13px 14px;border-radius:11px;border:1px solid rgba(230,199,106,.25);background:#0D1528;color:#F4EFE3;font-size:15px}
+  button{width:100%;padding:14px;border:0;border-radius:11px;background:#E6C76A;color:#0A1226;font-weight:800;font-size:16px;cursor:pointer}
+  .row{display:flex;justify-content:space-between;padding:12px 0;border-top:1px solid rgba(230,199,106,.15)}
+  .row .lbl{color:#C9C4B4} .row .val{font-weight:700;font-variant-numeric:tabular-nums}
+  .total{font-size:20px;color:#E6C76A} .muted{color:#8B94A8;font-size:12px}
+  #msg{margin-top:10px;font-size:14px;text-align:center;min-height:18px}
+  .hidden{display:none} .head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+  .monthsel{width:auto;margin:0} .print{background:transparent;color:#E6C76A;border:1px solid #E6C76A;width:auto;padding:8px 14px;font-size:13px}
+  @media print{.noprint{display:none} body{background:#fff;color:#000} .card{border:0}}
+</style></head><body>
+<div class="card" id="loginCard">
+  <h1>Mon relevé <span>VybzzZ</span></h1>
+  <p class="sub">Connecte-toi pour voir ton relevé mensuel (billets, tips, montant net).</p>
+  <input id="email" type="email" placeholder="Email" autocomplete="username">
+  <input id="pass" type="password" placeholder="Mot de passe" autocomplete="current-password">
+  <button id="go">Voir mon relevé</button>
+  <div id="msg"></div>
+</div>
+<div class="card hidden" id="stmtCard"></div>
+<script>
+  var TOKEN='';
+  function eur(n){return (Math.round(n*100)/100).toFixed(2).replace('.',',')+' €';}
+  async function load(month){
+    var m=document.getElementById('msg'); m.textContent='';
+    var url='/api/artist/statement'+(month?('?month='+month):'');
+    var r=await fetch(url,{headers:{'Authorization':'Bearer '+TOKEN}});
+    var j=await r.json(); if(!r.ok){m.style.color='#FF6B6B';m.textContent=(j&&j.message)||'Erreur';return;}
+    var d=j.data||j;
+    var c=document.getElementById('stmtCard');
+    c.innerHTML=''
+      +'<div class="head"><h1>Relevé <span>'+d.period+'</span></h1>'
+      +'<button class="print noprint" onclick="window.print()">Imprimer</button></div>'
+      +'<p class="sub">'+(d.artist||'')+'</p>'
+      +'<div class="row"><span class="lbl">🎟️ Billets vendus</span><span class="val">'+d.tickets.count+'</span></div>'
+      +'<div class="row"><span class="lbl">Montant net billets</span><span class="val">'+eur(d.tickets.net_eur)+'</span></div>'
+      +'<div class="row"><span class="lbl">🎁 Tips reçus</span><span class="val">'+d.tips.count+' ('+d.tips.points+' pts)</span></div>'
+      +'<div class="row"><span class="lbl">Montant net tips</span><span class="val">'+eur(d.tips.net_eur)+'</span></div>'
+      +'<div class="row"><span class="lbl total">Total net à percevoir</span><span class="val total">'+eur(d.total_net_eur)+'</span></div>'
+      +'<div class="head noprint" style="margin-top:16px"><span class="muted">Changer de mois</span>'
+      +'<input class="monthsel" type="month" id="msel" value="'+d.month+'"></div>';
+    var sel=document.getElementById('msel'); if(sel) sel.onchange=function(){load(sel.value);};
+    document.getElementById('loginCard').classList.add('hidden');
+    c.classList.remove('hidden');
+  }
+  document.getElementById('go').onclick=async function(){
+    var m=document.getElementById('msg'); m.style.color='#C9C4B4'; m.textContent='Connexion…';
+    try{
+      var l=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:document.getElementById('email').value.trim(),password:document.getElementById('pass').value})});
+      var lj=await l.json(); if(!l.ok||!lj.token) throw new Error(lj.message||'Connexion échouée');
+      TOKEN=lj.token; await load('');
+    }catch(e){ m.style.color='#FF6B6B'; m.textContent=e.message; }
+  };
+</script></body></html>`));
+
 // Dashboard admin web (statique) sous /admin
 app.use('/admin', express.static(path.join(__dirname, '..', 'public', 'admin')));
 
