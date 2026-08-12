@@ -865,4 +865,124 @@ router.delete('/ideas/:id', requireAdmin, (req, res) => {
   return res.json({ status: 'success', message: 'Idée supprimée.' });
 });
 
+// ═══════════════════════════════════════════════════════════════════════
+// APPORTEURS (imprésarios / agences) & commissions — voir APPORTEURS.md.
+// "Sous-dossier" = vue filtrée sur users.apporteur_id (pas de dossier figé).
+// ═══════════════════════════════════════════════════════════════════════
+
+// Liste des apporteurs + nb d'artistes rattachés + total dû (non payé).
+router.get('/apporteurs', requireAdmin, (req, res) => {
+  const rows = db.prepare('SELECT * FROM apporteurs ORDER BY id DESC').all();
+  const list = rows.map((a) => {
+    const artists = db.prepare('SELECT COUNT(*) c FROM users WHERE apporteur_id = ?').get(a.id).c;
+    const due = db.prepare(
+      "SELECT COALESCE(SUM(CAST(amount AS REAL)),0) s FROM apporteur_commissions WHERE apporteur_id = ? AND invoice_status != 'payée'"
+    ).get(a.id).s;
+    let params = {}; try { params = JSON.parse(a.deal_params || '{}'); } catch (_) { params = {}; }
+    return { ...a, deal_params: params, artists_count: artists, due_total: Math.round(due * 100) / 100 };
+  });
+  return res.json({ status: 'success', count: list.length, list });
+});
+
+// Détail (page "agence") : deal + ses artistes + récap commissions.
+router.get('/apporteurs/:id', requireAdmin, (req, res) => {
+  const a = db.prepare('SELECT * FROM apporteurs WHERE id = ?').get(req.params.id);
+  if (!a) return res.status(404).json({ status: 'error', message: 'Apporteur introuvable.' });
+  let params = {}; try { params = JSON.parse(a.deal_params || '{}'); } catch (_) { params = {}; }
+  const artists = db.prepare(
+    `SELECT id, full_name, artist_name, artist_regime, apporteur_attached_at, sub_free_until, commission_end
+     FROM users WHERE apporteur_id = ? ORDER BY id DESC`
+  ).all(a.id);
+  const s = db.prepare(
+    `SELECT
+       COALESCE(SUM(CASE WHEN invoice_status='due'      THEN CAST(amount AS REAL) ELSE 0 END),0) due,
+       COALESCE(SUM(CASE WHEN invoice_status='exigible' THEN CAST(amount AS REAL) ELSE 0 END),0) exigible,
+       COALESCE(SUM(CASE WHEN invoice_status='payée'    THEN CAST(amount AS REAL) ELSE 0 END),0) payee
+     FROM apporteur_commissions WHERE apporteur_id = ?`
+  ).get(a.id);
+  const r2 = (n) => Math.round(n * 100) / 100;
+  return res.json({ status: 'success', data: {
+    apporteur: { ...a, deal_params: params },
+    artists,
+    commissions: { due: r2(s.due), exigible: r2(s.exigible), payee: r2(s.payee) },
+  }});
+});
+
+// Créer un apporteur. body: name, structure, email, deal_type, deal_params.
+router.post('/apporteurs', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  if (!b.name) return res.status(422).json({ status: 'error', message: 'Le nom est requis.' });
+  const dealType = ['simple', 'paliers', 'fixe_primes'].includes(b.deal_type) ? b.deal_type : 'simple';
+  const params = typeof b.deal_params === 'string' ? b.deal_params : JSON.stringify(b.deal_params || {});
+  const info = db.prepare(
+    "INSERT INTO apporteurs (name, structure, email, deal_type, deal_params, status) VALUES (?, ?, ?, ?, ?, 'active')"
+  ).run(b.name, b.structure || null, b.email || null, dealType, params);
+  return res.json({ status: 'success', data: { id: info.lastInsertRowid } });
+});
+
+// Modifier un apporteur (deal, statut active/suspended…).
+router.post('/apporteurs/:id/update', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const a = db.prepare('SELECT * FROM apporteurs WHERE id = ?').get(req.params.id);
+  if (!a) return res.status(404).json({ status: 'error', message: 'Apporteur introuvable.' });
+  const dealType = ['simple', 'paliers', 'fixe_primes'].includes(b.deal_type) ? b.deal_type : a.deal_type;
+  const params = b.deal_params != null
+    ? (typeof b.deal_params === 'string' ? b.deal_params : JSON.stringify(b.deal_params))
+    : a.deal_params;
+  const status = ['active', 'suspended'].includes(b.status) ? b.status : a.status;
+  db.prepare('UPDATE apporteurs SET name=?, structure=?, email=?, deal_type=?, deal_params=?, status=? WHERE id=?')
+    .run(b.name ?? a.name, b.structure ?? a.structure, b.email ?? a.email, dealType, params, status, a.id);
+  return res.json({ status: 'success' });
+});
+
+// Rattacher un artiste + démarrer ses compteurs (3 mois abo offert, 12 mois de
+// commission par défaut — tous deux modifiables). body: artist_id, free_months,
+// commission_months.
+router.post('/apporteurs/:id/attach-artist', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const a = db.prepare('SELECT id FROM apporteurs WHERE id = ?').get(req.params.id);
+  if (!a) return res.status(404).json({ status: 'error', message: 'Apporteur introuvable.' });
+  const artist = db.prepare('SELECT id FROM users WHERE id = ?').get(b.artist_id);
+  if (!artist) return res.status(404).json({ status: 'error', message: 'Artiste introuvable.' });
+  const freeMonths = Number.isFinite(+b.free_months) ? +b.free_months : 3;
+  const commMonths = Number.isFinite(+b.commission_months) ? +b.commission_months : 12;
+  db.prepare(
+    `UPDATE users SET apporteur_id = ?, apporteur_attached_at = datetime('now'),
+        sub_free_until  = datetime('now', '+' || ? || ' months'),
+        commission_end  = datetime('now', '+' || ? || ' months')
+     WHERE id = ?`
+  ).run(a.id, freeMonths, commMonths, artist.id);
+  return res.json({ status: 'success' });
+});
+
+// Détacher un artiste : le rattachement se coupe SANS supprimer l'artiste.
+router.post('/apporteurs/detach-artist', requireAdmin, (req, res) => {
+  db.prepare('UPDATE users SET apporteur_id = NULL WHERE id = ?').run(req.body?.artist_id);
+  return res.json({ status: 'success' });
+});
+
+// Renouveler / prolonger la période de commission d'un artiste (date modifiable).
+router.post('/apporteurs/extend-commission', requireAdmin, (req, res) => {
+  const months = Number.isFinite(+req.body?.months) ? +req.body.months : 12;
+  db.prepare("UPDATE users SET commission_end = datetime('now', '+' || ? || ' months') WHERE id = ?")
+    .run(months, req.body?.artist_id);
+  return res.json({ status: 'success' });
+});
+
+// Régime d'un artiste (normal | pionnier | fondateur | parrain). Un PARRAIN
+// (ex: Kassav') est exclu du calcul de commission apporteur.
+router.post('/artist/:id/regime', requireAdmin, (req, res) => {
+  const regime = ['normal', 'pionnier', 'fondateur', 'parrain'].includes(req.body?.regime) ? req.body.regime : 'normal';
+  db.prepare('UPDATE users SET artist_regime = ? WHERE id = ?').run(regime, req.params.id);
+  return res.json({ status: 'success' });
+});
+
+// Statut de facturation d'une commission : due -> exigible (facture reçue) -> payée.
+router.post('/apporteur-commissions/:id/status', requireAdmin, (req, res) => {
+  const status = ['due', 'exigible', 'payée'].includes(req.body?.status) ? req.body.status : null;
+  if (!status) return res.status(422).json({ status: 'error', message: 'Statut invalide.' });
+  db.prepare('UPDATE apporteur_commissions SET invoice_status = ? WHERE id = ?').run(status, req.params.id);
+  return res.json({ status: 'success' });
+});
+
 module.exports = router;

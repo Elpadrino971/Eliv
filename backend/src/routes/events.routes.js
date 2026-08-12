@@ -7,6 +7,7 @@ const { serializeEvent, serializeUser, ok, fail, genReceipt, resolveArtistCommis
 const { requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
 const moderation = require('../services/moderation');
+const apporteurLedger = require('../services/apporteur_ledger');
 
 // GET /api/events?status=&day=&genre_ids=
 // day: today | future ; status: published | live | completed | …
@@ -138,29 +139,45 @@ router.post('/buy-ticket', optionalAuth, (req, res) => {
     return ok(res, serializeEvent(event, { currentUserId: userId }));
   }
 
-  // Split commission (billet en EUROS) : la part artiste est créditée à son
-  // wallet, la part plateforme tracée dans platform_earnings. Taux résolu depuis
-  // l'abonnement de l'artiste (défaut 60 %), figé sur la ligne du billet.
-  const price = parseFloat(event.ticket_price) || 0;
-  const rate = resolveArtistCommission(event.artist_id);
-  const { artistShare, platformShare } = splitAmount(price, rate);
+  // Split commission — modèle NET (voir APPORTEURS.md). On divise ce qu'on
+  // reçoit RÉELLEMENT après la commission store (Apple/Google ~15%), jamais le
+  // brut. La part artiste dépend de sa phase (promo 3 mois = 50%, sinon son
+  // offre). Si l'artiste a un apporteur éligible, sa commission (sur la part
+  // plateforme) est enregistrée en 'due' — payable après encaissement + facture.
+  const gross = parseFloat(event.ticket_price) || 0;
+  const { ctx, artistRatePct, apporteurRatePct, breakdown } =
+    apporteurLedger.computeForSale(event.artist_id, gross);
   const grant = db.transaction(() => {
     const info = db.prepare(
       `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status, commission_rate, artist_share)
        VALUES (?, ?, ?, ?, 'active', ?, ?)`
-    ).run(b.event_id, userId, String(event.ticket_price || '0'), genReceipt(), rate, artistShare.toFixed(2));
+    ).run(b.event_id, userId, String(event.ticket_price || '0'), genReceipt(), artistRatePct, breakdown.artist.toFixed(2));
     db.prepare(
       `INSERT INTO activities (user_id, event_id, type, description)
        VALUES (?, ?, 'ticket', 'bought a ticket')`
     ).run(userId, b.event_id);
     if (event.artist_id) {
       const artist = db.prepare('SELECT wallet FROM users WHERE id = ?').get(event.artist_id);
-      const newWallet = ((parseFloat(artist?.wallet) || 0) + artistShare).toFixed(2);
+      const newWallet = ((parseFloat(artist?.wallet) || 0) + breakdown.artist).toFixed(2);
       db.prepare('UPDATE users SET wallet = ? WHERE id = ?').run(newWallet, event.artist_id);
       db.prepare(
-        `INSERT INTO platform_earnings (artist_id, source, source_id, gross, artist_share, platform_share, commission_rate)
-         VALUES (?, 'ticket', ?, ?, ?, ?, ?)`
-      ).run(event.artist_id, info.lastInsertRowid, price.toFixed(2), artistShare.toFixed(2), platformShare.toFixed(2), rate);
+        `INSERT INTO platform_earnings
+           (artist_id, source, source_id, gross, artist_share, platform_share, commission_rate, store_fee, net, apporteur_id, apporteur_amount)
+         VALUES (?, 'ticket', ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(
+        event.artist_id, info.lastInsertRowid, breakdown.gross.toFixed(2),
+        breakdown.artist.toFixed(2), breakdown.platform.toFixed(2), artistRatePct,
+        breakdown.store.toFixed(2), breakdown.net.toFixed(2),
+        ctx.eligible ? ctx.apporteurId : null,
+        ctx.eligible ? breakdown.apporteur.toFixed(2) : null,
+      );
+      if (ctx.eligible && apporteurRatePct > 0) {
+        apporteurLedger.recordApporteurCommission({
+          apporteurId: ctx.apporteurId, artistId: event.artist_id,
+          sourceType: 'ticket', sourceId: info.lastInsertRowid,
+          breakdown, rate: apporteurRatePct,
+        });
+      }
     }
   });
   grant();
@@ -239,6 +256,19 @@ router.post('/report-event', optionalAuth, (req, res) => {
   ).run(req.user?.id || null, targetType, targetId != null ? String(targetId) : null,
     b.reason || b.type || 'other', b.details || b.message || b.description || null);
   return res.json({ status: 'success', message: 'Report received.' });
+});
+
+// POST /api/apporteur/report — un artiste signale SON apporteur (harcèlement,
+// nuisance). Suspend AUTOMATIQUEMENT la commission de l'apporteur sur cet
+// artiste. La suspension ne peut venir QUE d'ici (trace) — jamais d'une action
+// manuelle sans trace. L'artiste reste sur la plateforme ; seule la commission
+// est gelée (voir services/apporteur_ledger.js).
+router.post('/apporteur/report', requireAuth, (req, res) => {
+  const u = db.prepare('SELECT apporteur_id FROM users WHERE id = ?').get(req.user.id);
+  if (!u || !u.apporteur_id) return fail(res, "Aucun apporteur rattaché à ton compte.", 422);
+  db.prepare('INSERT INTO apporteur_reports (artist_id, apporteur_id, reason) VALUES (?, ?, ?)')
+    .run(req.user.id, u.apporteur_id, String(req.body?.reason || '').slice(0, 500));
+  return res.json({ status: 'success', message: 'Signalement enregistré. La commission de ton apporteur est suspendue.' });
 });
 
 // ─── Gifts ───
