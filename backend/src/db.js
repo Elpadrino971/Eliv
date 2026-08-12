@@ -311,6 +311,41 @@ function init() {
     );
   `);
 
+  // Modération automatique (Sightengine) : une ligne par détection (texte,
+  // image, vidéo/replay, live). Sert de file de revue + piste d'audit ("VYBZZZ
+  // dispose d'un système qui détecte ET journalise le contenu illégal").
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS moderation_flags (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      surface TEXT,           -- text | image | video | live
+      target_type TEXT,       -- comment | event | clip | profile | live
+      target_id TEXT,
+      action TEXT,            -- review | block
+      score REAL,
+      categories TEXT,        -- JSON [{name,score}]
+      extra TEXT,             -- JSON (URL, extrait de texte, position frame…)
+      status TEXT DEFAULT 'open',  -- open | reviewed | dismissed
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
+  // Signalements utilisateurs (bouton "Signaler" de l'app — exigence Apple 1.2
+  // pour tout contenu généré par les utilisateurs). Avant, /report-event ne
+  // persistait RIEN (réponse "success" à vide) : impossible de traiter un
+  // signalement. Ici on garde une vraie file consultable/actionnable.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS content_reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      reporter_id INTEGER,
+      target_type TEXT,       -- event | user | clip | comment
+      target_id TEXT,
+      reason TEXT,
+      details TEXT,
+      status TEXT DEFAULT 'open',  -- open | reviewed | actioned | dismissed
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
   // ─── Migrations : colonnes ajoutées après coup (ignorées si déjà présentes) ───
   for (const sql of [
     // Split commissions : snapshot du taux + part artiste au moment de la vente

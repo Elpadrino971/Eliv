@@ -6,6 +6,7 @@ const { db } = require('../db');
 const { serializeUser, fail } = require('../helpers');
 const { hash, compare, sign, requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
+const moderation = require('../services/moderation');
 const emailService = require('../services/email');
 
 const OTP_TTL_MINUTES = 15;
@@ -234,6 +235,22 @@ router.post('/update-profile', requireAuth, (req, res) => {
     vals.id = req.user.id;
     db.prepare(`UPDATE users SET ${sets.join(', ')}, updated_at = datetime('now') WHERE id = @id`).run(vals);
   }
+
+  // Modération des photos de profil (asynchrone, fire-and-forget) : sur blocage
+  // la photo litigieuse est retirée. La bio est journalisée pour revue.
+  if (uploadedPhoto) {
+    moderation.moderateImage({ url: uploadedPhoto, targetType: 'profile', targetId: req.user.id,
+      onBlock: () => db.prepare('UPDATE users SET profile_image = NULL WHERE id = ?').run(req.user.id) });
+  }
+  if (uploadedArtistPhoto) {
+    moderation.moderateImage({ url: uploadedArtistPhoto, targetType: 'profile', targetId: req.user.id,
+      onBlock: () => db.prepare('UPDATE users SET artist_profile = NULL WHERE id = ?').run(req.user.id) });
+  }
+  if (b.bio || b.artist_bio) {
+    moderation.reviewText([b.bio, b.artist_bio].filter(Boolean).join('\n'),
+      { targetType: 'profile', targetId: req.user.id });
+  }
+
   const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
   return res.json({ status: 'success', message: 'Profile updated.', data: serializeUser(fresh, { full: true }) });
 });

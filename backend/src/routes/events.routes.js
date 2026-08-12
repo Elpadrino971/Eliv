@@ -6,6 +6,7 @@ const { db } = require('../db');
 const { serializeEvent, serializeUser, ok, fail, genReceipt, resolveArtistCommission, splitAmount } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
+const moderation = require('../services/moderation');
 
 // GET /api/events?status=&day=&genre_ids=
 // day: today | future ; status: published | live | completed | …
@@ -61,9 +62,18 @@ router.get('/artist/:id/events', optionalAuth, (req, res) => {
 // concert par l'artiste connecté (formulaire "Créer un event" côté app).
 // artist_id vient TOUJOURS du token (req.user.id), jamais du user_id envoyé
 // par le client, pour qu'un user ne puisse pas créer un event au nom d'un autre.
-router.post('/events', requireAuth, (req, res) => {
+router.post('/events', requireAuth, async (req, res) => {
   const b = req.body || {};
   if (!b.name) return fail(res, 'Le nom est requis.', 422, { name: ['Le nom est requis.'] });
+
+  // Modération texte du titre + description avant création (bloque le grave).
+  const textVerdict = await moderation.reviewText(
+    [b.name, b.description].filter(Boolean).join('\n'),
+    { targetType: 'event', targetId: null }
+  );
+  if (textVerdict.action === 'block') {
+    return fail(res, 'Le titre ou la description enfreint les règles de la communauté.', 422);
+  }
 
   const cover = saveUpload(req, ['cover_image', 'cover'], 'covers', 'events/covers');
   const videoReel = saveUpload(req, ['video_reel', 'visual_video'], 'videos', 'events/videos');
@@ -89,6 +99,14 @@ router.post('/events', requireAuth, (req, res) => {
   );
 
   const created = db.prepare('SELECT * FROM events WHERE id = ?').get(info.lastInsertRowid);
+
+  // Modération de la cover (image) + du teaser (vidéo) en tâche de fond : on ne
+  // ralentit pas la création. Sur blocage, l'event passe en 'blocked' (masqué).
+  const blockEvent = () =>
+    db.prepare("UPDATE events SET status = 'blocked' WHERE id = ?").run(created.id);
+  if (cover) moderation.moderateImage({ url: cover, targetType: 'event', targetId: created.id, onBlock: blockEvent });
+  if (videoReel) moderation.moderateVideo({ url: videoReel, targetType: 'event', targetId: created.id });
+
   return ok(res, serializeEvent(created, { currentUserId: req.user.id }));
 });
 
@@ -169,10 +187,18 @@ router.post('/user-event-history', optionalAuth, (req, res) => {
 });
 
 // POST /api/event-comment  (body: { event_id, user_id, comment }) -> { status, activity: [...] }
-router.post('/event-comment', optionalAuth, (req, res) => {
+router.post('/event-comment', optionalAuth, async (req, res) => {
   const b = req.body || {};
   const userId = req.user?.id;
   if (!userId) return fail(res, 'Authentification requise.', 401);
+
+  // Modération du message de chat AVANT affichage (Sightengine, temps réel).
+  // 'block' -> refusé ; 'review'/'allow' -> passe (le 'review' est déjà journalisé).
+  const verdict = await moderation.reviewText(b.comment || '', { targetType: 'comment', targetId: b.event_id });
+  if (verdict.action === 'block') {
+    return fail(res, 'Ton message enfreint les règles de la communauté.', 422);
+  }
+
   db.prepare(
     `INSERT INTO activities (user_id, event_id, type, description)
      VALUES (?, ?, 'comment', ?)`
@@ -200,8 +226,18 @@ router.post('/events/update/:id', (req, res) => {
   return res.json({ status: 'success', message: 'Event updated.' });
 });
 
-// POST /api/report-event
-router.post('/report-event', (req, res) => {
+// POST /api/report-event — signalement utilisateur (exigence Apple 1.2). Avant,
+// ce endpoint ne persistait RIEN. Désormais on enregistre un vrai signalement
+// dans content_reports (file consultable/actionnable côté admin).
+router.post('/report-event', optionalAuth, (req, res) => {
+  const b = req.body || {};
+  const targetType = b.target_type || (b.user_id && !b.event_id ? 'user' : 'event');
+  const targetId = b.event_id || b.target_id || b.reported_user_id || b.user_id || null;
+  db.prepare(
+    `INSERT INTO content_reports (reporter_id, target_type, target_id, reason, details)
+     VALUES (?, ?, ?, ?, ?)`
+  ).run(req.user?.id || null, targetType, targetId != null ? String(targetId) : null,
+    b.reason || b.type || 'other', b.details || b.message || b.description || null);
   return res.json({ status: 'success', message: 'Report received.' });
 });
 

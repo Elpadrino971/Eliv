@@ -9,6 +9,7 @@ const { saveUpload, saveClipVideo, PUBLIC_BASE_URL } = require('../uploads');
 const mux = require('../services/mux');
 const stripeService = require('../services/stripe');
 const zegoService = require('../services/zego');
+const moderation = require('../services/moderation');
 const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
 
 // GET /api/artist/revenue-transactions — dernières entrées réelles du ledger
@@ -477,10 +478,13 @@ router.post('/feed-clips/submit', requireAuth, async (req, res) => {
     return res.status(422).json({ status: 'error', message: 'Fichier vidéo requis.' });
   }
   const expiresAt = uploaded.firebasePath ? `datetime('now', '+' || ${CLIP_RETENTION_DAYS} || ' days')` : 'NULL';
-  db.prepare(
+  const info = db.prepare(
     `INSERT INTO feed_clips (feed, title, video_url, active, user_id, firebase_path, expires_at)
      VALUES (?, ?, ?, 0, ?, ?, ${expiresAt})`
   ).run(feed, b.title || null, uploaded.url, req.user.id, uploaded.firebasePath);
+  // Modération vidéo du clip soumis (asynchrone). Le clip reste de toute façon
+  // invisible (active=0) tant que l'admin ne l'a pas validé.
+  moderation.moderateVideo({ url: uploaded.url, targetType: 'clip', targetId: info.lastInsertRowid });
   return res.json({ status: 'success', message: 'Envoyé ! Ton clip sera visible après validation.' });
 });
 
