@@ -99,6 +99,7 @@ const NAV = [
     { id: 'splash', label: 'Page de lancement', ic: '🚀' },
   ] },
   { group: 'Finance', items: [
+    { id: 'apporteurs', label: 'Apporteurs / Agences', ic: '🏢' },
     { id: 'withdrawals', label: 'Retraits', ic: '🏦' },
     { id: 'transactions', label: 'Transactions', ic: '💸' },
     { id: 'reports', label: 'Rapports', ic: '📈' },
@@ -1122,12 +1123,118 @@ function playHls(video, url) {
   document.head.appendChild(s);
 }
 
+// ─── Apporteurs / Agences (imprésarios, managers) — voir backend/APPORTEURS.md ───
+function dealLabel(a) {
+  const p = a.deal_params || {};
+  if (a.deal_type === 'paliers') return `jauge ${p.floor ?? 5}→${p.cap ?? 15}%`;
+  return `${p.rate ?? '?'}% fixe${a.deal_type === 'fixe_primes' ? ' + primes' : ''}`;
+}
+
+async function pageApporteurs() {
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  const { list } = await api('GET', '/apporteurs');
+  const columns = [
+    { label: '#', render: (r) => r.id },
+    { label: 'Agence / Apporteur', render: (r) => `<div class="uinfo"><div><div class="nm">${esc(r.structure || r.name)}</div><div class="em">${r.structure ? esc(r.name) + ' · ' : ''}${esc(r.email || '')}</div></div></div>` },
+    { label: 'Deal', render: (r) => esc(dealLabel(r)) },
+    { label: 'Artistes', render: (r) => r.artists_count },
+    { label: 'Dû', render: (r) => `${(+r.due_total || 0).toFixed(2)} €` },
+    { label: 'Statut', render: (r) => badge(r.status) },
+    { label: 'Action', render: (r) => `<button class="btn edit" data-apview="${r.id}">Voir l'agence</button>` },
+  ];
+  view().innerHTML = tableShell('Apporteurs / Agences', columns, '<button class="add-btn" id="addap">+ Créer un apporteur</button>');
+  mountTable(view().querySelector('.tcard'), { columns, rows: list });
+  view().querySelector('#addap').onclick = () => openApporteurModal(null);
+  view().querySelectorAll('[data-apview]').forEach((b) => b.onclick = () => renderApporteurDetail(+b.dataset.apview));
+}
+
+async function renderApporteurDetail(id) {
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  const { data } = await api('GET', '/apporteurs/' + id);
+  const a = data.apporteur, c = data.commissions;
+  const stat = (label, val, color) => `<div style="flex:1;min-width:140px;background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:16px"><div style="color:var(--muted);font-size:11px;letter-spacing:1px;text-transform:uppercase">${label}</div><div style="color:${color};font-size:24px;font-weight:700;margin-top:6px">${(+val || 0).toFixed(2)} €</div></div>`;
+  const cols = [
+    { label: '#', render: (r) => r.id },
+    { label: 'Artiste', render: (r) => esc(r.artist_name || r.full_name || ('#' + r.id)) },
+    { label: 'Régime', render: (r) => `<select data-regime="${r.id}" style="background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:7px;padding:5px">${['normal', 'pionnier', 'fondateur', 'parrain'].map((x) => `<option ${r.artist_regime === x ? 'selected' : ''}>${x}</option>`).join('')}</select>` },
+    { label: 'Abo offert jusqu\'au', render: (r) => fmtDate(r.sub_free_until) },
+    { label: 'Fin commission', render: (r) => fmtDate(r.commission_end) },
+    { label: 'Action', render: (r) => `<button class="btn del" data-detach="${r.id}">Détacher</button>` },
+  ];
+  view().innerHTML = `
+    <div class="head-row"><h1 class="page-title">🏢 ${esc(a.structure || a.name)}</h1>
+      <div><button class="add-btn" id="apedit" style="margin-right:8px">Modifier le deal</button><button class="add-btn" id="apback">← Retour</button></div></div>
+    <p style="color:var(--muted);margin:0 0 16px">${esc(a.name)}${a.email ? ' · ' + esc(a.email) : ''} — Deal : <b style="color:var(--ivory)">${esc(dealLabel(a))}</b> &nbsp;${badge(a.status)}</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px">${stat('Dû (calculé)', c.due, 'var(--gold)')}${stat('Exigible (facturé)', c.exigible, 'var(--amber)')}${stat('Payé', c.payee, 'var(--green)')}</div>
+    <div class="head-row" style="margin-bottom:10px"><h2 style="font-size:17px;margin:0">Artistes rattachés (${data.artists.length})</h2><button class="add-btn" id="apattach">+ Rattacher un artiste</button></div>
+    ${tableShellInner(cols)}`;
+  mountTable(view().querySelector('.tcard'), { columns: cols, rows: data.artists });
+  view().querySelector('#apback').onclick = () => pageApporteurs();
+  view().querySelector('#apedit').onclick = () => openApporteurModal(a);
+  view().querySelector('#apattach').onclick = () => openAttachArtist(a.id);
+  view().querySelectorAll('[data-detach]').forEach((b) => b.onclick = async () => {
+    if (!confirm('Détacher cet artiste ? Il reste sur la plateforme, seule la commission s\'arrête.')) return;
+    try { await api('POST', '/apporteurs/detach-artist', { artist_id: +b.dataset.detach }); toast('Artiste détaché'); renderApporteurDetail(id); } catch (e) { toast(e.message); }
+  });
+  view().querySelectorAll('[data-regime]').forEach((s) => s.onchange = async () => {
+    try { await api('POST', '/artist/' + s.dataset.regime + '/regime', { regime: s.value }); toast('Régime mis à jour'); } catch (e) { toast(e.message); }
+  });
+}
+
+function openApporteurModal(a) {
+  const p = (a && a.deal_params) || {};
+  modal({
+    title: a ? 'Modifier l\'apporteur' : 'Créer un apporteur', wide: true,
+    fields: [
+      { name: 'name', label: 'Nom (personne)', value: a?.name || '', placeholder: 'Ruddy Séverin' },
+      { name: 'structure', label: 'Structure / agence', value: a?.structure || '', placeholder: 'Alizés Records' },
+      { name: 'email', label: 'Email', value: a?.email || '' },
+      { name: 'deal_type', label: 'Type de deal', type: 'select', value: a?.deal_type || 'simple', options: [
+        { value: 'simple', label: 'Taux fixe' },
+        { value: 'paliers', label: 'Jauge (paliers selon nb d\'artistes)' },
+        { value: 'fixe_primes', label: 'Taux fixe + primes' },
+      ] },
+      { name: 'rate', label: 'Taux fixe (%) — si « taux fixe »', type: 'number', value: p.rate ?? 15 },
+      { name: 'floor', label: 'Jauge : plancher (%)', type: 'number', value: p.floor ?? 5 },
+      { name: 'cap', label: 'Jauge : plafond (%)', type: 'number', value: p.cap ?? 15 },
+      { name: 'status', label: 'Statut', type: 'select', value: a?.status || 'active', options: [
+        { value: 'active', label: 'Actif' }, { value: 'suspended', label: 'Suspendu' },
+      ] },
+    ],
+    onSave: async (d) => {
+      const rate = +d.rate || 0, floor = +d.floor || 0, cap = +d.cap || 0;
+      const deal_params = d.deal_type === 'paliers'
+        ? { metric: 'artists_count', floor, cap, tiers: [{ min: 1, rate: floor }, { min: 5, rate: Math.round((floor + cap) / 2) }, { min: 10, rate: cap }] }
+        : { rate };
+      const body = { name: d.name, structure: d.structure, email: d.email, deal_type: d.deal_type, deal_params, status: d.status };
+      if (a) { await api('POST', '/apporteurs/' + a.id + '/update', body); toast('Apporteur modifié'); renderApporteurDetail(a.id); }
+      else { await api('POST', '/apporteurs', body); toast('Apporteur créé'); pageApporteurs(); }
+    },
+  });
+}
+
+async function openAttachArtist(apId) {
+  let artists = [];
+  try { const { data } = await api('GET', '/users?type='); artists = (data || []).filter((u) => u.is_artist || u.artist_name); } catch (_) { artists = []; }
+  modal({
+    title: 'Rattacher un artiste', wide: true,
+    fields: [
+      artists.length
+        ? { name: 'artist_id', label: 'Artiste', type: 'select', options: artists.map((u) => ({ value: u.id, label: (u.artist_name || u.full_name || ('#' + u.id)) + ' · #' + u.id })) }
+        : { name: 'artist_id', label: 'ID de l\'artiste (voir Utilisateurs)', type: 'number', value: '' },
+      { name: 'free_months', label: 'Mois d\'abonnement offert', type: 'number', value: 3 },
+      { name: 'commission_months', label: 'Durée de commission (mois)', type: 'number', value: 12 },
+    ],
+    onSave: async (d) => { await api('POST', '/apporteurs/' + apId + '/attach-artist', d); toast('Artiste rattaché'); renderApporteurDetail(apId); },
+  });
+}
+
 const ROUTES = {
   dashboard: pageDashboard, lives: pageLives, users: pageUsers, genres: pageGenres, 'user-genres': pageUserGenres,
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
-  splash: pageSplash,
+  splash: pageSplash, apporteurs: pageApporteurs,
 };
 
 window.addEventListener('hashchange', route);
