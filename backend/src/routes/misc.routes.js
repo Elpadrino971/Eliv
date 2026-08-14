@@ -139,13 +139,15 @@ router.get('/genres', (req, res) => {
 // Valeurs vides -> le client retombe sur ses assets locaux par défaut.
 router.get('/splash-settings', (req, res) => {
   const rows = db.prepare(
-    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_logo_image', 'splash_animation_style')`
+    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_logo_image', 'splash_text_color', 'splash_overlay', 'splash_animation_style')`
   ).all();
   const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
   return ok(res, {
     background_image: map.splash_background_image || null,
     background_video: map.splash_background_video || null,
     logo_image: map.splash_logo_image || null,
+    text_color: map.splash_text_color || null,
+    overlay: Number(map.splash_overlay) || 0,
     animation_style: map.splash_animation_style || 'sparkles',
   });
 });

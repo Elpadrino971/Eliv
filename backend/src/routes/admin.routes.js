@@ -787,7 +787,7 @@ const SPLASH_ANIMATION_STYLES = ['sparkles', 'fade', 'none'];
 
 router.get('/splash-settings', requireAdmin, (req, res) => {
   const rows = db.prepare(
-    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_logo_image', 'splash_animation_style')`
+    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_logo_image', 'splash_text_color', 'splash_overlay', 'splash_animation_style')`
   ).all();
   const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
   return res.json({
@@ -796,6 +796,8 @@ router.get('/splash-settings', requireAdmin, (req, res) => {
       background_image: map.splash_background_image || null,
       background_video: map.splash_background_video || null,
       logo_image: map.splash_logo_image || null,
+      text_color: map.splash_text_color || null,
+      overlay: Number(map.splash_overlay) || 0,
       animation_style: map.splash_animation_style || 'sparkles',
     },
   });
@@ -819,12 +821,21 @@ router.put('/splash-settings', requireAdmin, (req, res) => {
   if (logoUrl) set.run('splash_logo_image', logoUrl);
   else if (truthy(b.remove_logo_image)) set.run('splash_logo_image', '');
 
+  // Colorimétrie / contraste des écritures (lisibilité selon le fond).
+  if (typeof b.text_color === 'string' && /^#?[0-9a-fA-F]{6}$/.test(b.text_color.trim())) {
+    set.run('splash_text_color', '#' + b.text_color.trim().replace(/^#/, ''));
+  }
+  if (b.overlay !== undefined && b.overlay !== '') {
+    const ov = Math.max(0, Math.min(85, parseInt(b.overlay, 10) || 0));
+    set.run('splash_overlay', String(ov));
+  }
+
   if (b.animation_style && SPLASH_ANIMATION_STYLES.includes(b.animation_style)) {
     set.run('splash_animation_style', b.animation_style);
   }
 
   const rows = db.prepare(
-    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_logo_image', 'splash_animation_style')`
+    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_logo_image', 'splash_text_color', 'splash_overlay', 'splash_animation_style')`
   ).all();
   const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
   return res.json({
@@ -834,6 +845,8 @@ router.put('/splash-settings', requireAdmin, (req, res) => {
       background_image: map.splash_background_image || null,
       background_video: map.splash_background_video || null,
       logo_image: map.splash_logo_image || null,
+      text_color: map.splash_text_color || null,
+      overlay: Number(map.splash_overlay) || 0,
       animation_style: map.splash_animation_style || 'sparkles',
     },
   });

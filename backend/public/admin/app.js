@@ -1003,6 +1003,16 @@ async function pageSplash() {
         ${styles.map((s) => `<option value="${s.value}" ${s.value === data.animation_style ? 'selected' : ''}>${esc(s.label)}</option>`).join('')}
       </select>
 
+      <label style="color:var(--muted);font-size:13px">Couleur des écritures (logo texte + « LIVE CONCERTS »)</label>
+      <div style="display:flex;align-items:center;gap:10px;margin:6px 0 16px">
+        <input type="color" id="sp-color" value="${esc(data.text_color || '#E6C76A')}" style="width:54px;height:38px;background:transparent;border:1px solid var(--line);border-radius:8px;cursor:pointer">
+        <span class="em">Choisis une couleur lisible sur ton fond (ex. blanc sur un fond clair).</span>
+      </div>
+
+      <label style="color:var(--muted);font-size:13px">Voile de contraste sur le fond : <b id="sp-ov-val" style="color:var(--gold)">${data.overlay || 0}%</b></label>
+      <input type="range" id="sp-overlay" min="0" max="85" value="${data.overlay || 0}" style="width:100%;margin:8px 0 18px" oninput="document.getElementById('sp-ov-val').textContent=this.value+'%'">
+      <div class="em" style="margin:-8px 0 18px">Assombrit le fond derrière le texte → lisible sur n'importe quelle image.</div>
+
       <button class="btn gold" id="sp-save">Enregistrer</button>
       <div class="em" style="margin-top:10px">Pris en compte au prochain lancement de l'app — pas besoin de nouvelle version App Store/Play Store.</div>
     </div>`;
@@ -1019,6 +1029,8 @@ async function pageSplash() {
     if (view().querySelector('#sp-video-remove')?.checked) fd.append('remove_background_video', '1');
     if (view().querySelector('#sp-logo-remove')?.checked) fd.append('remove_logo_image', '1');
     fd.append('animation_style', view().querySelector('#sp-style').value);
+    fd.append('text_color', view().querySelector('#sp-color').value);
+    fd.append('overlay', view().querySelector('#sp-overlay').value);
     try {
       await api('PUT', '/splash-settings', fd);
       toast('Page de lancement mise à jour');

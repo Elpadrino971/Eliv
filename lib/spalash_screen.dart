@@ -64,6 +64,8 @@ class _SpalashScreenState extends State<SpalashScreen>
   // sur les assets locaux si rien n'est configuré ou si le réseau est lent).
   String? _bgImageUrl;
   String? _logoUrl;
+  Color _accent = goldPrimary; // couleur des écritures principales (admin)
+  double _overlayOpacity = 0; // voile de contraste sur le fond (0..0.85)
   String _animationStyle = 'sparkles';
   VideoPlayerController? _videoController;
 
@@ -84,6 +86,8 @@ class _SpalashScreenState extends State<SpalashScreen>
       final videoUrl = (data['background_video'] as String?)?.trim();
       final imageUrl = (data['background_image'] as String?)?.trim();
       final logoUrl = (data['logo_image'] as String?)?.trim();
+      final textColor = (data['text_color'] as String?)?.trim();
+      final overlayRaw = data['overlay'];
       final style = (data['animation_style'] as String?)?.trim();
 
       if (!mounted) return;
@@ -91,6 +95,9 @@ class _SpalashScreenState extends State<SpalashScreen>
         if (style != null && style.isNotEmpty) _animationStyle = style;
         if (imageUrl != null && imageUrl.isNotEmpty) _bgImageUrl = imageUrl;
         if (logoUrl != null && logoUrl.isNotEmpty) _logoUrl = logoUrl;
+        if (textColor != null && textColor.isNotEmpty) _accent = _parseColor(textColor, goldPrimary);
+        final ov = overlayRaw is num ? overlayRaw.toDouble() : double.tryParse('${overlayRaw ?? ''}');
+        if (ov != null) _overlayOpacity = (ov / 100).clamp(0.0, 0.85);
       });
 
       if (videoUrl != null && videoUrl.isNotEmpty) {
@@ -150,6 +157,15 @@ class _SpalashScreenState extends State<SpalashScreen>
     return _localBackgroundFallback();
   }
 
+  // Parse une couleur hex "#RRGGBB" (ou "RRGGBB") venue de l'admin.
+  Color _parseColor(String? hex, Color fallback) {
+    if (hex == null || hex.isEmpty) return fallback;
+    var h = hex.replaceFirst('#', '').trim();
+    if (h.length == 6) h = 'FF$h';
+    final v = int.tryParse(h, radix: 16);
+    return v == null ? fallback : Color(v);
+  }
+
   // Logo emblème : image configurée dans l'admin (réseau) si présente, sinon
   // l'asset local, sinon le texte "VybzzZ". Comme le fond -> modifiable depuis
   // le VPS/admin, sans nouvelle version de l'app.
@@ -160,11 +176,11 @@ class _SpalashScreenState extends State<SpalashScreen>
       fit: BoxFit.contain,
       errorBuilder: (_, __, ___) => Padding(
         padding: EdgeInsets.symmetric(vertical: h * 0.12),
-        child: const Text(
+        child: Text(
           'VybzzZ',
           style: TextStyle(
             fontFamily: AppFonts.logo,
-            color: goldPrimary,
+            color: _accent,
             fontSize: 46,
             fontWeight: FontWeight.w600,
             letterSpacing: 6,
@@ -220,6 +236,13 @@ class _SpalashScreenState extends State<SpalashScreen>
         children: [
           // ── Fond : image/vidéo admin si configurée, sinon assets locaux
           _background(),
+
+          // ── Voile de contraste (réglable depuis l'admin) : assombrit le fond
+          // pour rendre le texte lisible sur n'importe quelle image.
+          if (_overlayOpacity > 0)
+            Positioned.fill(
+              child: ColoredBox(color: Colors.black.withValues(alpha: _overlayOpacity)),
+            ),
 
           // ── Halo doré central qui respire (comble le vide + met le logo en valeur)
           if (_animationStyle != 'none')
@@ -282,7 +305,7 @@ class _SpalashScreenState extends State<SpalashScreen>
                         'LIVE CONCERTS',
                         style: TextStyle(
                           fontFamily: AppFonts.ui,
-                          color: goldPrimary,
+                          color: _accent,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 4,
