@@ -63,6 +63,7 @@ class _SpalashScreenState extends State<SpalashScreen>
   // Fond d'écran / animation personnalisés depuis l'admin (facultatif -> repli
   // sur les assets locaux si rien n'est configuré ou si le réseau est lent).
   String? _bgImageUrl;
+  String? _logoUrl;
   String _animationStyle = 'sparkles';
   VideoPlayerController? _videoController;
 
@@ -82,12 +83,14 @@ class _SpalashScreenState extends State<SpalashScreen>
       final data = (jsonDecode(res.body)?['data'] ?? {}) as Map;
       final videoUrl = (data['background_video'] as String?)?.trim();
       final imageUrl = (data['background_image'] as String?)?.trim();
+      final logoUrl = (data['logo_image'] as String?)?.trim();
       final style = (data['animation_style'] as String?)?.trim();
 
       if (!mounted) return;
       setState(() {
         if (style != null && style.isNotEmpty) _animationStyle = style;
         if (imageUrl != null && imageUrl.isNotEmpty) _bgImageUrl = imageUrl;
+        if (logoUrl != null && logoUrl.isNotEmpty) _logoUrl = logoUrl;
       });
 
       if (videoUrl != null && videoUrl.isNotEmpty) {
@@ -145,6 +148,43 @@ class _SpalashScreenState extends State<SpalashScreen>
       );
     }
     return _localBackgroundFallback();
+  }
+
+  // Logo emblème : image configurée dans l'admin (réseau) si présente, sinon
+  // l'asset local, sinon le texte "VybzzZ". Comme le fond -> modifiable depuis
+  // le VPS/admin, sans nouvelle version de l'app.
+  Widget _localLogo(double w, double h) {
+    return Image.asset(
+      'assets/launch_logo.png',
+      width: w * 0.80,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => Padding(
+        padding: EdgeInsets.symmetric(vertical: h * 0.12),
+        child: const Text(
+          'VybzzZ',
+          style: TextStyle(
+            fontFamily: AppFonts.logo,
+            color: goldPrimary,
+            fontSize: 46,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 6,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _logo(double w, double h) {
+    if (_logoUrl != null && _logoUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: _logoUrl!,
+        width: w * 0.80,
+        fit: BoxFit.contain,
+        placeholder: (_, __) => _localLogo(w, h),
+        errorWidget: (_, __, ___) => _localLogo(w, h),
+      );
+    }
+    return _localLogo(w, h);
   }
 
   void _onConfirmed() async {
@@ -229,24 +269,7 @@ class _SpalashScreenState extends State<SpalashScreen>
                   opacity: _logoFade,
                   child: ScaleTransition(
                     scale: _logoScale,
-                    child: Image.asset(
-                      'assets/launch_logo.png',
-                      width: w * 0.80,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => Padding(
-                        padding: EdgeInsets.symmetric(vertical: h * 0.12),
-                        child: const Text(
-                          'VybzzZ',
-                          style: TextStyle(
-                            fontFamily: AppFonts.logo,
-                            color: goldPrimary,
-                            fontSize: 46,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 6,
-                          ),
-                        ),
-                      ),
-                    ),
+                    child: _logo(w, h),
                   ),
                 ),
 

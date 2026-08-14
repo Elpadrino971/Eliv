@@ -787,7 +787,7 @@ const SPLASH_ANIMATION_STYLES = ['sparkles', 'fade', 'none'];
 
 router.get('/splash-settings', requireAdmin, (req, res) => {
   const rows = db.prepare(
-    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_animation_style')`
+    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_logo_image', 'splash_animation_style')`
   ).all();
   const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
   return res.json({
@@ -795,6 +795,7 @@ router.get('/splash-settings', requireAdmin, (req, res) => {
     data: {
       background_image: map.splash_background_image || null,
       background_video: map.splash_background_video || null,
+      logo_image: map.splash_logo_image || null,
       animation_style: map.splash_animation_style || 'sparkles',
     },
   });
@@ -812,12 +813,18 @@ router.put('/splash-settings', requireAdmin, (req, res) => {
   if (videoUrl) set.run('splash_background_video', videoUrl);
   else if (truthy(b.remove_background_video)) set.run('splash_background_video', '');
 
+  // Logo emblème (image) — même mécanique que le fond : géré depuis l'admin/VPS,
+  // récupéré par l'app via /api/splash-settings (aucune nouvelle version requise).
+  const logoUrl = saveUpload(req, ['logo_image', 'logo'], 'splash', 'splash');
+  if (logoUrl) set.run('splash_logo_image', logoUrl);
+  else if (truthy(b.remove_logo_image)) set.run('splash_logo_image', '');
+
   if (b.animation_style && SPLASH_ANIMATION_STYLES.includes(b.animation_style)) {
     set.run('splash_animation_style', b.animation_style);
   }
 
   const rows = db.prepare(
-    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_animation_style')`
+    `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_logo_image', 'splash_animation_style')`
   ).all();
   const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
   return res.json({
@@ -826,6 +833,7 @@ router.put('/splash-settings', requireAdmin, (req, res) => {
     data: {
       background_image: map.splash_background_image || null,
       background_video: map.splash_background_video || null,
+      logo_image: map.splash_logo_image || null,
       animation_style: map.splash_animation_style || 'sparkles',
     },
   });
