@@ -41,7 +41,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
     // Paliers d'accès (impulsion / accessibilité). Chaque prix a un produit IAP
     // consommable dédié côté App Store / RevenueCat : id = ticket_<partie entière>
     // (2.99 -> ticket_2, 4.99 -> ticket_4, … 99.99 -> ticket_99).
-    '2.99', '4.99', '6.99', '9.99',
+    '2.99', '4.99', '6.99', '9.99', '14.99',
     '19.99', '29.99', '39.99', '49.99', '59.99',
     '79.99', '99.99',
   ];
