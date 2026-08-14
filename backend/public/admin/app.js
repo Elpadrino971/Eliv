@@ -988,6 +988,11 @@ async function pageSplash() {
       <input type="file" id="sp-image" accept="image/*" style="${fieldStyle}">
       ${data.background_image ? `<label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);margin:0 0 14px"><input type="checkbox" id="sp-image-remove" style="width:auto"> Supprimer l'image actuelle (repli sur l'asset par défaut de l'app)</label>` : '<div style="margin-bottom:14px"></div>'}
 
+      <label style="color:var(--muted);font-size:13px">Logo emblème (image — PNG transparent conseillé)</label>
+      ${data.logo_image ? `<div style="margin:8px 0;background:#0A1226;border-radius:8px;padding:10px;display:inline-block"><img src="${esc(data.logo_image)}" style="max-width:160px;max-height:160px"></div>` : ''}
+      <input type="file" id="sp-logo" accept="image/*" style="${fieldStyle}">
+      ${data.logo_image ? `<label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);margin:0 0 14px"><input type="checkbox" id="sp-logo-remove" style="width:auto"> Supprimer le logo actuel (repli sur le logo par défaut de l'app)</label>` : '<div style="margin-bottom:14px"></div>'}
+
       <label style="color:var(--muted);font-size:13px">Fond d'écran (vidéo — prioritaire sur l'image si les deux sont présentes)</label>
       ${data.background_video ? `<div style="margin:8px 0"><video src="${esc(data.background_video)}" muted loop autoplay playsinline style="max-width:100%;border-radius:8px;max-height:200px"></video></div>` : ''}
       <input type="file" id="sp-video" accept="video/*" style="${fieldStyle}">
@@ -1006,10 +1011,13 @@ async function pageSplash() {
     const fd = new FormData();
     const imageFile = view().querySelector('#sp-image').files[0];
     const videoFile = view().querySelector('#sp-video').files[0];
+    const logoFile = view().querySelector('#sp-logo').files[0];
     if (imageFile) fd.append('background_image', imageFile);
     if (videoFile) fd.append('background_video', videoFile);
+    if (logoFile) fd.append('logo_image', logoFile);
     if (view().querySelector('#sp-image-remove')?.checked) fd.append('remove_background_image', '1');
     if (view().querySelector('#sp-video-remove')?.checked) fd.append('remove_background_video', '1');
+    if (view().querySelector('#sp-logo-remove')?.checked) fd.append('remove_logo_image', '1');
     fd.append('animation_style', view().querySelector('#sp-style').value);
     try {
       await api('PUT', '/splash-settings', fd);
