@@ -90,7 +90,7 @@ const NAV = [
     { id: 'genres', label: 'Genres', ic: '🎵' },
     { id: 'user-genres', label: 'Genres par user', ic: '🏷️' },
     { id: 'events', label: 'Concerts', ic: '📅' },
-    { id: 'feed-clips', label: 'Clips (Feeds)', ic: '🎬' },
+    { id: 'feed-clips', label: 'Feeds (Pour toi / Clips)', ic: '🎬' },
     { id: 'packages', label: 'Packages', ic: '📦' },
     { id: 'subscriptions', label: 'Abonnements', ic: '💳' },
     { id: 'referrals', label: 'Parrainages', ic: '🤝' },
@@ -619,20 +619,46 @@ function feedClipForm(row, { duplicate = false } = {}) {
 function pageFeedClips() {
   EDIT.feedclip = (id) => { const r = currentRows.find((x) => x.id == id); if (r) feedClipForm(r); };
   DUP.feedclip = (id) => { const r = currentRows.find((x) => x.id == id); if (r) feedClipForm(r, { duplicate: true }); };
-  listPage({
-    title: 'Clips (Feeds Pour toi / Clips)', endpoint: '/feed-clips', addLabel: '+ Ajouter un clip',
-    onAdd: () => feedClipForm(null),
-    columns: [
-      { label: '#', render: (r) => r.id },
-      { label: 'Feed', render: (r) => r.feed === 'clips' ? 'Clips' : 'Pour toi' },
-      { label: 'Titre', render: (r) => esc(r.title || '—') },
-      { label: 'Soumis par', render: (r) => r.user_id ? esc(r.submitted_by || ('user #' + r.user_id)) : '<span style="color:var(--muted)">Admin (officiel)</span>' },
-      { label: 'Source', render: (r) => `${r.mux_playback_id ? '🎬 Mux' : (r.video_url ? '📁 Fichier' : '—')}${muxBadge(r.upload_status)}${r.expires_at ? `<div class="em">expire le ${fmtDate(r.expires_at)}</div>` : ''}` },
-      { label: 'Ordre', render: (r) => r.position ?? 0 },
-      { label: 'Statut', render: (r) => badge(r.active ? 'active' : 'pending') },
-      { label: 'Action', render: (r) => `${!r.active ? `<button class="btn status" data-approveclip="${r.id}">Approuver</button>` : ''}<button class="btn edit" data-edit="feedclip:${r.id}">Modifier</button><button class="btn dup" data-dup="feedclip:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="clip:${r.id}">🎬 Upload</button><button class="btn del" data-del="/feed-clips/${r.id}">Supprimer</button>` },
-    ],
-  });
+  const feedBadge = (f) => f === 'clips'
+    ? '<span class="badge" style="background:rgba(230,199,106,.18);color:var(--gold);font-weight:700">🟨 Clips</span>'
+    : '<span class="badge" style="background:rgba(90,160,255,.18);color:#7ab8ff;font-weight:700">🟦 Pour toi</span>';
+  const columns = [
+    { label: '#', render: (r) => r.id },
+    { label: 'Feed', render: (r) => feedBadge(r.feed) },
+    { label: 'Titre', render: (r) => esc(r.title || '—') },
+    { label: 'Soumis par', render: (r) => r.user_id ? esc(r.submitted_by || ('user #' + r.user_id)) : '<span style="color:var(--muted)">Admin (officiel)</span>' },
+    { label: 'Source', render: (r) => `${r.mux_playback_id ? '🎬 Mux' : (r.video_url ? '📁 Fichier' : '—')}${muxBadge(r.upload_status)}${r.expires_at ? `<div class="em">expire le ${fmtDate(r.expires_at)}</div>` : ''}` },
+    { label: 'Ordre', render: (r) => r.position ?? 0 },
+    { label: 'Statut', render: (r) => badge(r.active ? 'active' : 'pending') },
+    { label: 'Action', render: (r) => `${!r.active ? `<button class="btn status" data-approveclip="${r.id}">Approuver</button>` : ''}<button class="btn edit" data-edit="feedclip:${r.id}">Modifier</button><button class="btn dup" data-dup="feedclip:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="clip:${r.id}">🎬 Upload</button><button class="btn del" data-del="/feed-clips/${r.id}">Supprimer</button>` },
+  ];
+  (async () => {
+    view().innerHTML = '<div class="empty">Chargement…</div>';
+    const { data } = await api('GET', '/feed-clips');
+    currentRows = data || [];
+    const isClips = (r) => r.feed === 'clips';
+    const counts = { all: currentRows.length, for_you: currentRows.filter((r) => !isClips(r)).length, clips: currentRows.filter(isClips).length };
+    const tabs = [['all', 'Tous', counts.all], ['for_you', '🟦 Pour toi', counts.for_you], ['clips', '🟨 Clips', counts.clips]];
+    view().innerHTML = `<div class="head-row"><h1 class="page-title">Feeds — Pour toi / Clips</h1><button class="add-btn" id="addbtn">+ Ajouter un clip</button></div>
+      <p class="em" style="margin:-6px 0 12px">« Pour toi » et « Clips » sont les 2 feeds de shorts. (Les <b>Concerts</b> sont une section à part.)</p>
+      <div style="display:flex;gap:8px;margin:0 0 14px">
+        ${tabs.map(([v, l, c]) => `<button class="btn" data-ft="${v}" style="padding:8px 14px">${l} <span class="em">(${c})</span></button>`).join('')}
+      </div>
+      ${tableShellInner(columns)}`;
+    const rowsFor = (t) => t === 'all' ? currentRows : (t === 'clips' ? currentRows.filter(isClips) : currentRows.filter((r) => !isClips(r)));
+    const applyTab = (t) => {
+      mountTable(view().querySelector('.tcard'), { columns, rows: rowsFor(t) });
+      view().querySelectorAll('[data-ft]').forEach((b) => {
+        const on = b.dataset.ft === t;
+        b.style.background = on ? 'var(--gold)' : '';
+        b.style.color = on ? '#1a1206' : '';
+        b.style.fontWeight = on ? '700' : '';
+      });
+    };
+    view().querySelectorAll('[data-ft]').forEach((b) => b.onclick = () => applyTab(b.dataset.ft));
+    view().querySelector('#addbtn').onclick = () => feedClipForm(null);
+    applyTab('all');
+  })();
 }
 
 function pagePackages() {
