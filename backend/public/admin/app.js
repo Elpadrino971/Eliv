@@ -633,8 +633,20 @@ function pageFeedClips() {
   const feedBadge = (f) => f === 'clips'
     ? '<span class="badge" style="background:rgba(230,199,106,.18);color:var(--gold);font-weight:700">🟨 Clips</span>'
     : '<span class="badge" style="background:rgba(90,160,255,.18);color:#7ab8ff;font-weight:700">🟦 Pour toi</span>';
+  // Miniature : Mux génère une image du clip → on l'affiche pour repérer
+  // le contenu d'un coup d'œil. Format adapté (paysage pour un clip, portrait
+  // pour un short). Repli sur une icône si pas de Mux (fichier uploadé).
+  const thumb = (r) => {
+    if (r.mux_playback_id) {
+      const land = r.feed === 'clips';
+      const w = land ? 80 : 45, h = land ? 45 : 80;
+      return `<img src="https://image.mux.com/${r.mux_playback_id}/thumbnail.jpg?width=${w * 2}&height=${h * 2}&fit_mode=smartcrop" style="width:${w}px;height:${h}px;object-fit:cover;border-radius:6px;background:#0A1226" loading="lazy">`;
+    }
+    return `<div style="width:45px;height:45px;border-radius:6px;background:#0A1226;display:flex;align-items:center;justify-content:center;color:var(--muted)">▶</div>`;
+  };
   const columns = [
     { label: '#', render: (r) => r.id },
+    { label: 'Aperçu', render: (r) => thumb(r) },
     { label: 'Feed', render: (r) => feedBadge(r.feed) },
     { label: 'Titre', render: (r) => esc(r.title || '—') },
     { label: 'Soumis par', render: (r) => r.user_id ? esc(r.submitted_by || ('user #' + r.user_id)) : '<span style="color:var(--muted)">Admin (officiel)</span>' },
