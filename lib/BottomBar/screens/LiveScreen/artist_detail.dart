@@ -2,6 +2,7 @@ import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/user_model.dart';
+import 'package:artist/BottomBar/screens/LiveScreen/artist_clips_grid.dart';
 import 'package:artist/travis_scott/about_screen.dart';
 import 'package:artist/travis_scott/events_screen.dart';
 import 'package:artist/widgets/image_widget.dart';
@@ -46,7 +47,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: DefaultTabController(
-        length: 2,
+        length: 3,
         child: Padding(
           padding: myPadding,
           child: Column(
@@ -276,14 +277,16 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               ),
               height(0.01),
               SizedBox(
-                width: Get.width * .5,
+                width: Get.width * .7,
                 child: TabBar(
                   labelColor: Get.isDarkMode ? whiteColor : blackColor,
                   dividerColor: greyColor.withValues(alpha: 0.2),
                   indicatorColor: Get.isDarkMode ? goldPrimary : mainThemeColor,
                   unselectedLabelColor: Color(0xff737373),
+                  labelPadding: EdgeInsets.symmetric(horizontal: 6),
                   tabs: [
                     Tab(text: 'live_tab_events'.tr),
+                    Tab(text: 'Clips'),
                     Tab(text: 'live_tab_about'.tr),
                   ],
                 ),
@@ -294,6 +297,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                     children: [
                       EventsScreen(
                         events: eventController.artistEvents.value.data ?? [],
+                      ),
+                      ArtistClipsGrid(
+                        artistId: '${widget.artist?.id ?? 1}',
                       ),
                       AboutScreen(artist: widget.artist ?? User()),
                     ],

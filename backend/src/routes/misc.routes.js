@@ -476,6 +476,40 @@ router.get('/feed-clips', (req, res) => {
   return res.json({ status: 'success', count: list.length, list });
 });
 
+// GET /api/artist/:id/clips — tous les shorts (Pour toi + Clips) publiés par
+// un artiste, pour la grille "façon TikTok" de sa fiche profil. Ne renvoie
+// que du contenu déjà validé (active=1) ; le paramètre ?feed=for_you|clips
+// permet de filtrer un seul onglet. La miniature vient de Mux quand dispo.
+const feedMuxThumb = (id) => (id ? `https://image.mux.com/${id}/thumbnail.jpg?width=320&height=568&fit_mode=smartcrop` : null);
+router.get('/artist/:id/clips', (req, res) => {
+  const artistId = req.params.id;
+  const feedFilter = req.query.feed === 'clips' ? 'clips'
+    : req.query.feed === 'for_you' ? 'for_you' : null;
+  let sql = 'SELECT * FROM feed_clips WHERE user_id = ? AND active = 1';
+  const params = [artistId];
+  if (feedFilter) { sql += ' AND feed = ?'; params.push(feedFilter); }
+  sql += ' ORDER BY position ASC, id DESC';
+  const rows = db.prepare(sql).all(...params);
+  const list = rows.map((r) => ({
+    id: r.id,
+    feed: r.feed === 'clips' ? 'clips' : 'for_you',
+    title: r.title,
+    video_url: r.mux_playback_id ? feedMuxHls(r.mux_playback_id) : r.video_url,
+    mux_playback_id: r.mux_playback_id,
+    thumbnail: feedMuxThumb(r.mux_playback_id),
+    created_at: r.created_at,
+  }));
+  return res.json({
+    status: 'success',
+    count: list.length,
+    counts: {
+      for_you: list.filter((c) => c.feed === 'for_you').length,
+      clips: list.filter((c) => c.feed === 'clips').length,
+    },
+    list,
+  });
+});
+
 // POST /api/feed-clips/submit — n'importe quel user connecté peut soumettre
 // un short pour "Pour toi" ou "Clips" ; reste invisible (active=0) tant que
 // l'admin ne l'a pas approuvé depuis "Clips (Feeds)" (contenu hors-scène

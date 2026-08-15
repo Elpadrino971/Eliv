@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/abusive_words_model.dart';
+import 'package:artist/Models/artist_clips_model.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/Models/follow_model.dart';
 import 'package:artist/Models/gift_model.dart';
@@ -14,6 +15,10 @@ import 'package:zego_uikit_prebuilt_live_streaming/zego_uikit_prebuilt_live_stre
 
 class EventController extends GetxController {
   final response = ApiResponse();
+  // Réponse dédiée à la grille clips : la fiche artiste charge events/followers
+  // via [response] tandis que la grille charge en parallèle. Un ApiResponse
+  // séparé évite que les deux appels écrasent l'URL/le type l'un de l'autre.
+  final _clipsResponse = ApiResponse();
 
   Rx<EventsModel> featuredArtist = EventsModel().obs;
   Rx<EventsModel> nextEvents = EventsModel().obs;
@@ -24,6 +29,8 @@ class EventController extends GetxController {
   Rx<EventsModel> bannerEvents = EventsModel().obs;
   Rx<EventsModel> userJoinedEvents = EventsModel().obs;
   Rx<EventsModel> artistEvents = EventsModel().obs;
+  Rx<ArtistClipsModel> artistClips = ArtistClipsModel().obs;
+  RxBool artistClipsLoading = false.obs;
   Rx<EventsModel> eventHistory = EventsModel().obs;
   RxList<User> featuredArtists = <User>[].obs;
   Rx<FollowModel> artistFollowers = FollowModel().obs;
@@ -233,6 +240,22 @@ class EventController extends GetxController {
         parseError(value, doBack: false);
       }
     });
+  }
+
+  Future<void> getArtistClips({required String artistId}) async {
+    artistClipsLoading.value = true;
+    artistClips.value = ArtistClipsModel();
+    _clipsResponse.typeSetter = 'get';
+    _clipsResponse.urlSetter = APIs.getArtistClipsAPI(artistId);
+    await _clipsResponse.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        artistClips.value = artistClipsModelFromJson(value);
+        update();
+      } else {
+        parseError(value, doBack: false);
+      }
+    });
+    artistClipsLoading.value = false;
   }
 
   Future<void> getArtistFollowers({required String artistId}) async {

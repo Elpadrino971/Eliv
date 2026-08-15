@@ -104,6 +104,7 @@ class APIs {
   static const String updateEventStatusAPI = '$baseAPI/events/update';
   static const String reportEventAPI = '$baseAPI/report-event';
   static String getArtistEventsAPI(String id) => '$baseAPI/artist/$id/events';
+  static String getArtistClipsAPI(String id) => '$baseAPI/artist/$id/clips';
   static const String getEventStatsByUserIdAPI =
       '$baseAPI/get-event-stats-by-user-id'; // Post
 
