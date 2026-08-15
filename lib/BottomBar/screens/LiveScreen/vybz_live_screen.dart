@@ -977,21 +977,53 @@ class _ClipsFeedState extends State<_ClipsFeed> {
           itemBuilder: (context, index) {
             final c = _controller;
             final ready = c != null && c.value.isInitialized;
+            // Tap sur un clip (paysage) → plein écran paysage (façon YouTube).
+            final openFullscreen = () async {
+              if (index >= ids.length) return;
+              _controller?.pause();
+              await Get.to(() => ReplayPlayerScreen(
+                    url: ids[index],
+                    forceLandscape: true,
+                  ));
+              if (mounted && widget.isActive) _controller?.play();
+            };
             return GestureDetector(
+              onTap: openFullscreen,
               child: Container(
                 width: Get.width,
                 height: Get.height,
                 color: blackColor,
-                child: ready
-                    ? Center(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    if (ready)
+                      Center(
                         child: AspectRatio(
                           aspectRatio: c.value.aspectRatio,
                           child: VideoPlayer(c),
                         ),
                       )
-                    : const Center(
+                    else
+                      const Center(
                         child: CircularProgressIndicator(color: goldPrimary),
                       ),
+                    // Indice "plein écran" en bas à droite du clip.
+                    if (ready)
+                      Positioned(
+                        right: 14,
+                        bottom: 90,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.45),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.fullscreen,
+                              color: Colors.white, size: 24),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             );
           },
