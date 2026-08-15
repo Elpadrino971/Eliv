@@ -73,195 +73,249 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     final txt = dark ? whiteColor : blackColor;
     final bg = Theme.of(context).scaffoldBackgroundColor;
     return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: DefaultTabController(
-          length: 3,
-          child: NestedScrollView(
-            headerSliverBuilder: (context, _) => [
-              SliverToBoxAdapter(child: _identity(txt)),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _StickyTabBar(
-                  bg: bg,
-                  tabBar: TabBar(
-                    labelColor: txt,
-                    dividerColor: greyColor.withValues(alpha: 0.15),
-                    indicatorColor: dark ? goldPrimary : mainThemeColor,
-                    unselectedLabelColor: const Color(0xff737373),
-                    tabs: const [
-                      Tab(text: 'Shorts'),
-                      Tab(text: 'Clips'),
-                      Tab(text: 'Concerts'),
-                    ],
-                  ),
+      body: DefaultTabController(
+        length: 3,
+        child: NestedScrollView(
+          headerSliverBuilder: (context, _) => [
+            SliverToBoxAdapter(child: _identity(txt)),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _StickyTabBar(
+                bg: bg,
+                tabBar: TabBar(
+                  labelColor: txt,
+                  dividerColor: greyColor.withValues(alpha: 0.15),
+                  indicatorColor: dark ? goldPrimary : mainThemeColor,
+                  unselectedLabelColor: const Color(0xff737373),
+                  tabs: const [
+                    Tab(text: 'Shorts'),
+                    Tab(text: 'Clips'),
+                    Tab(text: 'Concerts'),
+                  ],
                 ),
               ),
-            ],
-            body: TabBarView(
-              children: [
-                const ArtistClipsGrid(feed: 'for_you'),
-                const ArtistClipsGrid(feed: 'clips'),
-                Obx(() => EventsScreen(
-                      events: eventController.artistEvents.value.data ?? [],
-                    )),
-              ],
             ),
+          ],
+          body: TabBarView(
+            children: [
+              const ArtistClipsGrid(feed: 'for_you'),
+              const ArtistClipsGrid(feed: 'clips'),
+              Obx(() => EventsScreen(
+                    events: eventController.artistEvents.value.data ?? [],
+                  )),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // ── PARTIE 1 : identité centrée (façon TikTok) ──
+  // ── PARTIE 1 : grande image plein cadre (façon Netflix/Spotify) ──
   Widget _identity(Color txt) {
     final dark = Get.isDarkMode;
+    final w = Get.width;
+    final img = widget.artist?.profileImage ?? widget.artist?.artistProfile ?? '';
     final bio = (widget.artist?.artistBio?.trim().isNotEmpty ?? false)
         ? widget.artist!.artistBio!
         : (widget.artist?.bio ?? '');
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: Column(
-        children: [
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () => Get.back(),
-                child: Image.asset('assets/button_image3.png', width: 30, height: 30),
-              ),
-              const Spacer(),
-              Image.asset('assets/button_image2.png', width: 30, height: 30),
-              width(0.02),
-              Image.asset('assets/button_image1.png', width: 30, height: 30),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(2.5),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: goldPrimary, width: 2),
+    final top = MediaQuery.of(context).padding.top;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Grande image du visage, plein cadre, sans bord ni arrondi.
+        Stack(
+          children: [
+            SizedBox(
+              width: w,
+              height: w * 1.08,
+              child: ImageWidget(url: img, width: w, height: w * 1.08, fit: BoxFit.cover),
             ),
-            child: ClipOval(
-              child: ImageWidget(
-                url: widget.artist?.profileImage ?? widget.artist?.artistProfile ?? '',
-                width: 92,
-                height: 92,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            widget.artist?.artistName ?? widget.artist?.fullName ?? 'N/A',
-            style: TextStyle(color: txt, fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 3),
-          Text(_handle, style: const TextStyle(color: Color(0xff737373), fontSize: 13.5)),
-          const SizedBox(height: 10),
-          // Stats
-          Obx(() {
-            final followers =
-                eventController.artistFollowers.value.data?.followersCount ?? 0;
-            final clips = eventController.artistClips.value.count;
-            final concerts =
-                (eventController.artistEvents.value.data ?? []).length;
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _stat('$followers', 'Abonnés', txt),
-                _divider(),
-                _stat('$clips', 'Vidéos', txt),
-                _divider(),
-                _stat('$concerts', 'Concerts', txt),
-              ],
-            );
-          }),
-          const SizedBox(height: 16),
-          // Boutons : Suivre + Ma liste + Partager
-          Row(
-            children: [
-              Expanded(
-                child: GetBuilder<EventController>(
-                  init: eventController,
-                  builder: (_) => GestureDetector(
-                    onTap: _toggleFollow,
-                    child: Container(
-                      height: 44,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: _isFollowing
-                            ? Colors.transparent
-                            : (dark ? goldPrimary : mainThemeColor),
-                        border: Border.all(color: goldPrimary, width: 1.4),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: eventController.isLoading.value
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
-                            )
-                          : Text(
-                              _isFollowing
-                                  ? 'live_following'.tr
-                                  : 'live_follow_artist'.tr,
-                              style: TextStyle(
-                                color: _isFollowing ? goldPrimary : Colors.white,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 14.5,
-                              ),
-                            ),
-                    ),
+            // Voiles pour lisibilité (haut sombre pour les boutons, bas pour le texte).
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.32),
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.72),
+                    ],
+                    stops: const [0.0, 0.42, 1.0],
                   ),
                 ),
               ),
-              const SizedBox(width: 9),
-              _ghostBtn(
-                icon: Icons.playlist_add,
-                label: 'Ma liste',
-                onTap: () => Get.snackbar(
-                  'Bientôt',
-                  'La liste arrive très vite 🎬',
-                  snackPosition: SnackPosition.BOTTOM,
-                ),
+            ),
+            // Barre du haut (retour / partager / menu).
+            Positioned(
+              top: top + 8,
+              left: 12,
+              right: 12,
+              child: Row(
+                children: [
+                  _circleBtn(Icons.arrow_back_ios_new_rounded, () => Get.back()),
+                  const Spacer(),
+                  _circleBtn(Icons.share_outlined, () {}),
+                  const SizedBox(width: 8),
+                  _circleBtn(Icons.more_horiz_rounded, () {}),
+                ],
               ),
-              const SizedBox(width: 9),
-              _ghostBtn(
-                icon: Icons.share_outlined,
-                onTap: () {},
+            ),
+            // Identité par-dessus le bas de l'image.
+            Positioned(
+              left: 18,
+              right: 18,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.artist?.artistName ?? widget.artist?.fullName ?? 'N/A',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                      shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _handle,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.82),
+                      fontSize: 13.5,
+                      shadows: const [Shadow(color: Colors.black87, blurRadius: 8)],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Obx(() {
+                    final followers =
+                        eventController.artistFollowers.value.data?.followersCount ?? 0;
+                    final clips = eventController.artistClips.value.count;
+                    final concerts =
+                        (eventController.artistEvents.value.data ?? []).length;
+                    return Row(
+                      children: [
+                        _statLight('$followers', 'Abonnés'),
+                        _vsep(),
+                        _statLight('$clips', 'Vidéos'),
+                        _vsep(),
+                        _statLight('$concerts', 'Concerts'),
+                      ],
+                    );
+                  }),
+                ],
               ),
-            ],
-          ),
-          if (bio.trim().isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Text(
-              bio,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xffcbd8ea), fontSize: 13, height: 1.5),
             ),
           ],
-          const SizedBox(height: 12),
-        ],
-      ),
+        ),
+        // Boutons + bio, sous l'image.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: GetBuilder<EventController>(
+                      init: eventController,
+                      builder: (_) => GestureDetector(
+                        onTap: _toggleFollow,
+                        child: Container(
+                          height: 44,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: _isFollowing
+                                ? Colors.transparent
+                                : (dark ? goldPrimary : mainThemeColor),
+                            border: Border.all(color: goldPrimary, width: 1.4),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: eventController.isLoading.value
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.white),
+                                )
+                              : Text(
+                                  _isFollowing
+                                      ? 'live_following'.tr
+                                      : 'live_follow_artist'.tr,
+                                  style: TextStyle(
+                                    color: _isFollowing ? goldPrimary : Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14.5,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 9),
+                  _ghostBtn(
+                    icon: Icons.playlist_add,
+                    label: 'Ma liste',
+                    onTap: () => Get.snackbar(
+                      'Bientôt',
+                      'La liste arrive très vite 🎬',
+                      snackPosition: SnackPosition.BOTTOM,
+                    ),
+                  ),
+                ],
+              ),
+              if (bio.trim().isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text(
+                  bio,
+                  style: TextStyle(color: txt.withValues(alpha: 0.85), fontSize: 13, height: 1.5),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _stat(String value, String label, Color txt) => Column(
+  Widget _circleBtn(IconData icon, VoidCallback onTap) => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.38),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: Colors.white, size: 18),
+        ),
+      );
+
+  Widget _statLight(String value, String label) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(value, style: TextStyle(color: txt, fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(value,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  shadows: [Shadow(color: Colors.black87, blurRadius: 8)])),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(color: Color(0xff737373), fontSize: 12)),
+          Text(label,
+              style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.78),
+                  fontSize: 12,
+                  shadows: const [Shadow(color: Colors.black87, blurRadius: 6)])),
         ],
       );
 
-  Widget _divider() => Container(
+  Widget _vsep() => Container(
         width: 1,
-        height: 30,
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        color: greyColor.withValues(alpha: 0.25),
+        height: 28,
+        margin: const EdgeInsets.symmetric(horizontal: 18),
+        color: Colors.white.withValues(alpha: 0.28),
       );
 
   Widget _ghostBtn({required IconData icon, String? label, required VoidCallback onTap}) {
