@@ -286,7 +286,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   labelPadding: EdgeInsets.symmetric(horizontal: 6),
                   tabs: [
                     Tab(text: 'live_tab_events'.tr),
-                    Tab(text: 'Clips'),
+                    Tab(text: 'Vidéos'),
                     Tab(text: 'live_tab_about'.tr),
                   ],
                 ),

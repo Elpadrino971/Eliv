@@ -20,12 +20,17 @@ class ReplayPlayerScreen extends StatefulWidget {
     this.title,
     this.isLive = false,
     this.event,
+    this.forceLandscape = false,
   }) : assert(playbackId != null || url != null, 'playbackId ou url requis');
 
   final String? playbackId;
   final String? url;
   final String? title;
   final bool isLive;
+
+  /// Ouvre directement en paysage (clips musicaux 16:9). L'app reste
+  /// portrait-only ailleurs ; on restaure le portrait à la fermeture.
+  final bool forceLandscape;
 
   /// Concert associé (pour like / tips / partage). Optionnel.
   final Event? event;
@@ -47,13 +52,16 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
   void initState() {
     super.initState();
     _likes = widget.event?.likesCount ?? 0;
-    // Autorise la rotation (paysage) pendant la lecture vidéo.
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    // Clip musical 16:9 → bascule directe en paysage. Sinon on autorise juste
+    // la rotation (l'utilisateur tourne s'il veut) sans forcer.
+    SystemChrome.setPreferredOrientations(widget.forceLandscape
+        ? [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]
+        : [
+            DeviceOrientation.portraitUp,
+            DeviceOrientation.portraitDown,
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ]);
     _init();
   }
 

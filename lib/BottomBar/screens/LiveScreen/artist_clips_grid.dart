@@ -6,9 +6,11 @@ import 'package:artist/widgets/replay_player_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Grille "façon TikTok" des posts d'un artiste (feeds "Pour toi" + "Clips").
-/// Sous-onglets Tous / Pour toi / Clips, vignettes 3 colonnes en portrait.
-/// Un tap ouvre le lecteur plein écran ([ReplayPlayerScreen]).
+/// Contenu vidéo d'un artiste sur sa fiche, en 2 sous-onglets distincts :
+///  • Shorts  = feed "Pour toi" (vertical / portrait, façon TikTok, 3 colonnes)
+///  • Clips   = clips musicaux (paysage 16:9, cartes pleine largeur)
+/// Un tap sur un short ouvre le lecteur portrait ; un clip s'ouvre en plein
+/// écran paysage automatique.
 class ArtistClipsGrid extends StatefulWidget {
   const ArtistClipsGrid({super.key, required this.artistId});
 
@@ -20,7 +22,7 @@ class ArtistClipsGrid extends StatefulWidget {
 
 class _ArtistClipsGridState extends State<ArtistClipsGrid> {
   final eventController = Get.find<EventController>();
-  String _tab = 'all'; // all | for_you | clips
+  String _tab = 'shorts'; // shorts (for_you) | clips
 
   @override
   void initState() {
@@ -28,25 +30,16 @@ class _ArtistClipsGridState extends State<ArtistClipsGrid> {
     eventController.getArtistClips(artistId: widget.artistId);
   }
 
-  List<ArtistClip> _rows(ArtistClipsModel m) {
-    if (_tab == 'clips') {
-      return m.list.where((c) => c.feed == 'clips').toList();
-    }
-    if (_tab == 'for_you') {
-      return m.list.where((c) => c.feed == 'for_you').toList();
-    }
-    return m.list;
-  }
-
-  void _open(ArtistClip clip) {
+  void _open(ArtistClip clip, {required bool landscape}) {
     final hasMux =
         clip.muxPlaybackId != null && clip.muxPlaybackId!.isNotEmpty;
     final hasUrl = clip.videoUrl != null && clip.videoUrl!.isNotEmpty;
-    if (!hasMux && !hasUrl) return; // rien à lire
+    if (!hasMux && !hasUrl) return;
     Get.to(() => ReplayPlayerScreen(
           playbackId: hasMux ? clip.muxPlaybackId : null,
           url: hasMux ? null : clip.videoUrl,
           title: clip.title,
+          forceLandscape: landscape,
         ));
   }
 
@@ -57,7 +50,7 @@ class _ArtistClipsGridState extends State<ArtistClipsGrid> {
       child: GestureDetector(
         onTap: () => setState(() => _tab = value),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: active ? goldPrimary : Colors.transparent,
             border: Border.all(
@@ -84,108 +77,156 @@ class _ArtistClipsGridState extends State<ArtistClipsGrid> {
     return Obx(() {
       final model = eventController.artistClips.value;
       final loading = eventController.artistClipsLoading.value;
-      final rows = _rows(model);
+      final shorts =
+          model.list.where((c) => c.feed == 'for_you').toList();
+      final clips = model.list.where((c) => c.feed == 'clips').toList();
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _chip('all', 'Tous', model.count),
-                _chip('for_you', 'Pour toi', model.counts.forYou),
-                _chip('clips', 'Clips', model.counts.clips),
-              ],
-            ),
+          Row(
+            children: [
+              _chip('shorts', 'Shorts', shorts.length),
+              _chip('clips', 'Clips', clips.length),
+            ],
           ),
           const SizedBox(height: 12),
           Expanded(
             child: loading
                 ? const Center(child: CircularProgressIndicator())
-                : rows.isEmpty
-                    ? Center(
-                        child: Text(
-                          'Aucun post pour le moment',
-                          style: TextStyle(color: greyColor),
-                        ),
-                      )
-                    : GridView.builder(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 4,
-                          crossAxisSpacing: 4,
-                          childAspectRatio: 9 / 16,
-                        ),
-                        itemCount: rows.length,
-                        itemBuilder: (context, i) => _tile(rows[i]),
-                      ),
+                : (_tab == 'shorts'
+                    ? _shortsGrid(shorts)
+                    : _clipsList(clips)),
           ),
         ],
       );
     });
   }
 
-  Widget _tile(ArtistClip clip) {
+  // ── Shorts : grille portrait 3 colonnes (façon TikTok) ──
+  Widget _shortsGrid(List<ArtistClip> rows) {
+    if (rows.isEmpty) {
+      return _empty('Aucun short pour le moment');
+    }
+    return GridView.builder(
+      padding: const EdgeInsets.only(bottom: 16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 4,
+        crossAxisSpacing: 4,
+        childAspectRatio: 9 / 16,
+      ),
+      itemCount: rows.length,
+      itemBuilder: (context, i) => _portraitTile(rows[i]),
+    );
+  }
+
+  // ── Clips musicaux : cartes paysage 16:9 pleine largeur ──
+  Widget _clipsList(List<ArtistClip> rows) {
+    if (rows.isEmpty) {
+      return _empty('Aucun clip pour le moment');
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.only(bottom: 16),
+      itemCount: rows.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, i) => _landscapeCard(rows[i]),
+    );
+  }
+
+  Widget _empty(String msg) => Center(
+        child: Text(msg, style: TextStyle(color: greyColor)),
+      );
+
+  Widget _portraitTile(ArtistClip clip) {
     return GestureDetector(
-      onTap: () => _open(clip),
+      onTap: () => _open(clip, landscape: false),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(6),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Container(color: const Color(0xff1a1a1a)),
-            if (clip.thumbnail != null && clip.thumbnail!.isNotEmpty)
-              ImageWidget(url: clip.thumbnail!, fit: BoxFit.cover)
-            else
-              Center(
-                child: Icon(Icons.play_circle_outline,
-                    color: whiteColor.withValues(alpha: 0.85), size: 34),
-              ),
-            // Voile bas + play icon pour lisibilité.
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.center,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.45),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const Positioned(
-              right: 6,
-              bottom: 6,
-              child: Icon(Icons.play_arrow_rounded,
-                  color: Colors.white, size: 18),
-            ),
-            // Petit badge feed en haut à gauche.
-            Positioned(
-              left: 5,
-              top: 5,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  clip.feed == 'clips' ? 'Clip' : 'Pour toi',
-                  style: const TextStyle(color: Colors.white, fontSize: 9),
-                ),
-              ),
-            ),
-          ],
-        ),
+        child: _thumb(clip, const Icon(Icons.play_arrow_rounded,
+            color: Colors.white, size: 18)),
       ),
+    );
+  }
+
+  Widget _landscapeCard(ArtistClip clip) {
+    return GestureDetector(
+      onTap: () => _open(clip, landscape: true),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: _thumb(
+                clip,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.play_arrow_rounded,
+                      color: Colors.white, size: 30),
+                ),
+                centerIcon: true,
+              ),
+            ),
+          ),
+          if (clip.title != null && clip.title!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 2),
+              child: Text(
+                clip.title!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Get.isDarkMode ? whiteColor : blackColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // Vignette commune (fond + image Mux + voile + icône play).
+  Widget _thumb(ArtistClip clip, Widget playIcon, {bool centerIcon = false}) {
+    final hasThumb = clip.thumbnail != null && clip.thumbnail!.isNotEmpty;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Container(color: const Color(0xff1a1a1a)),
+        if (hasThumb)
+          ImageWidget(url: clip.thumbnail!, fit: BoxFit.cover)
+        else
+          Center(
+            child: Icon(Icons.play_circle_outline,
+                color: whiteColor.withValues(alpha: 0.85), size: 34),
+          ),
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.center,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.45),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (centerIcon)
+          Center(child: playIcon)
+        else
+          Positioned(right: 6, bottom: 6, child: playIcon),
+      ],
     );
   }
 }

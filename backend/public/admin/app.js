@@ -612,7 +612,7 @@ async function feedClipForm(row, { duplicate = false } = {}) {
   modal({
     title: duplicate ? 'Dupliquer le clip' : (row ? 'Modifier le clip' : 'Ajouter un clip'),
     fields: [
-      { name: 'feed', label: 'Feed', type: 'select', value: row?.feed || 'for_you', options: [{ value: 'for_you', label: '🟦 Pour toi' }, { value: 'clips', label: '🟨 Clips' }] },
+      { name: 'feed', label: 'Type', type: 'select', value: row?.feed || 'for_you', options: [{ value: 'for_you', label: '🟦 Short (Pour toi — vertical/portrait)' }, { value: 'clips', label: '🟨 Clip musical (paysage 16:9)' }], hint: 'Short = contenu vertical (actu/promo). Clip = clip musical horizontal.' },
       { name: 'artist_id', label: 'Artiste (apparaît sur sa fiche profil)', type: 'select', value: row?.user_id ? String(row.user_id) : '', options: artistOpts, hint: 'Laisse « Officiel » si le clip n\'appartient à aucun artiste' },
       { name: 'title', label: 'Titre / légende (optionnel)', value: row?.title },
       { name: 'video', label: 'Fichier vidéo (upload direct)', type: 'file', accept: 'video/*' },
@@ -665,8 +665,8 @@ function pageFeedClips() {
     view().innerHTML = `<div class="head-row"><h1 class="page-title">Les 3 feeds de l'app</h1><button class="add-btn" id="addbtn">+ Ajouter un clip</button></div>
       <p class="em" style="margin:-6px 0 14px">Cette page gère les <b>shorts</b> (Pour toi & Clips). Les <b>Concerts</b> ont leur propre écran — cliquez sur la carte pour y aller.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin:0 0 18px">
-        ${card('#7ab8ff', '🟦', 'Pour toi', 'Shorts de découverte (mixe éditorial, mis en avant pour tous).', counts.for_you, 'data-ft-card="for_you"')}
-        ${card('#e6c76a', '🟨', 'Clips', 'Shorts communauté / clips d\'artistes.', counts.clips, 'data-ft-card="clips"')}
+        ${card('#7ab8ff', '🟦', 'Shorts (Pour toi)', 'Contenu court vertical/portrait : actu, promo, teasers.', counts.for_you, 'data-ft-card="for_you"')}
+        ${card('#e6c76a', '🟨', 'Clips', 'Clips musicaux des artistes — format paysage 16:9.', counts.clips, 'data-ft-card="clips"')}
         ${card('#ff6b6b', '🎬', 'Concerts', 'Lives & replays payants. Section séparée →', concertCount, 'data-goto="events"')}
       </div>
       <div style="display:flex;gap:8px;margin:0 0 12px;align-items:center">

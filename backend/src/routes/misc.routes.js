@@ -479,8 +479,13 @@ router.get('/feed-clips', (req, res) => {
 // GET /api/artist/:id/clips — tous les shorts (Pour toi + Clips) publiés par
 // un artiste, pour la grille "façon TikTok" de sa fiche profil. Ne renvoie
 // que du contenu déjà validé (active=1) ; le paramètre ?feed=for_you|clips
-// permet de filtrer un seul onglet. La miniature vient de Mux quand dispo.
-const feedMuxThumb = (id) => (id ? `https://image.mux.com/${id}/thumbnail.jpg?width=320&height=568&fit_mode=smartcrop` : null);
+// permet de filtrer un seul onglet. La miniature vient de Mux quand dispo :
+// portrait 9:16 pour les shorts, paysage 16:9 pour les clips musicaux.
+const feedMuxThumb = (id, feed) => {
+  if (!id) return null;
+  const dims = feed === 'clips' ? 'width=640&height=360' : 'width=320&height=568';
+  return `https://image.mux.com/${id}/thumbnail.jpg?${dims}&fit_mode=smartcrop`;
+};
 router.get('/artist/:id/clips', (req, res) => {
   const artistId = req.params.id;
   const feedFilter = req.query.feed === 'clips' ? 'clips'
@@ -490,15 +495,18 @@ router.get('/artist/:id/clips', (req, res) => {
   if (feedFilter) { sql += ' AND feed = ?'; params.push(feedFilter); }
   sql += ' ORDER BY position ASC, id DESC';
   const rows = db.prepare(sql).all(...params);
-  const list = rows.map((r) => ({
-    id: r.id,
-    feed: r.feed === 'clips' ? 'clips' : 'for_you',
-    title: r.title,
-    video_url: r.mux_playback_id ? feedMuxHls(r.mux_playback_id) : r.video_url,
-    mux_playback_id: r.mux_playback_id,
-    thumbnail: feedMuxThumb(r.mux_playback_id),
-    created_at: r.created_at,
-  }));
+  const list = rows.map((r) => {
+    const feed = r.feed === 'clips' ? 'clips' : 'for_you';
+    return {
+      id: r.id,
+      feed,
+      title: r.title,
+      video_url: r.mux_playback_id ? feedMuxHls(r.mux_playback_id) : r.video_url,
+      mux_playback_id: r.mux_playback_id,
+      thumbnail: feedMuxThumb(r.mux_playback_id, feed),
+      created_at: r.created_at,
+    };
+  });
   return res.json({
     status: 'success',
     count: list.length,
