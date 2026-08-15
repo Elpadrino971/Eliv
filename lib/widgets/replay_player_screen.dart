@@ -52,16 +52,19 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
   void initState() {
     super.initState();
     _likes = widget.event?.likesCount ?? 0;
-    // Clip musical 16:9 → bascule directe en paysage. Sinon on autorise juste
-    // la rotation (l'utilisateur tourne s'il veut) sans forcer.
-    SystemChrome.setPreferredOrientations(widget.forceLandscape
-        ? [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]
-        : [
-            DeviceOrientation.portraitUp,
-            DeviceOrientation.portraitDown,
-            DeviceOrientation.landscapeLeft,
-            DeviceOrientation.landscapeRight,
-          ]);
+    // Clip musical 16:9 → on affiche la vidéo en paysage tout de suite en la
+    // faisant pivoter nous-mêmes (RotatedBox dans build), ce qui est fiable sur
+    // iOS 16+/26 où setPreferredOrientations ne force pas la rotation. On garde
+    // donc l'UI verrouillée en portrait pour ne pas entrer en conflit.
+    // Sinon (replay concert), on autorise la rotation libre.
+    if (!widget.forceLandscape) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    }
     _init();
   }
 
@@ -228,7 +231,17 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
     final hasEvent = widget.event?.id != null;
     return Scaffold(
       backgroundColor: blackColor,
-      body: GestureDetector(
+      // Clip paysage : on pivote tout le lecteur de 90° pour un vrai plein
+      // écran horizontal, sans dépendre de la rotation iOS (peu fiable).
+      // L'utilisateur tourne son tel pour tenir la vidéo à l'endroit.
+      body: widget.forceLandscape
+          ? RotatedBox(quarterTurns: 1, child: _playerBody(c, hasEvent))
+          : _playerBody(c, hasEvent),
+    );
+  }
+
+  Widget _playerBody(VideoPlayerController? c, bool hasEvent) {
+    return GestureDetector(
         onTap: () => setState(() => _showControls = !_showControls),
         child: Stack(
           fit: StackFit.expand,
@@ -385,7 +398,6 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
             ],
           ],
         ),
-      ),
     );
   }
 }
