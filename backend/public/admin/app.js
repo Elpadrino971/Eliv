@@ -636,13 +636,31 @@ function pageFeedClips() {
     view().innerHTML = '<div class="empty">Chargement…</div>';
     const { data } = await api('GET', '/feed-clips');
     currentRows = data || [];
+    // Compte des concerts (3e surface) — sans bloquer si l'appel échoue.
+    let concertCount = null;
+    try { const ev = await api('GET', '/events'); concertCount = (ev.data || []).length; } catch (e) { concertCount = null; }
     const isClips = (r) => r.feed === 'clips';
     const counts = { all: currentRows.length, for_you: currentRows.filter((r) => !isClips(r)).length, clips: currentRows.filter(isClips).length };
-    const tabs = [['all', 'Tous', counts.all], ['for_you', '🟦 Pour toi', counts.for_you], ['clips', '🟨 Clips', counts.clips]];
-    view().innerHTML = `<div class="head-row"><h1 class="page-title">Feeds — Pour toi / Clips</h1><button class="add-btn" id="addbtn">+ Ajouter un clip</button></div>
-      <p class="em" style="margin:-6px 0 12px">« Pour toi » et « Clips » sont les 2 feeds de shorts. (Les <b>Concerts</b> sont une section à part.)</p>
-      <div style="display:flex;gap:8px;margin:0 0 14px">
-        ${tabs.map(([v, l, c]) => `<button class="btn" data-ft="${v}" style="padding:8px 14px">${l} <span class="em">(${c})</span></button>`).join('')}
+    // Les 3 surfaces de contenu de l'app, expliquées côte à côte. Cliquer sur
+    // « Pour toi » / « Clips » filtre le tableau ; « Concerts » ouvre la page dédiée.
+    const card = (accent, emoji, title, desc, count, action) => `
+      <div class="surface-card" ${action} style="flex:1;min-width:190px;cursor:pointer;border:1px solid var(--line);border-left:4px solid ${accent};border-radius:12px;padding:14px 16px;background:var(--card2,rgba(255,255,255,.02))">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-weight:700;font-size:15px">${emoji} ${title}</span>
+          <span style="font-weight:800;font-size:20px;color:${accent}">${count == null ? '—' : count}</span>
+        </div>
+        <div class="em" style="margin-top:4px;line-height:1.35">${desc}</div>
+      </div>`;
+    view().innerHTML = `<div class="head-row"><h1 class="page-title">Les 3 feeds de l'app</h1><button class="add-btn" id="addbtn">+ Ajouter un clip</button></div>
+      <p class="em" style="margin:-6px 0 14px">Cette page gère les <b>shorts</b> (Pour toi & Clips). Les <b>Concerts</b> ont leur propre écran — cliquez sur la carte pour y aller.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin:0 0 18px">
+        ${card('#7ab8ff', '🟦', 'Pour toi', 'Shorts de découverte (mixe éditorial, mis en avant pour tous).', counts.for_you, 'data-ft-card="for_you"')}
+        ${card('#e6c76a', '🟨', 'Clips', 'Shorts communauté / clips d\'artistes.', counts.clips, 'data-ft-card="clips"')}
+        ${card('#ff6b6b', '🎬', 'Concerts', 'Lives & replays payants. Section séparée →', concertCount, 'data-goto="events"')}
+      </div>
+      <div style="display:flex;gap:8px;margin:0 0 12px;align-items:center">
+        <span class="em" style="margin-right:2px">Filtrer les shorts :</span>
+        ${[['all', 'Tous', counts.all], ['for_you', '🟦 Pour toi', counts.for_you], ['clips', '🟨 Clips', counts.clips]].map(([v, l, c]) => `<button class="btn" data-ft="${v}" style="padding:8px 14px">${l} <span class="em">(${c})</span></button>`).join('')}
       </div>
       ${tableShellInner(columns)}`;
     const rowsFor = (t) => t === 'all' ? currentRows : (t === 'clips' ? currentRows.filter(isClips) : currentRows.filter((r) => !isClips(r)));
@@ -656,6 +674,8 @@ function pageFeedClips() {
       });
     };
     view().querySelectorAll('[data-ft]').forEach((b) => b.onclick = () => applyTab(b.dataset.ft));
+    view().querySelectorAll('[data-ft-card]').forEach((c) => c.onclick = () => applyTab(c.dataset.ftCard));
+    view().querySelectorAll('[data-goto]').forEach((c) => c.onclick = () => { location.hash = c.dataset.goto; });
     view().querySelector('#addbtn').onclick = () => feedClipForm(null);
     applyTab('all');
   })();
