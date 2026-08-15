@@ -368,6 +368,8 @@ const Map<String, String> _en = {
   'live_pro_concert': 'Pro concert live',
   'live_be_first_short': 'Be the first to post a short',
   'live_no_clips': 'No clips yet',
+  'clip_be_first': 'Be the first to post a clip',
+  'clip_create_title': 'Add a clip',
   // Replay player
   'replay_send_tip': 'Send a tip 🎁',
   'replay_tip_thanks': 'Thanks!',
@@ -700,6 +702,8 @@ const Map<String, String> _fr = {
   'live_pro_concert': 'Concert pro en direct',
   'live_be_first_short': 'Sois le premier à publier un short',
   'live_no_clips': 'Aucun clip pour l\'instant',
+  'clip_be_first': 'Sois le premier à publier un clip',
+  'clip_create_title': 'Ajouter un clip',
   // Lecteur replay
   'replay_send_tip': 'Envoyer un pourboire 🎁',
   'replay_tip_thanks': 'Merci !',

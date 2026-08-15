@@ -1050,7 +1050,7 @@ class _ClipsFeedState extends State<_ClipsFeed> {
   }
 }
 
-/// État vide de l'onglet Clips : invite à créer un short.
+/// État vide de l'onglet Clips : invite à ajouter un clip.
 class _NoClipsState extends StatelessWidget {
   const _NoClipsState();
 
@@ -1076,7 +1076,7 @@ class _NoClipsState extends StatelessWidget {
           ),
           height(0.01),
           Text(
-            'live_be_first_short'.tr,
+            'clip_be_first'.tr,
             style: TextStyle(
               color: whiteColor.withValues(alpha: 0.6),
               fontSize: 14,
@@ -1097,7 +1097,7 @@ class _NoClipsState extends StatelessWidget {
                   const Icon(Icons.add_rounded, color: midnightPrimary, size: 18),
                   const SizedBox(width: 6),
                   Text(
-                    'short_create_title'.tr,
+                    'clip_create_title'.tr,
                     style: const TextStyle(
                       color: midnightPrimary,
                       fontWeight: FontWeight.w700,
