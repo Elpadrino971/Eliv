@@ -7,6 +7,10 @@ import FirebaseMessaging
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, MessagingDelegate {
+  /// Orientations autorisées à l'instant T. L'app est portrait par défaut ;
+  /// le lecteur de clip la passe en paysage le temps de la lecture.
+  var orientationLock: UIInterfaceOrientationMask = .portrait
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -26,7 +30,51 @@ import FirebaseMessaging
       registrar.register(AirPlayRoutePickerFactory(), withId: "vybzzz/airplay_button")
     }
 
+    // Rotation forcée (clips paysage) — canal 'vybzzz/orientation'.
+    // Sur iOS 16+, SystemChrome.setPreferredOrientations ne pivote plus l'UI ;
+    // on force la géométrie nativement ici (voir lib/Global/orientation_helper.dart).
+    if let controller = window?.rootViewController as? FlutterViewController {
+      let channel = FlutterMethodChannel(
+        name: "vybzzz/orientation",
+        binaryMessenger: controller.binaryMessenger)
+      channel.setMethodCallHandler { [weak self] call, result in
+        guard let self = self else { result(nil); return }
+        switch call.method {
+        case "landscape":
+          self.applyOrientation(.landscapeRight, mask: .landscape)
+        case "portrait":
+          self.applyOrientation(.portrait, mask: .portrait)
+        default:
+          result(FlutterMethodNotImplemented)
+          return
+        }
+        result(nil)
+      }
+    }
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  /// Verrouille l'orientation supportée puis demande la bascule réelle.
+  private func applyOrientation(_ orientation: UIInterfaceOrientation, mask: UIInterfaceOrientationMask) {
+    orientationLock = mask
+    if #available(iOS 16.0, *) {
+      window?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+      let scene = UIApplication.shared.connectedScenes.first { $0 is UIWindowScene } as? UIWindowScene
+      let prefs = UIWindowScene.GeometryPreferences.iOS(interfaceOrientations: mask)
+      scene?.requestGeometryUpdate(prefs) { _ in }
+    } else {
+      UIDevice.current.setValue(orientation.rawValue, forKey: "orientation")
+      UIViewController.attemptRotationToDeviceOrientation()
+    }
+  }
+
+  /// iOS consulte cette méthode pour connaître les orientations autorisées.
+  override func application(
+    _ application: UIApplication,
+    supportedInterfaceOrientationsFor window: UIWindow?
+  ) -> UIInterfaceOrientationMask {
+    return orientationLock
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
