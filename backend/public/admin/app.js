@@ -598,11 +598,22 @@ function pageEvents() {
   });
 }
 
-function feedClipForm(row, { duplicate = false } = {}) {
+async function feedClipForm(row, { duplicate = false } = {}) {
+  // Liste des artistes pour le rattachement (le clip apparaît alors dans la
+  // grille de la fiche artiste). Dégrade sans bloquer si l'appel échoue.
+  let artists = [];
+  try { const r = await api('GET', '/artists-list'); artists = r.data || []; } catch (e) { artists = []; }
+  const artistOpts = [{ value: '', label: '— Officiel (aucun artiste) —' }];
+  // Préserve le rattachement actuel même si l'auteur n'est pas un artiste.
+  if (row?.user_id && !artists.some((a) => a.id == row.user_id)) {
+    artistOpts.push({ value: String(row.user_id), label: (row.submitted_by || ('user #' + row.user_id)) + ' (auteur actuel)' });
+  }
+  artists.forEach((a) => artistOpts.push({ value: String(a.id), label: a.name }));
   modal({
     title: duplicate ? 'Dupliquer le clip' : (row ? 'Modifier le clip' : 'Ajouter un clip'),
     fields: [
-      { name: 'feed', label: 'Feed', type: 'select', value: row?.feed || 'for_you', options: [{ value: 'for_you', label: 'Pour toi' }, { value: 'clips', label: 'Clips' }] },
+      { name: 'feed', label: 'Feed', type: 'select', value: row?.feed || 'for_you', options: [{ value: 'for_you', label: '🟦 Pour toi' }, { value: 'clips', label: '🟨 Clips' }] },
+      { name: 'artist_id', label: 'Artiste (apparaît sur sa fiche profil)', type: 'select', value: row?.user_id ? String(row.user_id) : '', options: artistOpts, hint: 'Laisse « Officiel » si le clip n\'appartient à aucun artiste' },
       { name: 'title', label: 'Titre / légende (optionnel)', value: row?.title },
       { name: 'video', label: 'Fichier vidéo (upload direct)', type: 'file', accept: 'video/*' },
       { name: 'mux_playback_id', label: 'Ou Mux Playback ID (si déjà sur Mux)', value: row?.mux_playback_id, placeholder: 'laisse vide si tu uploades un fichier' },

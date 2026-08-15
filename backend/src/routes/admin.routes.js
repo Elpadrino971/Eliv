@@ -676,12 +676,16 @@ router.post('/feed-clips', requireAdmin, async (req, res) => {
   const expiresAt = firebasePath ? `datetime('now', '+' || ${CLIP_RETENTION_DAYS} || ' days')` : 'NULL';
   // Pas de vidéo à la création ? OK : elle peut être attachée ensuite via le
   // bouton "🎬 Upload" (Mux Direct Upload) depuis la liste.
+  // artist_id (optionnel) rattache le clip à un artiste : il apparaît alors
+  // dans la grille "façon TikTok" de sa fiche profil (GET /api/artist/:id/clips)
+  // en plus du feed. Vide = clip officiel, non rattaché.
+  const artistId = b.artist_id ? Number(b.artist_id) : null;
   db.prepare(
-    `INSERT INTO feed_clips (feed, title, video_url, mux_playback_id, position, active, firebase_path, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ${expiresAt})`
+    `INSERT INTO feed_clips (feed, title, video_url, mux_playback_id, position, active, user_id, firebase_path, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ${expiresAt})`
   ).run(
     b.feed === 'clips' ? 'clips' : 'for_you', b.title || null, video, b.mux_playback_id || null,
-    Number(b.position) || 0, b.active === undefined ? 1 : (truthy(b.active) ? 1 : 0), firebasePath
+    Number(b.position) || 0, b.active === undefined ? 1 : (truthy(b.active) ? 1 : 0), artistId, firebasePath
   );
   return res.json({ status: 'success', message: 'Clip ajouté.' });
 });
@@ -689,14 +693,15 @@ router.put('/feed-clips/:id', requireAdmin, async (req, res) => {
   const b = req.body || {};
   const uploaded = await saveClipVideo(req, ['video', 'file']);
   const video = uploaded?.url || b.video_url || null;
+  const artistId = b.artist_id ? Number(b.artist_id) : null;
   db.prepare(
     `UPDATE feed_clips SET feed = ?, title = ?, video_url = COALESCE(?, video_url), mux_playback_id = ?,
-        position = ?, active = ?, firebase_path = COALESCE(?, firebase_path),
+        position = ?, active = ?, user_id = ?, firebase_path = COALESCE(?, firebase_path),
         expires_at = CASE WHEN ? IS NOT NULL THEN datetime('now', '+' || ? || ' days') ELSE expires_at END
      WHERE id = ?`
   ).run(
     b.feed === 'clips' ? 'clips' : 'for_you', b.title || null, video, b.mux_playback_id || null,
-    Number(b.position) || 0, truthy(b.active) ? 1 : 0, uploaded?.firebasePath || null,
+    Number(b.position) || 0, truthy(b.active) ? 1 : 0, artistId, uploaded?.firebasePath || null,
     uploaded?.firebasePath || null, CLIP_RETENTION_DAYS, req.params.id
   );
   return res.json({ status: 'success', message: 'Clip modifié.' });
