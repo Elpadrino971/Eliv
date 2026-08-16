@@ -17,7 +17,9 @@ import 'package:artist/Auth/create_passwrod.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/artist_bottom_bar/artist_bottom_bar.dart';
 import 'package:artist/services/api_services.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthController extends GetxController {
   final response = ApiResponse();
@@ -487,6 +489,24 @@ class AuthController extends GetxController {
         parseError(value);
       }
     });
+  }
+
+  // Déconnexion complète (déplacée depuis l'écran Profil vers ⚙ Réglages).
+  Future<void> logout() async {
+    myLoadingDialog();
+    try {
+      final id = userModel.value.user?.id;
+      await FirebaseMessaging.instance.unsubscribeFromTopic('00$id');
+      await FirebaseMessaging.instance.unsubscribeFromTopic('users');
+      await FirebaseMessaging.instance.unsubscribeFromTopic('artist');
+      if (userModel.value.user?.registrationType == 'social') {
+        await GoogleSignIn.instance.signOut();
+      }
+      await SubscriptionController.clearIdentity();
+      await box.remove('user');
+    } catch (_) {}
+    await Future.delayed(const Duration(seconds: 1));
+    Get.offAll(() => LoginScreen());
   }
 
   Future<void> deleteAccount() async {

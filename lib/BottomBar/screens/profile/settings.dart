@@ -403,6 +403,50 @@ class _SettingsState extends State<Settings> {
 
               GestureDetector(
                 onTap: () async {
+                  await myAlertDialog(
+                    title: 'prof_logout'.tr,
+                    content: 'prof_logout_confirm'.tr,
+                    onTap: () => authController.logout(),
+                  );
+                },
+                child: MyContainer(
+                  padding: EdgeInsets.only(left: 10, right: 10),
+                  widget: ListTile(
+                    minTileHeight: 40,
+                    contentPadding: EdgeInsets.all(0),
+                    leading: Icon(Icons.logout_rounded,
+                        color: Color(0xffFF2056), size: 30),
+                    title: Text(
+                      'prof_logout'.tr,
+                      style: TextStyle(
+                        color: Get.isDarkMode ? whiteColor : blackColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'prof_logout_confirm'.tr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Color(0xff737373),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 12,
+                      color: greyColor,
+                    ),
+                  ),
+                ),
+              ),
+
+              height(0.01),
+
+              GestureDetector(
+                onTap: () async {
                   await myWarningDialog(
                     title: 'prof_delete_account'.tr,
                     subtitle:
