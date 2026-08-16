@@ -72,46 +72,43 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   Widget build(BuildContext context) {
     final dark = Get.isDarkMode;
     final txt = dark ? whiteColor : blackColor;
-    final bg = Theme.of(context).scaffoldBackgroundColor;
+    // Structure éprouvée : identité fixe en haut + TabBar + Expanded(TabBarView).
+    // (Pas de NestedScrollView : instable avec Obx + EventsScreen imbriqués.)
     return Scaffold(
       body: DefaultTabController(
         length: 3,
-        child: NestedScrollView(
-          headerSliverBuilder: (context, _) => [
-            SliverToBoxAdapter(child: _identity(txt)),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _StickyTabBar(
-                bg: bg,
-                tabBar: TabBar(
-                  labelColor: txt,
-                  dividerColor: greyColor.withValues(alpha: 0.15),
-                  indicatorColor: dark ? goldPrimary : mainThemeColor,
-                  unselectedLabelColor: const Color(0xff737373),
-                  tabs: const [
-                    Tab(text: 'Shorts'),
-                    Tab(text: 'Clips'),
-                    Tab(text: 'Concerts'),
-                  ],
-                ),
+        child: Column(
+          children: [
+            _identity(txt),
+            TabBar(
+              labelColor: txt,
+              dividerColor: greyColor.withValues(alpha: 0.15),
+              indicatorColor: dark ? goldPrimary : mainThemeColor,
+              unselectedLabelColor: const Color(0xff737373),
+              tabs: const [
+                Tab(text: 'Shorts'),
+                Tab(text: 'Clips'),
+                Tab(text: 'Concerts'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  const ArtistClipsGrid(feed: 'for_you'),
+                  const ArtistClipsGrid(feed: 'clips'),
+                  Obx(() => EventsScreen(
+                        events: eventController.artistEvents.value.data ?? [],
+                      )),
+                ],
               ),
             ),
           ],
-          body: TabBarView(
-            children: [
-              const ArtistClipsGrid(feed: 'for_you'),
-              const ArtistClipsGrid(feed: 'clips'),
-              Obx(() => EventsScreen(
-                    events: eventController.artistEvents.value.data ?? [],
-                  )),
-            ],
-          ),
         ),
       ),
     );
   }
 
-  // ── PARTIE 1 : grande image plein cadre (façon Netflix/Spotify) ──
+  // ── Identité : grande image plein cadre (façon Netflix/Spotify) ──
   Widget _identity(Color txt) {
     final dark = Get.isDarkMode;
     final w = Get.width;
@@ -123,97 +120,95 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Grande image du visage, plein cadre, sans bord ni arrondi.
-        Stack(
-          children: [
-            SizedBox(
-              width: w,
-              height: w * 1.08,
-              child: ImageWidget(url: img, width: w, height: w * 1.08, fit: BoxFit.cover),
-            ),
-            // Voiles pour lisibilité (haut sombre pour les boutons, bas pour le texte).
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.32),
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.72),
-                    ],
-                    stops: const [0.0, 0.42, 1.0],
+        SizedBox(
+          width: w,
+          height: w * 0.62,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ImageWidget(url: img, width: w, height: w * 0.62, fit: BoxFit.cover),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.32),
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.74),
+                      ],
+                      stops: const [0.0, 0.42, 1.0],
+                    ),
                   ),
                 ),
               ),
-            ),
-            // Barre du haut (retour / partager / menu).
-            Positioned(
-              top: top + 8,
-              left: 12,
-              right: 12,
-              child: Row(
-                children: [
-                  _circleBtn(Icons.arrow_back_ios_new_rounded, () => Get.back()),
-                  const Spacer(),
-                  _circleBtn(Icons.share_outlined, () {}),
-                  const SizedBox(width: 8),
-                  _circleBtn(Icons.more_horiz_rounded, () {}),
-                ],
+              Positioned(
+                top: top + 8,
+                left: 12,
+                right: 12,
+                child: Row(
+                  children: [
+                    _circleBtn(Icons.arrow_back_ios_new_rounded, () => Get.back()),
+                    const Spacer(),
+                    _circleBtn(Icons.share_outlined, () {}),
+                    const SizedBox(width: 8),
+                    _circleBtn(Icons.more_horiz_rounded, () {}),
+                  ],
+                ),
               ),
-            ),
-            // Identité par-dessus le bas de l'image.
-            Positioned(
-              left: 18,
-              right: 18,
-              bottom: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.artist?.artistName ?? widget.artist?.fullName ?? 'N/A',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                      shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
+              Positioned(
+                left: 18,
+                right: 18,
+                bottom: 14,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.artist?.artistName ?? widget.artist?.fullName ?? 'N/A',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    _handle,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.82),
-                      fontSize: 13.5,
-                      shadows: const [Shadow(color: Colors.black87, blurRadius: 8)],
+                    const SizedBox(height: 3),
+                    Text(
+                      _handle,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.82),
+                        fontSize: 13,
+                        shadows: const [Shadow(color: Colors.black87, blurRadius: 8)],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
-                  Obx(() {
-                    final followers =
-                        eventController.artistFollowers.value.data?.followersCount ?? 0;
-                    final clips = eventController.artistClips.value.count;
-                    final concerts =
-                        (eventController.artistEvents.value.data ?? []).length;
-                    return Row(
-                      children: [
-                        _statLight('$followers', 'Abonnés'),
-                        _vsep(),
-                        _statLight('$clips', 'Vidéos'),
-                        _vsep(),
-                        _statLight('$concerts', 'Concerts'),
-                      ],
-                    );
-                  }),
-                ],
+                    const SizedBox(height: 10),
+                    Obx(() {
+                      final followers =
+                          eventController.artistFollowers.value.data?.followersCount ?? 0;
+                      final clips = eventController.artistClips.value.count;
+                      final concerts =
+                          (eventController.artistEvents.value.data ?? []).length;
+                      return Row(
+                        children: [
+                          _statLight('$followers', 'Abonnés'),
+                          _vsep(),
+                          _statLight('$clips', 'Vidéos'),
+                          _vsep(),
+                          _statLight('$concerts', 'Concerts'),
+                        ],
+                      );
+                    }),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        // Boutons + bio, sous l'image.
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -225,7 +220,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       builder: (_) => GestureDetector(
                         onTap: _toggleFollow,
                         child: Container(
-                          height: 44,
+                          height: 42,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: _isFollowing
@@ -248,7 +243,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                                   style: TextStyle(
                                     color: _isFollowing ? goldPrimary : Colors.white,
                                     fontWeight: FontWeight.w800,
-                                    fontSize: 14.5,
+                                    fontSize: 14,
                                   ),
                                 ),
                         ),
@@ -259,7 +254,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   Obx(() {
                     final saved = eventController.artistSaved.value;
                     return _ghostBtn(
-                      icon: saved ? Icons.playlist_add_check_rounded : Icons.playlist_add_rounded,
+                      icon: saved
+                          ? Icons.playlist_add_check_rounded
+                          : Icons.playlist_add_rounded,
                       label: saved ? 'Dans ma liste' : 'Ma liste',
                       onTap: () => eventController.toggleSaveArtist(
                         artistId: '${widget.artist?.id ?? 1}',
@@ -269,10 +266,12 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 ],
               ),
               if (bio.trim().isNotEmpty) ...[
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 Text(
                   bio,
-                  style: TextStyle(color: txt.withValues(alpha: 0.85), fontSize: 13, height: 1.5),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: txt.withValues(alpha: 0.85), fontSize: 12.5, height: 1.4),
                 ),
               ],
             ],
@@ -301,22 +300,22 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           Text(value,
               style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 18,
+                  fontSize: 17,
                   fontWeight: FontWeight.bold,
                   shadows: [Shadow(color: Colors.black87, blurRadius: 8)])),
           const SizedBox(height: 2),
           Text(label,
               style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.78),
-                  fontSize: 12,
+                  fontSize: 11.5,
                   shadows: const [Shadow(color: Colors.black87, blurRadius: 6)])),
         ],
       );
 
   Widget _vsep() => Container(
         width: 1,
-        height: 28,
-        margin: const EdgeInsets.symmetric(horizontal: 18),
+        height: 26,
+        margin: const EdgeInsets.symmetric(horizontal: 16),
         color: Colors.white.withValues(alpha: 0.28),
       );
 
@@ -324,7 +323,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 44,
+        height: 42,
         padding: EdgeInsets.symmetric(horizontal: label != null ? 14 : 12),
         alignment: Alignment.center,
         decoration: BoxDecoration(
@@ -339,32 +338,11 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               const SizedBox(width: 6),
               Text(label,
                   style: TextStyle(
-                      color: goldPrimary, fontWeight: FontWeight.w700, fontSize: 13.5)),
+                      color: goldPrimary, fontWeight: FontWeight.w700, fontSize: 13)),
             ],
           ],
         ),
       ),
     );
   }
-}
-
-/// En-tête persistant (épinglé) qui garde la TabBar visible au scroll.
-class _StickyTabBar extends SliverPersistentHeaderDelegate {
-  _StickyTabBar({required this.tabBar, required this.bg});
-  final TabBar tabBar;
-  final Color bg;
-
-  @override
-  double get minExtent => tabBar.preferredSize.height;
-  @override
-  double get maxExtent => tabBar.preferredSize.height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(color: bg, child: tabBar);
-  }
-
-  @override
-  bool shouldRebuild(_StickyTabBar oldDelegate) =>
-      oldDelegate.tabBar != tabBar || oldDelegate.bg != bg;
 }
