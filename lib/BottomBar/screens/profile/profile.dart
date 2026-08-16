@@ -323,78 +323,46 @@ class _ProfileState extends State<Profile> {
                       _toolsAndResources(),
                       height(0.02),
                     ],
-                    // Bloc "Devenir artiste" (mode fan uniquement). En mode
-                    // artiste, tous ces items sont dans ⚙ Réglages → on ne
-                    // laisse pas d'en-tête orphelin ici.
+                    // Bouton "Devenir artiste" en capsule (mode fan uniquement).
+                    // Les autres items de compte sont dans ⚙ Réglages.
                     if (!widget.fromArtist) ...[
-                    Text(
-                      'prof_account_experience'.tr,
-                      style: TextStyle(
-                        color: textMuted,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                    height(0.015),
-
-                    ListView.separated(
-                      shrinkWrap: true,
-                      padding: EdgeInsets.all(0),
-                      physics: NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        if (widget.fromArtist && index == 1) {
-                          return SizedBox();
-                        }
-                        return GestureDetector(
-                          onTap: acountList[index]['onTap'] as VoidCallback,
-                          child: ListTile(
-                            contentPadding: EdgeInsets.symmetric(vertical: 6),
-                            leading: Icon(
-                              acountList[index]['icon'] as IconData,
-                              color: goldPrimary,
-                              size: 28,
+                      height(0.01),
+                      GestureDetector(
+                        onTap: acountList[0]['onTap'] as VoidCallback,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [goldSecondary, goldPrimary],
                             ),
-                            horizontalTitleGap: 14,
-                            title: Text(
-                              acountList[index]['title'],
-                              style: TextStyle(
-                                color: ivory,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: goldPrimary.withValues(alpha: 0.30),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
                               ),
-                            ),
-                            subtitle: Text(
-                              acountList[index]['subTitle'],
-                              style: TextStyle(
-                                color: textMuted,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w300,
-                              ),
-                            ),
-                            trailing: Icon(
-                              Icons.arrow_forward_ios_sharp,
-                              size: 14,
-                              color: goldSecondary.withValues(alpha: 0.5),
-                            ),
+                            ],
                           ),
-                        );
-                      },
-                      separatorBuilder: (context, index) {
-                        if (widget.fromArtist && index == 0) {
-                          return SizedBox();
-                        }
-                        return Divider(
-                          height: 1,
-                          color: goldSecondary.withValues(alpha: 0.12),
-                        );
-                      },
-                      // Le profil ne garde que "Devenir artiste" (index 0) ;
-                      // tout le reste (Suivis, Historique, Portefeuille,
-                      // Abonnement, Idées, Confidentialité, CGU) est déplacé
-                      // dans ⚙ Réglages (voir settings.dart / vybzzzAccountList).
-                      itemCount: 1,
-                    ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.mic_none_rounded,
+                                  color: midnightPrimary, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'prof_become_artist'.tr,
+                                style: const TextStyle(
+                                  color: midnightPrimary,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                     height(0.02),
                     GestureDetector(
