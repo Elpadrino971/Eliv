@@ -323,6 +323,10 @@ class _ProfileState extends State<Profile> {
                       _toolsAndResources(),
                       height(0.02),
                     ],
+                    // Bloc "Devenir artiste" (mode fan uniquement). En mode
+                    // artiste, tous ces items sont dans ⚙ Réglages → on ne
+                    // laisse pas d'en-tête orphelin ici.
+                    if (!widget.fromArtist) ...[
                     Text(
                       'prof_account_experience'.tr,
                       style: TextStyle(
@@ -389,8 +393,9 @@ class _ProfileState extends State<Profile> {
                       // tout le reste (Suivis, Historique, Portefeuille,
                       // Abonnement, Idées, Confidentialité, CGU) est déplacé
                       // dans ⚙ Réglages (voir settings.dart / vybzzzAccountList).
-                      itemCount: widget.fromArtist ? 0 : 1,
+                      itemCount: 1,
                     ),
+                    ],
                     height(0.02),
                     GestureDetector(
                       onTap: () async {
