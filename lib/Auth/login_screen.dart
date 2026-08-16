@@ -276,6 +276,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       email: user.email ?? '',
                                       name: user.displayName ?? 'Google User',
                                       phone: user.phoneNumber,
+                                      idToken: googleIdToken,
+                                      provider: 'google',
                                     );
                                   } else {
                                     myWarningDialog(
@@ -315,6 +317,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           name:
                                               user.displayName ?? 'Google User',
                                           phone: user.phoneNumber,
+                                          idToken: googleIdToken,
+                                          provider: 'google',
                                         );
                                       } else {
                                         myWarningDialog(
@@ -361,6 +365,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                             name:
                                                 value.givenName?.toString() ??
                                                 'iOS User',
+                                            identityToken: value.identityToken,
+                                            provider: 'apple',
                                           );
                                         }).onError((error, stackTrace) {
                                           myPrint(

@@ -425,6 +425,9 @@ function init() {
     // ─── Apporteurs : rattachement + phase de l'artiste (voir APPORTEURS.md) ───
     "ALTER TABLE users ADD COLUMN apporteur_id INTEGER",           // 1 seul apporteur, nullable
     "ALTER TABLE users ADD COLUMN artist_regime TEXT DEFAULT 'normal'", // normal|pionnier|fondateur|parrain
+    // Identifiant Apple stable (le token Apple ne renvoie l'email qu'à la 1re
+    // connexion -> on retrouve le compte via ce 'sub' aux connexions suivantes).
+    "ALTER TABLE users ADD COLUMN apple_sub TEXT",
     "ALTER TABLE users ADD COLUMN apporteur_attached_at TEXT",
     "ALTER TABLE users ADD COLUMN sub_free_until TEXT",            // fin des 3 mois d'abo offert
     "ALTER TABLE users ADD COLUMN commission_end TEXT",            // fin 12/24 mois (modifiable = renouvelable)

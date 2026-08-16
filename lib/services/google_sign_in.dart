@@ -5,6 +5,10 @@ import 'package:google_sign_in/google_sign_in.dart';
 FirebaseAuth fAuth = FirebaseAuth.instance;
 User? user;
 
+/// Dernier id_token Google (audience = serverClientId ci-dessous). Envoyé au
+/// backend pour vérifier la connexion sociale côté serveur (social_auth.js).
+String? googleIdToken;
+
 // It is highly recommended to initialize GoogleSignIn once at app startup
 // (e.g., in main() or a dedicated service). This helper ensures it's done.
 bool _isGoogleSignInInitialized = false;
@@ -52,6 +56,8 @@ Future<User?> signInWithGoogle() async {
     // The accessToken is NOT directly available here.
     final GoogleSignInAuthentication googleSignInAuthentication =
         googleSignInAccount.authentication;
+    // Conserve l'id_token Google pour la vérification serveur (social-login).
+    googleIdToken = googleSignInAuthentication.idToken;
 
     // Step 5: Create a new Firebase AuthCredential using the idToken.
     // For basic Firebase authentication, idToken is sufficient.

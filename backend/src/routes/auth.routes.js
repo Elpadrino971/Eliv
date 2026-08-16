@@ -8,6 +8,7 @@ const { hash, compare, sign, requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
 const moderation = require('../services/moderation');
 const emailService = require('../services/email');
+const socialAuth = require('../services/social_auth');
 
 const OTP_TTL_MINUTES = 15;
 
@@ -108,20 +109,68 @@ router.post('/login', (req, res) => {
   return authResponse(res, user, 'Logged in.');
 });
 
-// POST /api/social-login  (Google/Apple : crée l'utilisateur s'il n'existe pas)
-router.post('/social-login', (req, res) => {
+// POST /api/social-login  (Google/Apple). SÉCURITÉ : on exige et on VÉRIFIE un
+// vrai jeton du fournisseur (id_token Google / identity_token Apple). Avant, un
+// simple email suffisait -> connexion en tant que n'importe qui (admin compris).
+router.post('/social-login', async (req, res) => {
   const b = req.body || {};
-  const email = (b.email || '').trim().toLowerCase();
-  if (!email) return fail(res, 'Validation error', 422, { email: ['The email field is required.'] });
-  let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+  const provider = String(b.provider || b.registration_type || '').toLowerCase();
+  const isApple = provider.includes('apple') || (!!b.identity_token && !b.id_token);
+  const token = b.id_token || b.identity_token || b.token || null;
+
+  // Vérification du jeton fournisseur. Obligatoire en production.
+  let verified = null;
+  try {
+    verified = isApple
+      ? await socialAuth.verifyApple(token)
+      : await socialAuth.verifyGoogle(token);
+  } catch (e) {
+    console.warn('[social-login] vérification échouée:', e.message);
+    if (process.env.NODE_ENV === 'production' || token) {
+      return fail(res, 'Connexion sociale non vérifiée.', 401);
+    }
+    // Dev sans jeton : on tolère l'ancien comportement email-only (tests).
+  }
+
+  // Retrouver le compte : Apple par 'sub' (email parfois absent), sinon email.
+  let user = null;
+  if (isApple && verified?.sub) {
+    user = db.prepare('SELECT * FROM users WHERE apple_sub = ?').get(verified.sub);
+  }
+  const email = (verified?.email || b.email || '').trim().toLowerCase();
+  if (!user && email) {
+    user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+  }
+
+  // Défense en profondeur : jamais de connexion sociale sur un compte admin,
+  // ni détournement d'un compte créé en email/mot de passe.
+  if (user) {
+    if (user.role === 'admin') {
+      return fail(res, 'Connexion sociale non autorisée pour ce compte.', 403);
+    }
+    if (user.registration_type === 'email') {
+      return fail(res, 'Ce compte utilise email + mot de passe.', 409);
+    }
+  }
+
   if (!user) {
+    if (!email) return fail(res, 'Validation error', 422, { email: ['The email field is required.'] });
     const info = db
       .prepare(
-        `INSERT INTO users (email, full_name, profile_image, registration_type, is_verified, referral_code)
-         VALUES (?, ?, ?, ?, 1, ?)`
+        `INSERT INTO users (email, full_name, profile_image, registration_type, is_verified, referral_code, apple_sub)
+         VALUES (?, ?, ?, ?, 1, ?, ?)`
       )
-      .run(email, b.full_name || null, b.profile_image || null, b.registration_type || 'google', genReferralCode(b.full_name));
+      .run(
+        email,
+        b.full_name || verified?.name || null,
+        b.profile_image || verified?.picture || null,
+        isApple ? 'apple' : 'google',
+        genReferralCode(b.full_name),
+        isApple ? (verified?.sub || null) : null
+      );
     user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
+  } else if (isApple && verified?.sub && !user.apple_sub) {
+    db.prepare('UPDATE users SET apple_sub = ? WHERE id = ?').run(verified.sub, user.id);
   }
   return authResponse(res, user, 'Logged in.');
 });

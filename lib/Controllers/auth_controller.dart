@@ -59,15 +59,21 @@ class AuthController extends GetxController {
     required String email,
     required String name,
     String? phone,
+    String? idToken, // Google id_token
+    String? identityToken, // Apple identity_token
+    String provider = 'google',
   }) async {
     myLoadingDialog();
     response.typeSetter = 'post';
     response.urlSetter = APIs.socialLoginAPI;
     response.bodySetter = {
-      "registration_type": "social",
+      "registration_type": provider,
+      "provider": provider,
       "email": email,
       "full_name": name,
       "phone_number": ?phone,
+      "id_token": ?idToken,
+      "identity_token": ?identityToken,
     };
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
