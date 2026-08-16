@@ -458,117 +458,105 @@ class _ProfileState extends State<Profile> {
   /// Carte profil "fan" — MÊME design que l'en-tête artiste : grande photo en
   /// bannière (fondue dans le thème) + "Bon retour" + nom + solde de points.
   Widget _fanHeaderCard() {
-    return SizedBox(
-      width: Get.width,
-      height: 156,
-      child: Stack(
-        children: [
-          // Traînée de paillettes dorées (fond)
-          Positioned.fill(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: CustomPaint(painter: _SparkleTrailPainter()),
-            ),
-          ),
-          // Grande photo avatar à droite, fondue dans le thème (comme l'artiste).
-          Positioned(
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: Get.width * 0.42,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ImageWidget(
-                  url: '${userModel.value.user?.profileImage}',
-                  width: Get.width * 0.42,
-                  height: 156,
-                  fit: BoxFit.cover,
-                ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      radius: 0.95,
-                      colors: [
-                        Colors.transparent,
-                        midnightPrimary.withValues(alpha: 0.55),
-                      ],
-                      stops: const [0.35, 1.0],
-                    ),
-                  ),
-                ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [midnightPrimary, Colors.transparent],
-                      stops: const [0.0, 0.65],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'prof_welcome_back'.tr,
-                        style: TextStyle(color: textMuted, fontSize: 13),
-                      ),
-                      Text(
-                        userModel.value.user?.fullName ?? 'N/A',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: ivory,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 19,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: goldPrimary),
-                        ),
-                        child: Text(
-                          '★ ${userModel.value.user?.points?.toString() ?? '0'} ${'prof_total_points'.tr}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: goldPrimary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 11.5,
-                          ),
-                        ),
-                      ),
+    final w = Get.width;
+    final img = '${userModel.value.user?.profileImage ?? ''}';
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: SizedBox(
+        width: w,
+        height: w * 0.6,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Grande photo plein cadre (visage), façon fiche artiste.
+            ImageWidget(url: img, width: w, height: w * 0.6, fit: BoxFit.cover),
+            // Voiles pour lisibilité du texte.
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.28),
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.75),
                     ],
+                    stops: const [0.0, 0.4, 1.0],
                   ),
                 ),
-                GestureDetector(
-                  onTap: () => Get.to(() => const NotificationScreen()),
-                  child: Icon(
-                    Icons.notifications_none_rounded,
-                    color: goldPrimary,
-                    size: 24,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+            // Cloche notifications (haut droite).
+            Positioned(
+              top: 12,
+              right: 12,
+              child: GestureDetector(
+                onTap: () => Get.to(() => const NotificationScreen()),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.notifications_none_rounded,
+                      color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+            // Bon retour + nom + points (bas gauche, par-dessus l'image).
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 14,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'prof_welcome_back'.tr,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.82),
+                      fontSize: 13,
+                      shadows: const [Shadow(color: Colors.black87, blurRadius: 8)],
+                    ),
+                  ),
+                  Text(
+                    userModel.value.user?.fullName ?? 'N/A',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: goldPrimary),
+                    ),
+                    child: Text(
+                      '★ ${userModel.value.user?.points?.toString() ?? '0'} ${'prof_total_points'.tr}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: goldPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -622,111 +610,102 @@ class _ProfileState extends State<Profile> {
         // Hauteur généreuse (156, pas 130) pour laisser de la marge au texte
         // sur les noms d'artiste longs + réglages d'accessibilité (police
         // agrandie) sans déborder.
-        SizedBox(
-          width: Get.width,
-          height: 156,
-          child: Stack(
+        ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: SizedBox(
+            width: Get.width,
+            height: Get.width * 0.58,
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: Get.width * 0.42,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      ImageWidget(
-                        url: '${userModel.value.user?.artistProfile}',
-                        width: Get.width * 0.42,
-                        height: 156,
-                        fit: BoxFit.cover,
+                // Grande photo artiste plein cadre (visage).
+                ImageWidget(
+                  url: '${userModel.value.user?.artistProfile ?? ''}',
+                  width: Get.width,
+                  height: Get.width * 0.58,
+                  fit: BoxFit.cover,
+                ),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.28),
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.75),
+                        ],
+                        stops: const [0.0, 0.4, 1.0],
                       ),
-                      // Vignette sur les 4 côtés : n'importe quelle photo
-                      // (fond clair ou sombre, cadrage quelconque) doit se
-                      // fondre dans le thème, pas seulement les photos déjà
-                      // sombres comme celles du mockup de référence.
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: RadialGradient(
-                            radius: 0.95,
-                            colors: [
-                              Colors.transparent,
-                              midnightPrimary.withValues(alpha: 0.55),
-                            ],
-                            stops: const [0.35, 1.0],
-                          ),
-                        ),
-                      ),
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [midnightPrimary, Colors.transparent],
-                            stops: const [0.0, 0.65],
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: GestureDetector(
+                    onTap: () => Get.to(() => const NotificationScreen()),
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.notifications_none_rounded,
+                          color: Colors.white, size: 20),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 14,
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'prof_welcome_back'.tr,
-                              style: TextStyle(color: textMuted, fontSize: 13),
-                            ),
-                            Text(
-                              userModel.value.user?.artistName ?? 'N/A',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: ivory,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 19,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: goldPrimary),
-                              ),
-                              child: Text(
-                                '★ ${'prof_artist_account'.tr}',
-                                style: TextStyle(
-                                  color: goldPrimary,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 11.5,
-                                ),
-                              ),
-                            ),
-                          ],
+                      Text(
+                        'prof_welcome_back'.tr,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.82),
+                          fontSize: 13,
+                          shadows: const [Shadow(color: Colors.black87, blurRadius: 8)],
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () => Get.to(() => const NotificationScreen()),
-                        child: Icon(
-                          Icons.notifications_none_rounded,
-                          color: goldPrimary,
-                          size: 24,
+                      Text(
+                        userModel.value.user?.artistName ?? 'N/A',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                          shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: goldPrimary),
+                        ),
+                        child: Text(
+                          '★ ${'prof_artist_account'.tr}',
+                          style: TextStyle(
+                            color: goldPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ],
+            ),
           ),
         ),
         height(0.02),
