@@ -16,11 +16,11 @@ const { db } = require('../db');
 const stripeService = require('../services/stripe');
 
 if (!process.env.STRIPE_WEBHOOK_SECRET) {
-  console.error(
-    '[stripe webhook] ⚠️⚠️  STRIPE_WEBHOOK_SECRET absent : la signature n\'est pas vérifiée, ' +
-    'n\'importe qui peut simuler un paiement réussi et activer un abonnement gratuitement. ' +
-    'Configure ce secret au plus vite.'
-  );
+  const msg =
+    '[stripe webhook] STRIPE_WEBHOOK_SECRET absent : signature non vérifiée, ' +
+    'n\'importe qui pourrait simuler un paiement et activer un abonnement gratuitement.';
+  if (process.env.NODE_ENV === 'production') throw new Error(msg);
+  console.error('⚠️⚠️ ' + msg + ' (toléré en dev uniquement)');
 }
 
 router.post('/', (req, res) => {

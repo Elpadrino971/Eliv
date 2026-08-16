@@ -434,6 +434,9 @@ function init() {
     // les fonds Apple/Google réellement reçus (~J+60), pas à la vente.
     "ALTER TABLE tickets ADD COLUMN encaissed INTEGER DEFAULT 0",
     "ALTER TABLE tickets ADD COLUMN encaissed_at TEXT",
+    // Reçu RevenueCat consommé pour ce billet (anti-rejeu : une transaction
+    // d'achat ne peut donner qu'UN billet, même à prix égal sur 2 concerts).
+    "ALTER TABLE tickets ADD COLUMN rc_transaction_id TEXT",
     // Traçage NET + part apporteur dans le ledger (part plateforme = ta marge réelle).
     "ALTER TABLE platform_earnings ADD COLUMN store_fee TEXT",
     "ALTER TABLE platform_earnings ADD COLUMN net TEXT",

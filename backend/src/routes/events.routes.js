@@ -9,6 +9,7 @@ const { saveUpload } = require('../uploads');
 const moderation = require('../services/moderation');
 const apporteurLedger = require('../services/apporteur_ledger');
 const apporteurBonus = require('../services/apporteur_bonus');
+const revenuecat = require('../services/revenuecat');
 
 // GET /api/events?status=&day=&genre_ids=
 // day: today | future ; status: published | live | completed | …
@@ -117,17 +118,14 @@ router.post('/events', requireAuth, async (req, res) => {
 // produit ticket_XX par palier de prix). L'app effectue l'achat (validé par
 // RevenueCat côté Apple), puis appelle cet endpoint pour ENREGISTRER l'accès
 // au concert. Pas de points ici (les points servent uniquement aux tips).
-// NOTE sécurité (MVP) : on fait confiance à l'appel après un achat IAP réussi ;
-// à durcir plus tard via vérification du reçu côté serveur (API RevenueCat).
-// price_paid est stocké en EUROS (le revenu artiste se calcule depuis tickets).
-router.post('/buy-ticket', optionalAuth, (req, res) => {
+// Achat d'un billet. L'identité vient du JWT (jamais du body). AVANT de créditer
+// le portefeuille artiste (argent retirable), on VÉRIFIE l'achat auprès de
+// RevenueCat (source de vérité) : sinon n'importe qui pourrait s'octroyer un
+// billet gratuit ET fabriquer du revenu artiste retirable. Anti-rejeu : un reçu
+// (transaction) ne peut donner qu'UN billet (colonne tickets.rc_transaction_id).
+router.post('/buy-ticket', requireAuth, async (req, res) => {
   const b = req.body || {};
-  // Identité = JWT uniquement. On n'accepte JAMAIS un user_id du corps : sinon
-  // n'importe qui pourrait s'octroyer (ou octroyer à autrui) un billet gratuit
-  // et fabriquer du revenu artiste (price_paid). Le client loggé envoie le
-  // Bearer token sur toutes ses requêtes (api_services.dart).
-  const userId = req.user?.id;
-  if (!userId) return fail(res, 'Authentification requise.', 401);
+  const userId = req.user.id;
 
   const event = db.prepare('SELECT * FROM events WHERE id = ?').get(b.event_id);
   if (!event) return fail(res, 'Event not found.', 404);
@@ -140,19 +138,51 @@ router.post('/buy-ticket', optionalAuth, (req, res) => {
     return ok(res, serializeEvent(event, { currentUserId: userId }));
   }
 
+  const gross = parseFloat(event.ticket_price) || 0;
+
+  // ── Vérification du paiement (billets payants uniquement) ──
+  let rcTransactionId = null;
+  if (gross > 0) {
+    // L'app achète le consommable `ticket_<partie entière du prix>` via
+    // RevenueCat. On dérive le même id et on confirme l'achat côté serveur.
+    const productId = `ticket_${Math.floor(gross)}`;
+    if (revenuecat.isConfigured()) {
+      let purchases = [];
+      try {
+        purchases = await revenuecat.nonSubscriptionPurchases(userId, productId);
+      } catch (e) {
+        console.error('[buy-ticket] RevenueCat verify:', e.message);
+        return fail(res, 'Vérification du paiement indisponible, réessaie.', 503);
+      }
+      // Un achat non encore consommé par un billet.
+      const fresh = purchases.find((p) => {
+        const tid = String(p.id || p.store_transaction_id || p.purchase_date || '');
+        if (!tid) return false;
+        return !db.prepare('SELECT 1 FROM tickets WHERE rc_transaction_id = ?').get(tid);
+      });
+      if (!fresh) {
+        return fail(res, 'Aucun achat valide trouvé pour ce billet.', 402);
+      }
+      rcTransactionId = String(fresh.id || fresh.store_transaction_id || fresh.purchase_date);
+    } else if (process.env.NODE_ENV === 'production') {
+      // En prod, on refuse plutôt que de créditer sans preuve de paiement.
+      return fail(res, 'Paiement non vérifiable (configuration serveur).', 503);
+    }
+    // En dev sans clé RevenueCat : on laisse passer pour les tests (rc null).
+  }
+
   // Split commission — modèle NET (voir APPORTEURS.md). On divise ce qu'on
   // reçoit RÉELLEMENT après la commission store (Apple/Google ~15%), jamais le
   // brut. La part artiste dépend de sa phase (promo 3 mois = 50%, sinon son
   // offre). Si l'artiste a un apporteur éligible, sa commission (sur la part
   // plateforme) est enregistrée en 'due' — payable après encaissement + facture.
-  const gross = parseFloat(event.ticket_price) || 0;
   const { ctx, artistRatePct, apporteurRatePct, breakdown } =
     apporteurLedger.computeForSale(event.artist_id, gross);
   const grant = db.transaction(() => {
     const info = db.prepare(
-      `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status, commission_rate, artist_share)
-       VALUES (?, ?, ?, ?, 'active', ?, ?)`
-    ).run(b.event_id, userId, String(event.ticket_price || '0'), genReceipt(), artistRatePct, breakdown.artist.toFixed(2));
+      `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status, commission_rate, artist_share, rc_transaction_id)
+       VALUES (?, ?, ?, ?, 'active', ?, ?, ?)`
+    ).run(b.event_id, userId, String(event.ticket_price || '0'), genReceipt(), artistRatePct, breakdown.artist.toFixed(2), rcTransactionId);
     db.prepare(
       `INSERT INTO activities (user_id, event_id, type, description)
        VALUES (?, ?, 'ticket', 'bought a ticket')`

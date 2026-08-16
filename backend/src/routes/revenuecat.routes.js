@@ -28,11 +28,13 @@ const PURCHASE_EVENTS = new Set(['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE']);
 // faux event INITIAL_PURCHASE et s'auto-créditer des points/un abonnement
 // gratuitement -> vérifier au démarrage que le secret est bien configuré.
 if (!process.env.REVENUECAT_WEBHOOK_AUTH) {
-  console.error(
-    '[revenuecat webhook] ⚠️⚠️  REVENUECAT_WEBHOOK_AUTH absent : ce webhook accepte ' +
-    'N\'IMPORTE QUEL appel non authentifié (faux achats/abonnements gratuits possibles). ' +
-    'Configure ce secret côté serveur ET dans le dashboard RevenueCat au plus vite.'
-  );
+  const msg =
+    '[revenuecat webhook] REVENUECAT_WEBHOOK_AUTH absent : ce webhook accepterait ' +
+    'N\'IMPORTE QUEL appel non authentifié (faux achats/abonnements gratuits). ' +
+    'Configure ce secret côté serveur ET dans le dashboard RevenueCat.';
+  // En production : refus de démarrer (fail-closed), comme le JWT_SECRET.
+  if (process.env.NODE_ENV === 'production') throw new Error(msg);
+  console.error('⚠️⚠️ ' + msg + ' (toléré en dev uniquement)');
 }
 
 router.post('/', (req, res) => {

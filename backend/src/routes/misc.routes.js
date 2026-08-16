@@ -11,6 +11,7 @@ const stripeService = require('../services/stripe');
 const zegoService = require('../services/zego');
 const moderation = require('../services/moderation');
 const statements = require('../services/statements');
+const revenuecat = require('../services/revenuecat');
 const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
 
 // GET /api/artist/statement?month=YYYY-MM — relevé mensuel de l'artiste connecté
@@ -407,10 +408,37 @@ router.get('/subscription/get', (req, res) => {
 // dans l'UI. Le webhook RevenueCat (routes/revenuecat.routes.js) reste la
 // source de vérité serveur-à-serveur — celui-ci ne fait que réconcilier tout
 // de suite, sans attendre la latence du webhook.
-router.post('/subscription/buy', requireAuth, (req, res) => {
+router.post('/subscription/buy', requireAuth, async (req, res) => {
   const subscriptionsId = Number(req.body?.subscriptions_id);
-  const sub = db.prepare('SELECT id FROM subscriptions WHERE id = ? AND active = 1').get(subscriptionsId);
+  const sub = db
+    .prepare('SELECT id, revenuecat_product_id FROM subscriptions WHERE id = ? AND active = 1')
+    .get(subscriptionsId);
   if (!sub) return fail(res, 'Abonnement introuvable.', 404);
+
+  const returnState = () => {
+    const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    return res.json({ status: 'success', data: serializeUser(fresh, { full: true }) });
+  };
+
+  // On n'active QUE si RevenueCat confirme l'achat (sinon self-grant gratuit).
+  // Le webhook RevenueCat reste la source de vérité asynchrone : si l'achat
+  // n'est pas encore visible, on ne bloque pas l'app, le webhook activera.
+  let allowActivate = false;
+  if (revenuecat.isConfigured() && sub.revenuecat_product_id) {
+    try {
+      allowActivate = await revenuecat.hasActiveSubscription(
+        req.user.id,
+        sub.revenuecat_product_id
+      );
+    } catch (e) {
+      console.error('[subscription/buy] RevenueCat verify:', e.message);
+      return returnState();
+    }
+  } else if (process.env.NODE_ENV !== 'production') {
+    allowActivate = true; // dev/test sans clé RevenueCat
+  }
+
+  if (!allowActivate) return returnState();
 
   const existing = db.prepare(
     'SELECT id FROM user_subscriptions WHERE user_id = ? AND subscriptions_id = ?'
@@ -422,9 +450,7 @@ router.post('/subscription/buy', requireAuth, (req, res) => {
       "INSERT INTO user_subscriptions (user_id, subscriptions_id, status) VALUES (?, ?, 'active')"
     ).run(req.user.id, subscriptionsId);
   }
-
-  const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
-  return res.json({ status: 'success', data: serializeUser(fresh, { full: true }) });
+  return returnState();
 });
 
 // POST /api/subscription/checkout — paiement carte (Stripe Checkout), chemin
@@ -834,9 +860,22 @@ router.post('/referral/redeem', requireAuth, (req, res) => {
 });
 
 // ─── Ghost pass (accès VIP temporaire gamifié, NON comptabilisé en vente) ───
+// Ghost pass = aperçu VIP court et gamifié, PAS un accès payant. La durée est
+// bornée côté serveur (le client ne peut plus demander 999999 min pour bypasser
+// le paywall), et on ne délivre qu'UN pass actif par user/concert.
+const GHOST_PASS_MAX_MINUTES = 10;
 router.post('/ghost-pass/grant', requireAuth, (req, res) => {
   const b = req.body || {};
-  const minutes = parseInt(b.duration_minutes || 10, 10);
+  if (!b.event_id) return fail(res, 'event_id requis.', 422);
+  const requested = parseInt(b.duration_minutes || GHOST_PASS_MAX_MINUTES, 10) || GHOST_PASS_MAX_MINUTES;
+  const minutes = Math.max(1, Math.min(GHOST_PASS_MAX_MINUTES, requested));
+  // Un seul pass actif à la fois par user/concert (anti re-grant en boucle).
+  const active = db
+    .prepare("SELECT id FROM ghost_passes WHERE user_id = ? AND event_id = ? AND datetime(expires_at) > datetime('now')")
+    .get(req.user.id, b.event_id);
+  if (active) {
+    return res.json({ status: 'success', message: 'Pass déjà actif.', data: { event_id: b.event_id } });
+  }
   const expires = new Date(Date.now() + minutes * 60000).toISOString().replace('T', ' ').slice(0, 19);
   db.prepare(
     'INSERT INTO ghost_passes (user_id, event_id, duration_minutes, expires_at) VALUES (?, ?, ?, ?)'

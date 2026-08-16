@@ -27,10 +27,11 @@ function safeParsePassthrough(raw) {
 }
 
 if (!process.env.MUX_WEBHOOK_SECRET) {
-  console.error(
-    '[mux webhook] ⚠️⚠️  MUX_WEBHOOK_SECRET absent : la signature n\'est pas vérifiée, ' +
-    'n\'importe qui peut simuler un event Mux. Configure ce secret au plus vite.'
-  );
+  const msg =
+    '[mux webhook] MUX_WEBHOOK_SECRET absent : signature non vérifiée, ' +
+    'n\'importe qui pourrait simuler un event Mux.';
+  if (process.env.NODE_ENV === 'production') throw new Error(msg);
+  console.error('⚠️⚠️ ' + msg + ' (toléré en dev uniquement)');
 }
 
 router.post('/', (req, res) => {
