@@ -132,12 +132,21 @@ router.post('/social-login', async (req, res) => {
     // Dev sans jeton : on tolère l'ancien comportement email-only (tests).
   }
 
-  // Retrouver le compte : Apple par 'sub' (email parfois absent), sinon email.
+  // L'email/sub utilisés pour RETROUVER un compte proviennent UNIQUEMENT du
+  // jeton vérifié — jamais du body (qu'un attaquant contrôle). En dev sans
+  // jeton (tolérance tests), on retombe sur le body ; jamais en production.
+  const devFallback = !verified && process.env.NODE_ENV !== 'production';
+  const email = (verified?.email || (devFallback ? b.email : '') || '')
+    .trim()
+    .toLowerCase();
+
   let user = null;
+  // Apple : résolution par le 'sub' stable d'abord. L'email Apple n'existe
+  // qu'à la 1re connexion -> aux connexions suivantes (email vide) on ne
+  // résout QUE par sub, jamais par un email fourni par le client.
   if (isApple && verified?.sub) {
     user = db.prepare('SELECT * FROM users WHERE apple_sub = ?').get(verified.sub);
   }
-  const email = (verified?.email || b.email || '').trim().toLowerCase();
   if (!user && email) {
     user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
   }

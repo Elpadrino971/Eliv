@@ -440,6 +440,9 @@ function init() {
     // Reçu RevenueCat consommé pour ce billet (anti-rejeu : une transaction
     // d'achat ne peut donner qu'UN billet, même à prix égal sur 2 concerts).
     "ALTER TABLE tickets ADD COLUMN rc_transaction_id TEXT",
+    // Unicité au niveau base : deux requêtes concurrentes ne peuvent pas
+    // consommer le même reçu (double-crédit). Index partiel (ignore les NULL).
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_tickets_rc_txn ON tickets(rc_transaction_id) WHERE rc_transaction_id IS NOT NULL",
     // Traçage NET + part apporteur dans le ledger (part plateforme = ta marge réelle).
     "ALTER TABLE platform_earnings ADD COLUMN store_fee TEXT",
     "ALTER TABLE platform_earnings ADD COLUMN net TEXT",

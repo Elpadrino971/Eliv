@@ -211,7 +211,14 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
       }
     }
   });
-  grant();
+  try {
+    grant();
+  } catch (e) {
+    // Course concurrente sur le même reçu (index unique rc_transaction_id) :
+    // un autre appel a déjà consommé l'achat -> on refuse proprement.
+    console.error('[buy-ticket] grant:', e.message);
+    return fail(res, 'Achat déjà utilisé ou conflit, réessaie.', 409);
+  }
 
   const fresh = db.prepare('SELECT * FROM events WHERE id = ?').get(b.event_id);
   return ok(res, serializeEvent(fresh, { currentUserId: userId }));
