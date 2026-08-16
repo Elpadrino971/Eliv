@@ -13,8 +13,11 @@ import 'package:artist/BottomBar/screens/profile/history.dart';
 import 'package:artist/BottomBar/screens/profile/idea_box_screen.dart';
 import 'package:artist/BottomBar/screens/profile/manage_subscription_screen.dart';
 import 'package:artist/BottomBar/screens/profile/user_wallet.dart';
+import 'package:artist/BottomBar/screens/LiveScreen/artist_clips_grid.dart';
 import 'package:artist/Controllers/controller.dart';
+import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
+import 'package:artist/travis_scott/events_screen.dart';
 // import 'package:artist/BottomBar/screens/profile/my_tickets.dart';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
@@ -41,6 +44,7 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> {
   final authController = Get.find<AuthController>();
+  final eventController = Get.find<EventController>();
 
   List<UserSubscription> userActiveSubscriptions = [];
 
@@ -57,6 +61,12 @@ class _ProfileState extends State<Profile> {
           .toList();
     }
     await authController.getSettings();
+    // Charge MON propre contenu (vidéos, concerts, abonnés) pour la grille du
+    // profil — même pipeline que la fiche artiste, sur mon id.
+    final myId = '${userModel.value.user?.id ?? 1}';
+    unawaited(eventController.getArtistClips(artistId: myId));
+    unawaited(eventController.getArtistEvents(artistId: myId));
+    unawaited(eventController.getArtistFollowers(artistId: myId));
     if (widget.fromArtist) unawaited(_loadArtistStats());
     if (mounted) setState(() {});
   }
@@ -305,121 +315,77 @@ class _ProfileState extends State<Profile> {
               ],
             ),
             height(0.01),
-
-            // Mode artiste : le dashboard (bannière + gains + croissance) scrolle
-            // avec le reste de la page au lieu d'être figé en haut -> sinon, sur
-            // petit écran, il ne reste presque plus de place pour naviguer vers
-            // le bas (outils, portefeuille, déconnexion...).
-            if (!widget.fromArtist) ...[_fanHeaderCard(), height(0.02)],
-
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (widget.fromArtist) ...[
-                      _artistDashboardHeader(),
-                      height(0.02),
-                      _toolsAndResources(),
-                      height(0.02),
-                    ],
-                    // Bouton "Devenir artiste" en capsule (mode fan uniquement).
-                    // Les autres items de compte sont dans ⚙ Réglages.
-                    if (!widget.fromArtist) ...[
-                      height(0.01),
-                      GestureDetector(
-                        onTap: acountList[0]['onTap'] as VoidCallback,
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 15),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [goldSecondary, goldPrimary],
-                            ),
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: goldPrimary.withValues(alpha: 0.30),
-                                blurRadius: 16,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.mic_none_rounded,
-                                  color: midnightPrimary, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                'prof_become_artist'.tr,
-                                style: const TextStyle(
-                                  color: midnightPrimary,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+            _ownHero(widget.fromArtist),
+            height(0.014),
+            _ownStatsRow(),
+            height(0.012),
+            // Capsule "Devenir artiste" (mode fan). La déconnexion + les autres
+            // items sont dans ⚙ Réglages ; les outils artiste dans la nav du bas.
+            if (!widget.fromArtist) ...[
+              GestureDetector(
+                onTap: acountList[0]['onTap'] as VoidCallback,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [goldSecondary, goldPrimary]),
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: goldPrimary.withValues(alpha: 0.30),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
                     ],
-                    height(0.02),
-                    GestureDetector(
-                      onTap: () async {
-                        await myAlertDialog(
-                          title: 'prof_logout'.tr,
-                          content: 'prof_logout_confirm'.tr,
-                          onTap: () async {
-                            myLoadingDialog();
-                            await unSub('00${userModel.value.user?.id}');
-                            await unSub('users');
-                            await unSub('artist');
-                            if (userModel.value.user?.registrationType ==
-                                'social') {
-                              await GoogleSignIn.instance.signOut();
-                            }
-                            await SubscriptionController.clearIdentity();
-                            await box.remove('user');
-                            await Future.delayed(Duration(seconds: 1));
-                            Get.offAll(() => LoginScreen());
-                          },
-                        );
-                      },
-                      child: Container(
-                        padding: myPadding,
-                        decoration: BoxDecoration(
-                          color: Color(0xffFFF1F2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Image.asset('assets/logout.png'),
-                            width(0.02),
-                            Text(
-                              ' Logout Securely',
-                              style: TextStyle(
-                                color: Color(0xffFF2056),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    height(0.02),
-
-                    Center(
-                      child: Text(
-                        textAlign: TextAlign.center,
-                        'VybzzZ Mobile App ',
-                        style: TextStyle(
-                          color: Color(0xffA1A1A1),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.mic_none_rounded,
+                          color: midnightPrimary, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'prof_become_artist'.tr,
+                        style: const TextStyle(
+                          color: midnightPrimary,
+                          fontWeight: FontWeight.w800,
                           fontSize: 16,
-                          fontWeight: FontWeight.bold,
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              height(0.012),
+            ],
+            // Grille de MES vidéos (onglets Shorts / Clips / Concerts), même
+            // structure éprouvée que la fiche artiste.
+            Expanded(
+              child: DefaultTabController(
+                length: 3,
+                child: Column(
+                  children: [
+                    TabBar(
+                      labelColor: Get.isDarkMode ? whiteColor : blackColor,
+                      dividerColor: greyColor.withValues(alpha: 0.15),
+                      indicatorColor: goldPrimary,
+                      unselectedLabelColor: const Color(0xff737373),
+                      tabs: const [
+                        Tab(text: 'Shorts'),
+                        Tab(text: 'Clips'),
+                        Tab(text: 'Concerts'),
+                      ],
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          const ArtistClipsGrid(feed: 'for_you'),
+                          const ArtistClipsGrid(feed: 'clips'),
+                          Obx(() => EventsScreen(
+                                events:
+                                    eventController.artistEvents.value.data ?? [],
+                              )),
+                        ],
                       ),
                     ),
                   ],
@@ -430,6 +396,119 @@ class _ProfileState extends State<Profile> {
         ),
       ),
     );
+  }
+
+  // Hero image plein cadre du profil (fan ou artiste), plus court que la fiche
+  // pour laisser la place à la grille.
+  Widget _ownHero(bool isArtist) {
+    final w = Get.width;
+    final u = userModel.value.user;
+    final img = (isArtist ? u?.artistProfile : u?.profileImage) ?? '';
+    final name = (isArtist ? u?.artistName : u?.fullName) ?? 'N/A';
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: SizedBox(
+        width: w,
+        height: w * 0.44,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ImageWidget(url: img, width: w, height: w * 0.44, fit: BoxFit.cover),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.25),
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.72),
+                    ],
+                    stops: const [0.0, 0.4, 1.0],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 12,
+              right: 12,
+              child: GestureDetector(
+                onTap: () => Get.to(() => const NotificationScreen()),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.notifications_none_rounded,
+                      color: Colors.white, size: 19),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 12,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'prof_welcome_back'.tr,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.82),
+                      fontSize: 12.5,
+                      shadows: const [Shadow(color: Colors.black87, blurRadius: 8)],
+                    ),
+                  ),
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 23,
+                      shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Stats du profil (Abonnés / Vidéos / Concelts) à partir de MON contenu.
+  Widget _ownStatsRow() {
+    final txt = Get.isDarkMode ? whiteColor : blackColor;
+    Widget stat(String v, String l) => Expanded(
+          child: Column(
+            children: [
+              Text(v,
+                  style: TextStyle(
+                      color: txt, fontSize: 17, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 2),
+              Text(l, style: const TextStyle(color: Color(0xff737373), fontSize: 12)),
+            ],
+          ),
+        );
+    return Obx(() {
+      final followers =
+          eventController.artistFollowers.value.data?.followersCount ?? 0;
+      final clips = eventController.artistClips.value.count;
+      final concerts = (eventController.artistEvents.value.data ?? []).length;
+      return Row(
+        children: [
+          stat('$followers', 'Abonnés'),
+          stat('$clips', 'Vidéos'),
+          stat('$concerts', 'Concerts'),
+        ],
+      );
+    });
   }
 
   /// Carte profil "fan" — MÊME design que l'en-tête artiste : grande photo en
