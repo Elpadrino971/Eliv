@@ -23,12 +23,25 @@ class FollowModel {
         data: data ?? this.data,
       );
 
-  factory FollowModel.fromJson(Map<String, dynamic> json, [String? key]) =>
-      FollowModel(
-        status: json["status"],
-        message: json["message"],
-        data: json["data"] == null ? null : Data.fromJson(json["data"], key),
+  factory FollowModel.fromJson(Map<String, dynamic> json, [String? key]) {
+    final raw = json["data"];
+    Data? parsed;
+    if (raw is List) {
+      // Le backend renvoie parfois "data" comme un simple tableau de followers.
+      // On en déduit le compte + la liste (au lieu de crasher sur un Map attendu).
+      parsed = Data(
+        followersCount: raw.length,
+        followers: List<Follower>.from(raw.map((x) => Follower.fromJson(x))),
       );
+    } else if (raw is Map<String, dynamic>) {
+      parsed = Data.fromJson(raw, key);
+    }
+    return FollowModel(
+      status: json["status"],
+      message: json["message"],
+      data: parsed,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     "status": status,

@@ -315,7 +315,11 @@ class EventController extends GetxController {
     response.urlSetter = '${APIs.getArtistFollowersAPI}/$artistId';
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
-        artistFollowers.value = followModelFromJson(value);
+        try {
+          artistFollowers.value = followModelFromJson(value);
+        } catch (e) {
+          myPrint('getArtistFollowers parse: $e');
+        }
         update();
       } else {
         parseError(value, doBack: false);
