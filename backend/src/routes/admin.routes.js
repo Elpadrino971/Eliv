@@ -34,7 +34,7 @@ function requireAdmin(req, res, next) {
 // ─── IA (Claude) : rédaction assistée des descriptions concert / bio artiste ───
 router.post('/ai/generate-description', requireAdmin, async (req, res) => {
   if (!anthropic.isConfigured()) {
-    return res.status(503).json({ status: 'error', message: 'IA non configurée côté serveur (ANTHROPIC_API_KEY manquant).' });
+    return res.status(503).json({ status: 'error', message: 'IA non configurée côté serveur (définir GEMINI_API_KEY gratuit ou ANTHROPIC_API_KEY).' });
   }
   const b = req.body || {};
   const kind = b.kind === 'artist' ? 'artist' : 'event';
