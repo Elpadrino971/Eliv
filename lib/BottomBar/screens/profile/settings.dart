@@ -7,6 +7,13 @@ import 'package:artist/BottomBar/screens/profile/language_screen.dart';
 import 'package:artist/Global/locale_service.dart';
 import 'package:artist/BottomBar/screens/profile/personal_screen.dart';
 import 'package:artist/BottomBar/screens/profile/security_screen.dart';
+import 'package:artist/BottomBar/screens/profile/following_artists.dart';
+import 'package:artist/BottomBar/screens/profile/history.dart';
+import 'package:artist/BottomBar/screens/profile/user_wallet.dart';
+import 'package:artist/BottomBar/screens/profile/all_subscription_screen.dart';
+import 'package:artist/BottomBar/screens/profile/manage_subscription_screen.dart';
+import 'package:artist/BottomBar/screens/profile/idea_box_screen.dart';
+import 'package:artist/BottomBar/screens/profile/contant_page.dart';
 import 'package:artist/BottomBar/screens/profile/Support/all_support_chats.dart';
 import 'package:artist/widgets/my_appBar.dart';
 import 'package:artist/widgets/my_container.dart';
@@ -70,6 +77,69 @@ class _SettingsState extends State<Settings> {
       'subTitle': 'prof_faq_sub'.tr,
       'image': 'assets/icon12.png',
       'screen': FaqScreen(),
+    },
+  ];
+
+  // Éléments "compte VYBZZZ" migrés depuis l'écran Profil (le profil ne garde
+  // que le hero). Icônes + navigation identiques à l'ancienne liste du profil.
+  List<Map> get vybzzzAccountList => [
+    {
+      'icon': Icons.favorite_border_rounded,
+      'title': 'prof_following_artists'.tr,
+      'subTitle': 'prof_following_artists_sub'.tr,
+      'onTap': () => Get.to(() => FollowingArtists()),
+    },
+    {
+      'icon': Icons.history_rounded,
+      'title': 'prof_stream_history'.tr,
+      'subTitle': 'prof_stream_history'.tr,
+      'onTap': () => Get.to(() => History()),
+    },
+    {
+      'icon': Icons.account_balance_wallet_outlined,
+      'title': 'prof_wallet'.tr,
+      'subTitle': 'prof_wallet_sub'.tr,
+      'onTap': () => Get.to(() => const UserWallet()),
+    },
+    {
+      'icon': Icons.workspace_premium_outlined,
+      'title': 'prof_purchase_sub'.tr,
+      'subTitle': 'prof_become_artist_sub'.tr,
+      'onTap': () => Get.to(() => const AllSubscriptionScreen()),
+    },
+    {
+      'icon': Icons.card_membership_outlined,
+      'title': 'prof_manage_sub'.tr,
+      'subTitle': 'prof_manage_sub_sub'.tr,
+      'onTap': () => Get.to(() => const ManageSubscriptionScreen()),
+    },
+    {
+      'icon': Icons.lightbulb_outline_rounded,
+      'title': 'idea_box_title'.tr,
+      'subTitle': 'idea_box_subtitle'.tr,
+      'onTap': () => Get.to(() => const IdeaBoxScreen()),
+    },
+    {
+      'icon': Icons.shield_outlined,
+      'title': 'prof_privacy'.tr,
+      'subTitle': 'prof_privacy_sub'.tr,
+      'onTap': () => Get.to(
+        () => ContantPage(
+          title: 'prof_privacy'.tr,
+          content: authController.settings['privacy_policy'],
+        ),
+      ),
+    },
+    {
+      'icon': Icons.description_outlined,
+      'title': 'prof_terms'.tr,
+      'subTitle': 'prof_terms_sub'.tr,
+      'onTap': () => Get.to(
+        () => ContantPage(
+          title: 'prof_terms'.tr,
+          content: authController.settings['terms_and_conditions'],
+        ),
+      ),
     },
   ];
 
@@ -141,6 +211,61 @@ class _SettingsState extends State<Settings> {
                     return Divider(color: greyColor.withValues(alpha: 0.2));
                   },
                   itemCount: acountList.length,
+                ),
+              ),
+
+              height(0.02),
+              Text(
+                'prof_account_experience'.tr,
+                style: TextStyle(
+                  color: Color(0xff737373),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              height(0.01),
+              MyContainer(
+                widget: ListView.separated(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.all(0),
+                  physics: NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      onTap: vybzzzAccountList[index]['onTap'] as VoidCallback,
+                      minTileHeight: 40,
+                      contentPadding: EdgeInsets.all(0),
+                      leading: Icon(
+                        vybzzzAccountList[index]['icon'] as IconData,
+                        color: goldPrimary,
+                        size: 26,
+                      ),
+                      title: Text(
+                        vybzzzAccountList[index]['title'],
+                        style: TextStyle(
+                          color: Get.isDarkMode ? whiteColor : blackColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      subtitle: Text(
+                        vybzzzAccountList[index]['subTitle'],
+                        style: TextStyle(
+                          color: Color(0xff737373),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      trailing: Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 12,
+                        color: greyColor,
+                      ),
+                    );
+                  },
+                  separatorBuilder: (context, index) {
+                    return Divider(color: greyColor.withValues(alpha: 0.2));
+                  },
+                  itemCount: vybzzzAccountList.length,
                 ),
               ),
 

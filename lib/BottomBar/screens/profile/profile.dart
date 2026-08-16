@@ -385,7 +385,11 @@ class _ProfileState extends State<Profile> {
                           color: goldSecondary.withValues(alpha: 0.12),
                         );
                       },
-                      itemCount: acountList.length,
+                      // Le profil ne garde que "Devenir artiste" (index 0) ;
+                      // tout le reste (Suivis, Historique, Portefeuille,
+                      // Abonnement, Idées, Confidentialité, CGU) est déplacé
+                      // dans ⚙ Réglages (voir settings.dart / vybzzzAccountList).
+                      itemCount: widget.fromArtist ? 0 : 1,
                     ),
                     height(0.02),
                     GestureDetector(
