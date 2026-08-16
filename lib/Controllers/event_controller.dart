@@ -247,11 +247,15 @@ class EventController extends GetxController {
     artistClips.value = ArtistClipsModel();
     _clipsResponse.typeSetter = 'get';
     _clipsResponse.urlSetter = APIs.getArtistClipsAPI(artistId);
+    myPrint('[clips] GET ${APIs.getArtistClipsAPI(artistId)}');
     await _clipsResponse.hitAPI().then((value) {
+      myPrint('[clips] resp: ${value.length > 160 ? value.substring(0, 160) : value}');
       if (value.split(' ').first != 'error') {
         artistClips.value = artistClipsModelFromJson(value);
+        myPrint('[clips] parsed count=${artistClips.value.count}');
         update();
       } else {
+        myPrint('[clips] ERROR branch');
         parseError(value, doBack: false);
       }
     });
