@@ -3,6 +3,7 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/user_model.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/artist_clips_grid.dart';
+import 'package:artist/travis_scott/about_screen.dart';
 import 'package:artist/travis_scott/events_screen.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:flutter/material.dart';
@@ -51,6 +52,20 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             .toList() ??
         [];
     return ids.contains(userModel.value.user?.id);
+  }
+
+  // Partage de l'artiste (tout sauf les concerts, qui ont leur propre
+  // partage "invitation" côté écran concert).
+  void _shareArtist() {
+    final name = widget.artist?.artistName ?? widget.artist?.fullName ?? 'cet artiste';
+    myShare(
+      message:
+          'Découvre $name sur VYBZZZ 🎤🔥\nLives, clips & concerts exclusifs.\nhttps://vybzzz.online',
+    );
+  }
+
+  void _openAbout() {
+    Get.to(() => AboutScreen(artist: widget.artist ?? User()));
   }
 
   Future<void> _toggleFollow() async {
@@ -151,9 +166,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   children: [
                     _circleBtn(Icons.arrow_back_ios_new_rounded, () => Get.back()),
                     const Spacer(),
-                    _circleBtn(Icons.share_outlined, () {}),
+                    _circleBtn(Icons.share_outlined, _shareArtist),
                     const SizedBox(width: 8),
-                    _circleBtn(Icons.more_horiz_rounded, () {}),
+                    _circleBtn(Icons.more_horiz_rounded, _openAbout),
                   ],
                 ),
               ),
@@ -274,6 +289,23 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   style: TextStyle(color: txt.withValues(alpha: 0.85), fontSize: 12.5, height: 1.4),
                 ),
               ],
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: _openAbout,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.info_outline_rounded, color: goldPrimary, size: 16),
+                    const SizedBox(width: 5),
+                    Text('À propos de l\'artiste',
+                        style: TextStyle(
+                            color: goldPrimary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13)),
+                    Icon(Icons.chevron_right_rounded, color: goldPrimary, size: 18),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
