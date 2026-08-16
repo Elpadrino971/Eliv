@@ -181,7 +181,21 @@ class _FutureScreenState extends State<FutureScreen> {
                           width(0.02),
                           _glassButton(
                             onTap: () async {
-                              await myShare(message: APIs.mainIP);
+                              // Partage d'un concert = invitation (différent du
+                              // partage simple d'un artiste).
+                              final e = widget.event;
+                              final artist = e.artist?.artistName ??
+                                  e.artist?.fullName ??
+                                  '';
+                              final date = AppDate.fullDate(e.startDateTime);
+                              final time = AppDate.time(e.startDateTime);
+                              await myShare(
+                                message: '🎟️ Tu es invité(e) au concert live !\n\n'
+                                    '🎤 ${e.name ?? 'Concert VYBZZZ'}'
+                                    '${artist.isNotEmpty ? '\n★ $artist' : ''}'
+                                    '\n📅 $date · $time'
+                                    '\n\nRejoins-moi en direct sur VYBZZZ 🔥\n${APIs.mainIP}',
+                              );
                             },
                             child: const Icon(
                               Icons.ios_share_rounded,
