@@ -106,6 +106,16 @@ function init() {
       PRIMARY KEY (follower_id, artist_id)
     );
 
+    -- "Ma liste" (façon Netflix) : artistes qu'un user enregistre pour les
+    -- retrouver vite. Distinct de "follows" (abonnement) : on peut mettre en
+    -- liste sans suivre. Voir GET/POST /api/my-list.
+    CREATE TABLE IF NOT EXISTS saved_artists (
+      user_id INTEGER,
+      artist_id INTEGER,
+      created_at TEXT DEFAULT (datetime('now')),
+      PRIMARY KEY (user_id, artist_id)
+    );
+
     CREATE TABLE IF NOT EXISTS gifts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,

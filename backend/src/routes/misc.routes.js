@@ -518,6 +518,44 @@ router.get('/artist/:id/clips', (req, res) => {
   });
 });
 
+// ─── "Ma liste" (façon Netflix) : enregistrer des artistes pour les retrouver.
+// Distinct de "suivre" : on peut mettre en liste sans suivre. ───
+router.post('/artist/:id/save', requireAuth, (req, res) => {
+  const artistId = Number(req.params.id);
+  if (!artistId || artistId === req.user.id) {
+    return fail(res, 'Artiste invalide.', 422);
+  }
+  db.prepare(
+    'INSERT OR IGNORE INTO saved_artists (user_id, artist_id) VALUES (?, ?)'
+  ).run(req.user.id, artistId);
+  return res.json({ status: 'success', saved: true });
+});
+
+router.post('/artist/:id/unsave', requireAuth, (req, res) => {
+  db.prepare('DELETE FROM saved_artists WHERE user_id = ? AND artist_id = ?')
+    .run(req.user.id, Number(req.params.id));
+  return res.json({ status: 'success', saved: false });
+});
+
+// GET /api/artist/:id/saved — l'artiste est-il dans ma liste ? (pour l'état du bouton)
+router.get('/artist/:id/saved', requireAuth, (req, res) => {
+  const row = db
+    .prepare('SELECT 1 FROM saved_artists WHERE user_id = ? AND artist_id = ?')
+    .get(req.user.id, Number(req.params.id));
+  return res.json({ status: 'success', saved: !!row });
+});
+
+// GET /api/my-list — les artistes enregistrés par le user connecté.
+router.get('/my-list', requireAuth, (req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT u.* FROM saved_artists s JOIN users u ON u.id = s.artist_id
+       WHERE s.user_id = ? ORDER BY s.created_at DESC`
+    )
+    .all(req.user.id);
+  return ok(res, rows.map((u) => serializeUser(u)));
+});
+
 // POST /api/feed-clips/submit — n'importe quel user connecté peut soumettre
 // un short pour "Pour toi" ou "Clips" ; reste invisible (active=0) tant que
 // l'admin ne l'a pas approuvé depuis "Clips (Feeds)" (contenu hors-scène
