@@ -238,20 +238,26 @@ router.post('/event-logs', (req, res) => {
 });
 
 // POST /api/events/update/:id  (body: { status })
-router.post('/events/update/:id', optionalAuth, (req, res) => {
+const ALLOWED_EVENT_STATUS = ['published', 'live', 'completed', 'cancelled', 'ended'];
+router.post('/events/update/:id', requireAuth, (req, res) => {
   const status = req.body?.status;
+  if (!ALLOWED_EVENT_STATUS.includes(status)) {
+    return fail(res, 'Statut invalide.', 422);
+  }
+  // Autorisation : SEUL l'artiste propriétaire du concert peut changer son
+  // statut (avant, l'endpoint était ouvert -> n'importe qui pouvait bloquer /
+  // couper / relancer le concert de n'importe quel artiste).
+  const ev = db.prepare('SELECT artist_id FROM events WHERE id = ?').get(req.params.id);
+  if (!ev) return fail(res, 'Concert introuvable.', 404);
+  if (req.user?.id !== ev.artist_id) {
+    return res.status(403).json({ status: 'error', message: 'Action non autorisée.' });
+  }
   db.prepare("UPDATE events SET status = ?, updated_at = datetime('now') WHERE id = ?")
     .run(status, req.params.id);
-  // Passage EN DIRECT -> déclenche (idempotent) la prime Pionnier + le départ des
-  // 24 mois de commission au premier live. IMPACT FINANCIER -> on n'arme le
-  // déclencheur QUE si c'est l'artiste lui-même (JWT) qui passe SON concert en
-  // direct : cet endpoint est ouvert, on ne veut pas qu'un appel anonyme puisse
-  // fabriquer une prime pour un artiste rattaché à un apporteur.
-  if (status === 'live') {
-    const ev = db.prepare('SELECT artist_id FROM events WHERE id = ?').get(req.params.id);
-    if (ev?.artist_id && req.user?.id === ev.artist_id) {
-      try { apporteurBonus.onFirstLive(ev.artist_id); } catch (e) { console.error('[apporteur onFirstLive]', e.message); }
-    }
+  // Passage EN DIRECT -> prime Pionnier + départ des 24 mois de commission
+  // (idempotent). Le propriétaire est déjà vérifié ci-dessus.
+  if (status === 'live' && ev.artist_id) {
+    try { apporteurBonus.onFirstLive(ev.artist_id); } catch (e) { console.error('[apporteur onFirstLive]', e.message); }
   }
   return res.json({ status: 'success', message: 'Event updated.' });
 });
