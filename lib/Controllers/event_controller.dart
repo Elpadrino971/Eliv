@@ -258,6 +258,54 @@ class EventController extends GetxController {
     artistClipsLoading.value = false;
   }
 
+  // ── "Ma liste" (artistes enregistrés, façon Netflix) ──
+  final _listResponse = ApiResponse();
+  RxBool artistSaved = false.obs;
+  RxBool myListLoading = false.obs;
+  RxList<User> myListArtists = <User>[].obs;
+
+  Future<void> checkArtistSaved({required String artistId}) async {
+    _listResponse.typeSetter = 'get';
+    _listResponse.urlSetter = APIs.artistSavedAPI(artistId);
+    final value = await _listResponse.hitAPI();
+    if (value.split(' ').first != 'error') {
+      try {
+        artistSaved.value = jsonDecode(value)['saved'] == true;
+      } catch (_) {}
+    }
+  }
+
+  Future<void> toggleSaveArtist({required String artistId}) async {
+    final wasSaved = artistSaved.value;
+    artistSaved.value = !wasSaved; // maj optimiste
+    _listResponse.typeSetter = 'post';
+    _listResponse.urlSetter =
+        wasSaved ? APIs.unsaveArtistAPI(artistId) : APIs.saveArtistAPI(artistId);
+    _listResponse.bodySetter = {};
+    final value = await _listResponse.hitAPI();
+    if (value.split(' ').first == 'error') {
+      artistSaved.value = wasSaved; // rollback si échec
+      parseError(value, doBack: false);
+    }
+  }
+
+  Future<void> getMyList() async {
+    myListLoading.value = true;
+    _listResponse.typeSetter = 'get';
+    _listResponse.urlSetter = APIs.myListAPI;
+    final value = await _listResponse.hitAPI();
+    if (value.split(' ').first != 'error') {
+      try {
+        final data = (jsonDecode(value)['data'] as List?) ?? [];
+        myListArtists.value =
+            data.map((e) => User.fromJson(e as Map<String, dynamic>)).toList();
+      } catch (e) {
+        parseError(value, doBack: false);
+      }
+    }
+    myListLoading.value = false;
+  }
+
   Future<void> getArtistFollowers({required String artistId}) async {
     response.typeSetter = 'get';
     response.urlSetter = '${APIs.getArtistFollowersAPI}/$artistId';

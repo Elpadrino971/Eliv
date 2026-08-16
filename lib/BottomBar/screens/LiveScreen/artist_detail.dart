@@ -31,6 +31,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     await eventController.getArtistEvents(artistId: id);
     await eventController.getArtistFollowers(artistId: id);
     await eventController.getArtistClips(artistId: id);
+    eventController.checkArtistSaved(artistId: id);
   }
 
   @override
@@ -255,15 +256,16 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                     ),
                   ),
                   const SizedBox(width: 9),
-                  _ghostBtn(
-                    icon: Icons.playlist_add,
-                    label: 'Ma liste',
-                    onTap: () => Get.snackbar(
-                      'Bientôt',
-                      'La liste arrive très vite 🎬',
-                      snackPosition: SnackPosition.BOTTOM,
-                    ),
-                  ),
+                  Obx(() {
+                    final saved = eventController.artistSaved.value;
+                    return _ghostBtn(
+                      icon: saved ? Icons.playlist_add_check_rounded : Icons.playlist_add_rounded,
+                      label: saved ? 'Dans ma liste' : 'Ma liste',
+                      onTap: () => eventController.toggleSaveArtist(
+                        artistId: '${widget.artist?.id ?? 1}',
+                      ),
+                    );
+                  }),
                 ],
               ),
               if (bio.trim().isNotEmpty) ...[

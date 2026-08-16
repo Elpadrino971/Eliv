@@ -105,6 +105,11 @@ class APIs {
   static const String reportEventAPI = '$baseAPI/report-event';
   static String getArtistEventsAPI(String id) => '$baseAPI/artist/$id/events';
   static String getArtistClipsAPI(String id) => '$baseAPI/artist/$id/clips';
+  // "Ma liste" (artistes enregistrés, façon Netflix).
+  static String saveArtistAPI(String id) => '$baseAPI/artist/$id/save';
+  static String unsaveArtistAPI(String id) => '$baseAPI/artist/$id/unsave';
+  static String artistSavedAPI(String id) => '$baseAPI/artist/$id/saved';
+  static const String myListAPI = '$baseAPI/my-list';
   static const String getEventStatsByUserIdAPI =
       '$baseAPI/get-event-stats-by-user-id'; // Post
 

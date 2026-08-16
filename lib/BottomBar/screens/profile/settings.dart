@@ -8,6 +8,7 @@ import 'package:artist/Global/locale_service.dart';
 import 'package:artist/BottomBar/screens/profile/personal_screen.dart';
 import 'package:artist/BottomBar/screens/profile/security_screen.dart';
 import 'package:artist/BottomBar/screens/profile/following_artists.dart';
+import 'package:artist/BottomBar/screens/profile/my_list_screen.dart';
 import 'package:artist/BottomBar/screens/profile/history.dart';
 import 'package:artist/BottomBar/screens/profile/user_wallet.dart';
 import 'package:artist/BottomBar/screens/profile/all_subscription_screen.dart';
@@ -83,6 +84,12 @@ class _SettingsState extends State<Settings> {
   // Éléments "compte VYBZZZ" migrés depuis l'écran Profil (le profil ne garde
   // que le hero). Icônes + navigation identiques à l'ancienne liste du profil.
   List<Map> get vybzzzAccountList => [
+    {
+      'icon': Icons.playlist_add_check_rounded,
+      'title': 'Ma liste',
+      'subTitle': 'Les artistes que tu as enregistrés',
+      'onTap': () => Get.to(() => const MyListScreen()),
+    },
     {
       'icon': Icons.favorite_border_rounded,
       'title': 'prof_following_artists'.tr,
