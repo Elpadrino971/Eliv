@@ -2,6 +2,8 @@
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 const path = require('path');
 
@@ -18,6 +20,10 @@ const moderationRoutes = require('./routes/moderation.routes');
 init();
 
 const app = express();
+// Derrière le reverse-proxy (Nginx/Hostinger) : nécessaire pour que le
+// rate-limit voie la vraie IP client (X-Forwarded-For) et pas celle du proxy.
+app.set('trust proxy', 1);
+app.use(helmet()); // en-têtes de sécurité HTTP (XSS, sniffing, frame, etc.)
 app.use(cors());
 
 // Webhooks Mux/Stripe : montés AVANT express.json() car la vérification de
@@ -30,10 +36,46 @@ app.use('/api/stripe/webhook', express.raw({ type: '*/*' }), stripeWebhookRoutes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ── Rate limiting anti-brute-force ────────────────────────────────────────
+// Protège les endpoints d'authentification (login, inscription, OTP, reset)
+// contre les tentatives massives de mots de passe / d'énumération. 20 requêtes
+// par IP toutes les 15 min : large pour un usage normal, bloque un bot.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { status: 'error', message: 'Trop de tentatives, réessaie dans quelques minutes.' },
+});
+app.use(
+  [
+    '/api/login',
+    '/api/sign-up',
+    '/api/social-login',
+    '/api/forget',
+    '/api/reset-password',
+    '/api/update-password',
+    '/api/verify',
+    '/api/admin/login',
+  ],
+  authLimiter,
+);
+
 const fs = require('fs');
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 fs.mkdirSync(uploadsDir, { recursive: true }); // dossier temp multer (créé au démarrage)
-const upload = multer({ dest: uploadsDir });
+// Limites d'upload : 200 Mo/fichier et 12 fichiers max (les grosses vidéos de
+// concert passent par l'upload direct Mux, pas par ce serveur). Filtre de type :
+// on n'accepte que des médias (image/vidéo/audio) — bloque scripts/exécutables.
+const ALLOWED_UPLOAD = /^(image|video|audio)\//;
+const upload = multer({
+  dest: uploadsDir,
+  limits: { fileSize: 200 * 1024 * 1024, files: 12 },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_UPLOAD.test(file.mimetype || '')) return cb(null, true);
+    cb(new Error('UNSUPPORTED_FILE_TYPE'));
+  },
+});
 app.use(upload.any()); // accepte n'importe quel champ fichier (profile_picture, images[], …)
 
 // Fichiers statiques (covers, profils, vidéos, gifts) — mêmes chemins que l'API live
@@ -194,6 +236,13 @@ app.use((req, res) => res.status(404).json({ status: 'error', message: `Not foun
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error('[ERROR]', err.message);
+  // Erreurs d'upload multer -> réponses propres (pas un 500 générique).
+  if (err && (err.code === 'LIMIT_FILE_SIZE' || err.code === 'LIMIT_FILE_COUNT')) {
+    return res.status(413).json({ status: 'error', message: 'Fichier trop volumineux.' });
+  }
+  if (err && err.message === 'UNSUPPORTED_FILE_TYPE') {
+    return res.status(415).json({ status: 'error', message: 'Type de fichier non supporté.' });
+  }
   // En prod, err.message peut contenir des détails internes (requête SQL,
   // chemin de fichier…) -> message générique côté client, détail dans les logs.
   const message = process.env.NODE_ENV === 'production' ? 'Internal server error.' : err.message;

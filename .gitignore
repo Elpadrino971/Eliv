@@ -62,3 +62,7 @@ app.*.map.json
 .env.*
 env/
 *.env.json
+
+# Sauvegardes SQLite locales (script backup-db.js)
+backend/backups/
+backend/uploads/
