@@ -26,6 +26,7 @@ const textFieldPadding = EdgeInsets.symmetric(vertical: 5);
 const String themeKey = 'isDarkMode';
 
 const String revenueCatAppleApiKey = 'appl_KIbaeOroARylQdwdEhBeHEGIVms';
+const String revenueCatGoogleApiKey = 'goog_lDZjQunqqLrPCbshbXkMrbhoZAn';
 
 Widget height(double height) {
   return SizedBox(height: Get.height * height);

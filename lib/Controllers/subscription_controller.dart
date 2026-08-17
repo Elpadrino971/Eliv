@@ -149,7 +149,7 @@ class SubscriptionController extends GetxController {
     await Purchases.setLogLevel(LogLevel.debug);
 
     if (Platform.isAndroid) {
-      // await Purchases.configure(PurchasesConfiguration(revenueCatGoogleApiKey));
+      await Purchases.configure(PurchasesConfiguration(revenueCatGoogleApiKey));
     } else {
       await Purchases.configure(PurchasesConfiguration(revenueCatAppleApiKey));
     }
