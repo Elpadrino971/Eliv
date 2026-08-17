@@ -68,6 +68,23 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # Génère les icônes d'app (Android + iOS) depuis une seule image source.
+  # Usage : place ton logo carré (idéalement 1024x1024) dans assets/app_icon.png
+  # puis lance :  flutter pub get  &&  dart run flutter_launcher_icons
+  flutter_launcher_icons: ^0.14.3
+
+# ── Configuration des icônes d'application ────────────────────────────────
+# Régénère android/app/src/main/res/mipmap-* et l'AppIcon iOS à partir de
+# assets/app_icon.png. Icône adaptative Android (fond noir façon VybzzZ).
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/app_icon.png"
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
