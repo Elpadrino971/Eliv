@@ -85,6 +85,9 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
   /// -> on l'achète directement par son ID (getProducts). Doit correspondre aux
   /// IDs créés dans App Store Connect (durée 1 an).
   String? _annualProductId(String? title) {
+    // Google Play n'a que des forfaits MENSUELS (base plans) -> pas d'annuel
+    // sur Android. On renvoie null pour afficher "annuel indisponible".
+    if (Platform.isAndroid) return null;
     final t = (title ?? '').toLowerCase();
     if (t.contains('founder')) return 'vybzz_79_1y';
     if (t.contains('growth')) return 'vybzz_199_1y';
@@ -123,6 +126,25 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
   /// qui plantait silencieusement (sheet vide) dès que le titre du produit
   /// App Store ne correspondait pas mot pour mot au nom en base.
   Future<void> _purchaseMonthly(Subscription sub) async {
+    // Android : les IDs App Store n'existent pas sur Play. Les paliers sont des
+    // base plans du produit d'abo Play -> on achète via RevenueCat par palier.
+    if (Platform.isAndroid) {
+      final ok = await subscriptionController.purchaseAndroidSubscription(
+        sub.title ?? '',
+      );
+      if (ok) {
+        await subscriptionController.buySubscription(
+          subscriptionId: sub.id.toString(),
+        );
+      } else {
+        myWarningDialog(
+          title: 'pay_purchasing_failed'.tr,
+          subtitle: 'pay_subscribe_failed'.tr,
+          btnTitle: 'common_continue'.tr,
+        );
+      }
+      return;
+    }
     final productId = sub.iapProductId;
     if (productId == null || productId.isEmpty) {
       // Repli : aucun ID produit mappé en admin pour ce palier -> ancien

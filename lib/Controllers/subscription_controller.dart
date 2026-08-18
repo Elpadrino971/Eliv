@@ -252,4 +252,58 @@ class SubscriptionController extends GetxController {
       return false;
     }
   }
+
+  /// Achète un ABONNEMENT sur ANDROID. Sur Google Play, les 4 paliers sont des
+  /// « base plans » d'un même produit d'abonnement (`vybzzz`) — leurs IDs
+  /// (`vybzzz:starter-plan`, `vybzzz:elite-plan`, …) ne correspondent PAS aux
+  /// IDs App Store (`vybzz_99_1m`). On ne peut donc pas réutiliser l'ID iOS ici.
+  /// On sélectionne le bon palier par mot-clé (founder/starter/growth/elite),
+  /// d'abord via les offerings RevenueCat (mapping le plus propre), sinon en
+  /// interrogeant directement le produit d'abonnement Play et ses base plans.
+  /// [tierOrTitle] = le titre du palier (ex. "Founder 79", "Growth").
+  Future<bool> purchaseAndroidSubscription(String tierOrTitle) async {
+    const tiers = ['founder', 'starter', 'growth', 'elite'];
+    final key = tierOrTitle.toLowerCase();
+    final tier = tiers.firstWhere((t) => key.contains(t), orElse: () => '');
+    if (tier.isEmpty) {
+      myPrint('purchaseAndroidSubscription: palier introuvable dans "$tierOrTitle"');
+      return false;
+    }
+    try {
+      // 1) Via les offerings RevenueCat (si configurés) : on cherche le package
+      //    dont le produit/base plan contient le mot-clé du palier.
+      try {
+        final offerings = await Purchases.getOfferings();
+        for (final offering in offerings.all.values) {
+          for (final pack in offering.availablePackages) {
+            final hay =
+                '${pack.identifier} ${pack.storeProduct.identifier} ${pack.storeProduct.title}'
+                    .toLowerCase();
+            if (hay.contains(tier)) {
+              await Purchases.purchase(PurchaseParams.package(pack));
+              return true;
+            }
+          }
+        }
+      } catch (e) {
+        myPrint('purchaseAndroidSubscription: offerings indisponibles ($e) -> fallback produit direct');
+      }
+      // 2) Repli : produit d'abonnement Play direct + ses base plans.
+      final products = await Purchases.getProducts(
+        ['vybzzz'],
+        productCategory: ProductCategory.subscription,
+      );
+      for (final p in products) {
+        if (p.identifier.toLowerCase().contains(tier)) {
+          await Purchases.purchase(PurchaseParams.storeProduct(p));
+          return true;
+        }
+      }
+      myPrint('purchaseAndroidSubscription: aucun base plan pour "$tier"');
+      return false;
+    } catch (e) {
+      myPrint('purchaseAndroidSubscription: $e');
+      return false;
+    }
+  }
 }
