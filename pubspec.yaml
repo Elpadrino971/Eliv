@@ -73,6 +73,10 @@ dev_dependencies:
   # puis lance :  flutter pub get  &&  dart run flutter_launcher_icons
   flutter_launcher_icons: ^0.14.3
 
+  # Génère l'écran de démarrage (splash) iOS + Android depuis une image + une
+  # couleur de fond. Usage :  flutter pub get && dart run flutter_native_splash:create
+  flutter_native_splash: ^2.4.4
+
 # ── Configuration des icônes d'application ────────────────────────────────
 # Régénère android/app/src/main/res/mipmap-* et l'AppIcon iOS à partir de
 # assets/app_icon.png. Icône adaptative Android (fond noir façon VybzzZ).
@@ -84,6 +88,20 @@ flutter_launcher_icons:
   min_sdk_android: 21
   adaptive_icon_background: "#000000"
   adaptive_icon_foreground: "assets/app_icon.png"
+
+# ── Écran de démarrage (splash) VybzzZ ─────────────────────────────────────
+# Logo centré sur fond sombre (bleu nuit VybzzZ). Régénère le LaunchImage iOS
+# (+ storyboard) et le splash Android à partir de assets/app_icon.png.
+# Lancer :  dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#0A1226"
+  image: assets/app_icon.png
+  android_12:
+    color: "#0A1226"
+    image: assets/app_icon.png
+  ios: true
+  android: true
+  web: false
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
