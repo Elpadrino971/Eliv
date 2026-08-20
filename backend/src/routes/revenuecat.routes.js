@@ -24,6 +24,47 @@ const ACTIVE_EVENTS = new Set([
 // Évènements d'achat qui créditent des points (packs consommables).
 const PURCHASE_EVENTS = new Set(['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE']);
 
+// Résout NOTRE users.id à partir des identifiants RevenueCat de l'évènement.
+// L'app appelle `Purchases.logIn(userId)` pour aligner l'identité RevenueCat
+// sur la nôtre, mais si l'achat a lieu AVANT que ce logIn ait pris effet
+// (ancienne version de l'app, ou logIn asynchrone pas encore terminé), la
+// transaction reste rattachée à un identifiant anonyme `$RCAnonymousID:...`.
+// Dans ce cas `Number(app_user_id)` = NaN -> aucun crédit -> échec silencieux
+// (argent pris, 0 point). Pour éviter ça, on cherche le PREMIER identifiant qui
+// est un vrai numéro d'utilisateur parmi app_user_id, original_app_user_id et
+// aliases (RevenueCat liste tous les ID d'un même client). Retourne null si
+// aucun n'est numérique (achat réellement anonyme -> crédit manuel requis).
+function resolveUserId(event) {
+  const candidates = [
+    event.app_user_id,
+    event.original_app_user_id,
+    ...(Array.isArray(event.aliases) ? event.aliases : []),
+  ];
+  for (const c of candidates) {
+    if (c == null) continue;
+    const s = String(c).trim();
+    if (/^\d+$/.test(s)) {
+      const n = Number(s);
+      if (Number.isInteger(n) && n > 0) return n;
+    }
+  }
+  return null;
+}
+
+// Dernier filet : si l'identité RevenueCat est purement anonyme (aucun ID
+// numérique), on tente de retrouver l'utilisateur par son EMAIL. L'app publie
+// l'email via `Purchases.setEmail(...)` -> RevenueCat le renvoie dans
+// `event.subscriber_attributes.$email.value`. On matche alors `users.email`.
+// Sans email publié (anciennes versions), retourne null -> crédit manuel.
+function resolveUserIdByEmail(event) {
+  const attrs = event.subscriber_attributes || {};
+  const raw = attrs['$email'] && attrs['$email'].value != null ? attrs['$email'].value : null;
+  const email = raw ? String(raw).trim().toLowerCase() : '';
+  if (!email) return null;
+  const row = db.prepare('SELECT id FROM users WHERE lower(email) = ?').get(email);
+  return row ? row.id : null;
+}
+
 // Sans REVENUECAT_WEBHOOK_AUTH, n'importe qui peut POSTer ce endpoint avec un
 // faux event INITIAL_PURCHASE et s'auto-créditer des points/un abonnement
 // gratuitement -> vérifier au démarrage que le secret est bien configuré.
@@ -51,14 +92,28 @@ router.post('/', (req, res) => {
   console.log(`[revenuecat webhook] ${event.type}`);
 
   try {
-    const userId = Number(event.app_user_id);
+    // 1) ID numérique (app_user_id / original / alias) ; 2) sinon, repli par
+    //    email publié via subscriber_attributes. Un des deux suffit à créditer.
+    let userId = resolveUserId(event);
+    if (!userId) userId = resolveUserIdByEmail(event);
     const productId = event.product_id;
 
     // ── Pack de points (recharge portefeuille via IAP) ──
     const pack = productId
       ? db.prepare('SELECT id, points FROM packages WHERE revenuecat_product_id = ?').get(productId)
       : null;
-    if (userId && pack && PURCHASE_EVENTS.has(event.type)) {
+    if (pack && PURCHASE_EVENTS.has(event.type)) {
+      // Achat de points reconnu mais impossible à rattacher à un utilisateur
+      // (identité anonyme) : on le LOG explicitement pour crédit manuel plutôt
+      // que de l'avaler en silence (l'argent a bien été pris côté store).
+      if (!userId) {
+        console.warn(
+          `[revenuecat webhook] ACHAT DE POINTS NON ATTRIBUÉ : app_user_id="${event.app_user_id}" ` +
+            `non numérique (identité anonyme). pack=${productId} tx=${event.transaction_id || '?'} ` +
+            `-> crédit manuel requis.`
+        );
+        return res.json({ received: true });
+      }
       // Dédup : les webhooks RevenueCat sont ré-émis, ne créditer qu'une fois.
       const evId = String(event.id || `${event.app_user_id}:${event.transaction_id || productId}:${event.purchased_at_ms || ''}`);
       const seen = db.prepare('SELECT event_id FROM rc_processed_events WHERE event_id = ?').get(evId);
@@ -80,6 +135,15 @@ router.post('/', (req, res) => {
     const sub = productId
       ? db.prepare('SELECT id FROM subscriptions WHERE revenuecat_product_id = ?').get(productId)
       : null;
+
+    // Abonnement reconnu mais identité anonyme : même problème que les points,
+    // on le signale au lieu de l'ignorer (l'abonnement ne serait pas activé).
+    if (sub && !userId && (ACTIVE_EVENTS.has(event.type) || event.type === 'EXPIRATION' || event.type === 'BILLING_ISSUE')) {
+      console.warn(
+        `[revenuecat webhook] ABONNEMENT NON ATTRIBUÉ : app_user_id="${event.app_user_id}" ` +
+          `non numérique (identité anonyme). product=${productId} event=${event.type} -> action manuelle requise.`
+      );
+    }
 
     if (userId && sub) {
       if (ACTIVE_EVENTS.has(event.type)) {
