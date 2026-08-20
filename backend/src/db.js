@@ -504,6 +504,13 @@ function init() {
     // Code de parrainage apporteur : l'artiste le valide (page /rejoindre) pour
     // être rattaché automatiquement à l'apporteur + démarrer l'offre (3 mois).
     "ALTER TABLE apporteurs ADD COLUMN code TEXT",
+    // Back-fill des IDs produit d'abonnement App Store (rejet Apple 2.1b : sans
+    // ID, l'achat d'abo échouait). On ne touche QUE les lignes encore vides,
+    // par palier -> n'écrase jamais une valeur saisie en admin.
+    "UPDATE subscriptions SET revenuecat_product_id = 'vybzz_79_1m' WHERE (revenuecat_product_id IS NULL OR revenuecat_product_id = '') AND lower(tier) = 'founder'",
+    "UPDATE subscriptions SET revenuecat_product_id = 'vybzz_99_1m' WHERE (revenuecat_product_id IS NULL OR revenuecat_product_id = '') AND lower(tier) = 'starter'",
+    "UPDATE subscriptions SET revenuecat_product_id = 'vybzz_199_1m' WHERE (revenuecat_product_id IS NULL OR revenuecat_product_id = '') AND lower(tier) = 'growth'",
+    "UPDATE subscriptions SET revenuecat_product_id = 'vybzz_299_1m' WHERE (revenuecat_product_id IS NULL OR revenuecat_product_id = '') AND lower(tier) = 'elite'",
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }

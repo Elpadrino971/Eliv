@@ -50,7 +50,10 @@ function subscriptionToJson(r) {
     next_price_in_seats: null,
     public_price: null,
     badge: r.badge,
-    iap_product_id: null,
+    // ID du produit d'abonnement (App Store / Play) — l'app l'utilise pour
+    // lancer l'achat IAP par identifiant. Avant : hardcodé à null -> l'app ne
+    // connaissait jamais le produit -> "Purchasing failed" (rejet Apple 2.1b).
+    iap_product_id: r.revenuecat_product_id || null,
     image: r.image,
   };
 }
