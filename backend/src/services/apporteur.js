@@ -21,7 +21,7 @@
 // Configurable par env (les prix/taux peuvent évoluer sans redéploiement).
 const STORE_FEE_RATE = clampRate(numEnv('STORE_FEE_RATE', 0.15), 0, 1); // Apple/Google
 const PROMO_ARTIST_RATE = numEnv('PROMO_ARTIST_RATE', 50);   // % artiste pendant les 3 mois offerts
-const DEFAULT_ARTIST_RATE = numEnv('DEFAULT_ARTIST_RATE', 60); // % artiste après (offre Fondateur)
+const DEFAULT_ARTIST_RATE = numEnv('DEFAULT_ARTIST_RATE', 58.8); // % artiste du net (modèle unifié gratuit : ~50% du brut à 15% de frais)
 
 function numEnv(key, dflt) {
   const v = parseFloat(process.env[`APPORTEUR_${key}`] ?? process.env[key]);

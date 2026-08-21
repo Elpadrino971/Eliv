@@ -249,9 +249,11 @@ function genReceipt() {
   return `VBZ-${n}-${m}`;
 }
 
-// Part ARTISTE par défaut (%) si l'artiste n'a pas d'abonnement / commission NULL.
-// Cf. docs/founder_plan_api_spec.md (Starter 50 / Growth 60 / Elite 70 / Founder 60).
-const DEFAULT_COMMISSION = 60;
+// Part ARTISTE par défaut (%) sur le NET, modèle unifié « entrée gratuite » :
+// 58,8 % du net → l'artiste garde ~50 % du brut quand les frais store sont à
+// 15 %, et Vibe 41,2 % du net. Plus d'abonnement, plus de grille par tier.
+// Surchargeable par env (DEFAULT_COMMISSION) sans redéploiement.
+const DEFAULT_COMMISSION = Number(process.env.DEFAULT_COMMISSION) || 58.8;
 
 // Taux de commission (= part artiste, en %) résolu depuis l'abonnement actif de
 // l'artiste. Toujours calculé côté serveur, jamais fourni par le client.
