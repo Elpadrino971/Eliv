@@ -4,6 +4,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { db } = require('../db');
+const { platformCounters, payoutCountdown } = require('../helpers');
 const { hash, compare, SECRET } = require('../auth');
 const { saveUpload, saveClipVideo } = require('../uploads');
 const mux = require('../services/mux');
@@ -84,6 +85,7 @@ router.get('/stats', requireAdmin, (req, res) => {
   const packages = db.prepare('SELECT COUNT(*) c FROM packages').get().c;
   const referrals = db.prepare("SELECT COUNT(*) c FROM referrals WHERE status = 'validated'").get().c;
   const revenueRow = db.prepare("SELECT COALESCE(SUM(CAST(price_paid AS REAL)),0) r FROM tickets").get();
+  const counters = platformCounters();
   return res.json({
     status: 'success',
     data: {
@@ -93,6 +95,11 @@ router.get('/stats', requireAdmin, (req, res) => {
       total_packages: packages,
       total_referrals: referrals,
       total_revenue: Math.round(revenueRow.r),
+      // OPRAS : artistes ayant tenu ≥1 concert + compteur d'audience total,
+      // + compte à rebours des 60 j avant 1er paiement (mis en exergue).
+      validated_artists: counters.validated_artists,
+      users_all: counters.users_total,
+      payout: payoutCountdown(),
     },
   });
 });

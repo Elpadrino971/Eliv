@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VYBZZZ — Espace Apporteurs</title>
+<style>
+  :root{
+    --bg:#080d1c; --bg2:#0c1430; --card:#111a38; --line:#1e2a52;
+    --gold:#d8b45a; --gold-dim:#a98c3f; --ivory:#f4efe3; --muted:#96a0c2;
+    --green:#4ade80; --blue:#7eb0ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 700px at 50% -10%, #16204a 0%, var(--bg) 60%);
+    color:var(--ivory); min-height:100vh; padding:28px 18px 60px;
+  }
+  .wrap{max-width:1040px;margin:0 auto}
+  .brand{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px}
+  .brand h1{font-size:26px;letter-spacing:6px;font-weight:800;color:var(--gold)}
+  .sub{text-align:center;color:var(--muted);font-size:13px;letter-spacing:.5px;margin-bottom:30px}
+
+  /* Compte à rebours */
+  .countdown{
+    background:linear-gradient(160deg,#15205088,#0c1430);
+    border:1px solid var(--line); border-radius:24px; padding:30px 24px; text-align:center;
+    box-shadow:0 20px 60px -30px #000; margin-bottom:26px; position:relative; overflow:hidden;
+  }
+  .countdown::before{content:"";position:absolute;inset:0;background:radial-gradient(500px 200px at 50% 0,#d8b45a22,transparent 70%);pointer-events:none}
+  .cd-label{color:var(--gold);font-weight:700;letter-spacing:2px;font-size:12px;text-transform:uppercase}
+  .cd-timer{display:flex;justify-content:center;gap:14px;margin:18px 0 10px;flex-wrap:wrap}
+  .cd-unit{min-width:78px}
+  .cd-num{font-size:46px;font-weight:800;color:var(--ivory);font-variant-numeric:tabular-nums;line-height:1}
+  .cd-u{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:6px}
+  .cd-sep{font-size:40px;color:var(--gold-dim);font-weight:700;line-height:1.1}
+  .cd-date{color:var(--muted);font-size:13px;margin-top:6px}
+  .cd-done{color:var(--green);font-weight:800;font-size:30px;margin:14px 0}
+
+  /* Compteurs */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .stat{
+    background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px 20px;text-align:center;
+    box-shadow:0 14px 40px -28px #000;
+  }
+  .stat .ic{font-size:24px}
+  .stat .n{font-size:44px;font-weight:800;margin:8px 0 4px;font-variant-numeric:tabular-nums;letter-spacing:-1px}
+  .stat .l{color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase}
+  .n.users{color:var(--blue)} .n.artists{color:var(--gold)} .n.valid{color:var(--green)}
+  .stat .hint{color:var(--gold-dim);font-size:10.5px;margin-top:8px}
+
+  .foot{text-align:center;color:var(--muted);font-size:11.5px;margin-top:26px}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:middle;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @media(max-width:620px){
+    .grid{grid-template-columns:1fr;gap:12px}
+    .cd-num{font-size:38px}.cd-sep{font-size:32px}.stat .n{font-size:40px}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand"><h1>VYBZZZ</h1></div>
+    <div class="sub">ESPACE APPORTEURS D'AFFAIRES · SUIVI EN TEMPS RÉEL</div>
+
+    <div class="countdown">
+      <div class="cd-label">⏳ 1<sup>er</sup> paiement dans</div>
+      <div id="timer" class="cd-timer">
+        <div class="cd-unit"><div class="cd-num" id="d">--</div><div class="cd-u">Jours</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit"><div class="cd-num" id="h">--</div><div class="cd-u">Heures</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit"><div class="cd-num" id="m">--</div><div class="cd-u">Min</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit"><div class="cd-num" id="s">--</div><div class="cd-u">Sec</div></div>
+      </div>
+      <div class="cd-date" id="cd-date">Départ 20 août 2026 · hold de 60 jours</div>
+    </div>
+
+    <div class="grid">
+      <div class="stat"><div class="ic">👥</div><div class="n users" id="c-users">—</div><div class="l">Utilisateurs</div><div class="hint">Audience totale de la plateforme</div></div>
+      <div class="stat"><div class="ic">🎤</div><div class="n artists" id="c-artists">—</div><div class="l">Artistes</div><div class="hint">Comptes artistes inscrits</div></div>
+      <div class="stat"><div class="ic">✅</div><div class="n valid" id="c-valid">—</div><div class="l">Artistes validés</div><div class="hint">Ayant tenu ≥ 1 concert</div></div>
+    </div>
+
+    <div class="foot"><span class="dot"></span><span id="updated">Connexion…</span></div>
+  </div>
+
+<script>
+(function(){
+  var targetMs = null, doneShown = false;
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function fmtDate(iso){ try{ return new Date(iso).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return ''; } }
+
+  function tick(){
+    if(targetMs===null) return;
+    var diff = targetMs - Date.now();
+    if(diff<=0){
+      if(!doneShown){
+        doneShown=true;
+        document.getElementById('timer').innerHTML='<div class="cd-done">🎉 Paiement débloqué</div>';
+      }
+      return;
+    }
+    var s=Math.floor(diff/1000);
+    var d=Math.floor(s/86400); s-=d*86400;
+    var h=Math.floor(s/3600); s-=h*3600;
+    var m=Math.floor(s/60); s-=m*60;
+    var D=document.getElementById('d'); if(!D) return;
+    D.textContent=d; document.getElementById('h').textContent=pad(h);
+    document.getElementById('m').textContent=pad(m); document.getElementById('s').textContent=pad(s);
+  }
+
+  function setNum(id,v){ var el=document.getElementById(id); if(el) el.textContent=Number(v).toLocaleString('fr-FR'); }
+
+  function load(){
+    fetch('/api/vibe/overview',{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+      var d=(j&&j.data)?j.data:j;
+      if(!d) throw new Error('no data');
+      setNum('c-users',d.users||0); setNum('c-artists',d.artists||0); setNum('c-valid',d.validated_artists||0);
+      if(d.payout&&d.payout.target_at){
+        targetMs=new Date(d.payout.target_at).getTime();
+        document.getElementById('cd-date').textContent='Départ '+fmtDate(d.payout.start_at)+' · 1er paiement le '+fmtDate(d.payout.target_at);
+        tick();
+      }
+      document.getElementById('updated').textContent='À jour · '+new Date().toLocaleTimeString('fr-FR');
+    }).catch(function(){
+      document.getElementById('updated').textContent='Reconnexion…';
+    });
+  }
+
+  load();
+  setInterval(tick,1000);
+  setInterval(load,60000);
+})();
+</script>
+</body>
+</html>

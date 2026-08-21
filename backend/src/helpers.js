@@ -279,6 +279,41 @@ function splitAmount(amount, rate) {
   return { artistShare, platformShare };
 }
 
+// ─── OPRAS / portail apporteurs : compteurs plateforme + compte à rebours ───
+// Compteurs agrégés (aucune donnée perso) affichés en exergue sur l'admin et
+// sur la page apporteurs. « Artiste validé » = artiste ayant au moins un concert
+// réellement tenu (statut live / completed / ended). Source unique de vérité :
+// on lit la prod, on ne stocke aucun total recalculé à la main.
+function platformCounters() {
+  const users_total = db.prepare('SELECT COUNT(*) c FROM users').get().c;
+  const fans = db.prepare("SELECT COUNT(*) c FROM users WHERE role = 'user' AND is_artist = 0").get().c;
+  const artists = db.prepare('SELECT COUNT(*) c FROM users WHERE is_artist = 1').get().c;
+  const validated_artists = db
+    .prepare("SELECT COUNT(DISTINCT artist_id) c FROM events WHERE status IN ('live','completed','ended')")
+    .get().c;
+  return { users_total, fans, artists, validated_artists };
+}
+
+// Compte à rebours des 60 jours de hold avant le 1er paiement (reversement
+// Apple). Départ configurable (défaut 20/08/2026). Calculé côté serveur pour
+// rester la source de vérité ; l'UI n'a qu'à afficher/décompter.
+const PAYOUT_START_ISO = process.env.PAYOUT_START_ISO || '2026-08-20T00:00:00Z';
+const PAYOUT_HOLD_DAYS = parseInt(process.env.PAYOUT_HOLD_DAYS || '60', 10);
+function payoutCountdown() {
+  const start = new Date(PAYOUT_START_ISO).getTime();
+  const holdDays = Number.isFinite(PAYOUT_HOLD_DAYS) ? PAYOUT_HOLD_DAYS : 60;
+  const target = start + holdDays * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const msLeft = Math.max(0, target - now);
+  return {
+    start_at: new Date(start).toISOString(),
+    target_at: new Date(target).toISOString(),
+    hold_days: holdDays,
+    days_left: Math.ceil(msLeft / (24 * 60 * 60 * 1000)),
+    reached: now >= target,
+  };
+}
+
 module.exports = {
   serializeUser,
   serializeEvent,
@@ -291,4 +326,6 @@ module.exports = {
   resolveArtistCommission,
   splitAmount,
   DEFAULT_COMMISSION,
+  platformCounters,
+  payoutCountdown,
 };

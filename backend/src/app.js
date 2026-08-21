@@ -214,8 +214,14 @@ app.get('/mon-releve', (req, res) => res.send(`<!doctype html><html lang="fr"><h
 // Dashboard admin web (statique) sous /admin
 app.use('/admin', express.static(path.join(__dirname, '..', 'public', 'admin')));
 
+// Page apporteurs (statique, lecture seule) adossée à l'admin sous /partner
+app.use('/partner', express.static(path.join(__dirname, '..', 'public', 'partner')));
+
 // API admin sous /api/admin
 app.use('/api/admin', adminRoutes);
+
+// Vue d'ensemble publique (agrégats OPRAS) sous /api/vibe
+app.use('/api/vibe', require('./routes/vibe.routes'));
 
 // Toutes les routes API sous /api (comme baseAPI = mainIP/api)
 app.use('/api', authRoutes);

@@ -373,6 +373,7 @@ async function pageDashboard() {
   const cards = [
     { ic: '👥', bg: 'rgba(59,130,246,.15)', col: '#7eb0ff', n: s.total_users, l: 'Utilisateurs', bar: '70%', barc: '#3b82f6' },
     { ic: '🎤', bg: 'rgba(216,180,90,.15)', col: '#d8b45a', n: s.total_artists, l: 'Artistes', bar: '60%', barc: '#d8b45a' },
+    { ic: '✅', bg: 'rgba(34,197,94,.15)', col: '#4ade80', n: s.validated_artists ?? 0, l: 'Artistes validés', bar: '40%', barc: '#22c55e' },
     { ic: '📅', bg: 'rgba(31,157,87,.15)', col: '#4ade80', n: s.total_events, l: 'Concerts', bar: '55%', barc: '#1f9d57' },
     { ic: '🤝', bg: 'rgba(168,85,247,.15)', col: '#c084fc', n: s.total_referrals, l: 'Parrainages', bar: '45%', barc: '#a855f7' },
     { ic: '💰', bg: 'rgba(224,167,58,.15)', col: '#e0a73a', n: euro(s.total_revenue), l: 'Revenus', bar: '85%', barc: '#e0a73a' },
@@ -382,6 +383,15 @@ async function pageDashboard() {
       <div><h2>Tableau de bord</h2><p>Bienvenue, Admin • Voici le résumé de la plateforme</p></div>
       <div class="dash-date">📅 ${today}</div>
     </div>
+    ${s.payout ? `<div class="tcard" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border:1px solid rgba(216,180,90,.4)">
+      <div>
+        <div style="color:var(--gold);font-weight:700;letter-spacing:1px;font-size:12px">⏳ 1ER PAIEMENT DANS</div>
+        <div style="font-size:36px;font-weight:800;line-height:1.1">${s.payout.reached ? '🎉 Débloqué' : s.payout.days_left + " <span style='font-size:16px;color:#96a0c2'>jours</span>"}</div>
+      </div>
+      <div style="text-align:right;color:#96a0c2;font-size:13px;line-height:1.6">
+        Départ ${new Date(s.payout.start_at).toLocaleDateString('fr-FR')}<br>1er paiement le <b style="color:#d8b45a">${new Date(s.payout.target_at).toLocaleDateString('fr-FR')}</b>
+      </div>
+    </div>` : ''}
     <div class="cards">${cards.map((c) => `
       <div class="card"><div class="row"><div class="ic-box" style="background:${c.bg};color:${c.col}">${c.ic}</div><div class="num">${c.n}</div></div>
         <div class="lbl">${c.l}</div><div class="bar"><i style="width:${c.bar};background:${c.barc}"></i></div></div>`).join('')}</div>
