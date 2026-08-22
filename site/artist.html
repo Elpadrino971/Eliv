@@ -18,7 +18,7 @@
 <div id="site-header"></div>
 
 <main class="page">
-  <div class="page__head reveal"><span class="eyebrow" data-i18n="art_eyebrow">Programme Founder</span><h1 data-i18n-html="art_title_html">Deviens créateur <span class="grad">Founder</span>.</h1><p data-i18n-html="art_p_html">$79/mois et tu gardes <strong>60% de tes revenus</strong> (billets, cadeaux, pourboires). Réservé aux 200 premiers créateurs, tarif bloqué tant que ton abonnement reste actif. Retraits via Stripe ou compte bancaire.</p></div>
+  <div class="page__head reveal"><span class="eyebrow" data-i18n="art_eyebrow">Deviens artiste</span><h1 data-i18n-html="art_title_html">Monte sur <span class="grad">scène</span>.</h1><p data-i18n-html="art_p_html">L'entrée est gratuite : pas d'abonnement, pas d'avance. Tu gardes <strong>50% de tes revenus</strong> (billets, cadeaux, pourboires). Retraits via Stripe ou compte bancaire.</p></div>
 
   <div class="artist-split">
     <!-- Application form -->
@@ -38,79 +38,31 @@
       <button class="btn btn--gold" type="submit" data-cursor="hover" style="width:100%"><span data-i18n="art_submit">Soumettre ma candidature</span></button>
     </form>
 
-    <!-- Contract -->
+    <!-- Le deal (nouveau modèle gratuit) -->
     <div class="contract glass reveal" id="contrat">
-      <h3 data-i18n="art_c_title">Contrat artiste</h3>
-      <p style="color:var(--muted);font-size:.9rem" data-i18n="art_c_intro">Aperçu du contrat d'engagement. Télécharge-le en PDF, signe-le, puis coche la case et envoie ta candidature.</p>
-      <div class="contract__doc" id="contractDoc">
-        <h4 data-i18n="ct_doc_title">CONTRAT CRÉATEUR FOUNDER — VYBZZZ</h4>
-        <p data-i18n="ct_intro">Le présent contrat est conclu entre Vybzzz (« la Plateforme ») et le créateur signataire (« le Créateur »).</p>
-        <h4 data-i18n="ct1_h">1. Objet</h4>
-        <p data-i18n="ct1_p">Le Créateur est autorisé à diffuser des concerts en direct, recevoir des cadeaux virtuels (Arena Points) et vendre des billets via la Plateforme.</p>
-        <h4 data-i18n="ct2_h">2. Abonnement Founder</h4>
-        <p data-i18n="ct2_p">Le Créateur souscrit au plan Founder au prix de $79/mois, offre de lancement limitée aux 200 premiers créateurs. Ce tarif reste bloqué tant que l'abonnement demeure actif sans interruption.</p>
-        <h4 data-i18n="ct3_h">3. Rémunération</h4>
-        <p data-i18n="ct3_p">Le Créateur conserve 60% de ses revenus (billets, cadeaux, pourboires) ; la Plateforme retient 40%. Les montants nets sont crédités au portefeuille du Créateur, exprimés en USD.</p>
-        <h4 data-i18n="ct4_h">4. Versements</h4>
-        <p data-i18n="ct4_p">Les retraits s'effectuent via Stripe ou compte bancaire, par paliers ($100 / $500 / $1000 / total), avec un délai moyen de versement de 24 heures.</p>
-        <h4 data-i18n="ct5_h">5. Contenu &amp; conduite</h4>
-        <p data-i18n="ct5_p">Le Créateur garantit détenir les droits sur les œuvres diffusées et s'engage à respecter la charte de la communauté.</p>
-        <h4 data-i18n="ct6_h">6. Durée &amp; résiliation</h4>
-        <p data-i18n="ct6_p">Le contrat est conclu pour une durée indéterminée et peut être résilié par l'une ou l'autre des parties avec un préavis de 30 jours. En cas de résiliation, le tarif Founder est définitivement perdu.</p>
-        <p style="margin-top:14px">Fait le ____________.<br/><span data-i18n="ct_sign">Signature du Créateur :</span> ____________________</p>
+      <h3 data-i18n="art_c_title">Le deal, en clair</h3>
+      <p style="color:var(--muted);font-size:.9rem" data-i18n="art_c_intro">Pas de petites lignes : l'entrée est gratuite, tu partages seulement ce que tu gagnes.</p>
+      <div class="contract__doc">
+        <h4 data-i18n="deal1_h">🆓 Entrée gratuite</h4>
+        <p data-i18n="deal1_p">Aucun abonnement, aucune carte bancaire, aucun engagement pour diffuser.</p>
+        <h4 data-i18n="deal2_h">💰 Tu gardes 50%</h4>
+        <p data-i18n="deal2_p">Sur chaque montant payé par un fan : frais store ~15%, tu gardes 50%, Vibe 35%. Un ticket à 10 € te rapporte 5 €.</p>
+        <h4 data-i18n="deal3_h">🎥 90 min de live incluses</h4>
+        <p data-i18n="deal3_p">Chaque mois. Un live qui rapporte finance son coût — tes concerts qui marchent sont toujours gratuits.</p>
+        <h4 data-i18n="deal4_h">🏦 Retraits simples</h4>
+        <p data-i18n="deal4_p">Via Stripe ou compte bancaire, délai moyen 24h.</p>
       </div>
-      <button class="btn btn--gold magnetic" id="dlContract" data-cursor="hover" style="width:100%"><span data-i18n="art_dl">⬇ Télécharger le contrat (PDF)</span></button>
     </div>
   </div>
 </main>
 
 <div id="site-footer"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
 <script src="data.js"></script>
 <script src="i18n.js"></script>
 <script src="app.js"></script>
 <script>
 (function(){
   var UI = window.VYBZZZ_UI || {toast:function(m){alert(m)}};
-
-  // ----- generate & download contract PDF -----
-  document.getElementById("dlContract").addEventListener("click", function(){
-    if(!window.jspdf || !window.jspdf.jsPDF){ UI.toast("Génération PDF indisponible (hors ligne)"); return; }
-    var doc = new window.jspdf.jsPDF({unit:"pt",format:"a4"});
-    var name = (document.getElementById("aName").value || "____________________");
-    var email = (document.getElementById("aEmail").value || "____________________");
-    var date = new Date().toLocaleDateString();
-    // Police PDF par défaut = latin uniquement → on sort le contrat dans la langue
-    // si elle est latine, sinon repli anglais (zh/ko/ja/ar/hi/ru non gérés par Helvetica).
-    var lang = document.documentElement.lang || "fr";
-    var LATIN = ["fr","en","es","it","de","pt"];
-    var L = (LATIN.indexOf(lang) >= 0) ? lang : "en";
-    var DI = (window.I18N && window.I18N[L]) || (window.I18N && window.I18N.en) || {};
-    function tr(k){ var v = DI[k] != null ? DI[k] : ((window.I18N.en && window.I18N.en[k]) || k); return String(v).replace(/<[^>]+>/g,""); }
-    var M=56, W=595-M*2, y=70;
-    function h(t){ doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.setTextColor(20); doc.text(t,M,y); y+=18; }
-    function p(t){ doc.setFont("helvetica","normal"); doc.setFontSize(10.5); doc.setTextColor(60); var lines=doc.splitTextToSize(t,W); doc.text(lines,M,y); y+=lines.length*15+8; }
-
-    doc.setFillColor(10,24,40); doc.rect(0,0,595,46,"F");
-    doc.setFont("helvetica","bold"); doc.setFontSize(16); doc.setTextColor(200,168,94); doc.text("VYBZZZ",M,30);
-    doc.setFontSize(9); doc.setTextColor(220); doc.text(tr("ct_doc_title"),595-M,30,{align:"right"});
-
-    doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(20);
-    doc.text(tr("ct_doc_title"),M,y); y+=24;
-    p(tr("ct_intro")+" — "+name+" ("+email+").");
-    h(tr("ct1_h")); p(tr("ct1_p"));
-    h(tr("ct2_h")); p(tr("ct2_p"));
-    h(tr("ct3_h")); p(tr("ct3_p"));
-    h(tr("ct4_h")); p(tr("ct4_p"));
-    h(tr("ct5_h")); p(tr("ct5_p"));
-    h(tr("ct6_h")); p(tr("ct6_p"));
-    y+=16; p(date+".");
-    y+=8; doc.setTextColor(60); doc.text(tr("ct_sign"),M,y); doc.line(M+170,y,M+360,y);
-    y+=40; doc.text("Vybzzz :",M,y); doc.line(M+70,y,M+270,y);
-
-    doc.save("Vybzzz-Founder-contract.pdf");
-    UI.toast("Contrat téléchargé ✓");
-  });
 
   // ----- submit application (vraie candidature -> table contact_leads) -----
   document.getElementById("artistForm").addEventListener("submit", function(e){

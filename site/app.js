@@ -47,7 +47,6 @@
     { href: "feed.html",             key: "nav_feed",   id: "feed" },
     { href: "store.html",            key: "nav_store",  id: "store" },
     { href: "index.html#avantages",  key: "nav_deal",   id: "_deal" },
-    { href: "index.html#lancement",  key: "nav_launch", id: "_launch" },
     { href: "dashboard.html",        key: "nav_studio", id: "dashboard" },
     { href: "faq.html",              key: "nav_faq",    id: "faq" },
   ];

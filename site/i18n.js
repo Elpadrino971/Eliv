@@ -1206,3 +1206,145 @@ window.I18N.ru = {
   ct6_h: "6. Срок и расторжение", ct6_p: "Договор заключается на неопределённый срок и может быть расторгнут любой из сторон с уведомлением за 30 дней. В случае расторжения цена Founder утрачивается безвозвратно.",
   ct_sign: "Подпись Креатора:",
 };
+
+/* ===================================================================
+   PIVOT MODÈLE GRATUIT — override des clés d'offre.
+   Remplace l'ancien discours Founder ($79/mois, 60%, tiers) par le
+   nouveau modèle : entrée gratuite, l'artiste garde 50%. Appliqué en
+   dernier -> écrase les valeurs précédentes. FR + EN rédigés ; les
+   autres langues retombent sur le nouveau texte EN (jamais l'ancienne
+   offre). Réversible : il suffit de retirer ce bloc.
+   =================================================================== */
+(function () {
+  if (!window.I18N) return;
+  var FR = {
+    hero_badge: "✦ Nouveau — l'entrée est gratuite",
+    hero_title_html: 'Diffuse tes concerts en live. <span class="grad">L\'entrée est gratuite.</span>',
+    hero_lead_html: 'Pas d\'abonnement, pas de carte bancaire. Tu gardes <strong>50%</strong> de tes revenus — billets, cadeaux, pourboires. Apple et Google prennent leurs frais, on partage le reste, et tu gardes la plus grosse part.',
+    perk1_html: 'Tu gardes <b>50%</b> de tes revenus (à 15% de frais store), dès le 1ᵉʳ live',
+    perk2_html: '<b>Zéro abonnement</b>, zéro avance — tu ne partages que ce que tu gagnes',
+    perk3_html: '<b>Studio Pro</b> complet : lives, billetterie, cadeaux',
+    perk4_html: '<b>90 min de live incluses</b> chaque mois',
+    reassure: '🔒 Gratuit · Sans engagement · Tu gardes la plus grosse part',
+    cta_reserve: 'Créer mon compte artiste',
+    cta_studio: 'Voir le Studio Pro',
+    av_eyebrow: 'Ce que tu obtiens',
+    av_title_html: 'Le deal <span class="grad">Vybzzz</span>.',
+    av_p: 'Une plateforme gratuite, pensée pour te faire gagner de l\'argent et de la visibilité — sans jamais te faire payer pour entrer.',
+    ben1_t: 'Tu gardes 50%',
+    ben1_p: 'Apple et Google prennent leurs frais, on partage le reste : tu gardes 50% du prix payé par le fan (billets, cadeaux, pourboires). La plus grosse part, c\'est la tienne.',
+    ben2_t: 'Entrée gratuite',
+    ben2_p: 'Aucun abonnement, aucune carte bancaire, aucun engagement. Tu ne paies rien pour diffuser — tu partages seulement ce que tu gagnes.',
+    ben3_t: 'Studio Pro complet',
+    ben3_p: 'Crée tes événements, passe en live, modère le chat et suis tes revenus — depuis le web ou l\'app.',
+    ben4_t: '90 min de live incluses',
+    ben4_p: 'Chaque mois, un quota de live est inclus. Un live qui rapporte finance son coût — tes concerts qui marchent sont toujours gratuits.',
+    ben5_t: 'Retraits simples',
+    ben5_p: 'Versements via Stripe ou compte bancaire, paliers flexibles, délai moyen 24h.',
+    ben6_t: 'Payé en direct',
+    ben6_p: 'Tes fans achètent leur place et envoient des cadeaux pendant le live — tu vois tes revenus monter en temps réel.',
+    pricing_eyebrow: 'La règle, en une ligne',
+    pricing_title_html: 'Simple : <span class="grad">tu gardes 50%</span>.',
+    pricing_p: 'Aucun abonnement. Sur chaque montant payé par un fan : les frais store (~15%) sont prélevés, tu gardes 50%, Vibe garde 35%. Un ticket à 10 € te rapporte 5 €.',
+    studio_title: 'Ton tableau de bord créateur',
+    studio_p: 'Revenus en temps réel, ventes de tickets, cadeaux reçus, retraits Stripe. Le même outil que tu utiliseras au quotidien.',
+    studio_cta: 'Explorer le Studio Pro →',
+    steps_title: 'Commencer, en 3 étapes',
+    step1_t: 'Crée ton compte',
+    step1_p: 'Inscris-toi en 2 min : nom de scène, genre, expérience. C\'est gratuit.',
+    step2_t: 'Configure ton studio',
+    step2_p: 'On valide ton profil et on active ton Studio Pro : lives, billetterie, cadeaux.',
+    step3_t: 'Passe en live',
+    step3_p: 'Crée ton premier événement, fixe ton prix (ou gratuit), et diffuse.',
+    cta_title_html: 'Prêt à monter sur <span class="grad">scène</span> ?',
+    cta_p: 'L\'entrée est gratuite. Crée ton compte, passe en live, garde 50% de ce que tu gagnes.',
+    cta_btn: 'Créer mon compte artiste',
+  };
+  var EN = {
+    hero_badge: "✦ New — joining is free",
+    hero_title_html: 'Stream your concerts live. <span class="grad">Joining is free.</span>',
+    hero_lead_html: 'No subscription, no credit card. You keep <strong>50%</strong> of your revenue — tickets, gifts, tips. Apple and Google take their fee, we split the rest, and you keep the biggest share.',
+    perk1_html: 'You keep <b>50%</b> of your revenue (at 15% store fee), from your very first live',
+    perk2_html: '<b>No subscription</b>, no upfront cost — you only share what you earn',
+    perk3_html: 'Full <b>Pro Studio</b>: lives, ticketing, gifts',
+    perk4_html: '<b>90 min of live included</b> every month',
+    reassure: '🔒 Free · No commitment · You keep the biggest share',
+    cta_reserve: 'Create my artist account',
+    cta_studio: 'See the Pro Studio',
+    av_eyebrow: 'What you get',
+    av_title_html: 'The <span class="grad">Vybzzz</span> deal.',
+    av_p: 'A free platform, built to help you make money and gain visibility — without ever charging you to join.',
+    ben1_t: 'You keep 50%',
+    ben1_p: 'Apple and Google take their fee, we split the rest: you keep 50% of what the fan pays (tickets, gifts, tips). The biggest share is yours.',
+    ben2_t: 'Free to join',
+    ben2_p: 'No subscription, no credit card, no commitment. You pay nothing to broadcast — you only share what you earn.',
+    ben3_t: 'Full Pro Studio',
+    ben3_p: 'Create your events, go live, moderate the chat and track your revenue — from web or app.',
+    ben4_t: '90 min of live included',
+    ben4_p: 'Every month a live quota is included. A live that earns pays for itself — your successful concerts are always free.',
+    ben5_t: 'Simple payouts',
+    ben5_p: 'Payouts via Stripe or bank account, flexible thresholds, 24h average.',
+    ben6_t: 'Paid live',
+    ben6_p: 'Your fans buy their spot and send gifts during the live — you watch your revenue grow in real time.',
+    pricing_eyebrow: 'The rule, in one line',
+    pricing_title_html: 'Simple: <span class="grad">you keep 50%</span>.',
+    pricing_p: 'No subscription. On every amount a fan pays: store fees (~15%) are taken, you keep 50%, Vibe keeps 35%. A €10 ticket earns you €5.',
+    studio_title: 'Your creator dashboard',
+    studio_p: 'Real-time revenue, ticket sales, gifts received, Stripe payouts. The same tool you\'ll use every day.',
+    studio_cta: 'Explore the Pro Studio →',
+    steps_title: 'Get started in 3 steps',
+    step1_t: 'Create your account',
+    step1_p: 'Sign up in 2 min: stage name, genre, experience. It\'s free.',
+    step2_t: 'Set up your studio',
+    step2_p: 'We validate your profile and activate your Pro Studio: lives, ticketing, gifts.',
+    step3_t: 'Go live',
+    step3_p: 'Create your first event, set your price (or free), and broadcast.',
+    cta_title_html: 'Ready to take the <span class="grad">stage</span>?',
+    cta_p: 'Joining is free. Create your account, go live, keep 50% of what you earn.',
+    cta_btn: 'Create my artist account',
+  };
+  Object.assign(window.I18N.fr, FR);
+  Object.assign(window.I18N.en, EN);
+  Object.keys(window.I18N).forEach(function (l) {
+    if (l !== 'fr' && l !== 'en' && window.I18N[l]) Object.assign(window.I18N[l], EN);
+  });
+})();
+
+/* free deal card keys */
+(function () {
+  if (!window.I18N) return;
+  Object.assign(window.I18N.fr, { free_word: 'Gratuit', free_sub: 'Aucun abonnement · tu gardes <b>50%</b>' });
+  var en = { free_word: 'Free', free_sub: 'No subscription · you keep <b>50%</b>' };
+  Object.assign(window.I18N.en, en);
+  Object.keys(window.I18N).forEach(function (l) { if (l !== 'fr' && l !== 'en' && window.I18N[l]) Object.assign(window.I18N[l], en); });
+})();
+
+/* artist.html — nouveau modèle */
+(function () {
+  if (!window.I18N) return;
+  var FR = {
+    art_eyebrow: 'Deviens artiste',
+    art_title_html: 'Monte sur <span class="grad">scène</span>.',
+    art_p_html: "L'entrée est gratuite : pas d'abonnement, pas d'avance. Tu gardes <strong>50% de tes revenus</strong> (billets, cadeaux, pourboires). Retraits via Stripe ou compte bancaire.",
+    art_c_title: 'Le deal, en clair',
+    art_c_intro: "Pas de petites lignes : l'entrée est gratuite, tu partages seulement ce que tu gagnes.",
+    deal1_h: '🆓 Entrée gratuite', deal1_p: 'Aucun abonnement, aucune carte bancaire, aucun engagement pour diffuser.',
+    deal2_h: '💰 Tu gardes 50%', deal2_p: 'Sur chaque montant payé par un fan : frais store ~15%, tu gardes 50%, Vibe 35%. Un ticket à 10 € te rapporte 5 €.',
+    deal3_h: '🎥 90 min de live incluses', deal3_p: 'Chaque mois. Un live qui rapporte finance son coût — tes concerts qui marchent sont toujours gratuits.',
+    deal4_h: '🏦 Retraits simples', deal4_p: 'Via Stripe ou compte bancaire, délai moyen 24h.',
+  };
+  var EN = {
+    art_eyebrow: 'Become an artist',
+    art_title_html: 'Take the <span class="grad">stage</span>.',
+    art_p_html: "Joining is free: no subscription, no upfront cost. You keep <strong>50% of your revenue</strong> (tickets, gifts, tips). Payouts via Stripe or bank account.",
+    art_c_title: 'The deal, plain and clear',
+    art_c_intro: "No small print: joining is free, you only share what you earn.",
+    deal1_h: '🆓 Free to join', deal1_p: 'No subscription, no credit card, no commitment to broadcast.',
+    deal2_h: '💰 You keep 50%', deal2_p: 'On every amount a fan pays: store fees ~15%, you keep 50%, Vibe 35%. A €10 ticket earns you €5.',
+    deal3_h: '🎥 90 min of live included', deal3_p: 'Every month. A live that earns pays for itself — your successful concerts are always free.',
+    deal4_h: '🏦 Simple payouts', deal4_p: 'Via Stripe or bank account, 24h average.',
+  };
+  Object.assign(window.I18N.fr, FR);
+  Object.assign(window.I18N.en, EN);
+  Object.keys(window.I18N).forEach(function (l) { if (l !== 'fr' && l !== 'en' && window.I18N[l]) Object.assign(window.I18N[l], EN); });
+})();
