@@ -221,6 +221,7 @@ router.get('/events', requireAdmin, (req, res) => {
             e.artist_id, e.genre_id, e.description, e.cover_image, e.mux_playback_id,
             e.is_banner, e.tz_offset_minutes, e.mux_upload_status, e.mux_asset_id,
             e.replay_expires_at, e.replay_enabled, e.replay_duration_days,
+            e.geo_mode, e.geo_countries, e.geo_block_until,
             e.mux_live_stream_id, u.artist_name AS artist
      FROM events e LEFT JOIN users u ON u.id = e.artist_id
      ORDER BY e.id DESC`
@@ -253,25 +254,49 @@ router.get('/artists-list', requireAdmin, (req, res) => {
   return res.json({ status: 'success', data: rows });
 });
 
+// ─── Géo-blocage (par secteur) : normalisation + fin de blocage temporisé ───
+function normalizeGeoMode(v) {
+  const m = String(v || 'off').toLowerCase();
+  return ['off', 'block', 'only'].includes(m) ? m : 'off';
+}
+function normalizeGeoCountries(v) {
+  const set = new Set(
+    String(v || '').split(',').map((c) => c.trim().toUpperCase()).filter((c) => /^[A-Z]{2}$/.test(c)),
+  );
+  return [...set].join(',');
+}
+// Durée en heures (admin) + début du concert -> date de fin du blocage. Passé
+// cette date, la diffusion repart seule. 0/vide -> null (blocage permanent).
+function computeGeoBlockUntil(startIso, hoursRaw) {
+  const hours = parseFloat(hoursRaw);
+  if (!Number.isFinite(hours) || hours <= 0) return null;
+  const start = startIso ? Date.parse(startIso) : Date.now();
+  const base = Number.isNaN(start) ? Date.now() : start;
+  return new Date(base + hours * 60 * 60 * 1000).toISOString();
+}
+
 router.post('/events', requireAdmin, (req, res) => {
   const b = req.body || {};
   const cover = saveUpload(req, ['cover', 'cover_image', 'image'], 'covers', 'events/covers') || b.cover_image || null;
   if (!b.name) return res.status(422).json({ status: 'error', message: 'Le nom est requis.' });
   const tzOffset = Number(b.tz_offset_minutes) || 0;
   const { replayEnabled, replayDays } = parseReplay(b);
+  const startUtc = localToUtcIso(b.start_date_time, tzOffset);
   db.prepare(
     `INSERT INTO events (artist_id, name, cover_image, ticket_price, start_date_time, tz_offset_minutes, genre_id,
         description, status, mux_playback_id, mux_live_playback_id, video_reel, is_banner,
-        replay_enabled, replay_duration_days)
+        replay_enabled, replay_duration_days, geo_mode, geo_countries, geo_block_until)
      VALUES (@artist_id, @name, @cover, @price, @start, @tzOffset, @genre, @desc, @status, @mux, @muxLive, @reel, @banner,
-        @replayEnabled, @replayDays)`
+        @replayEnabled, @replayDays, @geoMode, @geoCountries, @geoBlockUntil)`
   ).run({
     artist_id: b.artist_id || null, name: b.name, cover,
-    price: b.ticket_price || '0', start: localToUtcIso(b.start_date_time, tzOffset), tzOffset, genre: b.genre_id || null,
+    price: b.ticket_price || '0', start: startUtc, tzOffset, genre: b.genre_id || null,
     desc: b.description || null, status: b.status || 'published',
     mux: b.mux_playback_id || null, muxLive: b.status === 'live' ? (b.mux_playback_id || null) : null,
     reel: muxHls(b.mux_playback_id), banner: b.is_banner ? 1 : 0,
     replayEnabled, replayDays,
+    geoMode: normalizeGeoMode(b.geo_mode), geoCountries: normalizeGeoCountries(b.geo_countries),
+    geoBlockUntil: computeGeoBlockUntil(startUtc, b.geo_block_hours),
   });
   return res.json({ status: 'success', message: 'Concert créé.' });
 });
@@ -281,20 +306,24 @@ router.put('/events/:id', requireAdmin, (req, res) => {
   const cover = saveUpload(req, ['cover', 'cover_image', 'image'], 'covers', 'events/covers') || b.cover_image || null;
   const tzOffset = Number(b.tz_offset_minutes) || 0;
   const { replayEnabled, replayDays } = parseReplay(b);
+  const startUtc = localToUtcIso(b.start_date_time, tzOffset);
   db.prepare(
     `UPDATE events SET artist_id = @artist_id, name = @name, cover_image = @cover,
         ticket_price = @price, start_date_time = @start, tz_offset_minutes = @tzOffset, genre_id = @genre, description = @desc,
         status = @status, mux_playback_id = @mux, mux_live_playback_id = @muxLive,
         video_reel = @reel, is_banner = @banner,
-        replay_enabled = @replayEnabled, replay_duration_days = @replayDays, updated_at = datetime('now')
+        replay_enabled = @replayEnabled, replay_duration_days = @replayDays,
+        geo_mode = @geoMode, geo_countries = @geoCountries, geo_block_until = @geoBlockUntil, updated_at = datetime('now')
      WHERE id = @id`
   ).run({
     id: req.params.id, artist_id: b.artist_id || null, name: b.name, cover,
-    price: b.ticket_price || '0', start: localToUtcIso(b.start_date_time, tzOffset), tzOffset, genre: b.genre_id || null,
+    price: b.ticket_price || '0', start: startUtc, tzOffset, genre: b.genre_id || null,
     desc: b.description || null, status: b.status || 'published',
     mux: b.mux_playback_id || null, muxLive: b.status === 'live' ? (b.mux_playback_id || null) : null,
     reel: muxHls(b.mux_playback_id), banner: b.is_banner ? 1 : 0,
     replayEnabled, replayDays,
+    geoMode: normalizeGeoMode(b.geo_mode), geoCountries: normalizeGeoCountries(b.geo_countries),
+    geoBlockUntil: computeGeoBlockUntil(startUtc, b.geo_block_hours),
   });
   return res.json({ status: 'success', message: 'Concert mis à jour.' });
 });

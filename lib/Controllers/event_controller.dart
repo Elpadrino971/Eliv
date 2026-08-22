@@ -359,9 +359,14 @@ class EventController extends GetxController {
     Event? event;
     response.typeSetter = 'post';
     response.urlSetter = APIs.buyTicketAPI;
+    // Pays de l'APPAREIL (pas la langue) : sert au géo-blocage des concerts
+    // (un organisateur peut restreindre la diffusion en ligne dans le pays de
+    // son événement physique). Vide si indéterminé -> non bloqué.
+    final countryCode = Get.deviceLocale?.countryCode ?? '';
     response.bodySetter = {
       "event_id": eventId,
       "user_id": "${userModel.value.user?.id ?? 1}",
+      "country_code": countryCode,
     };
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {

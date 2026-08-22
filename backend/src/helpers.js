@@ -316,6 +316,28 @@ function payoutCountdown() {
   };
 }
 
+// Géo-blocage : l'event est-il bloqué pour ce pays (ISO-2) à cet instant ?
+// 'block' = bloque les pays listés ; 'only' = n'autorise QUE les pays listés.
+// Blocage temporisé : passé geo_block_until, la diffusion repart seule.
+function isGeoBlocked(event, country) {
+  const mode = String(event?.geo_mode || 'off').toLowerCase();
+  if (mode === 'off') return false;
+  if (event?.geo_block_until) {
+    const until = Date.parse(event.geo_block_until);
+    if (!Number.isNaN(until) && Date.now() > until) return false;
+  }
+  const list = String(event?.geo_countries || '')
+    .split(',')
+    .map((c) => c.trim().toUpperCase())
+    .filter(Boolean);
+  if (list.length === 0) return false;
+  const c = String(country || '').trim().toUpperCase();
+  if (!c) return false; // pays inconnu -> soft (non bloqué)
+  if (mode === 'block') return list.includes(c);
+  if (mode === 'only') return !list.includes(c);
+  return false;
+}
+
 module.exports = {
   serializeUser,
   serializeEvent,
@@ -330,4 +352,5 @@ module.exports = {
   DEFAULT_COMMISSION,
   platformCounters,
   payoutCountdown,
+  isGeoBlocked,
 };

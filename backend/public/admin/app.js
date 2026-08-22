@@ -548,6 +548,17 @@ async function openEventForm(row, { duplicate = false } = {}) {
       { name: 'is_banner', label: 'Mettre en bannière (carrousel accueil) ?', type: 'checkbox', value: !!row?.is_banner, hint: 'Afficher dans le carrousel' },
       { name: 'replay_enabled', label: 'Replay activé (concert rejouable) ?', type: 'checkbox', value: row ? !!row.replay_enabled : true, hint: 'Rejouable après le live' },
       { name: 'replay_duration_days', label: 'Durée du replay', type: 'select', value: row?.replay_duration_days ?? 60, options: [7, 14, 30, 60].map((d) => ({ value: d, label: d + ' jours' })) },
+      { name: 'geo_mode', label: 'Géo-blocage (par secteur)', type: 'select', value: row?.geo_mode || 'off', options: [
+        { value: 'off', label: 'Aucun — visible partout' },
+        { value: 'block', label: 'Bloquer les pays listés (les locaux viennent sur place)' },
+        { value: 'only', label: 'Autoriser UNIQUEMENT les pays listés' },
+      ], hint: 'Restreint la diffusion en ligne par pays' },
+      { name: 'geo_countries', label: 'Pays concernés (codes ISO-2)', value: row?.geo_countries || '', hint: 'Ex : FR,GF,BE — séparés par des virgules. Vide = pas de géo-blocage.' },
+      { name: 'geo_block_hours', label: 'Durée du géo-blocage (heures)', type: 'number',
+        value: (row?.geo_block_until && row?.start_date_time)
+          ? Math.max(0, Math.round((new Date(row.geo_block_until) - new Date(row.start_date_time)) / 3600000))
+          : '',
+        hint: 'Ex : 4 → bloqué 4h dès le début du concert, puis la diffusion REPART automatiquement. Vide ou 0 = permanent.' },
     ],
     afterRender: (bg) => attachAiDescriptionButton(bg, 'event'),
     onSave: async (d) => {

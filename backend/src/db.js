@@ -474,6 +474,14 @@ function init() {
     // replay_expires_at au moment où l'enregistrement Mux devient disponible.
     "ALTER TABLE events ADD COLUMN replay_enabled INTEGER DEFAULT 1",
     "ALTER TABLE events ADD COLUMN replay_duration_days INTEGER DEFAULT 60",
+    // ─── Géo-blocage (par secteur) ───
+    // geo_mode      : 'off' (défaut) | 'block' (bloque les pays listés) | 'only'
+    // geo_countries : codes pays ISO-2 séparés par virgule (ex 'FR,GF')
+    // geo_block_until : blocage TEMPORISÉ — tant que now < cette date le blocage
+    //   s'applique, passé ce délai la diffusion repart seule. NULL = permanent.
+    "ALTER TABLE events ADD COLUMN geo_mode TEXT DEFAULT 'off'",
+    "ALTER TABLE events ADD COLUMN geo_countries TEXT",
+    "ALTER TABLE events ADD COLUMN geo_block_until TEXT",
     "ALTER TABLE feed_clips ADD COLUMN mux_asset_id TEXT",
     "ALTER TABLE feed_clips ADD COLUMN mux_upload_id TEXT",
     "ALTER TABLE feed_clips ADD COLUMN upload_status TEXT",

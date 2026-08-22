@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
-const { serializeEvent, serializeUser, ok, fail, genReceipt, resolveArtistCommission, splitAmount } = require('../helpers');
+const { serializeEvent, serializeUser, ok, fail, genReceipt, resolveArtistCommission, splitAmount, isGeoBlocked } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
 const moderation = require('../services/moderation');
@@ -129,6 +129,14 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
 
   const event = db.prepare('SELECT * FROM events WHERE id = ?').get(b.event_id);
   if (!event) return fail(res, 'Event not found.', 404);
+
+  // Géo-blocage : certains concerts sont restreints par secteur (pour ne pas
+  // cannibaliser l'événement physique). Le pays vient de l'app (country_code)
+  // ou d'un en-tête reverse-proxy. Pays inconnu -> non bloqué (soft).
+  const country = (b.country_code || req.headers['cf-ipcountry'] || req.headers['x-country'] || '').toString();
+  if (isGeoBlocked(event, country)) {
+    return fail(res, "Ce concert n'est pas disponible en ligne dans ta région — rejoins l'événement sur place !", 451);
+  }
 
   // Déjà acheté -> idempotent.
   const already = db
