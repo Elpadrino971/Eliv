@@ -130,6 +130,14 @@ class SubscriptionController extends GetxController {
   static Future<void> syncIdentity(int userId) async {
     try {
       await Purchases.logIn(userId.toString());
+      // Publie l'email chez RevenueCat -> renvoyé dans le webhook
+      // (subscriber_attributes.$email). Filet de sécurité : si l'identité
+      // reste anonyme au moment de l'achat, le backend retrouve quand même
+      // l'utilisateur par email pour créditer points/abonnement.
+      final email = userModel.value.user?.email;
+      if (email != null && email.trim().isNotEmpty) {
+        await Purchases.setEmail(email.trim());
+      }
     } catch (e) {
       myPrint('⚠️ RevenueCat logIn échoué (app continue): $e');
     }

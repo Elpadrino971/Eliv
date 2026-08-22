@@ -113,7 +113,7 @@ class _TopupHistoryState extends State<TopupHistory> {
                         children: [
                           Obx(
                             () => Text(
-                              userModel.value.user?.points ?? 'N/A',
+                              userModel.value.user?.points ?? '0',
                               style: const TextStyle(
                                 color: whiteColor,
                                 fontWeight: FontWeight.bold,

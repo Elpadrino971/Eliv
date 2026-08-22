@@ -132,36 +132,40 @@ class _HomeBannerCardState extends State<HomeBannerCard> {
               children: [
                 Row(
                   children: [
-                    _glassChip(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Image.asset(
-                            'assets/location_icon.png',
-                            width: 16,
-                            height: 16,
-                            color: goldPrimary,
-                          ),
-                          const SizedBox(width: 6),
-                          ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: Get.width * 0.45,
+                    // Pastille de localisation affichée UNIQUEMENT si l'artiste
+                    // a une adresse : sinon on masque la puce plutôt que
+                    // d'afficher "N/A" (plus propre pour l'utilisateur).
+                    if ((event.artist?.address ?? '').trim().isNotEmpty)
+                      _glassChip(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset(
+                              'assets/location_icon.png',
+                              width: 16,
+                              height: 16,
+                              color: goldPrimary,
                             ),
-                            child: Text(
-                              event.artist?.address ?? 'N/A',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: ivory,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                                letterSpacing: 0.5,
+                            const SizedBox(width: 6),
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: Get.width * 0.45,
+                              ),
+                              child: Text(
+                                (event.artist?.address ?? '').trim(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: ivory,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
                     const Spacer(),
                     _glassChip(
                       child: Row(

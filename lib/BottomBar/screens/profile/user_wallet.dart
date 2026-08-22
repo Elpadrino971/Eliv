@@ -93,7 +93,7 @@ class _UserWalletState extends State<UserWallet> {
                           children: [
                             Obx(
                               () => Text(
-                                userModel.value.user?.points ?? 'N/A',
+                                userModel.value.user?.points ?? '0',
                                 style: TextStyle(
                                   color: whiteColor,
                                   fontWeight: FontWeight.bold,
