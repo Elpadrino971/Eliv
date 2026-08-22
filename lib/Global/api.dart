@@ -92,6 +92,8 @@ class APIs {
 
   //Events
   static const String eventsAPI = '$baseAPI/events';
+  // Un concert unique par id (join direct depuis l'anneau LIVE du feed).
+  static String eventByIdAPI(String id) => '$baseAPI/event/$id';
   static const String getBannerEventsAPI = '$baseAPI/banner-events';
   static const String featuredArtistAPI = '$baseAPI/featured-artists';
   static const String getArtistFollowersAPI = '$baseAPI/followers';

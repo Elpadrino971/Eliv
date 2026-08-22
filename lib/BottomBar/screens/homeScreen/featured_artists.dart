@@ -4,6 +4,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/Models/user_model.dart';
 import 'package:artist/widgets/my_appBar.dart';
 import 'package:artist/widgets/image_widget.dart';
+import 'package:artist/widgets/live_join.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -93,7 +94,13 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
                       final artist = widget.artists[index];
                       return GestureDetector(
                         onTap: () {
-                          Get.to(() => ArtistDetailScreen(artist: artist));
+                          // Artiste EN DIRECT -> bandeau "Rejoindre le live"
+                          // (montant -> paiement -> live). Sinon -> sa fiche.
+                          if (artist.isLive == true) {
+                            showLiveJoinSheet(artist);
+                          } else {
+                            Get.to(() => ArtistDetailScreen(artist: artist));
+                          }
                         },
                         child: Container(
                           clipBehavior: Clip.antiAlias,
@@ -108,6 +115,37 @@ class _FeaturedArtistsState extends State<FeaturedArtists> {
                                 fit: BoxFit.cover,
                                 errorAsset: 'assets/icon2.png',
                               ),
+                              if (artist.isLive == true)
+                                Positioned(
+                                  top: 10,
+                                  right: 10,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFF2D55),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.circle, color: Colors.white, size: 7),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'LIVE',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               Padding(
                                 padding: EdgeInsets.all(10),
                                 child: Column(

@@ -388,6 +388,45 @@ class EventController extends GetxController {
     return event;
   }
 
+  /// Récupère un concert unique par son id (pour le join direct depuis
+  /// l'anneau LIVE du feed). Renvoie null si introuvable.
+  Future<Event?> getEventById(String id) async {
+    Event? event;
+    response.typeSetter = 'get';
+    response.urlSetter = APIs.eventByIdAPI(id);
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        final data = jsonDecode(value)['data'];
+        if (data != null) event = Event.fromJson(data);
+      }
+    });
+    return event;
+  }
+
+  /// Enregistre l'accès au concert (billet) SANS effet de bord UI (ni dialog
+  /// ni pop d'écrans, contrairement à [buyTicket]). Utilisé par le bandeau
+  /// "Rejoindre le live" pour enchaîner directement sur la salle de live.
+  Future<Event?> registerTicketAndGet(String eventId) async {
+    Event? event;
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.buyTicketAPI;
+    final countryCode = Get.deviceLocale?.countryCode ?? '';
+    response.bodySetter = {
+      "event_id": eventId,
+      "user_id": "${userModel.value.user?.id ?? 1}",
+      "country_code": countryCode,
+    };
+    await response.hitAPI().then((value) {
+      if (value.split(' ').first != 'error') {
+        event = Event.fromJson(jsonDecode(value)['data']);
+        update();
+      } else {
+        parseError(value);
+      }
+    });
+    return event;
+  }
+
   Future<void> getUserJoinedEvents() async {
     response.typeSetter = 'post';
     response.urlSetter = APIs.userEventHistoryAPI;

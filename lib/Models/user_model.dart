@@ -73,6 +73,10 @@ class User {
   final int? isVerified;
   final bool? isFeatured;
   final bool? isArtist;
+  // Concert en direct de cet artiste (anneau "LIVE" + join direct depuis le feed).
+  final bool? isLive;
+  final int? liveEventId;
+  final String? liveTicketPrice;
   final List<Genre>? genres;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -103,6 +107,9 @@ class User {
     this.isVerified,
     this.isFeatured,
     this.isArtist,
+    this.isLive,
+    this.liveEventId,
+    this.liveTicketPrice,
     this.genres,
     this.createdAt,
     this.updatedAt,
@@ -139,6 +146,9 @@ class User {
             json["user_subscription"]!.map((x) => UserSubscription.fromJson(x)),
           ),
     isArtist: json["is_artist"],
+    isLive: json["is_live"],
+    liveEventId: json["live_event_id"],
+    liveTicketPrice: json["live_ticket_price"]?.toString(),
     genres: json["genres"] == null
         ? []
         : List<Genre>.from(json["genres"].map((x) => Genre.fromJson(x))),
@@ -176,6 +186,9 @@ class User {
       isVerified: user?.isVerified ?? isVerified,
       isFeatured: user?.isFeatured ?? isFeatured,
       isArtist: user?.isArtist ?? isArtist,
+      isLive: user?.isLive ?? isLive,
+      liveEventId: user?.liveEventId ?? liveEventId,
+      liveTicketPrice: user?.liveTicketPrice ?? liveTicketPrice,
       genres: user?.genres ?? genres,
       createdAt: user?.createdAt ?? createdAt,
       updatedAt: user?.updatedAt ?? updatedAt,

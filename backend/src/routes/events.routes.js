@@ -61,6 +61,15 @@ router.get('/artist/:id/events', optionalAuth, (req, res) => {
   return ok(res, rows.map((r) => serializeEvent(r, { currentUserId: req.user?.id })));
 });
 
+// GET /api/event/:id — un concert unique (sérialisé). Utilisé pour le "join
+// direct" depuis l'anneau LIVE du feed : on récupère l'event par son id pour
+// ouvrir le tunnel billet / la salle de live.
+router.get('/event/:id', optionalAuth, (req, res) => {
+  const row = db.prepare('SELECT * FROM events WHERE id = ?').get(req.params.id);
+  if (!row) return fail(res, 'Event not found.', 404);
+  return ok(res, serializeEvent(row, { currentUserId: req.user?.id }));
+});
+
 // POST /api/events  (multipart: cover_image, video_reel) — création d'un
 // concert par l'artiste connecté (formulaire "Créer un event" côté app).
 // artist_id vient TOUJOURS du token (req.user.id), jamais du user_id envoyé

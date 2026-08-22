@@ -102,6 +102,12 @@ function serializeUser(row, { withPassword = false, full = false } = {}) {
       }),
     }));
 
+  // Concert EN DIRECT de cet artiste (anneau "LIVE" + join direct depuis le
+  // feed) : id du live + prix du billet. null si l'artiste n'est pas en live.
+  const liveEvent = db
+    .prepare("SELECT id, ticket_price FROM events WHERE artist_id = ? AND status = 'live' ORDER BY id DESC LIMIT 1")
+    .get(row.id);
+
   const out = {
     id: row.id,
     // otp_code volontairement NON exposé : c'est un secret de vérification
@@ -120,6 +126,9 @@ function serializeUser(row, { withPassword = false, full = false } = {}) {
     is_verified: row.is_verified,
     is_featured: !!row.is_featured,
     is_artist: !!row.is_artist,
+    is_live: !!liveEvent,
+    live_event_id: liveEvent ? liveEvent.id : null,
+    live_ticket_price: liveEvent ? liveEvent.ticket_price : null,
     referral_code: row.referral_code,
     genres,
     user_subscription: userSubscription,
