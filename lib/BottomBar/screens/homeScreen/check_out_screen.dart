@@ -232,6 +232,16 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         onTap: () async {
                           Get.back(); // ferme la confirmation
                           myLoadingDialog();
+                          // Concert GRATUIT (prix 0) : aucun achat IAP (il n'y a
+                          // pas de produit `ticket_0`). On enregistre l'accès
+                          // directement — le backend accorde un billet gratuit
+                          // quand le prix est 0 (pas de vérif paiement).
+                          if (_ticketPrice <= 0) {
+                            await eventController.buyTicket(
+                              eventId: widget.event.id.toString(),
+                            );
+                            return; // buyTicket gère son dialog succès/erreur
+                          }
                           // 1. Achat IAP direct du billet (palier de prix).
                           final sub = Get.isRegistered<SubscriptionController>()
                               ? Get.find<SubscriptionController>()

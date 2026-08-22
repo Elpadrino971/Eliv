@@ -465,12 +465,8 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                               color: Color(0xffD4D4D4),
                             ),
                             onTap: () => _pickDate(context, endDateController),
-                            validation: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'art_required'.tr;
-                              }
-                              return null;
-                            },
+                            // Fin OPTIONNELLE : si vide -> début + 4h (cf. submit).
+                            validation: (value) => null,
                             textColor: Get.isDarkMode ? whiteColor : blackColor,
                           ),
                         ),
@@ -499,12 +495,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                               color: Color(0xff737373),
                             ),
                             onTap: () => _pickTime(context, endTimeController),
-                            validation: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'art_required'.tr;
-                              }
-                              return null;
-                            },
+                            validation: (value) => null,
                             textColor: Get.isDarkMode ? whiteColor : blackColor,
                           ),
                         ),
@@ -692,14 +683,10 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                   label: 'ev_publish'.tr,
                   onTap: () {
                     if (formKey.currentState!.validate()) {
-                      if (coverImage == null) {
-                        Get.snackbar('art_error'.tr, 'art_err_cover'.tr);
-                        return;
-                      }
-                      if (visualVideo == null) {
-                        Get.snackbar('art_error'.tr, 'art_err_visual'.tr);
-                        return;
-                      }
+                      // Image de couverture et vidéo teaser désormais
+                      // OPTIONNELLES : le backend les accepte vides. On ne
+                      // bloque plus la création d'un concert pour ça (grosse
+                      // friction retirée). Elles s'ajoutent quand l'artiste veut.
 
                       // Call API logic
                       final selectedGenreId = artistController
@@ -708,6 +695,20 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                           .genre
                           ?.firstWhere((e) => e.genre == selectedGenre)
                           .id;
+
+                      // Fin OPTIONNELLE : si vide -> début + 4h (fenêtre large
+                      // => le bouton "Passer en direct" reste actif, et le
+                      // replay a une référence de fin).
+                      final startLocal = DateTime.tryParse(
+                          '${startDateController.text} ${startTimeController.text}');
+                      final String endIso = (endDateController.text.isEmpty ||
+                              endTimeController.text.isEmpty)
+                          ? (startLocal != null
+                              ? '${startLocal.add(const Duration(hours: 4)).toUtc().toIso8601String().split('.').first}Z'
+                              : AppDate.localPartsToUtcIso(
+                                  startDateController.text, startTimeController.text))
+                          : AppDate.localPartsToUtcIso(
+                              endDateController.text, endTimeController.text);
 
                       artistController.createEvent(
                         name: titleController.text,
@@ -718,10 +719,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                           startDateController.text,
                           startTimeController.text,
                         ),
-                        endDateTime: AppDate.localPartsToUtcIso(
-                          endDateController.text,
-                          endTimeController.text,
-                        ),
+                        endDateTime: endIso,
                         ticketPrice:
                             (selectedPrice ?? '0').replaceAll(' €', ''),
                         genreId: selectedGenreId?.toString() ?? '',

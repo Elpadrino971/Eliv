@@ -101,41 +101,18 @@ class _ProfileState extends State<Profile> {
               'title': 'prof_become_artist'.tr,
               'subTitle': 'prof_do_live'.tr,
               'onTap': () async {
-                // Re-vérifie l'abonnement en direct (pas le cache local
-                // userActiveSubscriptions, calculé une seule fois à
-                // l'ouverture de l'onglet -> restait périmé après un achat
-                // réussi ailleurs tant que l'app n'était pas relancée).
+                // Modèle gratuit : devenir artiste ne nécessite AUCUN
+                // abonnement ni paiement. On rafraîchit le profil puis on
+                // route directement vers l'accueil artiste (déjà artiste) ou
+                // le parcours d'inscription artiste GRATUIT (ArtistOnboarding
+                // -> BasicInfo -> BankInfo -> updateProfile => is_artist=1).
                 myLoadingDialog();
                 await authController.getUserModel();
                 Get.back();
-                final freshActiveSubs = (userModel.value.user?.userSubscription ?? [])
-                    .where((e) => e.status == 'active')
-                    .toList();
-                userActiveSubscriptions = freshActiveSubs;
-                if (freshActiveSubs.isEmpty) {
-                  // Pas d'abonnement actif -> on propose de s'abonner.
-                  // In-app = achat Apple IAP (produits vybzz_XX_1m approuvés,
-                  // conforme 3.1.1). Le lien web/Stripe reste masqué sur iOS
-                  // (anti-steering) dans l'écran d'achat lui-même.
-                  myWarningDialog(
-                    title: 'common_warning'.tr,
-                    subtitle:
-                        'prof_no_sub_become_artist'.tr,
-                    ontap: () {
-                      Get.back();
-                      Get.to(
-                        () => AllSubscriptionScreen(
-                          fromArtist: widget.fromArtist,
-                        ),
-                      );
-                    },
-                  );
+                if (userModel.value.user?.isArtist == true) {
+                  Get.to(() => ArtistBottomBar());
                 } else {
-                  if (userModel.value.user?.isArtist == true) {
-                    Get.to(() => ArtistBottomBar());
-                  } else {
-                    Get.to(() => ArtistOnboardingScreen());
-                  }
+                  Get.to(() => ArtistOnboardingScreen());
                 }
               },
             },
