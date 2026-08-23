@@ -2,9 +2,11 @@ import 'package:artist/Auth/login_screen.dart';
 import 'package:artist/Controllers/auth_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/BottomBar/screens/profile/contant_page.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_header.dart';
 import 'package:artist/widgets/my_textfield.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -22,6 +24,7 @@ class _CreateAcountState extends State<CreateAcount> {
   final nameController = TextEditingController();
   final passwordController = TextEditingController();
   bool hiddinPassword = true;
+  bool acceptedTerms = false;
 
   final formKey = GlobalKey<FormState>();
 
@@ -193,9 +196,87 @@ class _CreateAcountState extends State<CreateAcount> {
 
                       height(0.02),
 
+                      // Consentement RGPD : l'utilisateur accepte CGU +
+                      // Politique de confidentialité avant de créer un compte.
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: Checkbox(
+                              value: acceptedTerms,
+                              activeColor: goldPrimary,
+                              checkColor: midnightPrimary,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                              onChanged: (v) =>
+                                  setState(() => acceptedTerms = v ?? false),
+                            ),
+                          ),
+                          width(0.02),
+                          Expanded(
+                            child: Text.rich(
+                              TextSpan(
+                                style: const TextStyle(
+                                  color: Color(0xff737373),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
+                                ),
+                                children: [
+                                  TextSpan(text: 'auth_consent_prefix'.tr),
+                                  TextSpan(
+                                    text: 'prof_terms'.tr,
+                                    style: const TextStyle(
+                                      color: goldPrimary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () => Get.to(
+                                            () => ContantPage(
+                                              title: 'prof_terms'.tr,
+                                              content: authController
+                                                  .settings[
+                                                      'terms_and_conditions'],
+                                            ),
+                                          ),
+                                  ),
+                                  TextSpan(text: 'auth_consent_and'.tr),
+                                  TextSpan(
+                                    text: 'prof_privacy'.tr,
+                                    style: const TextStyle(
+                                      color: goldPrimary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () => Get.to(
+                                            () => ContantPage(
+                                              title: 'prof_privacy'.tr,
+                                              content: authController
+                                                  .settings['privacy_policy'],
+                                            ),
+                                          ),
+                                  ),
+                                  const TextSpan(text: '.'),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      height(0.02),
+
                       MyButton(
                         label: 'auth_send_code'.tr,
                         onTap: () async {
+                          if (!acceptedTerms) {
+                            myWarningDialog(
+                              subtitle: 'auth_consent_required'.tr,
+                            );
+                            return;
+                          }
                           if (formKey.currentState!.validate()) {
                             await authController.signupUser(
                               email: emailController.text,

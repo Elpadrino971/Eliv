@@ -1,3 +1,4 @@
+import 'package:artist/BottomBar/screens/profile/about_screen.dart';
 import 'package:artist/BottomBar/screens/profile/faq_screen.dart';
 import 'package:artist/Controllers/auth_controller.dart';
 import 'package:artist/Global/colors.dart';
@@ -147,6 +148,12 @@ class _SettingsState extends State<Settings> {
           content: authController.settings['terms_and_conditions'],
         ),
       ),
+    },
+    {
+      'icon': Icons.info_outline_rounded,
+      'title': 'about_title'.tr,
+      'subTitle': 'about_subtitle'.tr,
+      'onTap': () => Get.to(() => const AboutScreen()),
     },
   ];
 
