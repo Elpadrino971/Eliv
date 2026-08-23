@@ -704,6 +704,21 @@ router.post('/feed-clips/:id/approve', requireAdmin, (req, res) => {
   db.prepare('UPDATE feed_clips SET active = 1 WHERE id = ?').run(req.params.id);
   return res.json({ status: 'success', message: 'Clip approuvé.' });
 });
+// Validation GROUPÉE : approuve plusieurs clips d'un coup (modération en masse
+// des shorts "Pour toi" + "Clips"). Corps : { ids: [1, 2, 3] }.
+router.post('/feed-clips/approve-batch', requireAdmin, (req, res) => {
+  const ids = Array.isArray(req.body?.ids)
+    ? [...new Set(req.body.ids.map(Number).filter((n) => Number.isInteger(n) && n > 0))]
+    : [];
+  if (!ids.length) {
+    return res.status(400).json({ status: 'error', message: 'Aucun clip sélectionné.' });
+  }
+  const placeholders = ids.map(() => '?').join(',');
+  const info = db
+    .prepare(`UPDATE feed_clips SET active = 1 WHERE id IN (${placeholders})`)
+    .run(...ids);
+  return res.json({ status: 'success', message: `${info.changes} clip(s) approuvé(s).` });
+});
 router.post('/feed-clips', requireAdmin, async (req, res) => {
   const b = req.body || {};
   const uploaded = await saveClipVideo(req, ['video', 'file']);

@@ -666,6 +666,7 @@ function pageFeedClips() {
     return `<div style="width:45px;height:45px;border-radius:6px;background:#0A1226;display:flex;align-items:center;justify-content:center;color:var(--muted)">▶</div>`;
   };
   const columns = [
+    { label: '✓', render: (r) => r.active ? '' : `<input type="checkbox" class="chk-clip" data-id="${r.id}" style="width:18px;height:18px;cursor:pointer">` },
     { label: '#', render: (r) => r.id },
     { label: 'Aperçu', render: (r) => thumb(r) },
     { label: 'Feed', render: (r) => feedBadge(r.feed) },
@@ -706,10 +707,25 @@ function pageFeedClips() {
         <span class="em" style="margin-right:2px">Filtrer les shorts :</span>
         ${[['all', 'Tous', counts.all], ['for_you', '🟦 Pour toi', counts.for_you], ['clips', '🟨 Clips', counts.clips]].map(([v, l, c]) => `<button class="btn" data-ft="${v}" style="padding:8px 14px">${l} <span class="em">(${c})</span></button>`).join('')}
       </div>
+      <div id="bulkbar" style="display:flex;gap:10px;align-items:center;margin:0 0 12px;flex-wrap:wrap">
+        <button class="btn" id="selectAllPending" style="padding:8px 14px">☑︎ Tout sélectionner (en attente)</button>
+        <button class="btn gold" id="bulkApprove" disabled style="padding:8px 14px;opacity:.5">✅ Valider la sélection (<span id="bulkCount">0</span>)</button>
+        <span class="em">Coche les vidéos à publier, puis valide-les toutes d'un coup.</span>
+      </div>
       ${tableShellInner(columns)}`;
     const rowsFor = (t) => t === 'all' ? currentRows : (t === 'clips' ? currentRows.filter(isClips) : currentRows.filter((r) => !isClips(r)));
+    // Barre de validation groupée : met à jour le compteur + l'état du bouton.
+    const refreshBulk = () => {
+      const sel = [...view().querySelectorAll('.chk-clip')].filter((c) => c.checked);
+      const cnt = view().querySelector('#bulkCount');
+      const btn = view().querySelector('#bulkApprove');
+      if (cnt) cnt.textContent = sel.length;
+      if (btn) { btn.disabled = sel.length === 0; btn.style.opacity = sel.length ? '1' : '.5'; }
+    };
     const applyTab = (t) => {
       mountTable(view().querySelector('.tcard'), { columns, rows: rowsFor(t) });
+      view().querySelectorAll('.chk-clip').forEach((c) => c.onchange = refreshBulk);
+      refreshBulk();
       view().querySelectorAll('[data-ft]').forEach((b) => {
         const on = b.dataset.ft === t;
         b.style.background = on ? 'var(--gold)' : '';
@@ -721,6 +737,23 @@ function pageFeedClips() {
     view().querySelectorAll('[data-ft-card]').forEach((c) => c.onclick = () => applyTab(c.dataset.ftCard));
     view().querySelectorAll('[data-goto]').forEach((c) => c.onclick = () => { location.hash = c.dataset.goto; });
     view().querySelector('#addbtn').onclick = () => feedClipForm(null);
+    // Tout cocher / tout décocher les clips EN ATTENTE de la vue courante.
+    view().querySelector('#selectAllPending').onclick = () => {
+      const checks = [...view().querySelectorAll('.chk-clip')];
+      const allOn = checks.length && checks.every((c) => c.checked);
+      checks.forEach((c) => { c.checked = !allOn; });
+      refreshBulk();
+    };
+    // Valider la sélection en une seule requête.
+    view().querySelector('#bulkApprove').onclick = async () => {
+      const ids = [...view().querySelectorAll('.chk-clip')].filter((c) => c.checked).map((c) => Number(c.dataset.id));
+      if (!ids.length) return;
+      try {
+        await api('POST', '/feed-clips/approve-batch', { ids });
+        toast(`${ids.length} vidéo(s) validée(s)`);
+        pageFeedClips();
+      } catch (e) { toast(e.message); }
+    };
     applyTab('all');
   })();
 }
