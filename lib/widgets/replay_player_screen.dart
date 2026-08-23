@@ -5,6 +5,7 @@ import 'package:artist/Global/mux.dart';
 import 'package:artist/Global/orientation_helper.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/cast_button.dart';
+import 'package:artist/widgets/mini_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -22,7 +23,9 @@ class ReplayPlayerScreen extends StatefulWidget {
     this.isLive = false,
     this.event,
     this.forceLandscape = false,
-  }) : assert(playbackId != null || url != null, 'playbackId ou url requis');
+    this.adopt,
+  }) : assert(playbackId != null || url != null || adopt != null,
+            'playbackId, url ou adopt requis');
 
   final String? playbackId;
   final String? url;
@@ -36,6 +39,11 @@ class ReplayPlayerScreen extends StatefulWidget {
   /// Concert associé (pour like / tips / partage). Optionnel.
   final Event? event;
 
+  /// Lecteur DÉJÀ initialisé, transmis par le mini-lecteur lors d'un
+  /// ré-agrandissement. Quand il est fourni, l'écran ne crée PAS de nouveau
+  /// lecteur et n'en dispose PAS (le mini-lecteur en garde la propriété).
+  final VideoPlayerController? adopt;
+
   @override
   State<ReplayPlayerScreen> createState() => _ReplayPlayerScreenState();
 }
@@ -45,6 +53,10 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
   bool _ready = false;
   bool _error = false;
   bool _showControls = true;
+  // Le lecteur a été confié au mini-lecteur -> ne pas le disposer ici.
+  bool _handedOff = false;
+  // Fermeture explicite (croix) -> ne pas restaurer la mini-carte.
+  bool _closed = false;
 
   bool _liked = false;
   int _likes = 0;
@@ -52,6 +64,14 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
   @override
   void initState() {
     super.initState();
+    // Ouverture d'une NOUVELLE vidéo alors qu'un mini-lecteur flotte encore :
+    // on ferme l'ancien pour ne jamais avoir deux vidéos qui jouent en même
+    // temps (le ré-agrandissement passe par "adopt" et ne tombe pas ici).
+    if (widget.adopt == null &&
+        Get.isRegistered<MiniPlayerController>() &&
+        MiniPlayerController.to.controller.value != null) {
+      MiniPlayerController.to.close();
+    }
     _likes = widget.event?.likesCount ?? 0;
     // Clip musical 16:9 → bascule réelle en paysage via l'API native iOS 16
     // (façon Netflix/YouTube). Sinon (replay concert) : rotation libre.
@@ -69,6 +89,17 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
   }
 
   Future<void> _init() async {
+    // Ré-agrandissement depuis le mini-lecteur : on réutilise le lecteur déjà
+    // initialisé (la vidéo continue sans coupure), on ne le recrée pas.
+    if (widget.adopt != null) {
+      final c = widget.adopt!;
+      if (!c.value.isPlaying) c.play();
+      setState(() {
+        _controller = c;
+        _ready = true;
+      });
+      return;
+    }
     try {
       final src = widget.url ?? Mux.hlsUrl(widget.playbackId!);
       final c = VideoPlayerController.networkUrl(Uri.parse(src));
@@ -86,7 +117,18 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
 
   @override
   void dispose() {
-    _controller?.dispose();
+    // On ne dispose le lecteur QUE si cet écran en est le propriétaire :
+    // - pas en mode "adopt" (il appartient au mini-lecteur),
+    // - pas s'il vient d'être confié au mini-lecteur (réduction).
+    if (widget.adopt == null && !_handedOff) {
+      _controller?.dispose();
+    }
+    // Retour système (bouton retour Android) depuis un plein écran adopté,
+    // sans réduction ni fermeture explicite : on ré-affiche la mini-carte
+    // pour que la vidéo (qui continue) reste accessible et pilotable.
+    if (widget.adopt != null && !_handedOff && !_closed) {
+      MiniPlayerController.to.restore();
+    }
     // Restaure le portrait (l'app est portrait-only ailleurs).
     if (widget.forceLandscape) {
       OrientationHelper.resetPortrait();
@@ -97,6 +139,34 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
       ]);
     }
     super.dispose();
+  }
+
+  /// Réduit en mini-lecteur flottant (façon YouTube) : on confie le lecteur au
+  /// contrôleur global, la vidéo continue, et on ferme le plein écran.
+  void _minimize() {
+    final c = _controller;
+    if (c == null || !_ready) return;
+    _handedOff = true;
+    MiniPlayerController.to.attach(
+      c: c,
+      url: widget.url,
+      playbackId: widget.playbackId,
+      title: widget.title,
+      isLive: widget.isLive,
+      forceLandscape: widget.forceLandscape,
+      event: widget.event,
+    );
+    Get.back();
+  }
+
+  /// Ferme définitivement le lecteur (croix). En mode "adopt", il faut couper
+  /// et libérer le lecteur détenu par le mini-lecteur.
+  void _close() {
+    _closed = true;
+    if (widget.adopt != null) {
+      MiniPlayerController.to.close();
+    }
+    Get.back();
   }
 
   String _fmt(Duration d) {
@@ -242,6 +312,10 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
   Widget _playerBody(VideoPlayerController? c, bool hasEvent) {
     return GestureDetector(
         onTap: () => setState(() => _showControls = !_showControls),
+        // Glisser vers le bas -> réduire en mini-lecteur (façon YouTube).
+        onVerticalDragEnd: (d) {
+          if ((d.primaryVelocity ?? 0) > 250) _minimize();
+        },
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -262,21 +336,40 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
             else
               const Center(child: CircularProgressIndicator(color: goldPrimary)),
 
-            // Fermer (haut gauche)
+            // Réduire (mini-lecteur) + Fermer — haut gauche
             Positioned(
               top: MediaQuery.of(context).padding.top + 10,
               left: 12,
-              child: GestureDetector(
-                onTap: () => Get.back(),
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: blackColor.withValues(alpha: 0.4),
-                    shape: BoxShape.circle,
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: _minimize,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: blackColor.withValues(alpha: 0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.keyboard_arrow_down_rounded,
+                          color: whiteColor, size: 26),
+                    ),
                   ),
-                  child: const Icon(Icons.close_rounded, color: whiteColor, size: 22),
-                ),
+                  const SizedBox(width: 10),
+                  GestureDetector(
+                    onTap: _close,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: blackColor.withValues(alpha: 0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close_rounded,
+                          color: whiteColor, size: 22),
+                    ),
+                  ),
+                ],
               ),
             ),
 
