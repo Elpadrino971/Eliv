@@ -135,6 +135,30 @@ router.get('/genres', (req, res) => {
   return ok(res, db.prepare('SELECT * FROM genres').all());
 });
 
+// Résout le style d'animation "auto" (change de saison / de temps en temps)
+// vers un style concret que l'app sait afficher. L'app ne connaît jamais
+// "auto" : elle reçoit toujours un style résolu (halloween, sparkles, …).
+function resolveSplashStyle(stored, now = new Date()) {
+  const style = (stored || 'sparkles').trim();
+  if (style !== 'auto') return style;
+
+  const m = now.getMonth() + 1; // 1..12
+  const d = now.getDate();
+
+  // Halloween : 24 octobre → 2 novembre.
+  if ((m === 10 && d >= 24) || (m === 11 && d <= 2)) return 'halloween';
+  // Période de fêtes : 18 → 31 décembre (paillettes façon neige dorée).
+  if (m === 12 && d >= 18) return 'sparkles';
+
+  // Le reste de l'année : rotation douce qui change tous les ~5 jours, pour
+  // que la page de lancement ne soit jamais figée trop longtemps.
+  const rotation = ['sparkles', 'liquid', 'equalizer', 'spotlights', 'bokeh'];
+  const dayOfYear = Math.floor(
+    (now - new Date(now.getFullYear(), 0, 0)) / 86400000
+  );
+  return rotation[Math.floor(dayOfYear / 5) % rotation.length];
+}
+
 // GET /api/splash-settings — fond d'écran + animation de la page de lancement,
 // personnalisables depuis l'admin sans passer par une nouvelle version d'app.
 // Valeurs vides -> le client retombe sur ses assets locaux par défaut.
@@ -149,7 +173,8 @@ router.get('/splash-settings', (req, res) => {
     logo_image: map.splash_logo_image || null,
     text_color: map.splash_text_color || null,
     overlay: Number(map.splash_overlay) || 0,
-    animation_style: map.splash_animation_style || 'sparkles',
+    // Style résolu (l'admin peut choisir "auto" -> saison / rotation).
+    animation_style: resolveSplashStyle(map.splash_animation_style),
   });
 });
 

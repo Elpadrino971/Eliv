@@ -824,7 +824,17 @@ router.put('/referral-settings', requireAdmin, (req, res) => {
 // ─── Page de lancement (splash) : fond d'écran + animation personnalisables
 // depuis l'admin, lus par l'app via GET /api/splash-settings (public). Permet
 // de changer le visuel de démarrage sans nouvelle version App Store/Play Store.
-const SPLASH_ANIMATION_STYLES = ['sparkles', 'fade', 'none'];
+const SPLASH_ANIMATION_STYLES = [
+  'auto', // change de saison / rotation (résolu côté serveur au chargement)
+  'sparkles',
+  'equalizer',
+  'spotlights',
+  'liquid',
+  'bokeh',
+  'halloween',
+  'fade',
+  'none',
+];
 
 router.get('/splash-settings', requireAdmin, (req, res) => {
   const rows = db.prepare(

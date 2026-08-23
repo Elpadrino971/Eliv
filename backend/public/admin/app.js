@@ -1066,7 +1066,13 @@ async function pageSplash() {
   view().innerHTML = '<div class="empty">Chargement…</div>';
   const { data } = await api('GET', '/splash-settings');
   const styles = [
+    { value: 'auto', label: '✨ Auto (change avec la saison — Halloween, fêtes, rotation)' },
     { value: 'sparkles', label: 'Paillettes dorées (par défaut)' },
+    { value: 'equalizer', label: 'Égaliseur audio (barres qui dansent)' },
+    { value: 'spotlights', label: 'Projecteurs de scène (faisceaux)' },
+    { value: 'liquid', label: 'Dégradé liquide (façon Apple)' },
+    { value: 'bokeh', label: 'Lumières de foule (bokeh flou)' },
+    { value: 'halloween', label: '🎃 Halloween (braises + chauves-souris)' },
     { value: 'fade', label: 'Halo simple (sans paillettes)' },
     { value: 'none', label: 'Aucune animation' },
   ];
