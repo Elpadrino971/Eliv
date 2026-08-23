@@ -348,9 +348,12 @@ router.post('/mux/direct-upload', requireAdmin, (req, res) => {
   let refId = Number(b.ref_id) || null;
   if (kind === 'clip' && !refId) {
     // Nouveau clip : on crée la ligne tout de suite (inactive tant que non prête + non approuvée).
+    // artist_id (optionnel, rangé dans user_id comme le formulaire) rattache le
+    // clip à un artiste -> il apparaît sur sa fiche. Sert à l'upload multiple.
+    const artistId = b.artist_id ? Number(b.artist_id) : null;
     const info = db.prepare(
-      'INSERT INTO feed_clips (feed, title, active, upload_status) VALUES (?, ?, 0, ?)'
-    ).run(b.feed === 'clips' ? 'clips' : 'for_you', b.title || null, 'waiting');
+      'INSERT INTO feed_clips (feed, title, user_id, active, upload_status) VALUES (?, ?, ?, 0, ?)'
+    ).run(b.feed === 'clips' ? 'clips' : 'for_you', b.title || null, artistId, 'waiting');
     refId = info.lastInsertRowid;
   }
   if (!refId) {
@@ -718,6 +721,33 @@ router.post('/feed-clips/approve-batch', requireAdmin, (req, res) => {
     .prepare(`UPDATE feed_clips SET active = 1 WHERE id IN (${placeholders})`)
     .run(...ids);
   return res.json({ status: 'success', message: `${info.changes} clip(s) approuvé(s).` });
+});
+// Ajout GROUPÉ par Playback ID : colle/importe une liste de Mux Playback IDs
+// (ex. un fichier .md), chacun devient un clip ajouté À LA SUITE du feed.
+// Corps : { feed, artist_id?, active?, playback_ids: [...] }.
+router.post('/feed-clips/bulk', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const feed = b.feed === 'clips' ? 'clips' : 'for_you';
+  const artistId = b.artist_id ? Number(b.artist_id) : null;
+  const active = b.active === undefined ? 1 : (truthy(b.active) ? 1 : 0);
+  const ids = Array.isArray(b.playback_ids)
+    ? [...new Set(b.playback_ids.map((s) => String(s).trim()).filter((s) => /^[A-Za-z0-9]+$/.test(s)))]
+    : [];
+  if (!ids.length) {
+    return res.status(400).json({ status: 'error', message: 'Aucun Playback ID valide.' });
+  }
+  const maxPos = db.prepare('SELECT COALESCE(MAX(position), -1) mp FROM feed_clips WHERE feed = ?').get(feed).mp;
+  const insert = db.prepare(
+    `INSERT INTO feed_clips (feed, title, mux_playback_id, position, active, user_id, upload_status)
+     VALUES (?, ?, ?, ?, ?, ?, 'ready')`
+  );
+  const tx = db.transaction((list) => {
+    let pos = maxPos;
+    for (const pid of list) { pos += 1; insert.run(feed, null, pid, pos, active, artistId); }
+    return list.length;
+  });
+  const count = tx(ids);
+  return res.json({ status: 'success', message: `${count} clip(s) ajouté(s).`, data: { count } });
 });
 router.post('/feed-clips', requireAdmin, async (req, res) => {
   const b = req.body || {};

@@ -648,6 +648,142 @@ async function feedClipForm(row, { duplicate = false } = {}) {
     },
   });
 }
+// Extrait des Mux Playback IDs d'un texte libre (liste collée ou fichier .md) :
+// gère les URLs mux (image/stream.mux.com/<ID>/…), les puces markdown, et les
+// IDs bruts séparés par espaces / virgules / retours ligne / pipes.
+function parsePlaybackIds(text) {
+  const ids = new Set();
+  const urlRe = /(?:image|stream)\.mux\.com\/([A-Za-z0-9]+)/g;
+  let m;
+  while ((m = urlRe.exec(text))) ids.add(m[1]);
+  String(text).split(/[\s,;|]+/).forEach((tok) => {
+    const t = tok.replace(/^[-*>#`.]+/, '').replace(/[`.]+$/, '').trim();
+    if (/^[A-Za-z0-9]{20,}$/.test(t)) ids.add(t);
+  });
+  return [...ids];
+}
+
+// Ajout MULTIPLE de clips. Deux méthodes dans le même dialogue :
+//  A) Coller / importer une liste de Playback IDs (ex. fichier .md) -> chaque
+//     ID devient un clip ajouté À LA SUITE (les vidéos sont déjà sur Mux).
+//  B) Uploader plusieurs fichiers vidéo (envoi direct Mux, 1 clip / fichier).
+async function bulkUploadDialog() {
+  let artists = [];
+  try { const r = await api('GET', '/artists-list'); artists = r.data || []; } catch (e) { artists = []; }
+  const artistOpts = ['<option value="">— Officiel (aucun artiste) —</option>']
+    .concat(artists.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`)).join('');
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal" style="max-width:580px">
+    <h3>Ajouter plusieurs vidéos</h3>
+    <label>Feed</label>
+    <select id="bu-feed"><option value="for_you">🟦 Short (Pour toi — vertical/portrait)</option><option value="clips">🟨 Clip musical (paysage 16:9)</option></select>
+    <label style="margin-top:10px">Artiste (optionnel — apparaît sur sa fiche)</label>
+    <select id="bu-artist">${artistOpts}</select>
+
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+      <b style="font-size:14px">A · Par Playback ID Mux</b>
+      <p style="color:var(--muted);font-size:12px;margin:4px 0 8px">Colle une liste (un ID par ligne), ou importe un fichier .md/.txt. Les URLs Mux et les puces markdown sont acceptées. Chaque ID s'ajoute à la suite du feed.</p>
+      <input type="file" id="bu-idfile" accept=".md,.txt,text/*" style="margin-bottom:8px">
+      <textarea id="bu-ids" rows="5" placeholder="Ixf100DM00MIBOSiPjVkEfbToOgso01NuVin19ugUXbjQA
+EcO013Q00m3BON019ydIrEUd3YaAES4J9nx02arl7U862P4" style="width:100%;background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:8px;padding:10px;font-family:monospace;font-size:12px"></textarea>
+      <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);margin:8px 0"><input type="checkbox" id="bu-active" checked style="width:auto"> Publier tout de suite (sinon « en attente »)</label>
+      <div style="display:flex;align-items:center;gap:10px"><button class="btn gold" id="bu-addids">Ajouter ces IDs (<span id="bu-idcount">0</span>)</button></div>
+    </div>
+
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+      <b style="font-size:14px">B · Uploader des fichiers vidéo</b>
+      <p style="color:var(--muted);font-size:12px;margin:4px 0 8px">Sélection multiple. Chaque fichier part directement vers Mux (jamais stocké chez nous) et arrive « en attente ».</p>
+      <input type="file" id="bu-files" accept="video/*" multiple>
+      <div id="bu-list" style="margin-top:10px;max-height:200px;overflow:auto"></div>
+      <button class="btn gold" id="bu-start" style="margin-top:8px">Envoyer les fichiers</button>
+    </div>
+
+    <div class="modal-actions"><button class="cancel">Fermer</button></div>
+  </div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  bg.querySelector('.cancel').onclick = close;
+  bg.onclick = (e) => { if (e.target === bg) close(); };
+  const feedOf = () => bg.querySelector('#bu-feed').value;
+  const artistOf = () => bg.querySelector('#bu-artist').value || null;
+
+  // ── Méthode A : Playback IDs ──
+  const idsArea = bg.querySelector('#bu-ids');
+  const idCount = bg.querySelector('#bu-idcount');
+  const refreshIdCount = () => { idCount.textContent = parsePlaybackIds(idsArea.value).length; };
+  idsArea.oninput = refreshIdCount;
+  bg.querySelector('#bu-idfile').onchange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      idsArea.value = (idsArea.value ? idsArea.value + '\n' : '') + reader.result;
+      refreshIdCount();
+    };
+    reader.readAsText(f);
+  };
+  bg.querySelector('#bu-addids').onclick = async () => {
+    const ids = parsePlaybackIds(idsArea.value);
+    if (!ids.length) { toast('Aucun Playback ID valide détecté'); return; }
+    try {
+      const { data } = await api('POST', '/feed-clips/bulk', {
+        feed: feedOf(), artist_id: artistOf(),
+        active: bg.querySelector('#bu-active').checked, playback_ids: ids,
+      });
+      toast(`${data?.count ?? ids.length} clip(s) ajouté(s)`);
+      close();
+      pageFeedClips();
+    } catch (e) { toast(e.message); }
+  };
+  refreshIdCount();
+
+  // ── Méthode B : upload de fichiers ──
+  const listEl = bg.querySelector('#bu-list');
+  const filesInput = bg.querySelector('#bu-files');
+  const renderList = () => {
+    const fs = [...filesInput.files];
+    listEl.innerHTML = fs.length ? fs.map((f, i) => `
+      <div style="display:flex;align-items:center;gap:10px;margin:6px 0">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">${esc(f.name)}</span>
+        <div style="width:110px;background:#0A1226;border-radius:6px;overflow:hidden;height:8px"><div id="bu-bar-${i}" style="height:8px;width:0;background:var(--gold)"></div></div>
+        <span id="bu-pct-${i}" class="em" style="width:44px;text-align:right">0%</span>
+      </div>`).join('') : '<div class="em">Aucun fichier sélectionné.</div>';
+  };
+  filesInput.onchange = renderList;
+  renderList();
+  bg.querySelector('#bu-start').onclick = async () => {
+    const fs = [...filesInput.files];
+    if (!fs.length) { toast('Choisis au moins une vidéo'); return; }
+    const feed = feedOf();
+    const artistId = artistOf();
+    const startBtn = bg.querySelector('#bu-start');
+    startBtn.disabled = true; startBtn.style.opacity = '.5';
+    let ok = 0, fail = 0;
+    for (let i = 0; i < fs.length; i++) {
+      const f = fs[i];
+      const bar = bg.querySelector(`#bu-bar-${i}`);
+      const pct = bg.querySelector(`#bu-pct-${i}`);
+      try {
+        const { data } = await api('POST', '/mux/direct-upload', {
+          kind: 'clip', feed, artist_id: artistId, title: f.name.replace(/\.[^.]+$/, ''),
+        });
+        await muxDirectUpload(data.upload_url, f, (p) => {
+          if (bar) bar.style.width = p + '%';
+          if (pct) pct.textContent = p + '%';
+        });
+        if (pct) { pct.textContent = '✓'; pct.style.color = 'var(--gold)'; }
+        ok++;
+      } catch (e) {
+        if (pct) { pct.textContent = '✗'; pct.style.color = '#ff6b6b'; pct.title = e.message; }
+        fail++;
+      }
+    }
+    toast(`${ok} vidéo(s) envoyée(s)${fail ? `, ${fail} échec(s)` : ''} — traitement Mux en cours`);
+    startBtn.disabled = false; startBtn.style.opacity = '1';
+    if (ok) setTimeout(() => { close(); pageFeedClips(); }, 900);
+  };
+}
 function pageFeedClips() {
   EDIT.feedclip = (id) => { const r = currentRows.find((x) => x.id == id); if (r) feedClipForm(r); };
   DUP.feedclip = (id) => { const r = currentRows.find((x) => x.id == id); if (r) feedClipForm(r, { duplicate: true }); };
@@ -696,7 +832,7 @@ function pageFeedClips() {
         </div>
         <div class="em" style="margin-top:4px;line-height:1.35">${desc}</div>
       </div>`;
-    view().innerHTML = `<div class="head-row"><h1 class="page-title">Les 3 feeds de l'app</h1><button class="add-btn" id="addbtn">+ Ajouter un clip</button></div>
+    view().innerHTML = `<div class="head-row"><h1 class="page-title">Les 3 feeds de l'app</h1><div style="display:flex;gap:8px"><button class="add-btn" id="bulkupbtn" style="background:#7ab8ff">⬆︎ Upload multiple</button><button class="add-btn" id="addbtn">+ Ajouter un clip</button></div></div>
       <p class="em" style="margin:-6px 0 14px">Cette page gère les <b>shorts</b> (Pour toi & Clips). Les <b>Concerts</b> ont leur propre écran — cliquez sur la carte pour y aller.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin:0 0 18px">
         ${card('#7ab8ff', '🟦', 'Shorts (Pour toi)', 'Contenu court vertical/portrait : actu, promo, teasers.', counts.for_you, 'data-ft-card="for_you"')}
@@ -737,6 +873,7 @@ function pageFeedClips() {
     view().querySelectorAll('[data-ft-card]').forEach((c) => c.onclick = () => applyTab(c.dataset.ftCard));
     view().querySelectorAll('[data-goto]').forEach((c) => c.onclick = () => { location.hash = c.dataset.goto; });
     view().querySelector('#addbtn').onclick = () => feedClipForm(null);
+    view().querySelector('#bulkupbtn').onclick = () => bulkUploadDialog();
     // Tout cocher / tout décocher les clips EN ATTENTE de la vue courante.
     view().querySelector('#selectAllPending').onclick = () => {
       const checks = [...view().querySelectorAll('.chk-clip')];
