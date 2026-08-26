@@ -110,6 +110,9 @@ const NAV = [
     { id: 'faqs', label: 'FAQ', ic: '❓' },
     { id: 'cms', label: 'CMS', ic: '📄' },
   ] },
+  { group: 'Pilotage interne', items: [
+    { id: 'vibe', label: 'Réunions & CRM', ic: '🎯' },
+  ] },
   { group: 'Compte', items: [{ id: 'profile', label: 'Profil', ic: '👤' }] },
 ];
 
@@ -1598,12 +1601,293 @@ async function showApporteurStatement(apId) {
   ]);
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// VIBE — Réunions & CRM (section admin interne). Visio Jitsi intégrée.
+// ═══════════════════════════════════════════════════════════════════════
+let vibeTab = 'objectifs';
+let vibePeopleCache = [];
+const VIBE_STAGES = [
+  ['a_qualifier', 'À qualifier'], ['contacte', 'Contacté'], ['en_discussion', 'En discussion'],
+  ['negociation', 'Négociation'], ['contrat_envoye', 'Contrat envoyé'], ['signe', 'Signé'],
+  ['en_pause', 'En pause'], ['perdu', 'Perdu'],
+];
+const stageLabel = (s) => (VIBE_STAGES.find((x) => x[0] === s) || [s, s])[1];
+const peopleSelectOpts = () => [{ value: '', label: '—' }].concat(vibePeopleCache.map((p) => ({ value: p.id, label: p.name })));
+
+async function pageVibe() {
+  view().innerHTML = `<h1 class="page-title">🎯 Réunions & CRM</h1>
+    <p class="em" style="margin:-6px 0 14px">Pilotage interne : objectifs (jauges), réunions en visio, et pipeline de recrutement des artistes.</p>
+    <div style="display:flex;gap:8px;margin:0 0 16px;flex-wrap:wrap">
+      ${[['objectifs', '🎯 Objectifs'], ['reunions', '🎥 Réunions'], ['crm', '📇 CRM artistes'], ['actions', '✅ Actions'], ['people', '👤 Équipe']]
+        .map(([v, l]) => `<button class="btn" data-vt="${v}" style="padding:8px 14px">${l}</button>`).join('')}
+    </div>
+    <div id="vibe-body"><div class="empty">Chargement…</div></div>`;
+  view().querySelectorAll('[data-vt]').forEach((b) => b.onclick = () => { vibeTab = b.dataset.vt; renderVibeTab(); });
+  try { vibePeopleCache = (await api('GET', '/vibe/people')).data || []; } catch (e) { vibePeopleCache = []; }
+  renderVibeTab();
+}
+function renderVibeTab() {
+  view().querySelectorAll('[data-vt]').forEach((b) => {
+    const on = b.dataset.vt === vibeTab;
+    b.style.background = on ? 'var(--gold)' : '';
+    b.style.color = on ? '#1a1206' : '';
+    b.style.fontWeight = on ? '700' : '';
+  });
+  const body = document.getElementById('vibe-body');
+  ({ objectifs: vibeObjectives, reunions: vibeMeetings, crm: vibeCrm, actions: vibeActions, people: vibePeopleTab }[vibeTab] || vibeObjectives)(body);
+}
+
+// ── Objectifs (jauges) ──
+async function vibeObjectives(body) {
+  body.innerHTML = '<div class="empty">Chargement…</div>';
+  const objs = (await api('GET', '/vibe/objectives')).data || [];
+  const card = (o) => {
+    const t = Number(o.target_value) || 0, c = Number(o.current_value) || 0;
+    const pct = t > 0 ? Math.min(100, Math.round((c / t) * 100)) : 0;
+    const col = o.person_color || '#E6C76A';
+    return `<div class="tcard" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><b style="color:${esc(col)}">${esc(o.person_name || '—')}</b> <span class="em">· ${esc(o.scope)}</span></div>
+        <span class="badge ${o.status === 'atteint' ? 'active' : 'pending'}">${pct}%</span>
+      </div>
+      <div style="margin:6px 0 4px;font-weight:600">${esc(o.title)}</div>
+      <div style="background:#0A1226;border-radius:6px;height:12px;overflow:hidden"><div style="height:12px;width:${pct}%;background:${esc(col)};transition:width .3s"></div></div>
+      <div class="em" style="margin-top:4px">${c} / ${t} ${esc(o.unit || '')}</div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <input type="number" id="ck-${o.id}" placeholder="nouvelle valeur" style="width:130px;padding:6px">
+        <button class="btn status" data-ck="${o.id}">↑ Mettre à jour</button>
+        <button class="btn edit" data-oe="${o.id}">Modifier</button>
+        <button class="btn del" data-od="${o.id}">Suppr</button>
+      </div>
+    </div>`;
+  };
+  body.innerHTML = `<div class="head-row" style="margin-bottom:12px"><span class="em">Jauges de progression par personne.</span><button class="add-btn" id="obj-add">+ Objectif</button></div>${objs.length ? objs.map(card).join('') : '<div class="empty">Aucun objectif. Ajoute-en un.</div>'}`;
+  document.getElementById('obj-add').onclick = () => objForm(null);
+  body.querySelectorAll('[data-ck]').forEach((b) => b.onclick = async () => {
+    const v = document.getElementById('ck-' + b.dataset.ck).value;
+    if (v === '') { toast('Entre une valeur'); return; }
+    try { await api('POST', `/vibe/objectives/${b.dataset.ck}/checkin`, { value: Number(v) }); toast('Mis à jour'); vibeObjectives(body); } catch (e) { toast(e.message); }
+  });
+  body.querySelectorAll('[data-oe]').forEach((b) => b.onclick = () => objForm(objs.find((x) => x.id == b.dataset.oe)));
+  body.querySelectorAll('[data-od]').forEach((b) => b.onclick = () => confirmDelete(async () => { await api('DELETE', '/vibe/objectives/' + b.dataset.od); toast('Supprimé'); vibeObjectives(body); }));
+}
+function objForm(o) {
+  modal({
+    title: o ? 'Modifier l\'objectif' : 'Nouvel objectif',
+    fields: [
+      { name: 'person_id', label: 'Personne', type: 'select', value: o?.person_id || '', options: peopleSelectOpts() },
+      { name: 'title', label: 'Objectif', value: o?.title },
+      { name: 'scope', label: 'Période', type: 'select', value: o?.scope || 'mensuel', options: [{ value: 'hebdo', label: 'Hebdo' }, { value: 'mensuel', label: 'Mensuel' }, { value: 'trimestriel', label: 'Trimestriel' }] },
+      { name: 'target_value', label: 'Cible', type: 'number', value: o?.target_value ?? 0 },
+      { name: 'current_value', label: 'Valeur actuelle', type: 'number', value: o?.current_value ?? 0 },
+      { name: 'unit', label: 'Unité (ex: artistes, €)', value: o?.unit },
+    ],
+    onSave: async (d) => {
+      if (o) { await api('PUT', '/vibe/objectives/' + o.id, d); toast('Modifié'); }
+      else { await api('POST', '/vibe/objectives', d); toast('Ajouté'); }
+      renderVibeTab();
+    },
+  });
+}
+
+// ── Réunions (visio Jitsi intégrée) ──
+async function vibeMeetings(body) {
+  body.innerHTML = '<div class="empty">Chargement…</div>';
+  const ms = (await api('GET', '/vibe/meetings')).data || [];
+  const row = (m) => `<div class="tcard" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+    <div><b>${esc(m.title)}</b> <span class="badge ${m.status === 'terminee' ? 'completed' : m.status === 'en_cours' ? 'live' : 'pending'}">${esc(m.status)}</span>
+      <div class="em">${esc(m.type)} · ${m.scheduled_at ? fmtDate(m.scheduled_at) : 'sans date'}${m.jitsi_room ? ' · 🎥 Jitsi' : (m.visio_url ? ' · 🔗 lien externe' : '')}</div></div>
+    <div style="display:flex;gap:6px"><button class="btn status" data-mopen="${m.id}">Ouvrir</button><button class="btn del" data-mdel="${m.id}">Suppr</button></div>
+  </div>`;
+  body.innerHTML = `<div class="head-row" style="margin-bottom:12px"><span class="em">Réunions avec visio intégrée (Jitsi, gratuit).</span><button class="add-btn" id="m-add">+ Nouvelle réunion</button></div>${ms.length ? ms.map(row).join('') : '<div class="empty">Aucune réunion.</div>'}`;
+  document.getElementById('m-add').onclick = () => meetingForm();
+  body.querySelectorAll('[data-mopen]').forEach((b) => b.onclick = () => openMeeting(b.dataset.mopen));
+  body.querySelectorAll('[data-mdel]').forEach((b) => b.onclick = () => confirmDelete(async () => { await api('DELETE', '/vibe/meetings/' + b.dataset.mdel); toast('Supprimée'); vibeMeetings(body); }));
+}
+function meetingForm() {
+  modal({
+    title: 'Nouvelle réunion',
+    fields: [
+      { name: 'title', label: 'Titre' },
+      { name: 'type', label: 'Type', type: 'select', value: 'hebdo', options: [{ value: 'hebdo', label: 'Hebdo' }, { value: 'mensuelle', label: 'Mensuelle' }, { value: 'comite', label: 'Comité' }, { value: 'ponctuelle', label: 'Ponctuelle' }] },
+      { name: 'scheduled_at', label: 'Date / heure', type: 'datetime' },
+      { name: 'visio_url', label: 'Lien visio externe (optionnel)', placeholder: 'Vide = salle Jitsi auto-générée' },
+    ],
+    onSave: async (d) => { await api('POST', '/vibe/meetings', d); toast('Réunion créée'); renderVibeTab(); },
+  });
+}
+async function openMeeting(id) {
+  const body = document.getElementById('vibe-body');
+  body.innerHTML = '<div class="empty">Chargement…</div>';
+  const m = (await api('GET', '/vibe/meetings/' + id)).data;
+  const isJitsi = !m.visio_url && m.jitsi_room;
+  const visioUrl = m.visio_url || (m.jitsi_room ? `https://meet.jit.si/${encodeURIComponent(m.jitsi_room)}` : null);
+  const actions = m.actions || [];
+  body.innerHTML = `
+    <button class="btn" id="m-back" style="margin-bottom:10px">← Retour</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <h2 style="margin:0">${esc(m.title)}</h2>
+      <select id="m-status">${['planifiee', 'en_cours', 'terminee', 'annulee'].map((s) => `<option value="${s}" ${m.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+    </div>
+    <div class="em" style="margin:4px 0 12px">${esc(m.type)} · ${m.scheduled_at ? fmtDate(m.scheduled_at) : 'sans date'}</div>
+    ${visioUrl ? `<div style="margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn gold" id="m-join">🎥 ${isJitsi ? 'Rejoindre la visio (Jitsi)' : 'Ouvrir la visio'}</button>
+      <button class="btn" id="m-copy">📋 Copier le lien invités</button>
+    </div><div id="m-visio"></div>` : ''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px">
+      <div>
+        <b>Compte rendu / notes</b>
+        <textarea id="m-notes" style="width:100%;min-height:220px;margin-top:6px" placeholder="Notes de réunion (sauvegarde auto)">${esc(m.summary_md || '')}</textarea>
+        <div class="em" id="m-notes-status" style="margin-top:4px"></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><b>Actions décidées</b><button class="btn" id="a-add">+ Action</button></div>
+        <div id="m-actions" style="margin-top:8px">${actions.length ? actions.map(actionRow).join('') : '<div class="em">Aucune action.</div>'}</div>
+      </div>
+    </div>`;
+  document.getElementById('m-back').onclick = () => { vibeTab = 'reunions'; renderVibeTab(); };
+  document.getElementById('m-status').onchange = async (e) => { await api('PUT', '/vibe/meetings/' + id, { status: e.target.value }); toast('Statut mis à jour'); };
+  const notes = document.getElementById('m-notes');
+  let noteT;
+  notes.oninput = () => {
+    clearTimeout(noteT);
+    document.getElementById('m-notes-status').textContent = '…';
+    noteT = setTimeout(async () => { await api('PUT', '/vibe/meetings/' + id, { summary_md: notes.value }); document.getElementById('m-notes-status').textContent = 'Enregistré ✓'; }, 800);
+  };
+  if (visioUrl) {
+    document.getElementById('m-join').onclick = () => {
+      if (isJitsi) {
+        document.getElementById('m-visio').innerHTML = `<iframe src="${esc(visioUrl)}" allow="camera; microphone; fullscreen; display-capture; autoplay" style="width:100%;height:520px;border:0;border-radius:12px;margin-top:8px"></iframe>`;
+        document.getElementById('m-visio').scrollIntoView({ behavior: 'smooth' });
+        if (m.status === 'planifiee') api('PUT', '/vibe/meetings/' + id, { status: 'en_cours' });
+      } else { window.open(visioUrl, '_blank'); }
+    };
+    document.getElementById('m-copy').onclick = () => { navigator.clipboard?.writeText(visioUrl); toast('Lien visio copié'); };
+  }
+  document.getElementById('a-add').onclick = () => actionForm({ meeting_id: id }, () => openMeeting(id));
+  bindActionRows(body, () => openMeeting(id));
+}
+function actionRow(a) {
+  const done = a.status === 'fait';
+  return `<div class="tcard" style="margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+    <div><span style="${done ? 'text-decoration:line-through;opacity:.6' : ''}">${esc(a.title)}</span>
+      <div class="em">${a.assignee_name ? esc(a.assignee_name) : '—'}${a.due_date ? ' · ' + fmtDate(a.due_date) : ''}${a.crm_name ? ' · 🎤 ' + esc(a.crm_name) : ''}${a.meeting_title ? ' · ' + esc(a.meeting_title) : ''}</div></div>
+    <div style="display:flex;gap:4px">
+      <select data-astatus="${a.id}">${['a_faire', 'en_cours', 'fait', 'bloque'].map((s) => `<option value="${s}" ${a.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+      <button class="btn del" data-adel="${a.id}">✕</button>
+    </div>
+  </div>`;
+}
+function bindActionRows(scope, reload) {
+  scope.querySelectorAll('[data-astatus]').forEach((s) => s.onchange = async () => { await api('PATCH', '/vibe/actions/' + s.dataset.astatus, { status: s.value }); toast('Action mise à jour'); });
+  scope.querySelectorAll('[data-adel]').forEach((b) => b.onclick = () => confirmDelete(async () => { await api('DELETE', '/vibe/actions/' + b.dataset.adel); toast('Supprimée'); reload && reload(); }));
+}
+function actionForm(preset, reload) {
+  modal({
+    title: 'Nouvelle action',
+    fields: [
+      { name: 'title', label: 'Action' },
+      { name: 'assignee_id', label: 'Assignée à', type: 'select', value: preset?.assignee_id || '', options: peopleSelectOpts() },
+      { name: 'due_date', label: 'Échéance (AAAA-MM-JJ)', placeholder: '2026-09-01' },
+      { name: 'priority', label: 'Priorité', type: 'select', value: 'normale', options: [{ value: 'basse', label: 'Basse' }, { value: 'normale', label: 'Normale' }, { value: 'haute', label: 'Haute' }, { value: 'critique', label: 'Critique' }] },
+    ],
+    onSave: async (d) => { await api('POST', '/vibe/actions', { ...preset, ...d }); toast('Action ajoutée'); reload && reload(); },
+  });
+}
+
+// ── Actions (vue globale) ──
+async function vibeActions(body) {
+  body.innerHTML = '<div class="empty">Chargement…</div>';
+  const acts = (await api('GET', '/vibe/actions')).data || [];
+  body.innerHTML = `<div class="head-row" style="margin-bottom:12px"><span class="em">Toutes les actions, tout suivi confondu.</span><button class="add-btn" id="ga-add">+ Action</button></div>${acts.length ? acts.map(actionRow).join('') : '<div class="empty">Aucune action.</div>'}`;
+  document.getElementById('ga-add').onclick = () => actionForm({}, () => vibeActions(body));
+  bindActionRows(body, () => vibeActions(body));
+}
+
+// ── CRM artistes (pipeline) ──
+async function vibeCrm(body) {
+  body.innerHTML = '<div class="empty">Chargement…</div>';
+  const rows = (await api('GET', '/vibe/crm')).data || [];
+  const counts = {};
+  VIBE_STAGES.forEach(([v]) => counts[v] = rows.filter((r) => r.pipeline_stage === v).length);
+  const card = (r) => `<div class="tcard" style="margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;align-items:start;gap:8px">
+      <div><b>${esc(r.stage_name || r.legal_name || '—')}</b>${r.genre ? ` <span class="em">· ${esc(r.genre)}</span>` : ''}
+        <div class="em">${r.followers_count ? Number(r.followers_count).toLocaleString('fr-FR') + ' abonnés · ' : ''}${r.referrer_name ? 'apporteur : ' + esc(r.referrer_name) : 'direct'}${r.next_action_date ? ' · ⏰ ' + fmtDate(r.next_action_date) : ''}</div></div>
+      <div style="display:flex;gap:4px"><button class="btn edit" data-ce="${r.id}">Modifier</button><button class="btn del" data-cd="${r.id}">Suppr</button></div>
+    </div>
+    <div style="margin-top:6px"><select data-cstage="${r.id}">${VIBE_STAGES.map(([v, l]) => `<option value="${v}" ${r.pipeline_stage === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+  </div>`;
+  body.innerHTML = `<div class="head-row" style="margin-bottom:10px"><span class="em">Pipeline de recrutement — ${rows.length} contact(s).</span><button class="add-btn" id="crm-add">+ Artiste</button></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">${VIBE_STAGES.map(([v, l]) => `<span class="badge pending" style="opacity:${counts[v] ? 1 : 0.4}">${l} : ${counts[v]}</span>`).join('')}</div>
+    ${rows.length ? rows.map(card).join('') : '<div class="empty">Aucun artiste dans le pipeline.</div>'}`;
+  document.getElementById('crm-add').onclick = () => crmForm(null);
+  body.querySelectorAll('[data-cstage]').forEach((s) => s.onchange = async () => { await api('PATCH', '/vibe/crm/' + s.dataset.cstage, { pipeline_stage: s.value }); toast('Étape mise à jour'); });
+  body.querySelectorAll('[data-ce]').forEach((b) => b.onclick = () => crmForm(rows.find((x) => x.id == b.dataset.ce)));
+  body.querySelectorAll('[data-cd]').forEach((b) => b.onclick = () => confirmDelete(async () => { await api('DELETE', '/vibe/crm/' + b.dataset.cd); toast('Supprimé'); vibeCrm(body); }));
+}
+function crmForm(r) {
+  modal({
+    title: r ? 'Modifier le contact' : 'Nouvel artiste (CRM)',
+    fields: [
+      { name: 'stage_name', label: 'Nom de scène', value: r?.stage_name },
+      { name: 'legal_name', label: 'Nom civil (optionnel)', value: r?.legal_name },
+      { name: 'genre', label: 'Genre', value: r?.genre },
+      { name: 'followers_count', label: 'Abonnés (nombre)', type: 'number', value: r?.followers_count },
+      { name: 'instagram', label: 'Instagram', value: r?.instagram },
+      { name: 'country', label: 'Pays', value: r?.country },
+      { name: 'referrer_id', label: 'Apporteur d\'affaires', type: 'select', value: r?.referrer_id || '', options: peopleSelectOpts() },
+      { name: 'pipeline_stage', label: 'Étape', type: 'select', value: r?.pipeline_stage || 'a_qualifier', options: VIBE_STAGES.map(([v, l]) => ({ value: v, label: l })) },
+      { name: 'next_action_date', label: 'Prochaine action (AAAA-MM-JJ)', value: r?.next_action_date },
+      { name: 'notes_md', label: 'Notes', type: 'textarea', value: r?.notes_md },
+    ],
+    onSave: async (d) => {
+      if (r) { await api('PATCH', '/vibe/crm/' + r.id, d); toast('Modifié'); }
+      else { await api('POST', '/vibe/crm', d); toast('Ajouté'); }
+      renderVibeTab();
+    },
+  });
+}
+
+// ── Équipe (personnes) ──
+async function vibePeopleTab(body) {
+  body.innerHTML = '<div class="empty">Chargement…</div>';
+  vibePeopleCache = (await api('GET', '/vibe/people')).data || [];
+  const roleLabel = { admin: 'Admin', associe: 'Associé', equipe: 'Équipe', apporteur: 'Apporteur' };
+  const row = (p) => `<div class="tcard" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+    <div><b style="color:${esc(p.color || '#E6C76A')}">${esc(p.name)}</b> <span class="em">· ${esc(roleLabel[p.role] || p.role)}</span>${p.email ? `<div class="em">${esc(p.email)}</div>` : ''}</div>
+    <div style="display:flex;gap:6px"><button class="btn edit" data-pe="${p.id}">Modifier</button><button class="btn del" data-pd="${p.id}">Suppr</button></div>
+  </div>`;
+  body.innerHTML = `<div class="head-row" style="margin-bottom:12px"><span class="em">Personnes suivies (équipe, associés, apporteurs).</span><button class="add-btn" id="p-add">+ Personne</button></div>${vibePeopleCache.map(row).join('') || '<div class="empty">Personne.</div>'}`;
+  document.getElementById('p-add').onclick = () => peopleForm(null);
+  body.querySelectorAll('[data-pe]').forEach((b) => b.onclick = () => peopleForm(vibePeopleCache.find((x) => x.id == b.dataset.pe)));
+  body.querySelectorAll('[data-pd]').forEach((b) => b.onclick = () => confirmDelete(async () => { await api('DELETE', '/vibe/people/' + b.dataset.pd); toast('Supprimé'); vibePeopleTab(body); }));
+}
+function peopleForm(p) {
+  modal({
+    title: p ? 'Modifier la personne' : 'Nouvelle personne',
+    fields: [
+      { name: 'name', label: 'Nom', value: p?.name },
+      { name: 'role', label: 'Rôle', type: 'select', value: p?.role || 'associe', options: [{ value: 'associe', label: 'Associé' }, { value: 'equipe', label: 'Équipe' }, { value: 'apporteur', label: 'Apporteur' }, { value: 'admin', label: 'Admin' }] },
+      { name: 'email', label: 'Email (optionnel)', value: p?.email },
+      { name: 'color', label: 'Couleur (hex, ex #E6C76A)', value: p?.color || '#E6C76A' },
+      ...(p ? [{ name: 'active', label: 'Actif ?', type: 'checkbox', value: !!p.active, hint: 'Actif' }] : []),
+    ],
+    onSave: async (d) => {
+      if (p) { await api('PUT', '/vibe/people/' + p.id, d); toast('Modifié'); }
+      else { await api('POST', '/vibe/people', d); toast('Ajouté'); }
+      vibePeopleCache = (await api('GET', '/vibe/people')).data || [];
+      renderVibeTab();
+    },
+  });
+}
+
 const ROUTES = {
   dashboard: pageDashboard, lives: pageLives, users: pageUsers, genres: pageGenres, 'user-genres': pageUserGenres,
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
-  splash: pageSplash, apporteurs: pageApporteurs,
+  splash: pageSplash, apporteurs: pageApporteurs, vibe: pageVibe,
 };
 
 window.addEventListener('hashchange', route);

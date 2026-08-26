@@ -414,6 +414,102 @@ function init() {
       reason TEXT,
       created_at TEXT DEFAULT (datetime('now'))
     );
+
+    -- ─── Module VIBE : Réunions + Objectifs + CRM artistes ───
+    -- Outil interne (section admin "Réunions & CRM"). Piste les réunions
+    -- (visio Jitsi intégrée), les objectifs par personne (jauges) et le
+    -- pipeline de recrutement des artistes. Aucune donnée de capital ici.
+
+    -- Personnes suivies en réunion / porteuses d'objectifs (équipe, associés,
+    -- apporteurs). Table dédiée, distincte de users (app) et apporteurs.
+    CREATE TABLE IF NOT EXISTS vibe_people (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      role TEXT DEFAULT 'associe',   -- admin | associe | equipe | apporteur
+      email TEXT,
+      color TEXT,                    -- couleur d'accent (jauges/avatars)
+      active INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- Objectifs mesurables par personne (jauge = current/target).
+    CREATE TABLE IF NOT EXISTS vibe_objectives (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      person_id INTEGER,
+      scope TEXT DEFAULT 'mensuel',  -- hebdo | mensuel | trimestriel
+      title TEXT NOT NULL,
+      metric_label TEXT,             -- ex "artistes signés"
+      target_value REAL DEFAULT 0,
+      current_value REAL DEFAULT 0,
+      unit TEXT,                     -- ex "artistes", "€", "%"
+      period_start TEXT,
+      period_end TEXT,
+      status TEXT DEFAULT 'en_cours',-- en_cours | atteint | manque
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- Réunions (visio Jitsi intégrée ou lien externe collé).
+    CREATE TABLE IF NOT EXISTS vibe_meetings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      type TEXT DEFAULT 'hebdo',     -- hebdo | mensuelle | comite | ponctuelle
+      scheduled_at TEXT,
+      status TEXT DEFAULT 'planifiee',-- planifiee | en_cours | terminee | annulee
+      jitsi_room TEXT,               -- nom de salle Jitsi (visio intégrée)
+      visio_url TEXT,                -- lien externe (Zoom/Meet) si utilisé
+      summary_md TEXT,               -- notes / compte rendu
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- Tâches / actions décidées en réunion, assignées à une personne, avec
+    -- rattachement optionnel à un artiste du CRM.
+    CREATE TABLE IF NOT EXISTS vibe_actions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      meeting_id INTEGER,
+      assignee_id INTEGER,
+      crm_id INTEGER,
+      title TEXT NOT NULL,
+      due_date TEXT,
+      priority TEXT DEFAULT 'normale',-- basse | normale | haute | critique
+      status TEXT DEFAULT 'a_faire', -- a_faire | en_cours | fait | bloque
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- CRM : pipeline de recrutement des artistes (pionniers).
+    CREATE TABLE IF NOT EXISTS vibe_crm (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT DEFAULT 'artiste',   -- artiste | manager | label | media
+      stage_name TEXT,               -- nom de scène
+      legal_name TEXT,
+      email TEXT,
+      phone TEXT,
+      instagram TEXT,
+      country TEXT,
+      genre TEXT,
+      followers_count INTEGER,
+      referrer_id INTEGER,           -- apporteur (vibe_people.id)
+      pipeline_stage TEXT DEFAULT 'a_qualifier',
+        -- a_qualifier | contacte | en_discussion | negociation | contrat_envoye | signe | perdu | en_pause
+      expected_value REAL,
+      next_action_date TEXT,
+      lost_reason TEXT,
+      notes_md TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- Interactions CRM (appels, messages, RDV, issues de réunions).
+    CREATE TABLE IF NOT EXISTS vibe_crm_interactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      crm_id INTEGER,
+      meeting_id INTEGER,
+      channel TEXT,                  -- appel | whatsapp | email | dm | rdv | reunion
+      direction TEXT,                -- entrant | sortant
+      occurred_at TEXT DEFAULT (datetime('now')),
+      summary TEXT,
+      outcome TEXT,                  -- positif | neutre | negatif | sans_reponse
+      created_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 
   // ─── Migrations : colonnes ajoutées après coup (ignorées si déjà présentes) ───
@@ -538,6 +634,37 @@ function init() {
       setCode.run(code, ap.id);
     }
   } catch (_) { /* table apporteurs pas encore présente au tout premier init */ }
+
+  // ─── Seed module VIBE : personnes suivies + objectifs d'exemple ───
+  // Ne s'exécute qu'une fois (base vide) : l'admin gère ensuite tout depuis
+  // la section "Réunions & CRM". Les noms viennent du contexte projet.
+  try {
+    const vpCount = db.prepare('SELECT COUNT(*) c FROM vibe_people').get().c;
+    if (vpCount === 0) {
+      const insP = db.prepare('INSERT INTO vibe_people (name, role, color) VALUES (?, ?, ?)');
+      const seedPeople = [
+        ['Ruddy', 'associe', '#E6C76A'],
+        ['Alain', 'associe', '#7ab8ff'],
+        ['Frédéric', 'associe', '#8ce6a1'],
+        ['Amandine', 'apporteur', '#ff9ec4'],
+        ['Hammad', 'equipe', '#c9a3ff'],
+      ];
+      const ids = {};
+      for (const [name, role, color] of seedPeople) {
+        ids[name] = insP.run(name, role, color).lastInsertRowid;
+      }
+      // Objectifs d'exemple (jauges) — modifiables/supprimables dans l'admin.
+      const insO = db.prepare(
+        `INSERT INTO vibe_objectives (person_id, scope, title, metric_label, target_value, current_value, unit)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      );
+      insO.run(ids['Ruddy'], 'mensuel', 'Artistes signés ce mois', 'artistes signés', 5, 2, 'artistes');
+      insO.run(ids['Alain'], 'mensuel', 'Rendez-vous labels', 'RDV réalisés', 8, 3, 'RDV');
+      insO.run(ids['Frédéric'], 'mensuel', 'Pipeline qualifié', 'artistes qualifiés', 12, 7, 'artistes');
+      insO.run(ids['Amandine'], 'mensuel', 'Artistes apportés', 'artistes apportés', 6, 4, 'artistes');
+      insO.run(ids['Hammad'], 'hebdo', 'Tickets tech livrés', 'tickets livrés', 10, 6, 'tickets');
+    }
+  } catch (_) { /* tables vibe pas encore présentes au tout premier init */ }
 
   // Packs de points par défaut (1 € = 100 points). Chaque pack correspond à un
   // produit consommable IAP (App Store / Play Store) dont l'identifiant DOIT

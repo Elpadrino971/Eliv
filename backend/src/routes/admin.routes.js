@@ -1164,4 +1164,202 @@ router.post('/apporteur-commissions/:id/status', requireAdmin, (req, res) => {
   return res.json({ status: 'success' });
 });
 
+// ═══════════════════════════════════════════════════════════════════════
+// Module VIBE : Réunions + Objectifs + CRM artistes (section admin interne).
+// Toutes protégées par requireAdmin. Visio = Jitsi (salle générée) intégrée.
+// ═══════════════════════════════════════════════════════════════════════
+
+// ── Personnes (équipe / associés / apporteurs) ──
+router.get('/vibe/people', requireAdmin, (req, res) => {
+  res.json({ status: 'success', data: db.prepare('SELECT * FROM vibe_people ORDER BY active DESC, name').all() });
+});
+router.post('/vibe/people', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  if (!b.name) return res.status(422).json({ status: 'error', message: 'Nom requis.' });
+  const info = db.prepare('INSERT INTO vibe_people (name, role, email, color, active) VALUES (?, ?, ?, ?, 1)')
+    .run(b.name, b.role || 'associe', b.email || null, b.color || null);
+  res.json({ status: 'success', data: { id: info.lastInsertRowid } });
+});
+router.put('/vibe/people/:id', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  db.prepare('UPDATE vibe_people SET name = ?, role = ?, email = ?, color = ?, active = ? WHERE id = ?')
+    .run(b.name, b.role || 'associe', b.email || null, b.color || null, truthy(b.active) ? 1 : 0, req.params.id);
+  res.json({ status: 'success' });
+});
+router.delete('/vibe/people/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM vibe_people WHERE id = ?').run(req.params.id);
+  res.json({ status: 'success' });
+});
+
+// ── Objectifs (jauges) ──
+router.get('/vibe/objectives', requireAdmin, (req, res) => {
+  const rows = db.prepare(`
+    SELECT o.*, p.name AS person_name, p.color AS person_color, p.role AS person_role
+    FROM vibe_objectives o LEFT JOIN vibe_people p ON p.id = o.person_id
+    ORDER BY o.status = 'en_cours' DESC, o.scope, p.name, o.id DESC
+  `).all();
+  res.json({ status: 'success', data: rows });
+});
+router.post('/vibe/objectives', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  if (!b.title) return res.status(422).json({ status: 'error', message: 'Titre requis.' });
+  const info = db.prepare(
+    `INSERT INTO vibe_objectives (person_id, scope, title, metric_label, target_value, current_value, unit, period_start, period_end)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(b.person_id || null, b.scope || 'mensuel', b.title, b.metric_label || null,
+    Number(b.target_value) || 0, Number(b.current_value) || 0, b.unit || null, b.period_start || null, b.period_end || null);
+  res.json({ status: 'success', data: { id: info.lastInsertRowid } });
+});
+router.put('/vibe/objectives/:id', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const target = Number(b.target_value) || 0;
+  const current = Number(b.current_value) || 0;
+  const status = b.status || (target > 0 && current >= target ? 'atteint' : 'en_cours');
+  db.prepare(
+    `UPDATE vibe_objectives SET person_id = ?, scope = ?, title = ?, metric_label = ?,
+        target_value = ?, current_value = ?, unit = ?, period_start = ?, period_end = ?, status = ?
+     WHERE id = ?`
+  ).run(b.person_id || null, b.scope || 'mensuel', b.title, b.metric_label || null,
+    target, current, b.unit || null, b.period_start || null, b.period_end || null, status, req.params.id);
+  res.json({ status: 'success' });
+});
+// Mise à jour rapide de la valeur courante (check-in en réunion).
+router.post('/vibe/objectives/:id/checkin', requireAdmin, (req, res) => {
+  const value = Number(req.body?.value);
+  if (Number.isNaN(value)) return res.status(422).json({ status: 'error', message: 'Valeur requise.' });
+  const o = db.prepare('SELECT target_value FROM vibe_objectives WHERE id = ?').get(req.params.id);
+  if (!o) return res.status(404).json({ status: 'error', message: 'Objectif introuvable.' });
+  const status = o.target_value > 0 && value >= o.target_value ? 'atteint' : 'en_cours';
+  db.prepare('UPDATE vibe_objectives SET current_value = ?, status = ? WHERE id = ?').run(value, status, req.params.id);
+  res.json({ status: 'success' });
+});
+router.delete('/vibe/objectives/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM vibe_objectives WHERE id = ?').run(req.params.id);
+  res.json({ status: 'success' });
+});
+
+// ── Réunions (visio Jitsi intégrée) ──
+router.get('/vibe/meetings', requireAdmin, (req, res) => {
+  res.json({ status: 'success', data: db.prepare('SELECT * FROM vibe_meetings ORDER BY COALESCE(scheduled_at, created_at) DESC, id DESC').all() });
+});
+router.get('/vibe/meetings/:id', requireAdmin, (req, res) => {
+  const meeting = db.prepare('SELECT * FROM vibe_meetings WHERE id = ?').get(req.params.id);
+  if (!meeting) return res.status(404).json({ status: 'error', message: 'Réunion introuvable.' });
+  const actions = db.prepare(`
+    SELECT a.*, p.name AS assignee_name, c.stage_name AS crm_name
+    FROM vibe_actions a LEFT JOIN vibe_people p ON p.id = a.assignee_id
+    LEFT JOIN vibe_crm c ON c.id = a.crm_id
+    WHERE a.meeting_id = ? ORDER BY a.status='fait', a.id DESC
+  `).all(req.params.id);
+  res.json({ status: 'success', data: { ...meeting, actions } });
+});
+router.post('/vibe/meetings', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  if (!b.title) return res.status(422).json({ status: 'error', message: 'Titre requis.' });
+  // Salle Jitsi unique (visio intégrée) si aucun lien externe fourni.
+  const slug = String(b.title).normalize('NFD').replace(/[^A-Za-z0-9]/g, '').slice(0, 18) || 'Reunion';
+  const room = (b.visio_url ? null : `Vybzzz-${slug}-${Date.now().toString(36)}`);
+  const info = db.prepare(
+    `INSERT INTO vibe_meetings (title, type, scheduled_at, status, jitsi_room, visio_url, summary_md)
+     VALUES (?, ?, ?, 'planifiee', ?, ?, ?)`
+  ).run(b.title, b.type || 'hebdo', b.scheduled_at || null, room, b.visio_url || null, b.summary_md || null);
+  res.json({ status: 'success', data: { id: info.lastInsertRowid, jitsi_room: room } });
+});
+router.put('/vibe/meetings/:id', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const fields = [];
+  const vals = [];
+  for (const k of ['title', 'type', 'scheduled_at', 'status', 'visio_url', 'summary_md']) {
+    if (b[k] !== undefined) { fields.push(`${k} = ?`); vals.push(b[k]); }
+  }
+  if (!fields.length) return res.json({ status: 'success' });
+  vals.push(req.params.id);
+  db.prepare(`UPDATE vibe_meetings SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
+  res.json({ status: 'success' });
+});
+router.delete('/vibe/meetings/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM vibe_meetings WHERE id = ?').run(req.params.id);
+  db.prepare('DELETE FROM vibe_actions WHERE meeting_id = ?').run(req.params.id);
+  res.json({ status: 'success' });
+});
+
+// ── Actions / tâches ──
+router.get('/vibe/actions', requireAdmin, (req, res) => {
+  const rows = db.prepare(`
+    SELECT a.*, p.name AS assignee_name, p.color AS assignee_color,
+           m.title AS meeting_title, c.stage_name AS crm_name
+    FROM vibe_actions a
+    LEFT JOIN vibe_people p ON p.id = a.assignee_id
+    LEFT JOIN vibe_meetings m ON m.id = a.meeting_id
+    LEFT JOIN vibe_crm c ON c.id = a.crm_id
+    ORDER BY a.status='fait', a.due_date IS NULL, a.due_date, a.id DESC
+  `).all();
+  res.json({ status: 'success', data: rows });
+});
+router.post('/vibe/actions', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  if (!b.title) return res.status(422).json({ status: 'error', message: 'Titre requis.' });
+  const info = db.prepare(
+    `INSERT INTO vibe_actions (meeting_id, assignee_id, crm_id, title, due_date, priority, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).run(b.meeting_id || null, b.assignee_id || null, b.crm_id || null, b.title,
+    b.due_date || null, b.priority || 'normale', b.status || 'a_faire');
+  res.json({ status: 'success', data: { id: info.lastInsertRowid } });
+});
+router.patch('/vibe/actions/:id', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const fields = [];
+  const vals = [];
+  for (const k of ['meeting_id', 'assignee_id', 'crm_id', 'title', 'due_date', 'priority', 'status']) {
+    if (b[k] !== undefined) { fields.push(`${k} = ?`); vals.push(b[k] === '' ? null : b[k]); }
+  }
+  if (!fields.length) return res.json({ status: 'success' });
+  vals.push(req.params.id);
+  db.prepare(`UPDATE vibe_actions SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
+  res.json({ status: 'success' });
+});
+router.delete('/vibe/actions/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM vibe_actions WHERE id = ?').run(req.params.id);
+  res.json({ status: 'success' });
+});
+
+// ── CRM artistes (pipeline) ──
+router.get('/vibe/crm', requireAdmin, (req, res) => {
+  const rows = db.prepare(`
+    SELECT c.*, p.name AS referrer_name, p.color AS referrer_color
+    FROM vibe_crm c LEFT JOIN vibe_people p ON p.id = c.referrer_id
+    ORDER BY c.updated_at DESC, c.id DESC
+  `).all();
+  res.json({ status: 'success', data: rows });
+});
+router.post('/vibe/crm', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  if (!b.stage_name && !b.legal_name) return res.status(422).json({ status: 'error', message: 'Nom requis.' });
+  const info = db.prepare(
+    `INSERT INTO vibe_crm (type, stage_name, legal_name, email, phone, instagram, country, genre,
+        followers_count, referrer_id, pipeline_stage, expected_value, next_action_date, notes_md)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(b.type || 'artiste', b.stage_name || null, b.legal_name || null, b.email || null, b.phone || null,
+    b.instagram || null, b.country || null, b.genre || null, b.followers_count || null, b.referrer_id || null,
+    b.pipeline_stage || 'a_qualifier', b.expected_value || null, b.next_action_date || null, b.notes_md || null);
+  res.json({ status: 'success', data: { id: info.lastInsertRowid } });
+});
+router.patch('/vibe/crm/:id', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const fields = [];
+  const vals = [];
+  for (const k of ['type', 'stage_name', 'legal_name', 'email', 'phone', 'instagram', 'country', 'genre',
+    'followers_count', 'referrer_id', 'pipeline_stage', 'expected_value', 'next_action_date', 'lost_reason', 'notes_md']) {
+    if (b[k] !== undefined) { fields.push(`${k} = ?`); vals.push(b[k] === '' ? null : b[k]); }
+  }
+  fields.push("updated_at = datetime('now')");
+  vals.push(req.params.id);
+  db.prepare(`UPDATE vibe_crm SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
+  res.json({ status: 'success' });
+});
+router.delete('/vibe/crm/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM vibe_crm WHERE id = ?').run(req.params.id);
+  res.json({ status: 'success' });
+});
+
 module.exports = router;
