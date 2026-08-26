@@ -14,7 +14,21 @@ const statements = require('../services/statements');
 const truthy = (v) => v === true || v === 1 || v === '1' || v === 'true' || v === 'on';
 const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
 
-/** Auth admin : exige un token dont le user a role='admin'. */
+// Modules DÉLÉGABLES à un compte "staff" (visibilité restreinte). Seuls ces
+// modules peuvent être ouverts à un membre non super-admin. Tout le reste
+// (utilisateurs, finances, données artistes…) reste réservé au super-admin.
+// Pour déléguer un nouveau module : l'ajouter ici (et vérifier qu'aucune
+// donnée sensible ne transite par ses routes).
+const DELEGATABLE_MODULES = ['vibe'];
+const moduleForPath = (p) => String(p || '').split('/').filter(Boolean)[0] || '';
+
+/**
+ * Auth panneau admin. Deux niveaux :
+ *  - role='admin'  → super-admin, accès TOTAL.
+ *  - role='staff'  → accès restreint : uniquement les modules délégables
+ *    présents dans son `admin_scopes` (CSV). Sinon 403.
+ * L'enforcement est ici (backend), pas seulement masqué côté UI.
+ */
 function requireAdmin(req, res, next) {
   const header = req.headers['authorization'] || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
@@ -22,11 +36,15 @@ function requireAdmin(req, res, next) {
   try {
     const payload = jwt.verify(token, SECRET);
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(payload.id);
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ status: 'error', message: 'Admin only.' });
+    if (!user) return res.status(401).json({ status: 'error', message: 'Invalid token.' });
+    if (user.role === 'admin') { req.admin = user; return next(); }
+    if (user.role === 'staff') {
+      const scopes = String(user.admin_scopes || '').split(',').map((s) => s.trim()).filter(Boolean);
+      const mod = moduleForPath(req.path);
+      if (DELEGATABLE_MODULES.includes(mod) && scopes.includes(mod)) { req.admin = user; return next(); }
+      return res.status(403).json({ status: 'error', message: 'Accès non autorisé pour ce module.' });
     }
-    req.admin = user;
-    next();
+    return res.status(403).json({ status: 'error', message: 'Admin only.' });
   } catch (e) {
     return res.status(401).json({ status: 'error', message: 'Invalid token.' });
   }
@@ -66,15 +84,70 @@ Réponds uniquement avec le texte de la description, sans titre ni guillemets.`;
 router.post('/login', (req, res) => {
   const { email, password } = req.body || {};
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get((email || '').toLowerCase());
-  if (!user || user.role !== 'admin' || !compare(password, user.password)) {
+  if (!user || !['admin', 'staff'].includes(user.role) || !compare(password, user.password)) {
     return res.status(401).json({ status: 'error', message: 'Identifiants admin invalides.' });
   }
   const token = jwt.sign({ id: user.id, email: user.email }, SECRET, { expiresIn: '7d' });
+  const scopes = user.role === 'admin'
+    ? '*'
+    : String(user.admin_scopes || '').split(',').map((s) => s.trim()).filter(Boolean);
   return res.json({
     status: 'success',
     token,
-    admin: { id: user.id, email: user.email, full_name: user.full_name },
+    admin: { id: user.id, email: user.email, full_name: user.full_name, role: user.role, scopes },
   });
+});
+
+// ── Gestion des accès : comptes "staff" à visibilité restreinte ──
+// Réservé au super-admin (requireAdmin bloque déjà les staff : '/staff' n'est
+// pas un module délégable).
+router.get('/staff', requireAdmin, (req, res) => {
+  const rows = db.prepare(
+    "SELECT id, email, full_name, role, admin_scopes, status FROM users WHERE role IN ('admin','staff') ORDER BY role, id"
+  ).all();
+  res.json({
+    status: 'success',
+    data: rows.map((r) => ({
+      id: r.id, email: r.email, full_name: r.full_name, role: r.role, status: r.status,
+      scopes: r.role === 'admin' ? '*' : String(r.admin_scopes || '').split(',').map((s) => s.trim()).filter(Boolean),
+    })),
+  });
+});
+router.post('/staff', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const email = (b.email || '').toLowerCase().trim();
+  if (!email || !b.password) return res.status(422).json({ status: 'error', message: 'Email et mot de passe requis.' });
+  if (db.prepare('SELECT id FROM users WHERE email = ?').get(email)) {
+    return res.status(409).json({ status: 'error', message: 'Email déjà utilisé.' });
+  }
+  const scopes = Array.isArray(b.scopes) ? b.scopes.filter((s) => DELEGATABLE_MODULES.includes(s)) : [];
+  db.prepare(
+    "INSERT INTO users (email, password, full_name, role, admin_scopes, status, registration_type) VALUES (?, ?, ?, 'staff', ?, 'active', 'email')"
+  ).run(email, hash(b.password), b.full_name || email, scopes.join(','));
+  res.json({ status: 'success' });
+});
+router.put('/staff/:id', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const target = db.prepare('SELECT id, role FROM users WHERE id = ?').get(req.params.id);
+  if (!target) return res.status(404).json({ status: 'error', message: 'Introuvable.' });
+  if (target.role === 'admin') return res.status(403).json({ status: 'error', message: 'Le super-admin ne se gère pas ici.' });
+  const scopes = Array.isArray(b.scopes) ? b.scopes.filter((s) => DELEGATABLE_MODULES.includes(s)) : [];
+  const fields = ['admin_scopes = ?'];
+  const vals = [scopes.join(',')];
+  if (b.full_name !== undefined) { fields.push('full_name = ?'); vals.push(b.full_name); }
+  if (b.status !== undefined) { fields.push('status = ?'); vals.push(b.status); }
+  if (b.password) { fields.push('password = ?'); vals.push(hash(b.password)); }
+  vals.push(req.params.id);
+  db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ? AND role = 'staff'`).run(...vals);
+  res.json({ status: 'success' });
+});
+router.delete('/staff/:id', requireAdmin, (req, res) => {
+  const target = db.prepare('SELECT role FROM users WHERE id = ?').get(req.params.id);
+  if (target && target.role === 'admin') {
+    return res.status(403).json({ status: 'error', message: 'Impossible de supprimer un super-admin ici.' });
+  }
+  db.prepare("DELETE FROM users WHERE id = ? AND role = 'staff'").run(req.params.id);
+  res.json({ status: 'success' });
 });
 
 // GET /api/admin/stats

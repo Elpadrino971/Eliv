@@ -600,6 +600,10 @@ function init() {
     // toujours '1234' pour tout le monde, sans expiration. Un vrai code
     // aléatoire doit expirer -> horodatage de validité.
     "ALTER TABLE users ADD COLUMN otp_expires_at TEXT",
+    // Comptes "staff" (rôle role='staff') : accès admin RESTREINT à certains
+    // modules seulement (CSV d'ids de modules, ex 'vibe'). Le super-admin
+    // (role='admin') garde l'accès total. Vide/NULL = aucun accès.
+    "ALTER TABLE users ADD COLUMN admin_scopes TEXT",
     // Candidature artiste (contact_leads) : suivi + activation auto de
     // l'abonnement choisi par l'admin dès que le candidat crée son compte
     // (voir POST /admin/contact-leads/:id/approve et /sign-up).

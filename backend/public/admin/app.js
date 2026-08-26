@@ -113,14 +113,35 @@ const NAV = [
   { group: 'Pilotage interne', items: [
     { id: 'vibe', label: 'Réunions & CRM', ic: '🎯' },
   ] },
-  { group: 'Compte', items: [{ id: 'profile', label: 'Profil', ic: '👤' }] },
+  { group: 'Compte', items: [
+    { id: 'access', label: 'Accès & rôles', ic: '🔐' },
+    { id: 'profile', label: 'Profil', ic: '👤' },
+  ] },
 ];
 
+// Modules délégables à un compte "staff" (doit refléter DELEGATABLE_MODULES
+// côté backend). Un staff ne voit QUE les modules cochés pour lui.
+const DELEGATABLE_MODULES = [
+  { id: 'vibe', label: 'Réunions & CRM' },
+];
+
+// Un module est-il visible pour le compte connecté ? Seuls les comptes
+// role='staff' sont restreints ; super-admin (et anciennes sessions sans
+// rôle) voient tout. 'access' reste réservé au super-admin.
+function allowedModule(id) {
+  const isStaff = admin && admin.role === 'staff';
+  if (id === 'access') return !isStaff;   // gestion des accès = super-admin uniquement
+  if (!isStaff) return true;              // super-admin (ou ancienne session) = tout
+  return Array.isArray(admin.scopes) && admin.scopes.includes(id);
+}
+
 function renderNav() {
-  $('nav').innerHTML = NAV.map((g) =>
-    `<div class="group">${g.group}</div>` +
-    g.items.map((i) => `<a href="#${i.id}" data-id="${i.id}"><span class="ic">${i.ic}</span><span class="lbl">${i.label}</span></a>`).join('')
-  ).join('');
+  $('nav').innerHTML = NAV.map((g) => {
+    const items = g.items.filter((i) => allowedModule(i.id));
+    if (!items.length) return '';
+    return `<div class="group">${g.group}</div>` +
+      items.map((i) => `<a href="#${i.id}" data-id="${i.id}"><span class="ic">${i.ic}</span><span class="lbl">${i.label}</span></a>`).join('');
+  }).join('');
 }
 function setActive(id) {
   document.querySelectorAll('#nav a').forEach((a) => a.classList.toggle('active', a.dataset.id === id));
@@ -133,7 +154,13 @@ function boot() {
   route();
 }
 function route() {
-  const id = (location.hash.replace('#', '') || 'dashboard');
+  let id = (location.hash.replace('#', '') || 'dashboard');
+  // Un staff qui vise un module non autorisé est renvoyé vers son 1er module.
+  if (!allowedModule(id)) {
+    const first = NAV.flatMap((g) => g.items).find((i) => allowedModule(i.id));
+    id = first ? first.id : 'vibe';
+    if (location.hash.replace('#', '') !== id) { location.hash = id; return; }
+  }
   setActive(id);
   (ROUTES[id] || ROUTES.dashboard)();
 }
@@ -1882,12 +1909,53 @@ function peopleForm(p) {
   });
 }
 
+// ── Accès & rôles : comptes staff à visibilité restreinte (super-admin) ──
+async function pageAccess() {
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  const staff = (await api('GET', '/staff')).data || [];
+  const modLabel = (id) => (DELEGATABLE_MODULES.find((m) => m.id === id) || { label: id }).label;
+  const row = (u) => `<div class="tcard" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+    <div><b>${esc(u.full_name || u.email)}</b> ${u.role === 'admin' ? '<span class="badge active">Super-admin</span>' : '<span class="badge pending">Staff</span>'}
+      <div class="em">${esc(u.email)}${u.role === 'staff'
+        ? ' · accès : ' + (Array.isArray(u.scopes) && u.scopes.length ? u.scopes.map(modLabel).join(', ') : 'aucun')
+        : ' · accès total'}</div></div>
+    ${u.role === 'staff' ? `<div style="display:flex;gap:6px"><button class="btn edit" data-se="${u.id}">Modifier</button><button class="btn del" data-sd="${u.id}">Suppr</button></div>` : '<span class="em">(toi)</span>'}
+  </div>`;
+  view().innerHTML = `<div class="head-row"><h1 class="page-title">🔐 Accès & rôles</h1><button class="add-btn" id="staff-add">+ Membre (staff)</button></div>
+    <p class="em" style="margin:-6px 0 14px">Crée des comptes <b>à visibilité restreinte</b> : un membre ne voit QUE les modules cochés, et le serveur bloque tout le reste. Les données sensibles (utilisateurs, finances, transactions…) restent réservées à toi (super-admin).</p>
+    ${staff.map(row).join('')}`;
+  document.getElementById('staff-add').onclick = () => staffForm(null);
+  view().querySelectorAll('[data-se]').forEach((b) => b.onclick = () => staffForm(staff.find((x) => x.id == b.dataset.se)));
+  view().querySelectorAll('[data-sd]').forEach((b) => b.onclick = () => confirmDelete(async () => { await api('DELETE', '/staff/' + b.dataset.sd); toast('Supprimé'); pageAccess(); }));
+}
+function staffForm(u) {
+  const scopes = new Set(Array.isArray(u?.scopes) ? u.scopes : []);
+  const modChecks = DELEGATABLE_MODULES.map((m) => ({ name: 'scope_' + m.id, label: 'Accès : ' + m.label, type: 'checkbox', value: scopes.has(m.id), hint: m.label }));
+  modal({
+    title: u ? 'Modifier le membre' : 'Nouveau membre (staff)',
+    fields: [
+      { name: 'full_name', label: 'Nom', value: u?.full_name },
+      { name: 'email', label: 'Email', value: u?.email },
+      { name: 'password', label: u ? 'Nouveau mot de passe (vide = inchangé)' : 'Mot de passe', type: 'password' },
+      ...modChecks,
+    ],
+    onSave: async (d) => {
+      const scopesArr = DELEGATABLE_MODULES.filter((m) => d['scope_' + m.id]).map((m) => m.id);
+      const payload = { full_name: d.full_name, email: d.email, scopes: scopesArr };
+      if (d.password) payload.password = d.password;
+      if (u) { await api('PUT', '/staff/' + u.id, payload); toast('Membre modifié'); }
+      else { if (!d.password) throw new Error('Mot de passe requis'); await api('POST', '/staff', payload); toast('Membre créé'); }
+      pageAccess();
+    },
+  });
+}
+
 const ROUTES = {
   dashboard: pageDashboard, lives: pageLives, users: pageUsers, genres: pageGenres, 'user-genres': pageUserGenres,
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
-  splash: pageSplash, apporteurs: pageApporteurs, vibe: pageVibe,
+  splash: pageSplash, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess,
 };
 
 window.addEventListener('hashchange', route);
