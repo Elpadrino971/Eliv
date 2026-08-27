@@ -823,13 +823,18 @@ function pageFeedClips() {
   // Miniature : Mux génère une image du clip → on l'affiche pour repérer
   // le contenu d'un coup d'œil. Format adapté (paysage pour un clip, portrait
   // pour un short). Repli sur une icône si pas de Mux (fichier uploadé).
+  const phBox = (w, h) => `<div style="width:${w}px;height:${h}px;border-radius:6px;background:#0A1226;display:flex;align-items:center;justify-content:center;color:var(--muted)">▶</div>`;
   const thumb = (r) => {
     if (r.mux_playback_id) {
       const land = r.feed === 'clips';
       const w = land ? 80 : 45, h = land ? 45 : 80;
-      return `<img src="https://image.mux.com/${r.mux_playback_id}/thumbnail.jpg?width=${w * 2}&height=${h * 2}&fit_mode=smartcrop" style="width:${w}px;height:${h}px;object-fit:cover;border-radius:6px;background:#0A1226" loading="lazy">`;
+      // L'aperçu vient de Mux (image.mux.com). Si l'ID n'est pas un asset Mux
+      // PUBLIC valide (ID de test, playback "signed", vidéo pas encore traitée),
+      // l'image renvoie 404/403 -> onerror affiche un placeholder ▶ propre au
+      // lieu de l'icône "image cassée".
+      return `<div style="position:relative;width:${w}px;height:${h}px">${phBox(w, h)}<img src="https://image.mux.com/${r.mux_playback_id}/thumbnail.jpg?width=${w * 2}&height=${h * 2}&fit_mode=smartcrop" onerror="this.style.display='none'" style="position:absolute;inset:0;width:${w}px;height:${h}px;object-fit:cover;border-radius:6px" loading="lazy"></div>`;
     }
-    return `<div style="width:45px;height:45px;border-radius:6px;background:#0A1226;display:flex;align-items:center;justify-content:center;color:var(--muted)">▶</div>`;
+    return phBox(45, 80);
   };
   const columns = [
     { label: '✓', render: (r) => r.active ? '' : `<input type="checkbox" class="chk-clip" data-id="${r.id}" style="width:18px;height:18px;cursor:pointer">` },
@@ -862,7 +867,7 @@ function pageFeedClips() {
         </div>
         <div class="em" style="margin-top:4px;line-height:1.35">${desc}</div>
       </div>`;
-    view().innerHTML = `<div class="head-row"><h1 class="page-title">Les 3 feeds de l'app</h1><div style="display:flex;gap:8px"><button class="add-btn" id="bulkupbtn" style="background:#7ab8ff">⬆︎ Upload multiple</button><button class="add-btn" id="addbtn">+ Ajouter un clip</button></div></div>
+    view().innerHTML = `<div class="head-row"><h1 class="page-title">Les 3 feeds de l'app</h1><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="dedupebtn">🧹 Supprimer les doublons</button><button class="add-btn" id="bulkupbtn" style="background:#7ab8ff">⬆︎ Upload multiple</button><button class="add-btn" id="addbtn">+ Ajouter un clip</button></div></div>
       <p class="em" style="margin:-6px 0 14px">Cette page gère les <b>shorts</b> (Pour toi & Clips). Les <b>Concerts</b> ont leur propre écran — cliquez sur la carte pour y aller.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin:0 0 18px">
         ${card('#7ab8ff', '🟦', 'Shorts (Pour toi)', 'Contenu court vertical/portrait : actu, promo, teasers.', counts.for_you, 'data-ft-card="for_you"')}
@@ -904,6 +909,14 @@ function pageFeedClips() {
     view().querySelectorAll('[data-goto]').forEach((c) => c.onclick = () => { location.hash = c.dataset.goto; });
     view().querySelector('#addbtn').onclick = () => feedClipForm(null);
     view().querySelector('#bulkupbtn').onclick = () => bulkUploadDialog();
+    view().querySelector('#dedupebtn').onclick = async () => {
+      if (!confirm('Supprimer les clips en double (même vidéo Mux) ? On garde le plus ancien de chaque.')) return;
+      try {
+        const { data } = await api('POST', '/feed-clips/dedupe', {});
+        toast(`${data?.removed ?? 0} doublon(s) supprimé(s)`);
+        pageFeedClips();
+      } catch (e) { toast(e.message); }
+    };
     // Tout cocher / tout décocher les clips EN ATTENTE de la vue courante.
     view().querySelector('#selectAllPending').onclick = () => {
       const checks = [...view().querySelectorAll('.chk-clip')];

@@ -809,6 +809,16 @@ router.post('/feed-clips/bulk', requireAdmin, (req, res) => {
   if (!ids.length) {
     return res.status(400).json({ status: 'error', message: 'Aucun Playback ID valide.' });
   }
+  // Anti-doublon : on ignore les Playback IDs déjà présents dans un feed.
+  const existing = new Set(
+    db.prepare("SELECT mux_playback_id FROM feed_clips WHERE mux_playback_id IS NOT NULL AND mux_playback_id <> ''")
+      .all().map((r) => r.mux_playback_id)
+  );
+  const fresh = ids.filter((id) => !existing.has(id));
+  const skipped = ids.length - fresh.length;
+  if (!fresh.length) {
+    return res.json({ status: 'success', message: `0 ajouté — ${skipped} doublon(s) ignoré(s).`, data: { count: 0, skipped } });
+  }
   const maxPos = db.prepare('SELECT COALESCE(MAX(position), -1) mp FROM feed_clips WHERE feed = ?').get(feed).mp;
   const insert = db.prepare(
     `INSERT INTO feed_clips (feed, title, mux_playback_id, position, active, user_id, upload_status)
@@ -819,8 +829,26 @@ router.post('/feed-clips/bulk', requireAdmin, (req, res) => {
     for (const pid of list) { pos += 1; insert.run(feed, null, pid, pos, active, artistId); }
     return list.length;
   });
-  const count = tx(ids);
-  return res.json({ status: 'success', message: `${count} clip(s) ajouté(s).`, data: { count } });
+  const count = tx(fresh);
+  return res.json({
+    status: 'success',
+    message: `${count} clip(s) ajouté(s)${skipped ? `, ${skipped} doublon(s) ignoré(s)` : ''}.`,
+    data: { count, skipped },
+  });
+});
+// Nettoyage : supprime les clips EN DOUBLE (même Playback ID Mux), en gardant
+// le plus ancien (id le plus petit). Ne touche pas aux clips sans Playback ID.
+router.post('/feed-clips/dedupe', requireAdmin, (req, res) => {
+  const info = db.prepare(`
+    DELETE FROM feed_clips
+    WHERE mux_playback_id IS NOT NULL AND mux_playback_id <> ''
+      AND id NOT IN (
+        SELECT MIN(id) FROM feed_clips
+        WHERE mux_playback_id IS NOT NULL AND mux_playback_id <> ''
+        GROUP BY mux_playback_id
+      )
+  `).run();
+  return res.json({ status: 'success', message: `${info.changes} doublon(s) supprimé(s).`, data: { removed: info.changes } });
 });
 router.post('/feed-clips', requireAdmin, async (req, res) => {
   const b = req.body || {};
