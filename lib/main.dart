@@ -8,6 +8,7 @@ import 'package:artist/OnBoarding/onboarding_1.dart';
 import 'package:artist/firebase_options.dart';
 import 'package:artist/services/push_notification.dart';
 import 'package:artist/spalash_screen.dart';
+import 'package:artist/widgets/mini_player.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -84,6 +85,10 @@ class MyApp extends StatelessWidget {
         theme: premiumTheme,
         darkTheme: premiumTheme,
         themeMode: ThemeMode.dark,
+        // Monte le mini-lecteur flottant (façon YouTube) AU-DESSUS de tous les
+        // écrans, pour qu'il survive aux changements de page.
+        builder: (context, child) =>
+            MiniPlayerHost(child: child ?? const SizedBox.shrink()),
         home: (box.read('init') == null)
             ? const Onboarding1()
             : const SpalashScreen(),
