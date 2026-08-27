@@ -58,6 +58,9 @@ dependencies:
   sign_in_with_apple: ^8.1.0
   # Lit la version + le build de l'app (écran "À propos", conformité stores).
   package_info_plus: ^8.0.0
+  # « Partager → VYBZZZ » : reçoit une vidéo depuis le partage natif du
+  # téléphone (galerie, autre app). Aucune API/validation TikTok requise.
+  receive_sharing_intent: ^1.8.1
 
 dev_dependencies:
   flutter_test:

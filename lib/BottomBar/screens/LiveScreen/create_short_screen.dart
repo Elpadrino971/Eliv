@@ -17,7 +17,11 @@ import 'package:image_picker/image_picker.dart';
 /// l'admin ne l'a pas approuvée (rubrique "Clips (Feeds)" du backend) —
 /// pas de modération automatique, donc validation manuelle avant publication.
 class CreateShortScreen extends StatefulWidget {
-  const CreateShortScreen({super.key});
+  const CreateShortScreen({super.key, this.sharedVideoPath});
+
+  /// Vidéo reçue via « Partager → VYBZZZ » (partage natif). Si fournie, l'écran
+  /// s'ouvre avec la vidéo déjà chargée : l'artiste n'a plus qu'à publier.
+  final String? sharedVideoPath;
 
   @override
   State<CreateShortScreen> createState() => _CreateShortScreenState();
@@ -30,6 +34,15 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
   XFile? _video;
   String _feed = 'clips';
   bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pré-remplissage depuis un partage entrant (galerie / autre app).
+    if (widget.sharedVideoPath != null && widget.sharedVideoPath!.isNotEmpty) {
+      _video = XFile(widget.sharedVideoPath!);
+    }
+  }
 
   @override
   void dispose() {

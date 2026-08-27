@@ -8,6 +8,7 @@ import 'package:artist/BottomBar/screens/Disscover/disscover_screen.dart';
 import 'package:artist/BottomBar/screens/my_tIckets/my_tickets_screen.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/services/push_notification.dart';
+import 'package:artist/services/share_receiver.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -45,6 +46,9 @@ class _MyBottomBarState extends State<MyBottomBar> {
   @override
   void initState() {
     myInitMethod();
+    // « Partager → VYBZZZ » : écoute les vidéos partagées vers l'app (cold +
+    // warm) et ouvre la création de clip. Idempotent.
+    ShareReceiver.init();
     super.initState();
   }
 
