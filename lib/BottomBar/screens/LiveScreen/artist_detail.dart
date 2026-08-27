@@ -2,6 +2,7 @@ import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/user_model.dart';
+import 'package:artist/widgets/bio_links.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/artist_clips_grid.dart';
 import 'package:artist/travis_scott/about_screen.dart';
 import 'package:artist/travis_scott/events_screen.dart';
@@ -289,6 +290,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   style: TextStyle(color: txt.withValues(alpha: 0.85), fontSize: 12.5, height: 1.4),
                 ),
               ],
+              // Liens en bio (contact + réseaux) — cliquables, façon TikTok.
+              const SizedBox(height: 10),
+              BioLinks(user: widget.artist),
               const SizedBox(height: 8),
               GestureDetector(
                 onTap: _openAbout,

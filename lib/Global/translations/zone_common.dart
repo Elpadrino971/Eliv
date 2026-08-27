@@ -12,6 +12,13 @@ const Map<String, Map<String, String>> commonTranslations = {
     'auth_consent_and': ' and ',
     'auth_consent_required':
         'Please accept the Terms & Conditions and Privacy Policy to continue.',
+    'links_section': 'Links (contact + socials)',
+    'links_contact_email_hint': 'Contact email',
+    'links_website_hint': 'Website / fanlink',
+    'links_instagram_hint': 'Instagram (link)',
+    'links_tiktok_hint': 'TikTok (link)',
+    'links_youtube_hint': 'YouTube (link)',
+    'links_spotify_hint': 'Spotify (link)',
   },
   'fr': {
     'common_success': 'Succès',
@@ -24,6 +31,13 @@ const Map<String, Map<String, String>> commonTranslations = {
     'auth_consent_and': ' et notre ',
     'auth_consent_required':
         'Merci d\'accepter les CGU et la Politique de confidentialité pour continuer.',
+    'links_section': 'Liens (contact + réseaux)',
+    'links_contact_email_hint': 'Email de contact',
+    'links_website_hint': 'Site web / fanlink',
+    'links_instagram_hint': 'Instagram (lien)',
+    'links_tiktok_hint': 'TikTok (lien)',
+    'links_youtube_hint': 'YouTube (lien)',
+    'links_spotify_hint': 'Spotify (lien)',
   },
   'es': {
     'common_success': 'Éxito',
