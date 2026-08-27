@@ -604,6 +604,14 @@ function init() {
     // modules seulement (CSV d'ids de modules, ex 'vibe'). Le super-admin
     // (role='admin') garde l'accès total. Vide/NULL = aucun accès.
     "ALTER TABLE users ADD COLUMN admin_scopes TEXT",
+    // Liens en bio (façon TikTok) : contact + réseaux, affichés/cliquables sur
+    // la fiche profil. Édités depuis l'app (update-profile).
+    "ALTER TABLE users ADD COLUMN contact_email TEXT",
+    "ALTER TABLE users ADD COLUMN link_website TEXT",
+    "ALTER TABLE users ADD COLUMN link_instagram TEXT",
+    "ALTER TABLE users ADD COLUMN link_tiktok TEXT",
+    "ALTER TABLE users ADD COLUMN link_youtube TEXT",
+    "ALTER TABLE users ADD COLUMN link_spotify TEXT",
     // Candidature artiste (contact_leads) : suivi + activation auto de
     // l'abonnement choisi par l'admin dès que le candidat crée son compte
     // (voir POST /admin/contact-leads/:id/approve et /sign-up).

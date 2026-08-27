@@ -126,6 +126,13 @@ function serializeUser(row, { withPassword = false, full = false } = {}) {
     is_verified: row.is_verified,
     is_featured: !!row.is_featured,
     is_artist: !!row.is_artist,
+    // Liens en bio (contact + réseaux), affichés/cliquables sur la fiche.
+    contact_email: row.contact_email || null,
+    link_website: row.link_website || null,
+    link_instagram: row.link_instagram || null,
+    link_tiktok: row.link_tiktok || null,
+    link_youtube: row.link_youtube || null,
+    link_spotify: row.link_spotify || null,
     is_live: !!liveEvent,
     live_event_id: liveEvent ? liveEvent.id : null,
     live_ticket_price: liveEvent ? liveEvent.ticket_price : null,

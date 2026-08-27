@@ -260,6 +260,9 @@ router.post('/update-profile', requireAuth, (req, res) => {
   const fields = [
     'full_name', 'artist_name', 'phone_number', 'dob', 'bio', 'address',
     'latitude', 'longitude', 'experience', 'artist_bio',
+    // Liens en bio (contact + réseaux).
+    'contact_email', 'link_website', 'link_instagram', 'link_tiktok',
+    'link_youtube', 'link_spotify',
   ];
   const sets = [];
   const vals = {};
