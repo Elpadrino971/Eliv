@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 
 /// Créer un short : n'importe quel utilisateur connecté peut soumettre une
 /// vidéo pour le feed "Pour toi" ou "Clips". Elle reste invisible tant que
@@ -41,6 +42,27 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
     // Pré-remplissage depuis un partage entrant (galerie / autre app).
     if (widget.sharedVideoPath != null && widget.sharedVideoPath!.isNotEmpty) {
       _video = XFile(widget.sharedVideoPath!);
+      // Choix auto du feed selon l'orientation : vidéo verticale (façon TikTok)
+      // -> "Pour toi" ; horizontale (façon YouTube/clip musical) -> "Clips".
+      _autoSelectFeed(widget.sharedVideoPath!);
+    }
+  }
+
+  // Détecte l'orientation de la vidéo et pré-sélectionne le bon feed. L'artiste
+  // peut toujours changer avant de publier. Silencieux en cas d'échec.
+  Future<void> _autoSelectFeed(String path) async {
+    VideoPlayerController? c;
+    try {
+      c = VideoPlayerController.file(File(path));
+      await c.initialize();
+      final ar = c.value.aspectRatio;
+      if (mounted && ar > 0) {
+        setState(() => _feed = ar < 1.0 ? 'for_you' : 'clips');
+      }
+    } catch (_) {
+      // On garde le feed par défaut si la détection échoue.
+    } finally {
+      await c?.dispose();
     }
   }
 
@@ -52,7 +74,11 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
 
   Future<void> _pick() async {
     final v = await _picker.pickVideo(source: ImageSource.gallery);
-    if (v != null) setState(() => _video = v);
+    if (v != null) {
+      setState(() => _video = v);
+      _autoSelectFeed(v.path);
+      return;
+    }
   }
 
   /// Envoi direct vers Mux : le fichier PUT directement sur Mux, jamais sur
