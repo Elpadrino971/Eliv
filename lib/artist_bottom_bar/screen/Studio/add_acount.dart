@@ -64,7 +64,8 @@ class _AddAcountState extends State<AddAcount> {
                     Text(
                       'sec_protected'.tr,
                       style: const TextStyle(
-                        color: ivory,
+                        // Titre sur bandeau vert clair : vert foncé lisible.
+                        color: Color(0xff166534),
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
@@ -98,7 +99,7 @@ class _AddAcountState extends State<AddAcount> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                       ),
                     ),
                     MyTextField(
@@ -110,7 +111,7 @@ class _AddAcountState extends State<AddAcount> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                       ),
                     ),
                     MyTextField(
@@ -122,7 +123,7 @@ class _AddAcountState extends State<AddAcount> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                       ),
                     ),
                     MyTextField(
@@ -136,7 +137,7 @@ class _AddAcountState extends State<AddAcount> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                       ),
                     ),
                     MyTextField(
@@ -150,7 +151,7 @@ class _AddAcountState extends State<AddAcount> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                       ),
                     ),
                     MyTextField(

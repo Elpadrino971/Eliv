@@ -73,7 +73,7 @@ class _BasicInfoState extends State<BasicInfo> {
                       Text(
                         'Artist/Band Name *',
                         style: TextStyle(
-                          color: Color(0xff364153),
+                          color: Color(0xffF4EFE6),
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -93,7 +93,7 @@ class _BasicInfoState extends State<BasicInfo> {
                       Text(
                         'Email *',
                         style: TextStyle(
-                          color: Color(0xff364153),
+                          color: Color(0xffF4EFE6),
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -107,7 +107,7 @@ class _BasicInfoState extends State<BasicInfo> {
                       Text(
                         'Phone Number *',
                         style: TextStyle(
-                          color: Color(0xff364153),
+                          color: Color(0xffF4EFE6),
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -127,7 +127,7 @@ class _BasicInfoState extends State<BasicInfo> {
                       Text(
                         'Primary Genre *',
                         style: TextStyle(
-                          color: Color(0xff364153),
+                          color: Color(0xffF4EFE6),
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -146,7 +146,7 @@ class _BasicInfoState extends State<BasicInfo> {
                       Text(
                         'Performance Experience *',
                         style: TextStyle(
-                          color: Color(0xff364153),
+                          color: Color(0xffF4EFE6),
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -169,7 +169,7 @@ class _BasicInfoState extends State<BasicInfo> {
                           Text(
                             'Social Media / Website*',
                             style: TextStyle(
-                              color: Color(0xff364153),
+                              color: Color(0xffF4EFE6),
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),

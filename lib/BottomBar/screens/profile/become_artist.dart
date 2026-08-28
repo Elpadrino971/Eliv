@@ -57,7 +57,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                     Text(
                       'Artist/Band Name *',
                       style: TextStyle(
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -71,7 +71,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                     Text(
                       'Email *',
                       style: TextStyle(
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -91,7 +91,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                     Text(
                       'Phone Number *',
                       style: TextStyle(
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -112,7 +112,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                     Text(
                       'Primary Genre *',
                       style: TextStyle(
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -125,7 +125,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                     Text(
                       'Performance Experience *',
                       style: TextStyle(
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -139,7 +139,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                     Text(
                       'ba_social'.tr,
                       style: TextStyle(
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -159,7 +159,7 @@ class _BecomeArtistState extends State<BecomeArtist> {
                     Text(
                       'ba_tell_about'.tr,
                       style: TextStyle(
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
