@@ -196,7 +196,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                           if (value == null || value.isEmpty) {
                             return 'val_enter_bio'.tr;
                           }
-                          if (value.length < 50) {
+                          if (value.trim().length < 10) {
                             return 'val_bio_min'.tr;
                           }
                           return null;
