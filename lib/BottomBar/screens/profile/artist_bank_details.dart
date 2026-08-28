@@ -76,7 +76,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                         child: Text(
                           'ba_help_fans'.tr,
                           style: TextStyle(
-                            color: Color(0xff4A5565),
+                            color: Color(0xff9FA8BC),
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -89,7 +89,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                         child: Text(
                           'ba_profile_photo'.tr,
                           style: TextStyle(
-                            color: Color(0xff364153),
+                            color: ivory,
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -182,7 +182,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
@@ -210,7 +210,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                           Text(
                             'val_min_50'.tr,
                             style: TextStyle(
-                              color: Color(0xff6A7282),
+                              color: Color(0xff9FA8BC),
                               fontWeight: FontWeight.w500,
                               fontSize: 15,
                             ),
@@ -221,7 +221,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                           Text(
                             '${bioController.text.length}/500',
                             style: TextStyle(
-                              color: Color(0xff6A7282),
+                              color: Color(0xff9FA8BC),
                               fontWeight: FontWeight.w500,
                               fontSize: 15,
                             ),
@@ -234,7 +234,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
@@ -258,7 +258,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                         widget: Text(
                           'ba_agreement'.tr,
                           style: TextStyle(
-                            color: Color(0xff4A5565),
+                            color: Color(0xff9FA8BC),
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                           ),

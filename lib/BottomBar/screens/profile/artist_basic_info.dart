@@ -78,7 +78,9 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                       Text(
                         'sec_protected'.tr,
                         style: TextStyle(
-                          color: ivory,
+                          // Fond du bandeau = vert clair (0xffF0FDF4) : un texte
+                          // ivoire y était illisible -> vert foncé lisible.
+                          color: Color(0xff166534),
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
@@ -112,7 +114,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
@@ -132,7 +134,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
@@ -152,7 +154,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
@@ -173,7 +175,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
@@ -195,7 +197,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
