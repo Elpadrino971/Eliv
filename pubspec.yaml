@@ -60,7 +60,10 @@ dependencies:
   package_info_plus: ^8.0.0
   # « Partager → VYBZZZ » : reçoit une vidéo depuis le partage natif du
   # téléphone (galerie, autre app). Aucune API/validation TikTok requise.
-  receive_sharing_intent: ^1.8.1
+  # Version FIGÉE à 1.8.1 (SANS caret ^) : 1.8.1 est la DERNIÈRE compatible
+  # CocoaPods ; la 1.9.0 est passée en Swift Package Manager only et casse
+  # le build iOS actuel. Ne pas remettre le ^ tant qu'on n'est pas sur SPM.
+  receive_sharing_intent: 1.8.1
 
 dev_dependencies:
   flutter_test:
