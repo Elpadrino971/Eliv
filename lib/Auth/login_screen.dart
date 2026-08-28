@@ -13,6 +13,23 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+/// Message DOUX quand la connexion Google n'aboutit pas (annulation ou
+/// indisponible). Remplace l'ancien gros « Warning » rouge, jugé agressif —
+/// surtout qu'une simple annulation du choix de compte le déclenchait.
+void _showGoogleUnavailable() {
+  Get.snackbar(
+    'google_signin_title'.tr,
+    'google_signin_failed'.tr,
+    snackPosition: SnackPosition.BOTTOM,
+    backgroundColor: cardDeep,
+    colorText: ivory,
+    margin: const EdgeInsets.all(14),
+    borderRadius: 14,
+    duration: const Duration(seconds: 4),
+    icon: const Icon(Icons.info_outline_rounded, color: goldPrimary),
+  );
+}
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -280,9 +297,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       provider: 'google',
                                     );
                                   } else {
-                                    myWarningDialog(
-                                      subtitle: 'error_try_again'.tr,
-                                    );
+                                    _showGoogleUnavailable();
                                   }
                                 },
                                 child: SizedBox(
@@ -321,9 +336,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           provider: 'google',
                                         );
                                       } else {
-                                        myWarningDialog(
-                                          subtitle: 'error_try_again'.tr,
-                                        );
+                                        _showGoogleUnavailable();
                                       }
                                     },
                                     child: SizedBox(
@@ -372,9 +385,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           myPrint(
                                             'Apple sign in error: ${error.toString()}',
                                           );
-                                          myWarningDialog(
-                                            subtitle: 'error_try_again'.tr,
-                                          );
+                                          _showGoogleUnavailable();
                                         });
                                       } catch (e) {
                                         myPrint(e);

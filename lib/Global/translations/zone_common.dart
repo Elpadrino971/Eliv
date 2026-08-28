@@ -19,6 +19,8 @@ const Map<String, Map<String, String>> commonTranslations = {
     'links_tiktok_hint': 'TikTok (link)',
     'links_youtube_hint': 'YouTube (link)',
     'links_spotify_hint': 'Spotify (link)',
+    'google_signin_title': 'Google sign-in',
+    'google_signin_failed': 'Sign-in not completed. Try again or use your email.',
   },
   'fr': {
     'common_success': 'Succès',
@@ -38,6 +40,8 @@ const Map<String, Map<String, String>> commonTranslations = {
     'links_tiktok_hint': 'TikTok (lien)',
     'links_youtube_hint': 'YouTube (lien)',
     'links_spotify_hint': 'Spotify (lien)',
+    'google_signin_title': 'Connexion Google',
+    'google_signin_failed': 'Connexion non aboutie. Réessaie ou utilise ton email.',
   },
   'es': {
     'common_success': 'Éxito',
