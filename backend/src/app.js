@@ -68,11 +68,21 @@ fs.mkdirSync(uploadsDir, { recursive: true }); // dossier temp multer (créé au
 // concert passent par l'upload direct Mux, pas par ce serveur). Filtre de type :
 // on n'accepte que des médias (image/vidéo/audio) — bloque scripts/exécutables.
 const ALLOWED_UPLOAD = /^(image|video|audio)\//;
+// Extensions média connues : filet de sécurité quand le MIME est générique.
+// Flutter (http.MultipartFile.fromPath) n'envoie PAS de Content-Type -> le
+// fichier arrive en 'application/octet-stream' et l'ancien filtre le rejetait
+// (photo de profil "Type de fichier non supporté"). On accepte alors sur
+// l'extension. Les scripts/exécutables restent bloqués (ni MIME média ni ext).
+const ALLOWED_UPLOAD_EXT = /\.(jpe?g|png|gif|webp|heic|heif|bmp|tiff?|mp4|mov|m4v|webm|mkv|avi|mp3|m4a|aac|wav|ogg|flac)$/i;
 const upload = multer({
   dest: uploadsDir,
   limits: { fileSize: 200 * 1024 * 1024, files: 12 },
   fileFilter: (req, file, cb) => {
-    if (ALLOWED_UPLOAD.test(file.mimetype || '')) return cb(null, true);
+    const mime = file.mimetype || '';
+    const name = file.originalname || '';
+    if (ALLOWED_UPLOAD.test(mime) || ALLOWED_UPLOAD_EXT.test(name)) {
+      return cb(null, true);
+    }
     cb(new Error('UNSUPPORTED_FILE_TYPE'));
   },
 });
