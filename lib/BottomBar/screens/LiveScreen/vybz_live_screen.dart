@@ -11,6 +11,7 @@ import 'package:artist/BottomBar/screens/LiveScreen/create_short_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/replay_player_screen.dart';
+import 'package:artist/widgets/feed_poster.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:flutter/material.dart';
@@ -246,10 +247,10 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                                       child: VideoPlayer(videoController),
                                     ),
                                   )
-                                : Center(
-                                    child: CircularProgressIndicator(
-                                      color: mainThemeColor,
-                                    ),
+                                : FeedPoster(
+                                    url: index < clipUrls.length
+                                        ? clipUrls[index]
+                                        : null,
                                   ),
                           ),
                         ),
@@ -1004,9 +1005,7 @@ class _ClipsFeedState extends State<_ClipsFeed> {
                         ),
                       )
                     else
-                      const Center(
-                        child: CircularProgressIndicator(color: goldPrimary),
-                      ),
+                      FeedPoster(url: index < _ids.length ? _ids[index] : null),
                     // Indice "plein écran" en bas à droite du clip.
                     if (ready)
                       Positioned(
