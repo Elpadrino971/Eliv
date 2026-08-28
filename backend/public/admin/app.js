@@ -852,9 +852,9 @@ function pageFeedClips() {
     view().innerHTML = '<div class="empty">Chargement…</div>';
     const { data } = await api('GET', '/feed-clips');
     currentRows = data || [];
-    // Compte des concerts (3e surface) — sans bloquer si l'appel échoue.
-    let concertCount = null;
-    try { const ev = await api('GET', '/events'); concertCount = (ev.data || []).length; } catch (e) { concertCount = null; }
+    // Compte des concerts : chargé EN ARRIÈRE-PLAN (l'appel /events est lourd).
+    // On n'attend plus dessus -> la page s'affiche tout de suite ('—' puis MAJ).
+    const concertCount = '<span id="concert-count">…</span>';
     const isClips = (r) => r.feed === 'clips';
     const counts = { all: currentRows.length, for_you: currentRows.filter((r) => !isClips(r)).length, clips: currentRows.filter(isClips).length };
     // Les 3 surfaces de contenu de l'app, expliquées côte à côte. Cliquer sur
@@ -935,6 +935,14 @@ function pageFeedClips() {
       } catch (e) { toast(e.message); }
     };
     applyTab('all');
+    // Compteur concerts en arrière-plan : ne bloque plus l'affichage de la page.
+    api('GET', '/events').then((ev) => {
+      const el = document.getElementById('concert-count');
+      if (el) el.textContent = (ev.data || []).length;
+    }).catch(() => {
+      const el = document.getElementById('concert-count');
+      if (el) el.textContent = '—';
+    });
   })();
 }
 
