@@ -984,6 +984,9 @@ class _ClipsFeedState extends State<_ClipsFeed> {
               _controller?.pause();
               await Get.to(() => ReplayPlayerScreen(
                     url: ids[index],
+                    playlist: ids,
+                    startIndex: index,
+                    autoAdvance: true,
                     forceLandscape: true,
                   ));
               if (mounted && widget.isActive) _controller?.play();

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
@@ -24,13 +26,26 @@ class ReplayPlayerScreen extends StatefulWidget {
     this.event,
     this.forceLandscape = false,
     this.adopt,
-  }) : assert(playbackId != null || url != null || adopt != null,
-            'playbackId, url ou adopt requis');
+    this.playlist,
+    this.startIndex = 0,
+    this.autoAdvance = false,
+  }) : assert(playbackId != null || url != null || adopt != null || (playlist != null && playlist.length > 0),
+            'playbackId, url, adopt ou playlist requis');
 
   final String? playbackId;
   final String? url;
   final String? title;
   final bool isLive;
+
+  /// Playlist de clips (URLs HLS). Si fournie, le lecteur affiche les boutons
+  /// précédent / suivant et enchaîne automatiquement (voir [autoAdvance]).
+  final List<String>? playlist;
+
+  /// Index de départ dans la [playlist].
+  final int startIndex;
+
+  /// Enchaîne automatiquement le morceau suivant (compte à rebours) à la fin.
+  final bool autoAdvance;
 
   /// Ouvre directement en paysage (clips musicaux 16:9). L'app reste
   /// portrait-only ailleurs ; on restaure le portrait à la fermeture.
@@ -60,6 +75,17 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
 
   bool _liked = false;
   int _likes = 0;
+
+  // ── Playlist (clips) ──
+  late int _index = widget.startIndex;
+  Timer? _watchTimer; // surveille la fin de la vidéo (enchaînement auto)
+  Timer? _autoNextTimer; // compte à rebours avant le morceau suivant
+  int _countdown = 0; // secondes restantes (0 = pas de compte à rebours)
+
+  List<String> get _playlist => widget.playlist ?? const [];
+  bool get _hasPlaylist => _playlist.length > 1;
+  bool get _hasPrev => _hasPlaylist && _index > 0;
+  bool get _hasNext => _hasPlaylist && _index < _playlist.length - 1;
 
   @override
   void initState() {
@@ -101,22 +127,99 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
       return;
     }
     try {
-      final src = widget.url ?? Mux.hlsUrl(widget.playbackId!);
+      final src = _hasPlaylist
+          ? _playlist[_index]
+          : (widget.url ?? Mux.hlsUrl(widget.playbackId!));
       final c = VideoPlayerController.networkUrl(Uri.parse(src));
       await c.initialize();
-      if (!widget.isLive) await c.setLooping(true);
+      // En playlist auto : PAS de boucle (sinon jamais de fin -> pas d'enchaînement).
+      if (!widget.isLive && !(_hasPlaylist && widget.autoAdvance)) {
+        await c.setLooping(true);
+      }
       c.play();
+      if (!mounted) {
+        await c.dispose();
+        return;
+      }
       setState(() {
         _controller = c;
         _ready = true;
       });
+      _startEndWatch();
     } catch (_) {
       setState(() => _error = true);
     }
   }
 
+  /// Va au clip [i] de la playlist : recrée le lecteur (la vidéo change).
+  Future<void> _goTo(int i) async {
+    if (widget.playlist == null || i < 0 || i >= _playlist.length || i == _index) {
+      return;
+    }
+    _cancelAutoNext();
+    final old = _controller;
+    setState(() {
+      _ready = false;
+      _error = false;
+      _index = i;
+    });
+    await old?.pause();
+    await old?.dispose();
+    try {
+      final c = VideoPlayerController.networkUrl(Uri.parse(_playlist[i]));
+      await c.initialize();
+      c.play();
+      if (!mounted) {
+        await c.dispose();
+        return;
+      }
+      setState(() {
+        _controller = c;
+        _ready = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _error = true);
+    }
+  }
+
+  /// Surveille la fin de la vidéo pour déclencher le compte à rebours "suivant".
+  void _startEndWatch() {
+    if (!widget.autoAdvance) return;
+    _watchTimer?.cancel();
+    _watchTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+      final c = _controller;
+      if (c == null || !c.value.isInitialized) return;
+      final v = c.value;
+      final atEnd = v.duration > Duration.zero &&
+          v.position >= v.duration - const Duration(milliseconds: 400);
+      if (atEnd && _autoNextTimer == null && _hasNext) _startAutoNext();
+    });
+  }
+
+  void _startAutoNext() {
+    _countdown = 5;
+    if (mounted) setState(() {});
+    _autoNextTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (_countdown <= 1) {
+        t.cancel();
+        _autoNextTimer = null;
+        _goTo(_index + 1);
+      } else if (mounted) {
+        setState(() => _countdown -= 1);
+      }
+    });
+  }
+
+  void _cancelAutoNext() {
+    _autoNextTimer?.cancel();
+    _autoNextTimer = null;
+    if (_countdown != 0 && mounted) setState(() => _countdown = 0);
+  }
+
   @override
   void dispose() {
+    _watchTimer?.cancel();
+    _autoNextTimer?.cancel();
     // On ne dispose le lecteur QUE si cet écran en est le propriétaire :
     // - pas en mode "adopt" (il appartient au mini-lecteur),
     // - pas s'il vient d'être confié au mini-lecteur (réduction).
@@ -440,13 +543,31 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
             // Play/pause + jauge (au tap)
             if (_ready && c != null && _showControls) ...[
               Center(
-                child: GestureDetector(
-                  onTap: () => setState(() => c.value.isPlaying ? c.pause() : c.play()),
-                  child: Icon(
-                    c.value.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                    color: whiteColor,
-                    size: 64,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_hasPlaylist) ...[
+                      _navButton(Icons.skip_previous_rounded,
+                          _hasPrev ? () => _goTo(_index - 1) : null),
+                      const SizedBox(width: 30),
+                    ],
+                    GestureDetector(
+                      onTap: () => setState(
+                          () => c.value.isPlaying ? c.pause() : c.play()),
+                      child: Icon(
+                        c.value.isPlaying
+                            ? Icons.pause_circle_filled
+                            : Icons.play_circle_filled,
+                        color: whiteColor,
+                        size: 64,
+                      ),
+                    ),
+                    if (_hasPlaylist) ...[
+                      const SizedBox(width: 30),
+                      _navButton(Icons.skip_next_rounded,
+                          _hasNext ? () => _goTo(_index + 1) : null),
+                    ],
+                  ],
                 ),
               ),
               Positioned(
@@ -488,8 +609,64 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
                 ),
               ),
             ],
+            // Compte à rebours "morceau suivant" (bas-droite), visible même
+            // quand les contrôles sont masqués.
+            if (_countdown > 0)
+              Positioned(
+                right: 16,
+                bottom: 24,
+                child: _autoNextBanner(),
+              ),
           ],
         ),
+    );
+  }
+
+  Widget _navButton(IconData icon, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Icon(icon,
+          color: onTap == null ? Colors.white24 : whiteColor, size: 44),
+    );
+  }
+
+  Widget _autoNextBanner() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: blackColor.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: goldSecondary.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Suivant dans $_countdown s',
+              style: const TextStyle(
+                  color: whiteColor, fontSize: 13, fontWeight: FontWeight.w600)),
+          const SizedBox(width: 10),
+          GestureDetector(
+            onTap: () => _goTo(_index + 1),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: goldPrimary,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text('Lire',
+                  style: TextStyle(
+                      color: midnightPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800)),
+            ),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: _cancelAutoNext,
+            child: const Icon(Icons.close_rounded, color: whiteColor, size: 20),
+          ),
+        ],
+      ),
     );
   }
 }
