@@ -1207,6 +1207,9 @@ async function pageLeads() {
     { label: 'Téléphone', render: (r) => esc(r.phone || '—') },
     { label: 'Message', render: (r) => esc(r.message || '') },
     { label: 'Statut', render: (r) => badge(r.status) + (r.approved_subscription_id ? `<div class="em">${esc(subName(r.approved_subscription_id) || '—')}</div>` : '') },
+    { label: 'Signature', render: (r) => r.signature_data
+      ? `<img src="${r.signature_data}" alt="signature" title="Contrat signé${r.signed_at ? ' le ' + new Date(r.signed_at).toLocaleDateString('fr-FR') : ''}" onclick="window.open(this.src,'_blank')" style="height:34px;max-width:130px;background:#fff;border:1px solid var(--line);border-radius:6px;cursor:zoom-in;object-fit:contain">`
+      : '<span class="em">—</span>' },
     { label: 'Date', render: (r) => fmtDate(r.created_at) },
     {
       label: 'Action', render: (r) => {

@@ -276,8 +276,18 @@ router.post('/contact-leads', (req, res) => {
       email: !b.email ? ["L'email est requis."] : undefined,
     });
   }
-  db.prepare('INSERT INTO contact_leads (name, email, phone, message) VALUES (?, ?, ?, ?)')
-    .run(b.name, b.email, b.phone || null, b.message || null);
+  // Signature dessinée au doigt (data URL PNG). On ne stocke qu'une vraie
+  // image raisonnable (< ~300 Ko) ; sinon on ignore (protection).
+  let signature = null;
+  if (typeof b.signature === 'string' && b.signature.startsWith('data:image/') && b.signature.length < 300000) {
+    signature = b.signature;
+  }
+  db.prepare(
+    'INSERT INTO contact_leads (name, email, phone, message, signature_data, contract_version, signed_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).run(
+    b.name, b.email, b.phone || null, b.message || null,
+    signature, (b.contract_version || null), signature ? new Date().toISOString() : null,
+  );
   return res.json({ status: 'success', message: 'Candidature envoyée.' });
 });
 

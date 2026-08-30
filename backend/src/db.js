@@ -617,6 +617,11 @@ function init() {
     // (voir POST /admin/contact-leads/:id/approve et /sign-up).
     "ALTER TABLE contact_leads ADD COLUMN status TEXT DEFAULT 'pending'",
     "ALTER TABLE contact_leads ADD COLUMN approved_subscription_id INTEGER",
+    // Signature du contrat depuis la page « postuler » (dessinée au doigt) :
+    // image PNG (data URL), version du contrat acceptée, et horodatage.
+    "ALTER TABLE contact_leads ADD COLUMN signature_data TEXT",
+    "ALTER TABLE contact_leads ADD COLUMN contract_version TEXT",
+    "ALTER TABLE contact_leads ADD COLUMN signed_at TEXT",
     // Code de parrainage apporteur : l'artiste le valide (page /rejoindre) pour
     // être rattaché automatiquement à l'apporteur + démarrer l'offre (3 mois).
     "ALTER TABLE apporteurs ADD COLUMN code TEXT",

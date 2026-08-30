@@ -33,8 +33,10 @@ app.use('/api/stripe/webhook', express.raw({ type: '*/*' }), stripeWebhookRoutes
 
 // L'app Flutter envoie soit du form-urlencoded (Map<String,String>),
 // soit du JSON, soit du multipart (uploads). On gère les trois.
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Limite relevée à 1 Mo : la candidature artiste inclut une signature PNG
+// (dessinée au doigt, data URL) qui dépasse la limite par défaut de 100 Ko.
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // ── Rate limiting anti-brute-force ────────────────────────────────────────
 // Protège les endpoints d'authentification (login, inscription, OTP, reset)
