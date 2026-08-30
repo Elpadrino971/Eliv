@@ -665,3 +665,31 @@ body{background:radial-gradient(120% 80% at 50% -10%,#0e2438 0%,var(--bg) 55%) f
   .promo-band::before,.promo-band h1 .grad{animation:none}
   .promo-band > .reveal > *{opacity:1;animation:none}
 }
+
+/* ═══ HERO v2 — fond concert cinématique + waveform + cartes en rangée ═══ */
+/* Fond concert plein cadre (au lieu de letterboxé) + ambiance dorée/vignette */
+.hero-carousel{height:64vh;min-height:440px;max-height:720px}
+.hero-carousel__slide{background-size:cover}
+.hero-carousel::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:
+    radial-gradient(120% 75% at 50% 18%, rgba(230,199,106,.12), transparent 55%),
+    linear-gradient(180deg, rgba(5,10,20,.30) 0%, rgba(5,10,20,.10) 38%, rgba(5,10,20,.92) 100%)}
+
+/* Waveform dorée qui défile (fil audio) */
+.hero-wave{width:100%;max-width:1100px;height:78px;margin:6px auto 26px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.hero-wave svg{width:100%;height:100%;display:block}
+.hero-wave path{fill:none;stroke:url(#wvg);stroke-width:2.4;stroke-linecap:round;
+  filter:drop-shadow(0 0 5px rgba(230,199,106,.7))}
+.hero-wave__g{animation:waveScroll 16s linear infinite}
+@keyframes waveScroll{to{transform:translateX(-1200px)}}
+
+/* Avantages : rangée de cartes (icône en haut) façon maquette */
+.promo-band .hero-perks{max-width:980px;grid-template-columns:repeat(4,1fr)}
+.hero-perks li{flex-direction:column;align-items:center;text-align:center;gap:9px;padding:18px 14px}
+.hero-perks li::before{font-size:1.4rem;line-height:1}
+@media(max-width:780px){.promo-band .hero-perks{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:440px){.promo-band .hero-perks{grid-template-columns:1fr;max-width:360px}}
+
+@media (prefers-reduced-motion:reduce){ .hero-wave__g{animation:none} }
