@@ -619,22 +619,29 @@ a{color:inherit;text-decoration:none}
 <script>
 (function(){
   var clamp=function(v,a,b){return Math.max(a,Math.min(b,v));};
-  // ── HLS : attache une source à une vidéo ──
-  function attachHls(v){
-    if(v.dataset.loaded) return; v.dataset.loaded='1';
+  // ── HLS : attache une source à une vidéo (play=false → charge sans lire) ──
+  function attachHls(v,play){
+    if(v.dataset.loaded){ if(play!==false) v.play().catch(function(){}); return; }
+    v.dataset.loaded='1';
     var src=v.dataset.src; if(!src) return;
     if(v.canPlayType('application/vnd.apple.mpegurl')){ v.src=src; }
     else if(window.Hls && window.Hls.isSupported()){ var h=new Hls({capLevelToPlayerSize:true}); h.loadSource(src); h.attachMedia(v); }
-    v.play().catch(function(){});
+    if(play!==false) v.play().catch(function(){});
   }
   // Hero : charge tout de suite les 3 vidéos
-  document.querySelectorAll('.chapter-video video[data-src]').forEach(attachHls);
+  document.querySelectorAll('.chapter-video video[data-src]').forEach(function(v){attachHls(v);});
   // Showcase (concert, clip, filmstrip) : charge à l'arrivée dans le viewport
   var lazyVids=document.querySelectorAll('.show video[data-src], .strip video[data-src]');
   if('IntersectionObserver' in window){
     var vio=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){attachHls(en.target);vio.unobserve(en.target);}});},{rootMargin:'200px'});
     lazyVids.forEach(function(v){vio.observe(v);});
-  }else{ lazyVids.forEach(attachHls); }
+  }else{ lazyVids.forEach(function(v){attachHls(v);}); }
+  // Explicatives : PRÉ-charge sans lire (pour que le clic démarre le son dans le geste)
+  var expVids=document.querySelectorAll('.exp video[data-src]');
+  if('IntersectionObserver' in window){
+    var eio=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){attachHls(en.target,false);eio.unobserve(en.target);}});},{rootMargin:'400px'});
+    expVids.forEach(function(v){eio.observe(v);});
+  }else{ expVids.forEach(function(v){attachHls(v,false);}); }
 
   var hero=document.getElementById('scrollhero');
   var vids=[].map.call(document.querySelectorAll('.chapter-video'),function(e){return e;});
@@ -682,10 +689,12 @@ a{color:inherit;text-decoration:none}
     var vid=exp.querySelector('video'), play=exp.querySelector('.exp__play'), full=exp.querySelector('.exp__full'), frame=exp.querySelector('.exp__frame');
     if(!vid) return;
     function start(){
-      attachHls(vid);
+      attachHls(vid,false); // source déjà pré-chargée : pas de re-lecture parasite
       document.querySelectorAll('video').forEach(function(o){ if(o!==vid) o.muted=true; });
       document.querySelectorAll('.sound-btn').forEach(function(b){ b.innerHTML=ICON_MUTE; b.setAttribute('aria-label','Activer le son'); });
-      vid.muted=false; vid.play().catch(function(){});
+      vid.muted=false; vid.volume=1; vid.removeAttribute('muted');
+      var p=vid.play();
+      if(p&&p.catch) p.catch(function(){ vid.muted=false; vid.play().catch(function(){}); });
       exp.classList.add('playing');
     }
     if(play) play.addEventListener('click',function(e){ e.preventDefault(); start(); });
