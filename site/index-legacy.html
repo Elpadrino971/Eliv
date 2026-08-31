@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0a1828" />
+<title>Vybzzz — Diffuse tes concerts en live, gratuitement</title>
+<meta name="description" content="Diffuse tes concerts en live sur Vybzzz. Entrée gratuite, sans abonnement : tu gardes 50% de tes revenus (billets, cadeaux, pourboires). Studio Pro complet." />
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
+<link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body data-page="home">
+<div class="grain" aria-hidden="true"></div>
+<div class="aurora" aria-hidden="true"><span class="aurora__blob a1"></span><span class="aurora__blob a2"></span><span class="aurora__blob a3"></span></div>
+<div class="cursor" id="cursor"></div><div class="cursor-dot" id="cursorDot"></div>
+<div class="scroll-progress" id="scrollProgress"></div>
+<div id="site-header"></div>
+
+<!-- ===== Bandeau visuel : carousel de marque, seul, sous le header ===== -->
+<section class="hero-carousel" id="heroCarousel">
+  <div class="hero-carousel__slide active" style="background-image:url('assets/hero-bg-1.png')"></div>
+  <div class="hero-carousel__slide" style="background-image:url('assets/hero-bg-2.png')"></div>
+  <div class="hero-carousel__slide" style="background-image:url('assets/hero-bg-3.png')"></div>
+  <div class="hero-carousel__slide" style="background-image:url('assets/hero-bg-4.png')"></div>
+  <div class="hero-carousel__slide" style="background-image:url('assets/hero-bg-5.png')"></div>
+</section>
+
+<!-- ===== Promotion (entrée gratuite) ===== -->
+<section class="promo-band">
+  <div class="reveal">
+    <span class="rec-hero__badge" data-i18n="hero_badge">✦ Nouveau — l'entrée est gratuite</span>
+    <h1 data-i18n-html="hero_title_html">Diffuse tes concerts en live. <span class="grad">L'entrée est gratuite.</span></h1>
+
+    <p class="lead" data-i18n-html="hero_lead_html">Pas d'abonnement, pas de carte bancaire. Tu gardes <strong>50%</strong> de tes revenus — billets, cadeaux, pourboires. Apple et Google prennent leurs frais, on partage le reste, et tu gardes la plus grosse part.</p>
+
+    <div class="rec-hero__actions">
+      <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_reserve">Créer mon compte artiste</span></a>
+      <a href="dashboard.html" class="btn btn--outline btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_studio">Voir le Studio Pro</span></a>
+    </div>
+    <p class="hero-reassure" data-i18n="reassure">🔒 Gratuit · Sans engagement · Tu gardes la plus grosse part</p>
+
+    <!-- Waveform dorée animée (fil audio, façon live) -->
+    <div class="hero-wave" aria-hidden="true">
+      <svg viewBox="0 0 1200 90" preserveAspectRatio="none">
+        <defs><linearGradient id="wvg" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#8a6a1f"/><stop offset=".5" stop-color="#e6c76a"/><stop offset="1" stop-color="#8a6a1f"/>
+        </linearGradient></defs>
+        <g class="hero-wave__g">
+          <path d="M 0 40.3 L 8 36 L 16 34.1 L 24 35.2 L 32 37.2 L 40 37.8 L 48 37.4 L 56 38.1 L 64 41.7 L 72 46.6 L 80 49.2 L 88 47.7 L 96 43.8 L 104 41.3 L 112 42.5 L 120 45.7 L 128 47.6 L 136 47.2 L 144 47.2 L 152 50.8 L 160 57.7 L 168 63.8 L 176 64.7 L 184 60.3 L 192 54.7 L 200 51.9 L 208 51.8 L 216 50.7 L 224 46.1 L 232 40.2 L 240 38 L 248 41.7 L 256 48 L 264 51 L 272 47.9 L 280 41.5 L 288 37 L 296 36.2 L 304 35.7 L 312 31.5 L 320 24 L 328 18.7 L 336 20.7 L 344 29.5 L 352 38.8 L 360 43.1 L 368 42.7 L 376 42.6 L 384 46.3 L 392 51.6 L 400 52.8 L 408 47.7 L 416 40.5 L 424 38.6 L 432 44.7 L 440 54.6 L 448 61.3 L 456 62.5 L 464 61.8 L 472 64.4 L 480 69.9 L 488 72.5 L 496 66.9 L 504 54.9 L 512 43.9 L 520 40 L 528 42.5 L 536 45 L 544 43.2 L 552 39 L 560 38.1 L 568 42.8 L 576 48.6 L 584 48.3 L 592 39.5 L 600 27.8 L 608 20.8 L 616 21.1 L 624 24.5 L 632 25.2 L 640 23.1 L 648 23.4 L 656 30.8 L 664 43.3 L 672 53.2 L 680 54.8 L 688 49.8 L 696 45 L 704 45.5 L 712 49.4 L 720 51.2 L 728 48.4 L 736 45.1 L 744 47.4 L 752 56.8 L 760 67.6 L 768 72.5 L 776 69.4 L 784 63 L 792 59.1 L 800 58.6 L 808 57 L 816 50.2 L 824 40.3 L 832 33.6 L 840 34.6 L 848 41 L 856 46.3 L 864 45.9 L 872 41.5 L 880 38.3 L 888 38.9 L 896 40.2 L 904 37.5 L 912 30.1 L 920 22.7 L 928 21.1 L 936 26.5 L 944 34.3 L 952 39.3 L 960 40.5 L 968 41.6 L 976 45.7 L 984 51.8 L 992 55 L 1000 52.7 L 1008 46.9 L 1016 43 L 1024 44.2 L 1032 48.7 L 1040 52.4 L 1048 52.9 L 1056 52.3 L 1064 53.7 L 1072 57.8 L 1080 61.1 L 1088 60.1 L 1096 54.6 L 1104 48.1 L 1112 44.4 L 1120 44 L 1128 44.2 L 1136 42.7 L 1144 40.1 L 1152 39 L 1160 41 L 1168 44.5 L 1176 46.3 L 1184 44.8 L 1192 41.3 L 1200 38.8"/>
+          <path transform="translate(1200,0)" d="M 0 40.3 L 8 36 L 16 34.1 L 24 35.2 L 32 37.2 L 40 37.8 L 48 37.4 L 56 38.1 L 64 41.7 L 72 46.6 L 80 49.2 L 88 47.7 L 96 43.8 L 104 41.3 L 112 42.5 L 120 45.7 L 128 47.6 L 136 47.2 L 144 47.2 L 152 50.8 L 160 57.7 L 168 63.8 L 176 64.7 L 184 60.3 L 192 54.7 L 200 51.9 L 208 51.8 L 216 50.7 L 224 46.1 L 232 40.2 L 240 38 L 248 41.7 L 256 48 L 264 51 L 272 47.9 L 280 41.5 L 288 37 L 296 36.2 L 304 35.7 L 312 31.5 L 320 24 L 328 18.7 L 336 20.7 L 344 29.5 L 352 38.8 L 360 43.1 L 368 42.7 L 376 42.6 L 384 46.3 L 392 51.6 L 400 52.8 L 408 47.7 L 416 40.5 L 424 38.6 L 432 44.7 L 440 54.6 L 448 61.3 L 456 62.5 L 464 61.8 L 472 64.4 L 480 69.9 L 488 72.5 L 496 66.9 L 504 54.9 L 512 43.9 L 520 40 L 528 42.5 L 536 45 L 544 43.2 L 552 39 L 560 38.1 L 568 42.8 L 576 48.6 L 584 48.3 L 592 39.5 L 600 27.8 L 608 20.8 L 616 21.1 L 624 24.5 L 632 25.2 L 640 23.1 L 648 23.4 L 656 30.8 L 664 43.3 L 672 53.2 L 680 54.8 L 688 49.8 L 696 45 L 704 45.5 L 712 49.4 L 720 51.2 L 728 48.4 L 736 45.1 L 744 47.4 L 752 56.8 L 760 67.6 L 768 72.5 L 776 69.4 L 784 63 L 792 59.1 L 800 58.6 L 808 57 L 816 50.2 L 824 40.3 L 832 33.6 L 840 34.6 L 848 41 L 856 46.3 L 864 45.9 L 872 41.5 L 880 38.3 L 888 38.9 L 896 40.2 L 904 37.5 L 912 30.1 L 920 22.7 L 928 21.1 L 936 26.5 L 944 34.3 L 952 39.3 L 960 40.5 L 968 41.6 L 976 45.7 L 984 51.8 L 992 55 L 1000 52.7 L 1008 46.9 L 1016 43 L 1024 44.2 L 1032 48.7 L 1040 52.4 L 1048 52.9 L 1056 52.3 L 1064 53.7 L 1072 57.8 L 1080 61.1 L 1088 60.1 L 1096 54.6 L 1104 48.1 L 1112 44.4 L 1120 44 L 1128 44.2 L 1136 42.7 L 1144 40.1 L 1152 39 L 1160 41 L 1168 44.5 L 1176 46.3 L 1184 44.8 L 1192 41.3 L 1200 38.8"/>
+        </g>
+      </svg>
+    </div>
+
+    <ul class="hero-perks">
+      <li data-i18n-html="perk1_html">Tu gardes <b>50%</b> de tes revenus (à 15% de frais store), dès le 1ᵉʳ live</li>
+      <li data-i18n-html="perk2_html"><b>Zéro abonnement</b>, zéro avance — tu ne partages que ce que tu gagnes</li>
+      <li data-i18n-html="perk3_html"><b>Studio Pro</b> complet : lives, billetterie, cadeaux</li>
+      <li data-i18n-html="perk4_html"><b>90 min de live incluses</b> chaque mois</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== Storytelling de marque : Pourquoi Vybzzz ===== -->
+<section class="story" id="pourquoi">
+  <div class="story__inner">
+    <span class="eyebrow reveal" data-i18n="story_eyebrow">Notre histoire</span>
+    <h2 class="story__title reveal" data-i18n-html="story_title_html">Créée pour ne plus jamais <span class="grad">manquer</span> un artiste.</h2>
+    <p class="story__lead reveal" data-i18n="story_lead">En 2009, j'avais une place pour « This Is It ». Je n'y suis jamais allé — l'artiste nous a quittés avant. Depuis, la même blessure revient : Prince, Dolores O'Riordan, Chester Bennington, Peetah Morgan… des artistes que je rêvais de voir sur scène, partis trop tôt. Trop d'artistes ne sont jamais vraiment vus ni entendus, et un moment live, une fois passé, ne revient jamais.</p>
+    <p class="story__mission reveal" data-i18n-html="story_mission_html">Vybzzz est né de là : <strong>pour ne plus jamais perdre ces instants</strong> — que chaque artiste soit vu et entendu, et qu'aucun fan ne manque sa chance d'y être.</p>
+
+    <div class="story__cols">
+      <div class="story__col reveal"><h3 data-i18n="story_artists_t">Pour les artistes</h3><p data-i18n="story_artists_p">Ta scène, ton public, tes revenus — sans salle, sans intermédiaire. Tu passes en live, tes fans envoient des cadeaux et achètent leur place, et tu es payé en direct.</p></div>
+      <div class="story__col reveal"><h3 data-i18n="story_fans_t">Pour les fans</h3><p data-i18n="story_fans_p">Sois au premier rang de tes artistes préférés, soutiens-les vraiment avec des cadeaux en live, et ne rate plus jamais un concert — où que tu sois.</p></div>
+    </div>
+    <p class="story__close reveal" data-i18n-html="story_close_html">Le prochain grand concert n'est pas à l'autre bout du monde. Il commence <strong>maintenant</strong>, dans ta poche. <span class="grad">Télécharge Vybzzz.</span></p>
+  </div>
+</section>
+
+<!-- ===== Vidéo de présentation : pleine largeur (20px des bords) ===== -->
+<div class="explainer-video-wrap">
+  <div class="explainer-video reveal">
+    <video class="explainer-video__el" data-src="https://stream.mux.com/Tau4rdI8m5eXWU2rpiJ02V8ZqB4Ni3eLP3tHTZ947t6g.m3u8" autoplay muted loop playsinline></video>
+    <button class="feed-sound explainer-video__sound" aria-label="Activer le son" data-cursor="hover">🔇</button>
+  </div>
+</div>
+
+<main class="page" style="padding-top:74px">
+  <!-- ===== Avantages ===== -->
+  <div class="page__head reveal" id="avantages">
+    <span class="eyebrow" data-i18n="av_eyebrow">Ce que tu obtiens</span>
+    <h1 data-i18n-html="av_title_html">Le deal <span class="grad">Vybzzz</span>.</h1>
+    <p data-i18n="av_p">Une plateforme gratuite, pensée pour te faire gagner de l'argent et de la visibilité — sans jamais te faire payer pour entrer.</p>
+  </div>
+  <div class="benefits">
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">💰</div><h3 data-i18n="ben1_t">Tu gardes 50%</h3><p data-i18n="ben1_p">Apple et Google prennent leurs frais, on partage le reste : tu gardes 50% du prix payé par le fan (billets, cadeaux, pourboires). La plus grosse part, c'est la tienne.</p></article>
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🆓</div><h3 data-i18n="ben2_t">Entrée gratuite</h3><p data-i18n="ben2_p">Aucun abonnement, aucune carte bancaire, aucun engagement. Tu ne paies rien pour diffuser — tu partages seulement ce que tu gagnes.</p></article>
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🎛️</div><h3 data-i18n="ben3_t">Studio Pro complet</h3><p data-i18n="ben3_p">Crée tes événements, passe en live, modère le chat et suis tes revenus — depuis le web ou l'app.</p></article>
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🎥</div><h3 data-i18n="ben4_t">90 min de live incluses</h3><p data-i18n="ben4_p">Chaque mois, un quota de live est inclus. Un live qui rapporte finance son coût — tes concerts qui marchent sont toujours gratuits.</p></article>
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🏦</div><h3 data-i18n="ben5_t">Retraits simples</h3><p data-i18n="ben5_p">Versements via Stripe ou compte bancaire, paliers flexibles, délai moyen 24h.</p></article>
+    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">⚡</div><h3 data-i18n="ben6_t">Payé en direct</h3><p data-i18n="ben6_p">Tes fans achètent leur place et envoient des cadeaux pendant le live — tu vois tes revenus monter en temps réel.</p></article>
+  </div>
+
+  <!-- ===== Tarifs ===== -->
+  <div class="page__head reveal" id="pricing">
+    <span class="eyebrow" data-i18n="pricing_eyebrow">La règle, en une ligne</span>
+    <h1 data-i18n-html="pricing_title_html">Simple : <span class="grad">tu gardes 50%</span>.</h1>
+    <p data-i18n="pricing_p">Aucun abonnement. Sur chaque montant payé par un fan : les frais store (~15%) sont prélevés, tu gardes 50%, Vybzzz garde 35%. Un ticket à 10 € te rapporte 5 €.</p>
+  </div>
+  <div class="freedeal glass reveal" style="max-width:520px;margin:0 auto;text-align:center;padding:34px 28px;border-radius:var(--radius)">
+    <div class="plan__price" style="font-size:2.8rem;margin-bottom:6px" data-i18n="free_word">Gratuit</div>
+    <div class="plan__comm" style="margin-bottom:18px" data-i18n-html="free_sub">Aucun abonnement · tu gardes <b>50%</b></div>
+    <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_reserve">Créer mon compte artiste</span></a>
+  </div>
+
+  <!-- ===== Studio preview ===== -->
+  <h2 class="section-title" data-i18n="studio_title">Ton tableau de bord créateur</h2>
+  <div class="studio-preview">
+    <div class="reveal">
+      <p style="color:var(--muted);max-width:420px;margin-bottom:18px" data-i18n="studio_p">Revenus en temps réel, ventes de tickets, cadeaux reçus, retraits Stripe. Le même outil que tu utiliseras au quotidien.</p>
+      <a href="dashboard.html" class="btn btn--gold magnetic" data-cursor="hover"><span data-i18n="studio_cta">Explorer le Studio Pro →</span></a>
+    </div>
+    <div class="studio-preview__frame reveal tilt" data-cursor="hover">
+      <div class="studio-preview__bar"><span></span><span></span><span></span></div>
+      <div class="studio-preview__body">
+        <div class="mini-kpis">
+          <div class="mini-kpi"><b>$8 140</b><small>Revenu 7j</small></div>
+          <div class="mini-kpi"><b>1 284</b><small>Tickets</small></div>
+          <div class="mini-kpi"><b>312K</b><small>Arena Points</small></div>
+        </div>
+        <div class="mini-chart"><i style="height:35%"></i><i style="height:55%"></i><i style="height:42%"></i><i style="height:70%"></i><i style="height:60%"></i><i style="height:85%"></i><i style="height:100%"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== How it works ===== -->
+  <h2 class="section-title" data-i18n="steps_title">Rejoindre les fondateurs</h2>
+  <div class="steps">
+    <div class="step reveal"><span class="step__n">01</span><h3 data-i18n="step1_t">Candidate</h3><p data-i18n="step1_p">Remplis le formulaire créateur (2 min) : nom de scène, genre, expérience.</p></div>
+    <div class="step reveal"><span class="step__n">02</span><h3 data-i18n="step2_t">Configure ton studio</h3><p data-i18n="step2_p">On valide ton profil et on active ton Studio Pro : lives, billetterie, cadeaux.</p></div>
+    <div class="step reveal"><span class="step__n">03</span><h3 data-i18n="step3_t">Passe en live</h3><p data-i18n="step3_p">On valide ton profil, on configure ton studio, et tu crées ton premier événement.</p></div>
+  </div>
+
+  <!-- ===== Boîte à idées ===== -->
+  <h2 class="section-title" data-i18n="idea_title">Boîte à idées</h2>
+  <div class="ideabox glass reveal">
+    <p style="color:var(--muted);margin-bottom:14px" data-i18n="idea_p">Une fonctionnalité qui te manque ? Dis-nous tout — les fondateurs façonnent Vybzzz.</p>
+    <textarea id="ideaText" rows="3" data-i18n-ph="idea_ph" placeholder="Ton idée pour améliorer Vybzzz…"></textarea>
+    <button class="btn btn--gold" id="ideaBtn" data-cursor="hover" style="margin-top:12px"><span data-i18n="idea_send">Envoyer mon idée</span></button>
+  </div>
+</main>
+
+<!-- ===== CTA ===== -->
+<section class="cta-band">
+  <div class="cta-band__inner reveal">
+    <h2 data-i18n-html="cta_title_html">Prêt à monter sur <span class="grad">scène</span> ?</h2>
+    <p data-i18n="cta_p">L'entrée est gratuite. Crée ton compte, passe en live, garde 50% de ce que tu gagnes.</p>
+    <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_btn">Créer mon compte artiste</span></a>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16" integrity="sha384-5E8B0pTlZZJMabWpC0fyYf6OUpe15jJij34BqBAh4NXoHAlLNOjCPRrwtOXOQFAn" crossorigin="anonymous"></script>
+<script src="data.js"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+<script>
+  // Parrainage (-10% par artiste, 10 = gratuit) + boîte à idées
+  (function () {
+    var UI = window.VYBZZZ_UI || { toast: function (m) { alert(m); } };
+    var ladder = document.getElementById("refLadder"), invited = 0;
+    function renderLadder() {
+      if (!ladder) return;
+      var h = "";
+      for (var i = 1; i <= 10; i++) h += '<span class="refslot ' + (i <= invited ? "on" : "") + '">' + (i === 10 ? "🎁 Gratuit" : "−" + (i * 10) + "%") + "</span>";
+      ladder.innerHTML = h;
+    }
+    renderLadder();
+    var refBtn = document.getElementById("refBtn"), refArtist = document.getElementById("refArtist"), refStatus = document.getElementById("refStatus");
+    refBtn && refBtn.addEventListener("click", function () {
+      if (invited >= 10) { UI.toast("Maximum atteint — abonnement gratuit à vie 🎉"); return; }
+      invited++; renderLadder();
+      if (refStatus) refStatus.textContent = invited + " invité" + (invited > 1 ? "s" : "") + " · −" + (invited * 10) + "%";
+      UI.toast(invited >= 10 ? "10 artistes ! Abonnement GRATUIT à vie 🎉" : "Artiste invité · −" + (invited * 10) + "% sur ton abonnement");
+      if (refArtist) refArtist.value = "";
+    });
+    // Lien de parrainage : copier + partager
+    var link = document.getElementById("refLink");
+    var url = link ? link.value : "https://vybzzz.com/?ref=nova";
+    var msg = "Rejoins-moi sur Vybzzz, la scène live des artistes 🎤 " + url;
+    var wa = document.getElementById("refWa"); if (wa) wa.href = "https://wa.me/?text=" + encodeURIComponent(msg);
+    var x = document.getElementById("refX"); if (x) x.href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent("Rejoins-moi sur Vybzzz 🎤") + "&url=" + encodeURIComponent(url);
+    var mail = document.getElementById("refMail"); if (mail) mail.href = "mailto:?subject=" + encodeURIComponent("Rejoins-moi sur Vybzzz") + "&body=" + encodeURIComponent(msg);
+    var copy = document.getElementById("refCopy");
+    copy && copy.addEventListener("click", function () {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () { UI.toast("Lien de parrainage copié ✓"); }, function () { fallbackCopy(); });
+      } else { fallbackCopy(); }
+      function fallbackCopy() { if (link) { link.removeAttribute("readonly"); link.select(); try { document.execCommand("copy"); } catch (e) {} link.setAttribute("readonly", ""); } UI.toast("Lien de parrainage copié ✓"); }
+    });
+    var ideaBtn = document.getElementById("ideaBtn");
+    ideaBtn && ideaBtn.addEventListener("click", function () {
+      var t = document.getElementById("ideaText");
+      if (t && t.value.trim()) { UI.toast("Merci ! Idée envoyée 💡"); t.value = ""; }
+      else { UI.toast("Écris ton idée d'abord 🙂"); }
+    });
+  })();
+
+  // Vidéo explicative (3 emplacements) : muette + en boucle par défaut
+  // (autoplay navigateur), bouton pour activer le son indépendamment sur
+  // chaque instance.
+  (function () {
+    // Mux ne sert pas de rendu MP4 direct pour cet asset -> lecture HLS
+    // (même pattern que le feed, cf. attachHls dans app.js) : Safari lit le
+    // .m3u8 nativement, les autres navigateurs passent par hls.js.
+    function attachHls(video, src) {
+      if (video.canPlayType("application/vnd.apple.mpegurl")) { video.src = src; }
+      else if (window.Hls && window.Hls.isSupported()) { var h = new Hls(); h.loadSource(src); h.attachMedia(video); }
+      else { video.src = src; }
+    }
+    document.querySelectorAll(".explainer-video").forEach(function (wrap) {
+      var video = wrap.querySelector(".explainer-video__el");
+      var btn = wrap.querySelector(".explainer-video__sound");
+      if (!video || !btn) return;
+      if (video.dataset.src) attachHls(video, video.dataset.src);
+      btn.addEventListener("click", function () {
+        video.muted = !video.muted;
+        btn.textContent = video.muted ? "🔇" : "🔊";
+        btn.classList.toggle("on", !video.muted);
+        btn.setAttribute("aria-label", video.muted ? "Activer le son" : "Couper le son");
+      });
+    });
+  })();
+
+  // Carousel du fond du hero : défile automatiquement entre les visuels
+  (function () {
+    var slides = document.querySelectorAll("#heroCarousel .hero-carousel__slide");
+    if (slides.length < 2) return;
+    var i = 0;
+    setInterval(function () {
+      slides[i].classList.remove("active");
+      i = (i + 1) % slides.length;
+      slides[i].classList.add("active");
+    }, 5000);
+  })();
+</script>
+</body>
+</html>

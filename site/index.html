@@ -1,250 +1,643 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#0a1828" />
-<title>Vybzzz — Diffuse tes concerts en live, gratuitement</title>
-<meta name="description" content="Diffuse tes concerts en live sur Vybzzz. Entrée gratuite, sans abonnement : tu gardes 50% de tes revenus (billets, cadeaux, pourboires). Studio Pro complet." />
-<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
-<link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
-<link rel="stylesheet" href="styles.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VybzzZ — La scène est à toi</title>
+<meta name="description" content="VybzzZ — diffuse tes concerts en live. Accès privé, scène ouverte.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070C18; --ink:#0A1226; --ivory:#F4EFE3; --muted:#B9C0D0;
+  --gold:#E6C76A; --gold-2:#C6A75E; --line:rgba(230,199,106,.28);
+  --serif:"Playfair Display",Georgia,serif; --sans:"Inter",system-ui,sans-serif;
+  --ease:cubic-bezier(.22,.7,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ivory);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img,video{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+.serif{font-family:var(--serif)}
+.eyebrow{font-family:var(--sans);font-weight:600;font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
+.eyebrow--line{display:inline-flex;align-items:center;gap:12px}
+.eyebrow--line::before{content:"";width:34px;height:1px;background:var(--gold);opacity:.7}
+
+/* ── NAV pilule flottante ── */
+.pillnav{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:60;
+  display:flex;align-items:center;gap:6px;padding:8px 8px 8px 18px;
+  background:rgba(12,18,38,.55);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.12);border-radius:99px;box-shadow:0 12px 40px -12px rgba(0,0,0,.6)}
+.pillnav__brand{font-family:var(--serif);font-weight:800;letter-spacing:.18em;font-size:1.02rem;padding-right:12px;display:flex;align-items:center;gap:8px}
+.pillnav__brand .dot{color:var(--gold)}
+.pillnav__links{display:flex;gap:22px;padding:0 16px;border-left:1px solid rgba(255,255,255,.12)}
+.pillnav__links a{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);transition:color .3s}
+.pillnav__links a:hover{color:var(--ivory)}
+.pillnav__cta{margin-left:6px;padding:10px 20px;border-radius:99px;background:var(--gold);color:#0A1226;
+  font-weight:700;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;transition:transform .3s,box-shadow .3s}
+.pillnav__cta:hover{transform:translateY(-2px);box-shadow:0 10px 26px -8px rgba(230,199,106,.7)}
+.menupill{position:fixed;top:20px;right:22px;z-index:60;display:flex;align-items:center;gap:10px;
+  padding:12px 20px;border-radius:99px;background:rgba(12,18,38,.55);backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.14);font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ivory);cursor:pointer}
+.menupill .plus{font-size:1.1rem;line-height:1;color:var(--gold)}
+@media(max-width:900px){.pillnav__links{display:none}.menupill{display:none}}
+
+/* ── HERO scrollytelling (3 vidéos qui s'enchaînent) ── */
+.scrollhero{position:relative;height:340vh}
+.scrollhero__stage{position:sticky;top:0;height:100vh;overflow:hidden}
+.chapter-video{position:absolute;inset:0;opacity:0;will-change:opacity}
+.chapter-video video{width:100%;height:100%;object-fit:cover}
+.chapter-video__poster{position:absolute;inset:0;background-size:cover;background-position:center}
+.stage-scrim{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(7,12,24,.45) 0%,rgba(7,12,24,.15) 35%,rgba(7,12,24,.82) 100%)}
+.chapter{position:absolute;inset:0;opacity:0;will-change:opacity,transform;padding:clamp(80px,10vh,140px) clamp(24px,6vw,90px)}
+
+/* Chapitre 1 : gros titre bas-gauche */
+.ch1{display:flex;flex-direction:column;justify-content:flex-end}
+.ch1 .eyebrow{margin-bottom:18px}
+.ch1 h1{font-family:var(--serif);font-weight:800;line-height:.98;letter-spacing:-.01em;
+  font-size:clamp(3rem,9.5vw,8rem);text-shadow:0 4px 30px rgba(0,0,0,.5)}
+.ch1 h1 em{font-style:italic;font-weight:600;color:var(--gold)}
+.ch1 p{max-width:440px;margin-top:22px;color:var(--muted);font-size:.85rem;letter-spacing:.12em;text-transform:uppercase;line-height:1.7}
+
+/* Chapitre 2 : panneau verre à droite */
+.ch2{display:flex;align-items:center;justify-content:flex-end}
+.glass{max-width:560px;padding:clamp(28px,4vw,52px);border-radius:22px;
+  background:rgba(14,22,44,.42);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.12);box-shadow:0 30px 80px -30px rgba(0,0,0,.7)}
+.glass h2{font-family:var(--serif);font-weight:800;font-size:clamp(2.2rem,4.4vw,3.6rem);line-height:1.02;margin:16px 0 18px}
+.glass h2 em{font-style:italic;font-weight:600;color:var(--gold)}
+.glass p{color:var(--muted);line-height:1.7;font-size:1rem}
+.ghost-btn{display:inline-flex;align-items:center;gap:10px;margin-top:26px;padding:14px 26px;border-radius:12px;
+  border:1px solid var(--line);color:var(--ivory);font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;
+  transition:background .3s,border-color .3s,transform .3s}
+.ghost-btn:hover{background:rgba(230,199,106,.1);border-color:var(--gold);transform:translateY(-2px)}
+
+/* Chapitre 3 : titre + colonne de cartes verre */
+.ch3{display:flex;justify-content:space-between;align-items:center;gap:40px;flex-wrap:wrap}
+.ch3__title{font-family:var(--serif);font-weight:800;font-size:clamp(2.2rem,5.2vw,4.4rem);line-height:1.02}
+.ch3__title em{font-style:italic;font-weight:600}
+.ch3__cards{display:flex;flex-direction:column;gap:16px;max-width:520px;width:100%;margin-left:auto}
+.gcard{padding:22px 26px;border-radius:16px;background:rgba(14,22,44,.42);backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.1);transition:transform .35s var(--ease),border-color .35s,background .35s}
+.gcard:hover{transform:translateY(-4px);border-color:var(--line);background:rgba(230,199,106,.06)}
+.gcard .eyebrow{color:#8fb4ff;font-size:.66rem}
+.gcard h3{font-family:var(--serif);font-weight:700;font-size:1.5rem;margin:8px 0 8px}
+.gcard p{color:var(--muted);font-size:.94rem;line-height:1.55}
+
+/* Indicateurs bas */
+.scroll-hint{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:5;
+  font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);opacity:.8}
+.scroll-hint::after{content:"";display:block;width:1px;height:34px;margin:10px auto 0;
+  background:linear-gradient(var(--gold),transparent);animation:scrollPulse 2.2s var(--ease) infinite}
+@keyframes scrollPulse{0%{opacity:.2;transform:scaleY(.4)}50%{opacity:1;transform:scaleY(1)}100%{opacity:.2;transform:scaleY(.4)}}
+.corner-cta{position:fixed;right:24px;bottom:24px;z-index:55;padding:16px 30px;border-radius:14px;
+  background:rgba(12,18,38,.6);backdrop-filter:blur(12px);border:1px solid var(--line);
+  font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ivory);transition:background .3s,transform .3s}
+.corner-cta:hover{background:var(--gold);color:#0A1226;transform:translateY(-2px)}
+
+/* Section de clôture */
+.closing{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:120px 24px;background:radial-gradient(120% 90% at 50% 0%,rgba(230,199,106,.08),transparent 60%),var(--bg)}
+.closing h2{font-family:var(--serif);font-weight:800;font-size:clamp(2.2rem,6vw,4.4rem);line-height:1.05;max-width:16ch;margin-bottom:22px}
+.closing h2 em{font-style:italic;font-weight:600;color:var(--gold)}
+.closing p{color:var(--muted);max-width:52ch;margin-bottom:34px;line-height:1.7}
+.closing .pillnav__cta{padding:16px 34px;font-size:.8rem}
+@media(prefers-reduced-motion:reduce){.scroll-hint::after{animation:none}}
+
+/* ── Sections génériques ── */
+.section{padding:clamp(90px,12vh,150px) clamp(24px,7vw,110px);position:relative}
+.section__head{max-width:900px;margin:0 auto clamp(48px,7vh,88px);text-align:center}
+.section__head .eyebrow{display:inline-block;margin-bottom:20px}
+.section__head h2{font-family:var(--serif);font-weight:800;line-height:1.02;letter-spacing:-.01em;
+  font-size:clamp(2.4rem,6vw,5rem)}
+.section__head h2 em{font-style:italic;font-weight:600;color:var(--gold)}
+.section__head p{margin:22px auto 0;max-width:60ch;color:var(--muted);line-height:1.75;font-size:1.02rem}
+.reveal{opacity:0;transform:translateY(34px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.reveal.in{opacity:1;transform:none}
+
+/* ── FLEET : 3 scènes ── */
+.fleet{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.vessel{position:relative;border-radius:20px;overflow:hidden;min-height:520px;display:flex;flex-direction:column;justify-content:flex-end;
+  border:1px solid rgba(255,255,255,.1);isolation:isolate}
+.vessel__bg{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center;transition:transform 1.1s var(--ease)}
+.vessel:hover .vessel__bg{transform:scale(1.06)}
+.vessel::after{content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(180deg,rgba(7,12,24,.15) 0%,rgba(7,12,24,.55) 55%,rgba(7,12,24,.94) 100%)}
+.vessel__body{padding:30px 28px 34px}
+.vessel__no{font-family:var(--serif);font-style:italic;color:var(--gold);font-size:1rem;opacity:.85}
+.vessel h3{font-family:var(--serif);font-weight:800;font-size:1.9rem;margin:6px 0 12px;line-height:1.05}
+.vessel p{color:var(--muted);font-size:.95rem;line-height:1.6;margin-bottom:18px}
+.vessel__meta{display:flex;gap:18px;border-top:1px solid rgba(255,255,255,.12);padding-top:16px}
+.vessel__meta span{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ivory)}
+.vessel__meta span b{display:block;font-family:var(--serif);font-size:1.25rem;color:var(--gold);letter-spacing:0;text-transform:none;margin-top:3px}
+@media(max-width:900px){.fleet{grid-template-columns:1fr}.vessel{min-height:420px}}
+
+/* ── SHOWCASE : 3 grandes sections média ── */
+.showcase{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:clamp(64px,10vh,130px)}
+.show{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,5vw,70px);align-items:center}
+.show--rev .show__media{order:2}
+.show__txt .eyebrow{display:inline-block;margin-bottom:16px}
+.show__txt h3{font-family:var(--serif);font-weight:800;font-size:clamp(2.1rem,4.4vw,3.6rem);line-height:1.03;margin-bottom:18px}
+.show__txt h3 em{font-style:italic;font-weight:600;color:var(--gold)}
+.show__txt p{color:var(--muted);line-height:1.78;margin-bottom:24px;max-width:48ch}
+.show__meta{display:flex;gap:30px;margin-bottom:28px}
+.show__meta span{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.show__meta b{display:block;font-family:var(--serif);font-size:1.5rem;color:var(--gold);margin-top:5px;letter-spacing:0;text-transform:none}
+@media(max-width:900px){.show{grid-template-columns:1fr}.show--rev .show__media{order:0}}
+
+/* média paysage 16:10 */
+.media16{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:16/10;border:1px solid rgba(255,255,255,.12);
+  background:#0A1226 center/cover;box-shadow:0 40px 90px -34px rgba(0,0,0,.75)}
+.media16 video,.media16 img{width:100%;height:100%;object-fit:cover}
+.media16::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 52%,rgba(7,12,24,.55))}
+.play-badge{position:absolute;left:20px;bottom:18px;z-index:2;display:inline-flex;align-items:center;gap:10px;
+  padding:10px 18px;border-radius:99px;background:rgba(7,12,24,.55);backdrop-filter:blur(8px);border:1px solid var(--line);
+  font-size:.64rem;letter-spacing:.16em;text-transform:uppercase}
+.play-badge .tri{width:0;height:0;border-left:10px solid var(--gold);border-top:6px solid transparent;border-bottom:6px solid transparent}
+.live-dot{position:absolute;right:18px;top:18px;z-index:2;display:inline-flex;align-items:center;gap:8px;
+  padding:7px 14px;border-radius:99px;background:rgba(180,30,30,.28);border:1px solid rgba(255,120,120,.5);
+  font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#ffd9d9}
+.live-dot::before{content:"";width:8px;height:8px;border-radius:50%;background:#ff5a5a;box-shadow:0 0 10px #ff5a5a;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* clip vertical dans un cadre téléphone */
+.phone{position:relative;width:min(300px,78%);margin:0 auto;aspect-ratio:9/19;border-radius:36px;overflow:hidden;
+  border:8px solid #0d1528;box-shadow:0 44px 100px -32px rgba(0,0,0,.85);background:#000}
+.phone video,.phone img{width:100%;height:100%;object-fit:cover}
+.phone__notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:96px;height:22px;border-radius:99px;background:#0d1528;z-index:3}
+
+/* filmstrip : scroll horizontal de vidéos */
+.strip-wrap{position:relative;margin-top:8px}
+.strip{display:flex;gap:18px;overflow-x:auto;padding:6px 2px 20px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.strip::-webkit-scrollbar{height:6px}
+.strip::-webkit-scrollbar-track{background:transparent}
+.strip::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+.strip__item{flex:0 0 auto;width:236px;aspect-ratio:9/13;border-radius:18px;overflow:hidden;scroll-snap-align:start;
+  position:relative;border:1px solid rgba(255,255,255,.1);background:#0A1226 center/cover;transition:transform .4s var(--ease),border-color .4s}
+.strip__item:hover{transform:translateY(-6px);border-color:var(--line)}
+.strip__item video,.strip__item img{width:100%;height:100%;object-fit:cover}
+.strip__item::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 48%,rgba(7,12,24,.78))}
+.strip__cap{position:absolute;left:14px;bottom:14px;z-index:2}
+.strip__cap b{display:block;font-family:var(--serif);font-weight:700;font-size:1.02rem;text-shadow:0 2px 10px rgba(0,0,0,.7)}
+.strip__cap span{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.strip-hint{margin-top:6px;font-size:.64rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);opacity:.75;display:flex;align-items:center;gap:10px}
+.strip-hint::after{content:"→";color:var(--gold);font-size:1rem}
+
+/* ── TESTIMONIALS ── */
+.testi{background:radial-gradient(120% 80% at 50% 0%,rgba(230,199,106,.05),transparent 60%)}
+.testi__grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.quote{padding:34px 30px;border-radius:18px;background:rgba(14,22,44,.5);border:1px solid rgba(255,255,255,.1)}
+.quote__mark{font-family:var(--serif);font-size:3.4rem;line-height:.6;color:var(--gold);opacity:.55;height:26px;display:block}
+.quote p{font-family:var(--serif);font-style:italic;font-size:1.18rem;line-height:1.5;margin:8px 0 22px}
+.quote__who{display:flex;align-items:center;gap:14px}
+.quote__av{width:44px;height:44px;border-radius:50%;background-size:cover;background-position:center;border:1px solid var(--line);
+  display:grid;place-items:center;font-family:var(--serif);font-weight:800;color:var(--gold);background-color:#12203f}
+.quote__who b{display:block;font-size:.95rem}
+.quote__who span{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+@media(max-width:900px){.testi__grid{grid-template-columns:1fr}}
+
+/* ── TIERS / rôles ── */
+.tiers{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:22px;align-items:stretch}
+.tier{display:flex;flex-direction:column;padding:36px 30px;border-radius:20px;background:rgba(14,22,44,.5);
+  border:1px solid rgba(255,255,255,.1);transition:transform .4s var(--ease),border-color .4s}
+.tier:hover{transform:translateY(-6px);border-color:var(--line)}
+.tier--feature{background:linear-gradient(180deg,rgba(230,199,106,.14),rgba(14,22,44,.6));border-color:var(--line)}
+.tier__tag{align-self:flex-start;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:#0A1226;
+  background:var(--gold);padding:5px 12px;border-radius:99px;font-weight:700;margin-bottom:18px}
+.tier h3{font-family:var(--serif);font-weight:800;font-size:1.7rem;margin-bottom:6px}
+.tier__price{font-family:var(--serif);font-size:2.6rem;font-weight:800;color:var(--gold);line-height:1;margin:8px 0 6px}
+.tier__price small{font-size:.9rem;color:var(--muted);font-family:var(--sans);font-weight:500}
+.tier__sub{color:var(--muted);font-size:.9rem;margin-bottom:22px}
+.tier ul{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:28px;flex:1}
+.tier li{position:relative;padding-left:26px;color:var(--ivory);font-size:.94rem;line-height:1.45}
+.tier li::before{content:"";position:absolute;left:0;top:6px;width:14px;height:8px;border-left:2px solid var(--gold);
+  border-bottom:2px solid var(--gold);transform:rotate(-45deg)}
+.tier__cta{display:block;text-align:center;padding:15px;border-radius:12px;font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;transition:transform .3s,box-shadow .3s}
+.tier__cta--gold{background:var(--gold);color:#0A1226}
+.tier__cta--ghost{border:1px solid var(--line);color:var(--ivory)}
+.tier__cta:hover{transform:translateY(-2px)}
+.tier__cta--gold:hover{box-shadow:0 12px 30px -10px rgba(230,199,106,.7)}
+@media(max-width:900px){.tiers{grid-template-columns:1fr}}
+
+/* ── ACADEMY ── */
+.academy{background:linear-gradient(180deg,var(--bg),#060a14)}
+.modules{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.module{display:flex;gap:22px;align-items:flex-start;padding:28px 30px;border-radius:16px;
+  background:rgba(14,22,44,.42);border:1px solid rgba(255,255,255,.08);transition:border-color .35s,background .35s}
+.module:hover{border-color:var(--line);background:rgba(230,199,106,.05)}
+.module__no{font-family:var(--serif);font-style:italic;font-weight:700;font-size:2.2rem;color:var(--gold);opacity:.7;line-height:1}
+.module h3{font-family:var(--serif);font-weight:700;font-size:1.35rem;margin-bottom:8px}
+.module p{color:var(--muted);font-size:.94rem;line-height:1.6}
+@media(max-width:820px){.modules{grid-template-columns:1fr}}
+
+/* ── FAQ accordéon ── */
+.faqwrap{max-width:860px;margin:0 auto}
+.faq{border-top:1px solid rgba(255,255,255,.12)}
+.faq:last-child{border-bottom:1px solid rgba(255,255,255,.12)}
+.faq__q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:20px;
+  padding:26px 4px;background:none;border:0;color:var(--ivory);cursor:pointer;text-align:left;
+  font-family:var(--serif);font-weight:700;font-size:clamp(1.1rem,2.2vw,1.5rem)}
+.faq__q .ic{flex:none;width:30px;height:30px;border:1px solid var(--line);border-radius:50%;position:relative;transition:transform .4s var(--ease),background .3s}
+.faq__q .ic::before,.faq__q .ic::after{content:"";position:absolute;left:50%;top:50%;background:var(--gold);transition:opacity .3s}
+.faq__q .ic::before{width:12px;height:2px;transform:translate(-50%,-50%)}
+.faq__q .ic::after{width:2px;height:12px;transform:translate(-50%,-50%)}
+.faq.open .ic{transform:rotate(180deg)}
+.faq.open .ic::after{opacity:0}
+.faq__a{max-height:0;overflow:hidden;transition:max-height .5s var(--ease)}
+.faq__a p{padding:0 4px 26px;color:var(--muted);line-height:1.75;max-width:66ch}
+
+/* ── CONCIERGE / contact ── */
+.concierge{background:radial-gradient(120% 90% at 50% 100%,rgba(230,199,106,.08),transparent 55%),#060a14}
+.concierge__inner{max-width:960px;margin:0 auto;display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(30px,5vw,64px);align-items:center}
+.concierge__intro h2{font-family:var(--serif);font-weight:800;font-size:clamp(2.2rem,4.6vw,3.6rem);line-height:1.05;margin:16px 0 18px}
+.concierge__intro h2 em{font-style:italic;font-weight:600;color:var(--gold)}
+.concierge__intro p{color:var(--muted);line-height:1.75}
+.cform{display:grid;gap:16px;padding:clamp(26px,3vw,40px);border-radius:22px;
+  background:rgba(14,22,44,.55);border:1px solid rgba(255,255,255,.12);box-shadow:0 30px 80px -30px rgba(0,0,0,.7)}
+.cform .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cform label{display:block;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.cform input,.cform select,.cform textarea{width:100%;padding:14px 16px;border-radius:11px;background:#0D1528;
+  border:1px solid rgba(255,255,255,.14);color:var(--ivory);font-family:var(--sans);font-size:.95rem;transition:border-color .3s}
+.cform input:focus,.cform select:focus,.cform textarea:focus{outline:none;border-color:var(--gold)}
+.cform textarea{resize:vertical;min-height:96px}
+.cform__submit{margin-top:6px;padding:16px;border-radius:12px;background:var(--gold);color:#0A1226;border:0;cursor:pointer;
+  font-weight:700;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;transition:transform .3s,box-shadow .3s}
+.cform__submit:hover{transform:translateY(-2px);box-shadow:0 12px 30px -10px rgba(230,199,106,.7)}
+@media(max-width:820px){.concierge__inner{grid-template-columns:1fr}.cform .row{grid-template-columns:1fr}}
+
+/* ── FOOTER ── */
+.foot{padding:clamp(64px,8vh,96px) clamp(24px,7vw,110px) 40px;border-top:1px solid rgba(255,255,255,.1);background:#050810}
+.foot__top{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px}
+.foot__brand h4{font-family:var(--serif);font-weight:800;letter-spacing:.2em;font-size:1.4rem;margin-bottom:14px}
+.foot__brand h4 .dot{color:var(--gold)}
+.foot__brand p{color:var(--muted);font-size:.92rem;line-height:1.7;max-width:34ch}
+.foot__col h5{font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:18px}
+.foot__col a{display:block;color:var(--muted);font-size:.94rem;margin-bottom:12px;transition:color .3s}
+.foot__col a:hover{color:var(--ivory)}
+.foot__bar{max-width:1240px;margin:56px auto 0;padding-top:24px;border-top:1px solid rgba(255,255,255,.08);
+  display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;color:var(--muted);font-size:.8rem;letter-spacing:.06em}
+@media(max-width:820px){.foot__top{grid-template-columns:1fr 1fr}.foot__brand{grid-column:1/-1}}
+</style>
 </head>
-<body data-page="home">
-<div class="grain" aria-hidden="true"></div>
-<div class="aurora" aria-hidden="true"><span class="aurora__blob a1"></span><span class="aurora__blob a2"></span><span class="aurora__blob a3"></span></div>
-<div class="cursor" id="cursor"></div><div class="cursor-dot" id="cursorDot"></div>
-<div class="scroll-progress" id="scrollProgress"></div>
-<div id="site-header"></div>
+<body>
 
-<!-- ===== Bandeau visuel : carousel de marque, seul, sous le header ===== -->
-<section class="hero-carousel" id="heroCarousel">
-  <div class="hero-carousel__slide active" style="background-image:url('assets/hero-bg-1.png')"></div>
-  <div class="hero-carousel__slide" style="background-image:url('assets/hero-bg-2.png')"></div>
-  <div class="hero-carousel__slide" style="background-image:url('assets/hero-bg-3.png')"></div>
-  <div class="hero-carousel__slide" style="background-image:url('assets/hero-bg-4.png')"></div>
-  <div class="hero-carousel__slide" style="background-image:url('assets/hero-bg-5.png')"></div>
-</section>
+<!-- NAV -->
+<nav class="pillnav">
+  <span class="pillnav__brand">V<span class="dot">Y</span>BZZZ</span>
+  <div class="pillnav__links">
+    <a href="feed.html">Feed</a><a href="store.html">Boutique</a><a href="#roles">Le deal</a>
+    <a href="dashboard.html">Studio Pro</a><a href="faq.html">FAQ</a>
+  </div>
+  <a href="artist.html" class="pillnav__cta">Postuler</a>
+</nav>
+<div class="menupill">Menu <span class="plus">+</span></div>
 
-<!-- ===== Promotion (entrée gratuite) ===== -->
-<section class="promo-band">
-  <div class="reveal">
-    <span class="rec-hero__badge" data-i18n="hero_badge">✦ Nouveau — l'entrée est gratuite</span>
-    <h1 data-i18n-html="hero_title_html">Diffuse tes concerts en live. <span class="grad">L'entrée est gratuite.</span></h1>
+<!-- HERO SCROLLYTELLING -->
+<section class="scrollhero" id="scrollhero">
+  <div class="scrollhero__stage">
+    <!-- 3 vidéos (placeholder Mux concert — À REMPLACER par tes 3 vidéos). Poster = image de secours tant que la vidéo n'est pas chargée. -->
+    <div class="chapter-video" data-v="0" style="opacity:1;background:#0A1226 url('https://image.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g/thumbnail.jpg?time=6') center/cover"><video data-src="https://stream.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g.m3u8" poster="https://image.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g/thumbnail.jpg?time=6" muted loop playsinline preload="auto"></video></div>
+    <div class="chapter-video" data-v="1" style="background:#0A1226 url('https://image.mux.com/S5gwJ00UP6GtKeYp11SeGabksA6JdpOQQkdCEkkLOBCo/thumbnail.jpg?time=4') center/cover"><video data-src="https://stream.mux.com/S5gwJ00UP6GtKeYp11SeGabksA6JdpOQQkdCEkkLOBCo.m3u8" poster="https://image.mux.com/S5gwJ00UP6GtKeYp11SeGabksA6JdpOQQkdCEkkLOBCo/thumbnail.jpg?time=4" muted loop playsinline preload="auto"></video></div>
+    <div class="chapter-video" data-v="2" style="background:#0A1226 url('https://image.mux.com/fy01PolEvTfQkcE1NpRSYfZ3BJJTuYRpei9FDebfdaXw/thumbnail.jpg?time=5') center/cover"><video data-src="https://stream.mux.com/fy01PolEvTfQkcE1NpRSYfZ3BJJTuYRpei9FDebfdaXw.m3u8" poster="https://image.mux.com/fy01PolEvTfQkcE1NpRSYfZ3BJJTuYRpei9FDebfdaXw/thumbnail.jpg?time=5" muted loop playsinline preload="auto"></video></div>
+    <div class="stage-scrim"></div>
 
-    <p class="lead" data-i18n-html="hero_lead_html">Pas d'abonnement, pas de carte bancaire. Tu gardes <strong>50%</strong> de tes revenus — billets, cadeaux, pourboires. Apple et Google prennent leurs frais, on partage le reste, et tu gardes la plus grosse part.</p>
-
-    <div class="rec-hero__actions">
-      <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_reserve">Créer mon compte artiste</span></a>
-      <a href="dashboard.html" class="btn btn--outline btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_studio">Voir le Studio Pro</span></a>
-    </div>
-    <p class="hero-reassure" data-i18n="reassure">🔒 Gratuit · Sans engagement · Tu gardes la plus grosse part</p>
-
-    <!-- Waveform dorée animée (fil audio, façon live) -->
-    <div class="hero-wave" aria-hidden="true">
-      <svg viewBox="0 0 1200 90" preserveAspectRatio="none">
-        <defs><linearGradient id="wvg" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#8a6a1f"/><stop offset=".5" stop-color="#e6c76a"/><stop offset="1" stop-color="#8a6a1f"/>
-        </linearGradient></defs>
-        <g class="hero-wave__g">
-          <path d="M 0 40.3 L 8 36 L 16 34.1 L 24 35.2 L 32 37.2 L 40 37.8 L 48 37.4 L 56 38.1 L 64 41.7 L 72 46.6 L 80 49.2 L 88 47.7 L 96 43.8 L 104 41.3 L 112 42.5 L 120 45.7 L 128 47.6 L 136 47.2 L 144 47.2 L 152 50.8 L 160 57.7 L 168 63.8 L 176 64.7 L 184 60.3 L 192 54.7 L 200 51.9 L 208 51.8 L 216 50.7 L 224 46.1 L 232 40.2 L 240 38 L 248 41.7 L 256 48 L 264 51 L 272 47.9 L 280 41.5 L 288 37 L 296 36.2 L 304 35.7 L 312 31.5 L 320 24 L 328 18.7 L 336 20.7 L 344 29.5 L 352 38.8 L 360 43.1 L 368 42.7 L 376 42.6 L 384 46.3 L 392 51.6 L 400 52.8 L 408 47.7 L 416 40.5 L 424 38.6 L 432 44.7 L 440 54.6 L 448 61.3 L 456 62.5 L 464 61.8 L 472 64.4 L 480 69.9 L 488 72.5 L 496 66.9 L 504 54.9 L 512 43.9 L 520 40 L 528 42.5 L 536 45 L 544 43.2 L 552 39 L 560 38.1 L 568 42.8 L 576 48.6 L 584 48.3 L 592 39.5 L 600 27.8 L 608 20.8 L 616 21.1 L 624 24.5 L 632 25.2 L 640 23.1 L 648 23.4 L 656 30.8 L 664 43.3 L 672 53.2 L 680 54.8 L 688 49.8 L 696 45 L 704 45.5 L 712 49.4 L 720 51.2 L 728 48.4 L 736 45.1 L 744 47.4 L 752 56.8 L 760 67.6 L 768 72.5 L 776 69.4 L 784 63 L 792 59.1 L 800 58.6 L 808 57 L 816 50.2 L 824 40.3 L 832 33.6 L 840 34.6 L 848 41 L 856 46.3 L 864 45.9 L 872 41.5 L 880 38.3 L 888 38.9 L 896 40.2 L 904 37.5 L 912 30.1 L 920 22.7 L 928 21.1 L 936 26.5 L 944 34.3 L 952 39.3 L 960 40.5 L 968 41.6 L 976 45.7 L 984 51.8 L 992 55 L 1000 52.7 L 1008 46.9 L 1016 43 L 1024 44.2 L 1032 48.7 L 1040 52.4 L 1048 52.9 L 1056 52.3 L 1064 53.7 L 1072 57.8 L 1080 61.1 L 1088 60.1 L 1096 54.6 L 1104 48.1 L 1112 44.4 L 1120 44 L 1128 44.2 L 1136 42.7 L 1144 40.1 L 1152 39 L 1160 41 L 1168 44.5 L 1176 46.3 L 1184 44.8 L 1192 41.3 L 1200 38.8"/>
-          <path transform="translate(1200,0)" d="M 0 40.3 L 8 36 L 16 34.1 L 24 35.2 L 32 37.2 L 40 37.8 L 48 37.4 L 56 38.1 L 64 41.7 L 72 46.6 L 80 49.2 L 88 47.7 L 96 43.8 L 104 41.3 L 112 42.5 L 120 45.7 L 128 47.6 L 136 47.2 L 144 47.2 L 152 50.8 L 160 57.7 L 168 63.8 L 176 64.7 L 184 60.3 L 192 54.7 L 200 51.9 L 208 51.8 L 216 50.7 L 224 46.1 L 232 40.2 L 240 38 L 248 41.7 L 256 48 L 264 51 L 272 47.9 L 280 41.5 L 288 37 L 296 36.2 L 304 35.7 L 312 31.5 L 320 24 L 328 18.7 L 336 20.7 L 344 29.5 L 352 38.8 L 360 43.1 L 368 42.7 L 376 42.6 L 384 46.3 L 392 51.6 L 400 52.8 L 408 47.7 L 416 40.5 L 424 38.6 L 432 44.7 L 440 54.6 L 448 61.3 L 456 62.5 L 464 61.8 L 472 64.4 L 480 69.9 L 488 72.5 L 496 66.9 L 504 54.9 L 512 43.9 L 520 40 L 528 42.5 L 536 45 L 544 43.2 L 552 39 L 560 38.1 L 568 42.8 L 576 48.6 L 584 48.3 L 592 39.5 L 600 27.8 L 608 20.8 L 616 21.1 L 624 24.5 L 632 25.2 L 640 23.1 L 648 23.4 L 656 30.8 L 664 43.3 L 672 53.2 L 680 54.8 L 688 49.8 L 696 45 L 704 45.5 L 712 49.4 L 720 51.2 L 728 48.4 L 736 45.1 L 744 47.4 L 752 56.8 L 760 67.6 L 768 72.5 L 776 69.4 L 784 63 L 792 59.1 L 800 58.6 L 808 57 L 816 50.2 L 824 40.3 L 832 33.6 L 840 34.6 L 848 41 L 856 46.3 L 864 45.9 L 872 41.5 L 880 38.3 L 888 38.9 L 896 40.2 L 904 37.5 L 912 30.1 L 920 22.7 L 928 21.1 L 936 26.5 L 944 34.3 L 952 39.3 L 960 40.5 L 968 41.6 L 976 45.7 L 984 51.8 L 992 55 L 1000 52.7 L 1008 46.9 L 1016 43 L 1024 44.2 L 1032 48.7 L 1040 52.4 L 1048 52.9 L 1056 52.3 L 1064 53.7 L 1072 57.8 L 1080 61.1 L 1088 60.1 L 1096 54.6 L 1104 48.1 L 1112 44.4 L 1120 44 L 1128 44.2 L 1136 42.7 L 1144 40.1 L 1152 39 L 1160 41 L 1168 44.5 L 1176 46.3 L 1184 44.8 L 1192 41.3 L 1200 38.8"/>
-        </g>
-      </svg>
+    <!-- Chapitre 1 -->
+    <div class="chapter ch1" data-c="0">
+      <span class="eyebrow eyebrow--line">Membres fondateurs · Live depuis 2026</span>
+      <h1>LA SCÈNE<br>EST <em>À TOI.</em><br>MONTE<br><em>MAINTENANT.</em></h1>
+      <p>Un monde de concerts en direct. Gratuit. Sans salle, sans frontières, sans intermédiaire.</p>
     </div>
 
-    <ul class="hero-perks">
-      <li data-i18n-html="perk1_html">Tu gardes <b>50%</b> de tes revenus (à 15% de frais store), dès le 1ᵉʳ live</li>
-      <li data-i18n-html="perk2_html"><b>Zéro abonnement</b>, zéro avance — tu ne partages que ce que tu gagnes</li>
-      <li data-i18n-html="perk3_html"><b>Studio Pro</b> complet : lives, billetterie, cadeaux</li>
-      <li data-i18n-html="perk4_html"><b>90 min de live incluses</b> chaque mois</li>
-    </ul>
-  </div>
-</section>
-
-<!-- ===== Storytelling de marque : Pourquoi Vybzzz ===== -->
-<section class="story" id="pourquoi">
-  <div class="story__inner">
-    <span class="eyebrow reveal" data-i18n="story_eyebrow">Notre histoire</span>
-    <h2 class="story__title reveal" data-i18n-html="story_title_html">Créée pour ne plus jamais <span class="grad">manquer</span> un artiste.</h2>
-    <p class="story__lead reveal" data-i18n="story_lead">En 2009, j'avais une place pour « This Is It ». Je n'y suis jamais allé — l'artiste nous a quittés avant. Depuis, la même blessure revient : Prince, Dolores O'Riordan, Chester Bennington, Peetah Morgan… des artistes que je rêvais de voir sur scène, partis trop tôt. Trop d'artistes ne sont jamais vraiment vus ni entendus, et un moment live, une fois passé, ne revient jamais.</p>
-    <p class="story__mission reveal" data-i18n-html="story_mission_html">Vybzzz est né de là : <strong>pour ne plus jamais perdre ces instants</strong> — que chaque artiste soit vu et entendu, et qu'aucun fan ne manque sa chance d'y être.</p>
-
-    <div class="story__cols">
-      <div class="story__col reveal"><h3 data-i18n="story_artists_t">Pour les artistes</h3><p data-i18n="story_artists_p">Ta scène, ton public, tes revenus — sans salle, sans intermédiaire. Tu passes en live, tes fans envoient des cadeaux et achètent leur place, et tu es payé en direct.</p></div>
-      <div class="story__col reveal"><h3 data-i18n="story_fans_t">Pour les fans</h3><p data-i18n="story_fans_p">Sois au premier rang de tes artistes préférés, soutiens-les vraiment avec des cadeaux en live, et ne rate plus jamais un concert — où que tu sois.</p></div>
-    </div>
-    <p class="story__close reveal" data-i18n-html="story_close_html">Le prochain grand concert n'est pas à l'autre bout du monde. Il commence <strong>maintenant</strong>, dans ta poche. <span class="grad">Télécharge Vybzzz.</span></p>
-  </div>
-</section>
-
-<!-- ===== Vidéo de présentation : pleine largeur (20px des bords) ===== -->
-<div class="explainer-video-wrap">
-  <div class="explainer-video reveal">
-    <video class="explainer-video__el" data-src="https://stream.mux.com/Tau4rdI8m5eXWU2rpiJ02V8ZqB4Ni3eLP3tHTZ947t6g.m3u8" autoplay muted loop playsinline></video>
-    <button class="feed-sound explainer-video__sound" aria-label="Activer le son" data-cursor="hover">🔇</button>
-  </div>
-</div>
-
-<main class="page" style="padding-top:74px">
-  <!-- ===== Avantages ===== -->
-  <div class="page__head reveal" id="avantages">
-    <span class="eyebrow" data-i18n="av_eyebrow">Ce que tu obtiens</span>
-    <h1 data-i18n-html="av_title_html">Le deal <span class="grad">Vybzzz</span>.</h1>
-    <p data-i18n="av_p">Une plateforme gratuite, pensée pour te faire gagner de l'argent et de la visibilité — sans jamais te faire payer pour entrer.</p>
-  </div>
-  <div class="benefits">
-    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">💰</div><h3 data-i18n="ben1_t">Tu gardes 50%</h3><p data-i18n="ben1_p">Apple et Google prennent leurs frais, on partage le reste : tu gardes 50% du prix payé par le fan (billets, cadeaux, pourboires). La plus grosse part, c'est la tienne.</p></article>
-    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🆓</div><h3 data-i18n="ben2_t">Entrée gratuite</h3><p data-i18n="ben2_p">Aucun abonnement, aucune carte bancaire, aucun engagement. Tu ne paies rien pour diffuser — tu partages seulement ce que tu gagnes.</p></article>
-    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🎛️</div><h3 data-i18n="ben3_t">Studio Pro complet</h3><p data-i18n="ben3_p">Crée tes événements, passe en live, modère le chat et suis tes revenus — depuis le web ou l'app.</p></article>
-    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🎥</div><h3 data-i18n="ben4_t">90 min de live incluses</h3><p data-i18n="ben4_p">Chaque mois, un quota de live est inclus. Un live qui rapporte finance son coût — tes concerts qui marchent sont toujours gratuits.</p></article>
-    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">🏦</div><h3 data-i18n="ben5_t">Retraits simples</h3><p data-i18n="ben5_p">Versements via Stripe ou compte bancaire, paliers flexibles, délai moyen 24h.</p></article>
-    <article class="benefit glass reveal tilt" data-cursor="hover"><div class="benefit__ic">⚡</div><h3 data-i18n="ben6_t">Payé en direct</h3><p data-i18n="ben6_p">Tes fans achètent leur place et envoient des cadeaux pendant le live — tu vois tes revenus monter en temps réel.</p></article>
-  </div>
-
-  <!-- ===== Tarifs ===== -->
-  <div class="page__head reveal" id="pricing">
-    <span class="eyebrow" data-i18n="pricing_eyebrow">La règle, en une ligne</span>
-    <h1 data-i18n-html="pricing_title_html">Simple : <span class="grad">tu gardes 50%</span>.</h1>
-    <p data-i18n="pricing_p">Aucun abonnement. Sur chaque montant payé par un fan : les frais store (~15%) sont prélevés, tu gardes 50%, Vybzzz garde 35%. Un ticket à 10 € te rapporte 5 €.</p>
-  </div>
-  <div class="freedeal glass reveal" style="max-width:520px;margin:0 auto;text-align:center;padding:34px 28px;border-radius:var(--radius)">
-    <div class="plan__price" style="font-size:2.8rem;margin-bottom:6px" data-i18n="free_word">Gratuit</div>
-    <div class="plan__comm" style="margin-bottom:18px" data-i18n-html="free_sub">Aucun abonnement · tu gardes <b>50%</b></div>
-    <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_reserve">Créer mon compte artiste</span></a>
-  </div>
-
-  <!-- ===== Studio preview ===== -->
-  <h2 class="section-title" data-i18n="studio_title">Ton tableau de bord créateur</h2>
-  <div class="studio-preview">
-    <div class="reveal">
-      <p style="color:var(--muted);max-width:420px;margin-bottom:18px" data-i18n="studio_p">Revenus en temps réel, ventes de tickets, cadeaux reçus, retraits Stripe. Le même outil que tu utiliseras au quotidien.</p>
-      <a href="dashboard.html" class="btn btn--gold magnetic" data-cursor="hover"><span data-i18n="studio_cta">Explorer le Studio Pro →</span></a>
-    </div>
-    <div class="studio-preview__frame reveal tilt" data-cursor="hover">
-      <div class="studio-preview__bar"><span></span><span></span><span></span></div>
-      <div class="studio-preview__body">
-        <div class="mini-kpis">
-          <div class="mini-kpi"><b>$8 140</b><small>Revenu 7j</small></div>
-          <div class="mini-kpi"><b>1 284</b><small>Tickets</small></div>
-          <div class="mini-kpi"><b>312K</b><small>Arena Points</small></div>
-        </div>
-        <div class="mini-chart"><i style="height:35%"></i><i style="height:55%"></i><i style="height:42%"></i><i style="height:70%"></i><i style="height:60%"></i><i style="height:85%"></i><i style="height:100%"></i></div>
+    <!-- Chapitre 2 -->
+    <div class="chapter ch2" data-c="1">
+      <div class="glass">
+        <span class="eyebrow eyebrow--line">La philosophie VybzzZ</span>
+        <h2>ACCÈS PRIVÉ.<br><em>SCÈNE OUVERTE.</em></h2>
+        <p>On crée des expériences pour ceux qui veulent être vus et entendus. Depuis le premier live, les artistes gardent la plus grosse part — et les fans sont au premier rang, où qu'ils soient.</p>
+        <a href="#roles" class="ghost-btn">Notre histoire</a>
       </div>
     </div>
-  </div>
 
-  <!-- ===== How it works ===== -->
-  <h2 class="section-title" data-i18n="steps_title">Rejoindre les fondateurs</h2>
-  <div class="steps">
-    <div class="step reveal"><span class="step__n">01</span><h3 data-i18n="step1_t">Candidate</h3><p data-i18n="step1_p">Remplis le formulaire créateur (2 min) : nom de scène, genre, expérience.</p></div>
-    <div class="step reveal"><span class="step__n">02</span><h3 data-i18n="step2_t">Configure ton studio</h3><p data-i18n="step2_p">On valide ton profil et on active ton Studio Pro : lives, billetterie, cadeaux.</p></div>
-    <div class="step reveal"><span class="step__n">03</span><h3 data-i18n="step3_t">Passe en live</h3><p data-i18n="step3_p">On valide ton profil, on configure ton studio, et tu crées ton premier événement.</p></div>
-  </div>
+    <!-- Chapitre 3 -->
+    <div class="chapter ch3" data-c="2">
+      <h2 class="ch3__title">LA VIE<br>AU-DELÀ<br><em>DE LA SCÈNE</em></h2>
+      <div class="ch3__cards">
+        <div class="gcard"><span class="eyebrow">Concerts</span><h3>Lives mondiaux</h3><p>Diffuse en direct partout dans le monde, sans salle ni intermédiaire — tes fans achètent leur place et envoient des cadeaux.</p></div>
+        <div class="gcard"><span class="eyebrow">Studio Pro</span><h3>Tout pour créer</h3><p>Lives, billetterie, cadeaux, replays : tes outils professionnels réunis dans un seul studio.</p></div>
+        <div class="gcard"><span class="eyebrow">Revenus</span><h3>Payé en direct</h3><p>Billets, cadeaux, pourboires — tu gardes 50 % (à 15 % de frais store), versé rapidement.</p></div>
+      </div>
+    </div>
 
-  <!-- ===== Boîte à idées ===== -->
-  <h2 class="section-title" data-i18n="idea_title">Boîte à idées</h2>
-  <div class="ideabox glass reveal">
-    <p style="color:var(--muted);margin-bottom:14px" data-i18n="idea_p">Une fonctionnalité qui te manque ? Dis-nous tout — les fondateurs façonnent Vybzzz.</p>
-    <textarea id="ideaText" rows="3" data-i18n-ph="idea_ph" placeholder="Ton idée pour améliorer Vybzzz…"></textarea>
-    <button class="btn btn--gold" id="ideaBtn" data-cursor="hover" style="margin-top:12px"><span data-i18n="idea_send">Envoyer mon idée</span></button>
-  </div>
-</main>
-
-<!-- ===== CTA ===== -->
-<section class="cta-band">
-  <div class="cta-band__inner reveal">
-    <h2 data-i18n-html="cta_title_html">Prêt à monter sur <span class="grad">scène</span> ?</h2>
-    <p data-i18n="cta_p">L'entrée est gratuite. Crée ton compte, passe en live, garde 50% de ce que tu gagnes.</p>
-    <a href="artist.html" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span data-i18n="cta_btn">Créer mon compte artiste</span></a>
+    <div class="scroll-hint" id="scrollHint">Défile</div>
   </div>
 </section>
 
-<div id="site-footer"></div>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16" integrity="sha384-5E8B0pTlZZJMabWpC0fyYf6OUpe15jJij34BqBAh4NXoHAlLNOjCPRrwtOXOQFAn" crossorigin="anonymous"></script>
-<script src="data.js"></script>
-<script src="i18n.js"></script>
-<script src="app.js"></script>
+<a href="artist.html" class="corner-cta">Postuler</a>
+
+<!-- FLEET : 3 scènes -->
+<section class="section" id="scenes">
+  <div class="section__head reveal">
+    <span class="eyebrow eyebrow--line">Trois façons de briller</span>
+    <h2>TROIS SCÈNES.<br><em>UN SEUL STANDARD.</em></h2>
+    <p>Le live, le clip, le studio. Trois manières d'exister sur VybzzZ — chacune pensée pour te mettre en lumière et te faire gagner ta part.</p>
+  </div>
+  <div class="showcase">
+
+    <!-- 1. LE LIVE — scroll horizontal de vidéos Mux -->
+    <div class="show-scroll reveal">
+      <div class="show__txt" style="max-width:760px;margin:0 auto clamp(26px,4vh,44px);text-align:center">
+        <span class="eyebrow eyebrow--line">01 — Le Live</span>
+        <h3>Une scène qui <em>défile.</em></h3>
+        <p style="margin:0 auto;max-width:56ch">Fais défiler les lives du moment. Chaque vignette est un concert en direct — touche, entre, vibre. <span style="color:var(--gold)">(vidéos Mux à remplacer par tes lives)</span></p>
+      </div>
+      <div class="strip-wrap">
+        <div class="strip">
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk/thumbnail.jpg?width=360&height=520&fit_mode=smartcrop')"><video data-src="https://stream.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>NOVA</b><span>Afrobeats · Clip</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/ex6y2Wc00iV1un00GfuDGKiSTj6QzU49fXtuFKamfYQ1s/thumbnail.jpg?width=360&height=520&fit_mode=smartcrop')"><video data-src="https://stream.mux.com/ex6y2Wc00iV1un00GfuDGKiSTj6QzU49fXtuFKamfYQ1s.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>KODA</b><span>House · Clip</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/a1SB54WoSAeljaRnEmx3iIMdv4IREYoNENgJRvKcC2M/thumbnail.jpg?width=360&height=520&fit_mode=smartcrop')"><video data-src="https://stream.mux.com/a1SB54WoSAeljaRnEmx3iIMdv4IREYoNENgJRvKcC2M.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>SÉLÉNÉ</b><span>Pop · Clip</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/S5gwJ00UP6GtKeYp11SeGabksA6JdpOQQkdCEkkLOBCo/thumbnail.jpg?width=360&height=520&fit_mode=smartcrop')"><span class="strip__cap"><b>AKORI</b><span>Amapiano · Feed</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/fy01PolEvTfQkcE1NpRSYfZ3BJJTuYRpei9FDebfdaXw/thumbnail.jpg?width=360&height=520&fit_mode=smartcrop')"><span class="strip__cap"><b>MIRÖ</b><span>Électro · Feed</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/wsZ7w3n1rZC8hO6f01a5SXd01J1CPtPcsGHJW01VIur2m8/thumbnail.jpg?width=360&height=520&fit_mode=smartcrop')"><span class="strip__cap"><b>NABIL</b><span>R&B · Feed</span></span></a>
+        </div>
+        <div class="strip-hint">Fais défiler</div>
+      </div>
+    </div>
+
+    <!-- 2. LE CONCERT — grande vidéo paysage -->
+    <div class="show reveal">
+      <div class="show__media">
+        <div class="media16" style="background-image:url('https://image.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g/thumbnail.jpg?time=6')">
+          <video data-src="https://stream.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g.m3u8" poster="https://image.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g/thumbnail.jpg?time=6" muted loop playsinline preload="none"></video>
+          <span class="live-dot">En direct</span>
+          <span class="play-badge"><span class="tri"></span>Concert live</span>
+        </div>
+      </div>
+      <div class="show__txt">
+        <span class="eyebrow eyebrow--line">02 — Le Concert</span>
+        <h3>Le grand <em>live.</em></h3>
+        <p>Monte sur scène en direct, où que tu sois. Tes fans achètent leur place, envoient des cadeaux et vibrent avec toi en temps réel — sans salle, sans frontière, sans intermédiaire.</p>
+        <div class="show__meta"><span>Portée<b>Monde</b></span><span>Billetterie<b>Intégrée</b></span><span>Revenus<b>Tu gardes 50 %</b></span></div>
+        <a href="artist.html" class="ghost-btn">Diffuser mon concert</a>
+      </div>
+    </div>
+
+    <!-- 3. LE CLIP — vidéo verticale -->
+    <div class="show show--rev reveal">
+      <div class="show__media">
+        <div class="phone">
+          <span class="phone__notch"></span>
+          <video data-src="https://stream.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk.m3u8" poster="https://image.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk/thumbnail.jpg?fit_mode=smartcrop&height=760&width=360" muted loop playsinline preload="none"></video>
+        </div>
+      </div>
+      <div class="show__txt">
+        <span class="eyebrow eyebrow--line">03 — Le Clip</span>
+        <h3>Le clip <em>vertical.</em></h3>
+        <p>Publie tes clips verticaux et horizontaux. Ton public te découvre entre deux lives, partage en un geste et revient pour ton prochain concert. Le feed « Pour toi » fait le reste.</p>
+        <div class="show__meta"><span>Format<b>Vertical & 16:9</b></span><span>Partage<b>1 geste</b></span><span>Découverte<b>Pour toi</b></span></div>
+        <a href="feed.html" class="ghost-btn">Voir les clips</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="section testi" id="temoignages">
+  <div class="section__head reveal">
+    <span class="eyebrow eyebrow--line">Ils y étaient</span>
+    <h2>CEUX QUI <em>SAVENT.</em></h2>
+    <p>Des artistes et des fans qui ont vécu la scène VybzzZ, en direct.</p>
+  </div>
+  <div class="testi__grid">
+    <figure class="quote reveal">
+      <span class="quote__mark">&ldquo;</span>
+      <p>Mon premier live VybzzZ a rassemblé plus de monde que n'importe quelle salle. Et j'ai été payé le soir même.</p>
+      <figcaption class="quote__who"><span class="quote__av">N</span><div><b>NOVA</b><span>Artiste Afrobeats</span></div></figcaption>
+    </figure>
+    <figure class="quote reveal">
+      <span class="quote__mark">&ldquo;</span>
+      <p>J'étais au premier rang d'un concert à l'autre bout du monde, depuis mon canapé. L'énergie passe l'écran.</p>
+      <figcaption class="quote__who"><span class="quote__av">L</span><div><b>Léa M.</b><span>Fan · Paris</span></div></figcaption>
+    </figure>
+    <figure class="quote reveal">
+      <span class="quote__mark">&ldquo;</span>
+      <p>Gratuit à l'entrée, 50 % pour moi, tout dans une seule appli. Je ne monte plus sur scène autrement.</p>
+      <figcaption class="quote__who"><span class="quote__av">K</span><div><b>KODA</b><span>Producteur · Live</span></div></figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- TIERS / rôles -->
+<span id="pourquoi"></span><section class="section" id="roles">
+  <div class="section__head reveal">
+    <span class="eyebrow eyebrow--line">Choisis ta place</span>
+    <h2>ENTRE DANS <em>LE CERCLE.</em></h2>
+    <p>Pas d'abonnement caché, pas d'avance. Tu choisis ton rôle — l'entrée reste gratuite, tu partages seulement ce que tu gagnes.</p>
+  </div>
+  <div class="tiers">
+    <article class="tier reveal">
+      <h3>Fan</h3>
+      <div class="tier__price">Gratuit</div>
+      <p class="tier__sub">Pour vivre chaque concert.</p>
+      <ul>
+        <li>Accès à tous les lives et clips</li>
+        <li>Achat de billets à l'unité</li>
+        <li>Cadeaux et pourboires en direct</li>
+        <li>Replays des concerts</li>
+      </ul>
+      <a href="index.html" class="tier__cta tier__cta--ghost">Télécharger l'appli</a>
+    </article>
+    <article class="tier tier--feature reveal">
+      <span class="tier__tag">Le plus choisi</span>
+      <h3>Artiste</h3>
+      <div class="tier__price">Gratuit <small>· tu gardes 50 %</small></div>
+      <p class="tier__sub">Pour monter sur scène.</p>
+      <ul>
+        <li>Lives mondiaux illimités</li>
+        <li>90 min de live incluses / mois</li>
+        <li>Billetterie, cadeaux, pourboires</li>
+        <li>Tu gardes 50 % (frais store ~15 %)</li>
+        <li>Retraits Stripe ou banque ~24 h</li>
+      </ul>
+      <a href="artist.html" class="tier__cta tier__cta--gold">Postuler comme artiste</a>
+    </article>
+    <article class="tier reveal">
+      <h3>Studio Pro</h3>
+      <div class="tier__price">Sur demande</div>
+      <p class="tier__sub">Pour les labels & équipes.</p>
+      <ul>
+        <li>Multi-artistes & régie avancée</li>
+        <li>Statistiques et revenus détaillés</li>
+        <li>Lives programmés et co-diffusion</li>
+        <li>Accompagnement dédié</li>
+      </ul>
+      <a href="#reserver" class="tier__cta tier__cta--ghost">Nous contacter</a>
+    </article>
+  </div>
+</section>
+
+<!-- ACADEMY -->
+<section class="section academy" id="academy">
+  <div class="section__head reveal">
+    <span class="eyebrow eyebrow--line">L'école de la scène</span>
+    <h2>MAÎTRISE <em>LA SCÈNE.</em></h2>
+    <p>Tout ce qu'il faut savoir pour réussir ton live, fédérer ton public et transformer tes concerts en revenus.</p>
+  </div>
+  <div class="modules">
+    <div class="module reveal"><span class="module__no">01</span><div><h3>Réussir ton premier live</h3><p>Cadrage, son, lumière, connexion : la checklist pour un concert net dès la première fois.</p></div></div>
+    <div class="module reveal"><span class="module__no">02</span><div><h3>Faire venir ton public</h3><p>Clips, teasers et partage en un geste pour remplir la salle avant même de monter sur scène.</p></div></div>
+    <div class="module reveal"><span class="module__no">03</span><div><h3>Monétiser en direct</h3><p>Billetterie, cadeaux, pourboires : les leviers pour être payé le soir même du concert.</p></div></div>
+    <div class="module reveal"><span class="module__no">04</span><div><h3>Fidéliser tes fans</h3><p>Replays, rendez-vous réguliers et communauté : transforme un public en vrais supporters.</p></div></div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+  <div class="section__head reveal">
+    <span class="eyebrow eyebrow--line">Ce qu'il faut savoir</span>
+    <h2>LES BONNES <em>QUESTIONS.</em></h2>
+  </div>
+  <div class="faqwrap reveal">
+    <div class="faq"><button class="faq__q" type="button">Combien coûte VybzzZ pour un artiste ?<span class="ic"></span></button><div class="faq__a"><p>Rien à l'entrée : aucun abonnement, aucune carte bancaire, aucun engagement pour diffuser. Tu partages seulement une part de ce que tu gagnes — tu gardes 50 % de chaque montant payé par un fan (après ~15 % de frais store).</p></div></div>
+    <div class="faq"><button class="faq__q" type="button">Comment suis-je payé ?<span class="ic"></span></button><div class="faq__a"><p>Billets, cadeaux et pourboires sont crédités en direct. Tu retires via Stripe ou compte bancaire, avec un délai moyen de 24 h.</p></div></div>
+    <div class="faq"><button class="faq__q" type="button">De quel matériel ai-je besoin ?<span class="ic"></span></button><div class="faq__a"><p>Un smartphone récent et une bonne connexion suffisent pour démarrer. Le Studio Pro te permet ensuite de brancher caméras, son et régie pour passer à l'échelle supérieure.</p></div></div>
+    <div class="faq"><button class="faq__q" type="button">Mes fans doivent-ils payer pour regarder ?<span class="ic"></span></button><div class="faq__a"><p>C'est toi qui décides : certains lives sont gratuits, d'autres sur billet. Dans tous les cas, tes fans peuvent envoyer cadeaux et pourboires pour te soutenir en direct.</p></div></div>
+    <div class="faq"><button class="faq__q" type="button">Que se passe-t-il après ma candidature ?<span class="ic"></span></button><div class="faq__a"><p>Notre équipe examine ta candidature et te recontacte sous 48 h. Une fois validé, tu accèdes au Studio Pro et tu peux programmer ton premier live.</p></div></div>
+  </div>
+</section>
+
+<!-- CONCIERGE / contact -->
+<section class="section concierge" id="reserver">
+  <div class="concierge__inner">
+    <div class="concierge__intro reveal">
+      <span class="eyebrow eyebrow--line">Parlons de ta scène</span>
+      <h2>RÉSERVE <em>TON MOMENT.</em></h2>
+      <p>Artiste, label ou organisateur : dis-nous ton projet, on te prépare une scène sur mesure. Réponse sous 48 h.</p>
+    </div>
+    <form class="cform reveal" id="expForm">
+      <div class="row">
+        <div><label>Nom / projet</label><input id="cName" required placeholder="Ton nom de scène"></div>
+        <div><label>E-mail</label><input id="cEmail" type="email" required placeholder="toi@email.com"></div>
+      </div>
+      <div class="row">
+        <div><label>Téléphone</label><input id="cPhone" placeholder="+33 6 …"></div>
+        <div><label>Tu es…</label><select id="cRole"><option>Artiste solo</option><option>Groupe</option><option>Label / production</option><option>Organisateur</option><option>Fan curieux</option></select></div>
+      </div>
+      <div><label>Ton projet</label><textarea id="cMsg" placeholder="Parle-nous de ton univers, ton public, ton prochain live…"></textarea></div>
+      <button class="cform__submit" type="submit">Envoyer ma demande</button>
+    </form>
+  </div>
+</section>
+
+<!-- CLÔTURE -->
+<section class="closing">
+  <span class="eyebrow eyebrow--line" style="margin-bottom:20px">Le prochain grand concert</span>
+  <h2>Il commence <em>maintenant</em>, dans ta poche.</h2>
+  <p>Ne rate plus jamais un artiste. Diffuse, soutiens, vibre — en direct, où que tu sois.</p>
+  <a href="artist.html" class="pillnav__cta">Créer mon compte artiste</a>
+</section>
+
+<!-- FOOTER -->
+<footer class="foot">
+  <div class="foot__top">
+    <div class="foot__brand">
+      <h4>V<span class="dot">Y</span>BZZZ</h4>
+      <p>Un monde de concerts en direct. La scène est à toi — diffuse, soutiens, vibre, où que tu sois.</p>
+    </div>
+    <div class="foot__col"><h5>Explorer</h5><a href="feed.html">Feed & Clips</a><a href="store.html">Boutique</a><a href="#roles">Le deal</a><a href="dashboard.html">Studio Pro</a></div>
+    <div class="foot__col"><h5>Artistes</h5><a href="artist.html">Postuler</a><a href="#roles">Rôles & revenus</a><a href="#academy">Maîtrise la scène</a><a href="#faq">FAQ</a></div>
+    <div class="foot__col"><h5>Contact</h5><a href="#reserver">Réserver un moment</a><a href="mailto:hello@vybzzz.online">hello@vybzzz.online</a><a href="index.html">Mentions légales</a></div>
+  </div>
+  <div class="foot__bar">
+    <span>© 2026 VybzzZ. Tous droits réservés.</span>
+    <span>Fait pour ceux qui montent sur scène.</span>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16"></script>
 <script>
-  // Parrainage (-10% par artiste, 10 = gratuit) + boîte à idées
-  (function () {
-    var UI = window.VYBZZZ_UI || { toast: function (m) { alert(m); } };
-    var ladder = document.getElementById("refLadder"), invited = 0;
-    function renderLadder() {
-      if (!ladder) return;
-      var h = "";
-      for (var i = 1; i <= 10; i++) h += '<span class="refslot ' + (i <= invited ? "on" : "") + '">' + (i === 10 ? "🎁 Gratuit" : "−" + (i * 10) + "%") + "</span>";
-      ladder.innerHTML = h;
-    }
-    renderLadder();
-    var refBtn = document.getElementById("refBtn"), refArtist = document.getElementById("refArtist"), refStatus = document.getElementById("refStatus");
-    refBtn && refBtn.addEventListener("click", function () {
-      if (invited >= 10) { UI.toast("Maximum atteint — abonnement gratuit à vie 🎉"); return; }
-      invited++; renderLadder();
-      if (refStatus) refStatus.textContent = invited + " invité" + (invited > 1 ? "s" : "") + " · −" + (invited * 10) + "%";
-      UI.toast(invited >= 10 ? "10 artistes ! Abonnement GRATUIT à vie 🎉" : "Artiste invité · −" + (invited * 10) + "% sur ton abonnement");
-      if (refArtist) refArtist.value = "";
-    });
-    // Lien de parrainage : copier + partager
-    var link = document.getElementById("refLink");
-    var url = link ? link.value : "https://vybzzz.com/?ref=nova";
-    var msg = "Rejoins-moi sur Vybzzz, la scène live des artistes 🎤 " + url;
-    var wa = document.getElementById("refWa"); if (wa) wa.href = "https://wa.me/?text=" + encodeURIComponent(msg);
-    var x = document.getElementById("refX"); if (x) x.href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent("Rejoins-moi sur Vybzzz 🎤") + "&url=" + encodeURIComponent(url);
-    var mail = document.getElementById("refMail"); if (mail) mail.href = "mailto:?subject=" + encodeURIComponent("Rejoins-moi sur Vybzzz") + "&body=" + encodeURIComponent(msg);
-    var copy = document.getElementById("refCopy");
-    copy && copy.addEventListener("click", function () {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(function () { UI.toast("Lien de parrainage copié ✓"); }, function () { fallbackCopy(); });
-      } else { fallbackCopy(); }
-      function fallbackCopy() { if (link) { link.removeAttribute("readonly"); link.select(); try { document.execCommand("copy"); } catch (e) {} link.setAttribute("readonly", ""); } UI.toast("Lien de parrainage copié ✓"); }
-    });
-    var ideaBtn = document.getElementById("ideaBtn");
-    ideaBtn && ideaBtn.addEventListener("click", function () {
-      var t = document.getElementById("ideaText");
-      if (t && t.value.trim()) { UI.toast("Merci ! Idée envoyée 💡"); t.value = ""; }
-      else { UI.toast("Écris ton idée d'abord 🙂"); }
-    });
-  })();
+(function(){
+  var clamp=function(v,a,b){return Math.max(a,Math.min(b,v));};
+  // ── HLS : attache une source à une vidéo ──
+  function attachHls(v){
+    if(v.dataset.loaded) return; v.dataset.loaded='1';
+    var src=v.dataset.src; if(!src) return;
+    if(v.canPlayType('application/vnd.apple.mpegurl')){ v.src=src; }
+    else if(window.Hls && window.Hls.isSupported()){ var h=new Hls({capLevelToPlayerSize:true}); h.loadSource(src); h.attachMedia(v); }
+    v.play().catch(function(){});
+  }
+  // Hero : charge tout de suite les 3 vidéos
+  document.querySelectorAll('.chapter-video video[data-src]').forEach(attachHls);
+  // Showcase (concert, clip, filmstrip) : charge à l'arrivée dans le viewport
+  var lazyVids=document.querySelectorAll('.show video[data-src], .strip video[data-src]');
+  if('IntersectionObserver' in window){
+    var vio=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){attachHls(en.target);vio.unobserve(en.target);}});},{rootMargin:'200px'});
+    lazyVids.forEach(function(v){vio.observe(v);});
+  }else{ lazyVids.forEach(attachHls); }
 
-  // Vidéo explicative (3 emplacements) : muette + en boucle par défaut
-  // (autoplay navigateur), bouton pour activer le son indépendamment sur
-  // chaque instance.
-  (function () {
-    // Mux ne sert pas de rendu MP4 direct pour cet asset -> lecture HLS
-    // (même pattern que le feed, cf. attachHls dans app.js) : Safari lit le
-    // .m3u8 nativement, les autres navigateurs passent par hls.js.
-    function attachHls(video, src) {
-      if (video.canPlayType("application/vnd.apple.mpegurl")) { video.src = src; }
-      else if (window.Hls && window.Hls.isSupported()) { var h = new Hls(); h.loadSource(src); h.attachMedia(video); }
-      else { video.src = src; }
-    }
-    document.querySelectorAll(".explainer-video").forEach(function (wrap) {
-      var video = wrap.querySelector(".explainer-video__el");
-      var btn = wrap.querySelector(".explainer-video__sound");
-      if (!video || !btn) return;
-      if (video.dataset.src) attachHls(video, video.dataset.src);
-      btn.addEventListener("click", function () {
-        video.muted = !video.muted;
-        btn.textContent = video.muted ? "🔇" : "🔊";
-        btn.classList.toggle("on", !video.muted);
-        btn.setAttribute("aria-label", video.muted ? "Activer le son" : "Couper le son");
-      });
-    });
-  })();
+  var hero=document.getElementById('scrollhero');
+  var vids=[].map.call(document.querySelectorAll('.chapter-video'),function(e){return e;});
+  var chaps=[].map.call(document.querySelectorAll('.chapter'),function(e){return e;});
+  var hint=document.getElementById('scrollHint');
 
-  // Carousel du fond du hero : défile automatiquement entre les visuels
-  (function () {
-    var slides = document.querySelectorAll("#heroCarousel .hero-carousel__slide");
-    if (slides.length < 2) return;
-    var i = 0;
-    setInterval(function () {
-      slides[i].classList.remove("active");
-      i = (i + 1) % slides.length;
-      slides[i].classList.add("active");
-    }, 5000);
-  })();
+  function render(){
+    var rect=hero.getBoundingClientRect();
+    var total=hero.offsetHeight-window.innerHeight;
+    var progress=clamp((-rect.top)/total,0,1); // 0..1 sur toute la hauteur du hero
+    var seg=progress*2; // keyframes vidéos à 0,1,2
+    var op=[1-clamp(seg,0,1), (seg<1?clamp(seg,0,1):1-clamp(seg-1,0,1)), clamp(seg-1,0,1)];
+    for(var i=0;i<3;i++){
+      vids[i].style.opacity=op[i].toFixed(3);
+      chaps[i].style.opacity=op[i].toFixed(3);
+      // léger parallaxe vertical sur le contenu
+      chaps[i].style.transform='translateY('+((1-op[i])*26)+'px)';
+    }
+    if(hint) hint.style.opacity=(1-clamp(seg,0,1)).toFixed(2);
+  }
+  var ticking=false;
+  function onScroll(){ if(!ticking){ticking=true;requestAnimationFrame(function(){render();ticking=false;});} }
+  window.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('resize',render);
+  render();
+
+  // ── Reveal au scroll ──
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}});},{threshold:.14,rootMargin:'0px 0px -8% 0px'});
+    document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+  }else{ document.querySelectorAll('.reveal').forEach(function(el){el.classList.add('in');}); }
+
+  // ── FAQ accordéon ──
+  document.querySelectorAll('.faq__q').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var faq=btn.parentNode, a=faq.querySelector('.faq__a'), open=faq.classList.contains('open');
+      document.querySelectorAll('.faq.open').forEach(function(f){f.classList.remove('open');f.querySelector('.faq__a').style.maxHeight=null;});
+      if(!open){ faq.classList.add('open'); a.style.maxHeight=a.scrollHeight+'px'; }
+    });
+  });
+
+  // ── Formulaire concierge → contact-leads ──
+  var f=document.getElementById('expForm');
+  if(f) f.addEventListener('submit',function(e){
+    e.preventDefault();
+    var btn=f.querySelector('.cform__submit');
+    var payload={
+      name:document.getElementById('cName').value.trim(),
+      email:document.getElementById('cEmail').value.trim(),
+      phone:document.getElementById('cPhone').value.trim(),
+      message:['Profil : '+document.getElementById('cRole').value,'Projet : '+(document.getElementById('cMsg').value.trim()||'—')].join('\n')
+    };
+    if(!payload.name||!payload.email){ alert('Merci de renseigner ton nom et ton e-mail.'); return; }
+    if(btn) btn.disabled=true;
+    fetch('https://api.vybzzz.online/api/contact-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){return r.json();})
+      .then(function(d){ if(d&&d.status==='success'){ alert('Demande envoyée ! On te recontacte sous 48 h 🎉'); f.reset(); } else { alert((d&&d.message)||'Erreur, réessaie dans un instant.'); } })
+      .catch(function(){ alert('Erreur réseau, réessaie dans un instant.'); })
+      .finally(function(){ if(btn) btn.disabled=false; });
+  });
+})();
 </script>
 </body>
 </html>
