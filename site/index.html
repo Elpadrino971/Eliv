@@ -615,18 +615,42 @@ a{color:inherit;text-decoration:none}
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16"></script>
+<script src="vendor/hls.min.js"></script>
+<script>window.Hls||document.write('<script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16"><\/script>');</script>
 <script>
 (function(){
   var clamp=function(v,a,b){return Math.max(a,Math.min(b,v));};
+
+  // ── Diagnostic (ajoute ?debug=1 à l'URL) ──
+  var DEBUG=/[?&]debug=1/.test(location.search), dbg=null;
+  if(DEBUG){ dbg=document.createElement('div');
+    dbg.style.cssText='position:fixed;left:8px;bottom:8px;z-index:99999;max-width:52ch;max-height:60vh;overflow:auto;'+
+      'font:12px/1.45 monospace;background:rgba(0,0,0,.9);color:#5cff9d;padding:12px 14px;border:1px solid #5cff9d;border-radius:8px;white-space:pre-wrap';
+    (document.body||document.documentElement).appendChild(dbg); }
+  function log(m){ if(DEBUG&&dbg){ dbg.textContent+=m+'\n'; } }
+  log('hls.js : '+(window.Hls? ('chargé v'+(window.Hls.version||'?')) : 'NON CHARGÉ (CDN bloqué ?)'));
+
   // ── HLS : attache une source à une vidéo (play=false → charge sans lire) ──
   function attachHls(v,play){
     if(v.dataset.loaded){ if(play!==false) v.play().catch(function(){}); return; }
     v.dataset.loaded='1';
     var src=v.dataset.src; if(!src) return;
-    if(v.canPlayType('application/vnd.apple.mpegurl')){ v.src=src; }
-    else if(window.Hls && window.Hls.isSupported()){ var h=new Hls({capLevelToPlayerSize:true}); h.loadSource(src); h.attachMedia(v); }
-    if(play!==false) v.play().catch(function(){});
+    var lbl=(src.split('/').pop()||'').slice(0,8);
+    v.addEventListener('playing',function(){ log('▶ lecture '+lbl); });
+    v.addEventListener('error',function(){ log('✖ <video> error '+lbl+' code='+((v.error&&v.error.code)||'?')); });
+    if(v.canPlayType('application/vnd.apple.mpegurl')){ // Safari / iOS : HLS natif
+      v.src=src;
+      if(play!==false) v.play().catch(function(e){ log('play refusé '+lbl+' : '+e.name); });
+    } else if(window.Hls && window.Hls.isSupported()){ // Chrome / Firefox / Edge : hls.js
+      var h=new window.Hls({capLevelToPlayerSize:true});
+      h.loadSource(src); h.attachMedia(v);
+      h.on(window.Hls.Events.MANIFEST_PARSED,function(){ log('✓ manifeste OK '+lbl); if(play!==false) v.play().catch(function(e){ log('play refusé '+lbl+' : '+e.name); }); });
+      h.on(window.Hls.Events.ERROR,function(_evt,d){ if(d&&d.fatal){ log('✖ HLS '+lbl+' : '+d.type+' / '+d.details);
+        if(d.type===window.Hls.ErrorTypes.NETWORK_ERROR){ h.startLoad(); }
+        else if(d.type===window.Hls.ErrorTypes.MEDIA_ERROR){ h.recoverMediaError(); }
+      }});
+      v._hls=h;
+    } else { log('✖ aucun support HLS pour '+lbl); }
   }
   // Hero : charge tout de suite les 3 vidéos
   document.querySelectorAll('.chapter-video video[data-src]').forEach(function(v){attachHls(v);});
