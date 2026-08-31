@@ -135,6 +135,57 @@ a{color:inherit;text-decoration:none}
 .vessel__meta span b{display:block;font-family:var(--serif);font-size:1.25rem;color:var(--gold);letter-spacing:0;text-transform:none;margin-top:3px}
 @media(max-width:900px){.fleet{grid-template-columns:1fr}.vessel{min-height:420px}}
 
+/* ── SHOWCASE : 3 grandes sections média ── */
+.showcase{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:clamp(64px,10vh,130px)}
+.show{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,5vw,70px);align-items:center}
+.show--rev .show__media{order:2}
+.show__txt .eyebrow{display:inline-block;margin-bottom:16px}
+.show__txt h3{font-family:var(--serif);font-weight:800;font-size:clamp(2.1rem,4.4vw,3.6rem);line-height:1.03;margin-bottom:18px}
+.show__txt h3 em{font-style:italic;font-weight:600;color:var(--gold)}
+.show__txt p{color:var(--muted);line-height:1.78;margin-bottom:24px;max-width:48ch}
+.show__meta{display:flex;gap:30px;margin-bottom:28px}
+.show__meta span{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.show__meta b{display:block;font-family:var(--serif);font-size:1.5rem;color:var(--gold);margin-top:5px;letter-spacing:0;text-transform:none}
+@media(max-width:900px){.show{grid-template-columns:1fr}.show--rev .show__media{order:0}}
+
+/* média paysage 16:10 */
+.media16{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:16/10;border:1px solid rgba(255,255,255,.12);
+  background:#0A1226 center/cover;box-shadow:0 40px 90px -34px rgba(0,0,0,.75)}
+.media16 video,.media16 img{width:100%;height:100%;object-fit:cover}
+.media16::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 52%,rgba(7,12,24,.55))}
+.play-badge{position:absolute;left:20px;bottom:18px;z-index:2;display:inline-flex;align-items:center;gap:10px;
+  padding:10px 18px;border-radius:99px;background:rgba(7,12,24,.55);backdrop-filter:blur(8px);border:1px solid var(--line);
+  font-size:.64rem;letter-spacing:.16em;text-transform:uppercase}
+.play-badge .tri{width:0;height:0;border-left:10px solid var(--gold);border-top:6px solid transparent;border-bottom:6px solid transparent}
+.live-dot{position:absolute;right:18px;top:18px;z-index:2;display:inline-flex;align-items:center;gap:8px;
+  padding:7px 14px;border-radius:99px;background:rgba(180,30,30,.28);border:1px solid rgba(255,120,120,.5);
+  font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#ffd9d9}
+.live-dot::before{content:"";width:8px;height:8px;border-radius:50%;background:#ff5a5a;box-shadow:0 0 10px #ff5a5a;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* clip vertical dans un cadre téléphone */
+.phone{position:relative;width:min(300px,78%);margin:0 auto;aspect-ratio:9/19;border-radius:36px;overflow:hidden;
+  border:8px solid #0d1528;box-shadow:0 44px 100px -32px rgba(0,0,0,.85);background:#000}
+.phone video,.phone img{width:100%;height:100%;object-fit:cover}
+.phone__notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:96px;height:22px;border-radius:99px;background:#0d1528;z-index:3}
+
+/* filmstrip : scroll horizontal de vidéos */
+.strip-wrap{position:relative;margin-top:8px}
+.strip{display:flex;gap:18px;overflow-x:auto;padding:6px 2px 20px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.strip::-webkit-scrollbar{height:6px}
+.strip::-webkit-scrollbar-track{background:transparent}
+.strip::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+.strip__item{flex:0 0 auto;width:236px;aspect-ratio:9/13;border-radius:18px;overflow:hidden;scroll-snap-align:start;
+  position:relative;border:1px solid rgba(255,255,255,.1);background:#0A1226 center/cover;transition:transform .4s var(--ease),border-color .4s}
+.strip__item:hover{transform:translateY(-6px);border-color:var(--line)}
+.strip__item video,.strip__item img{width:100%;height:100%;object-fit:cover}
+.strip__item::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 48%,rgba(7,12,24,.78))}
+.strip__cap{position:absolute;left:14px;bottom:14px;z-index:2}
+.strip__cap b{display:block;font-family:var(--serif);font-weight:700;font-size:1.02rem;text-shadow:0 2px 10px rgba(0,0,0,.7)}
+.strip__cap span{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.strip-hint{margin-top:6px;font-size:.64rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);opacity:.75;display:flex;align-items:center;gap:10px}
+.strip-hint::after{content:"→";color:var(--gold);font-size:1rem}
+
 /* ── TESTIMONIALS ── */
 .testi{background:radial-gradient(120% 80% at 50% 0%,rgba(230,199,106,.05),transparent 60%)}
 .testi__grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
@@ -293,34 +344,63 @@ a{color:inherit;text-decoration:none}
     <h2>TROIS SCÈNES.<br><em>UN SEUL STANDARD.</em></h2>
     <p>Le live, le clip, le studio. Trois manières d'exister sur VybzzZ — chacune pensée pour te mettre en lumière et te faire gagner ta part.</p>
   </div>
-  <div class="fleet">
-    <article class="vessel reveal">
-      <div class="vessel__bg" style="background-image:url('https://image.mux.com/Tau4rdI8m5eXWU2rpiJ02V8ZqB4Ni3eLP3tHTZ947t6g/thumbnail.jpg?time=6')"></div>
-      <div class="vessel__body">
-        <span class="vessel__no">01 — Le Live</span>
-        <h3>Concert mondial</h3>
-        <p>Monte sur scène en direct, où que tu sois. Tes fans achètent leur place, envoient des cadeaux, vibrent en temps réel.</p>
-        <div class="vessel__meta"><span>Portée<b>Monde</b></span><span>Billetterie<b>Intégrée</b></span><span>Cadeaux<b>En direct</b></span></div>
+  <div class="showcase">
+
+    <!-- 1. LE LIVE — scroll horizontal de vidéos Mux -->
+    <div class="show-scroll reveal">
+      <div class="show__txt" style="max-width:760px;margin:0 auto clamp(26px,4vh,44px);text-align:center">
+        <span class="eyebrow eyebrow--line">01 — Le Live</span>
+        <h3>Une scène qui <em>défile.</em></h3>
+        <p style="margin:0 auto;max-width:56ch">Fais défiler les lives du moment. Chaque vignette est un concert en direct — touche, entre, vibre. <span style="color:var(--gold)">(vidéos Mux à remplacer par tes lives)</span></p>
       </div>
-    </article>
-    <article class="vessel reveal">
-      <div class="vessel__bg" style="background-image:url('https://image.mux.com/EcO013Q00m3BON019ydIrEUd3YaAES4J9nx02arl7U862P4/thumbnail.jpg?time=4')"></div>
-      <div class="vessel__body">
-        <span class="vessel__no">02 — Le Clip</span>
-        <h3>Feed & Clips</h3>
-        <p>Publie tes clips verticaux et horizontaux. Ton public te découvre entre deux lives et revient pour le prochain concert.</p>
-        <div class="vessel__meta"><span>Format<b>Vertical & 16:9</b></span><span>Partage<b>1 geste</b></span><span>Découverte<b>Pour toi</b></span></div>
+      <div class="strip-wrap">
+        <div class="strip">
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/Tau4rdI8m5eXWU2rpiJ02V8ZqB4Ni3eLP3tHTZ947t6g/thumbnail.jpg?time=6')"><video data-src="https://stream.mux.com/Tau4rdI8m5eXWU2rpiJ02V8ZqB4Ni3eLP3tHTZ947t6g.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>NOVA</b><span>Afrobeats · Live</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/EcO013Q00m3BON019ydIrEUd3YaAES4J9nx02arl7U862P4/thumbnail.jpg?time=4')"><video data-src="https://stream.mux.com/EcO013Q00m3BON019ydIrEUd3YaAES4J9nx02arl7U862P4.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>KODA</b><span>House · Live</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/Qz0200nUKYr5025USFnUB9DrK3YzXY2k8jzjWcvq4SukBc/thumbnail.jpg?time=5')"><video data-src="https://stream.mux.com/Qz0200nUKYr5025USFnUB9DrK3YzXY2k8jzjWcvq4SukBc.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>SÉLÉNÉ</b><span>Pop · Live</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/Tau4rdI8m5eXWU2rpiJ02V8ZqB4Ni3eLP3tHTZ947t6g/thumbnail.jpg?time=12')"><span class="strip__cap"><b>AKORI</b><span>Amapiano · Live</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/EcO013Q00m3BON019ydIrEUd3YaAES4J9nx02arl7U862P4/thumbnail.jpg?time=10')"><span class="strip__cap"><b>MIRÖ</b><span>Électro · Live</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/Qz0200nUKYr5025USFnUB9DrK3YzXY2k8jzjWcvq4SukBc/thumbnail.jpg?time=14')"><span class="strip__cap"><b>NABIL</b><span>R&B · Live</span></span></a>
+        </div>
+        <div class="strip-hint">Fais défiler</div>
       </div>
-    </article>
-    <article class="vessel reveal">
-      <div class="vessel__bg" style="background-image:url('https://image.mux.com/Qz0200nUKYr5025USFnUB9DrK3YzXY2k8jzjWcvq4SukBc/thumbnail.jpg?time=5')"></div>
-      <div class="vessel__body">
-        <span class="vessel__no">03 — Le Studio</span>
-        <h3>Studio Pro</h3>
-        <p>Ta régie complète : lives programmés, replays, revenus, statistiques. Tout ce qu'il faut pour piloter ta carrière.</p>
-        <div class="vessel__meta"><span>Live inclus<b>90 min/mois</b></span><span>Replays<b>Illimités</b></span><span>Retrait<b>~24 h</b></span></div>
+    </div>
+
+    <!-- 2. LE CONCERT — grande vidéo paysage -->
+    <div class="show reveal">
+      <div class="show__media">
+        <div class="media16" style="background-image:url('https://image.mux.com/Tau4rdI8m5eXWU2rpiJ02V8ZqB4Ni3eLP3tHTZ947t6g/thumbnail.jpg?time=6')">
+          <video data-src="https://stream.mux.com/Tau4rdI8m5eXWU2rpiJ02V8ZqB4Ni3eLP3tHTZ947t6g.m3u8" poster="https://image.mux.com/Tau4rdI8m5eXWU2rpiJ02V8ZqB4Ni3eLP3tHTZ947t6g/thumbnail.jpg?time=6" muted loop playsinline preload="none"></video>
+          <span class="live-dot">En direct</span>
+          <span class="play-badge"><span class="tri"></span>Concert live</span>
+        </div>
       </div>
-    </article>
+      <div class="show__txt">
+        <span class="eyebrow eyebrow--line">02 — Le Concert</span>
+        <h3>Le grand <em>live.</em></h3>
+        <p>Monte sur scène en direct, où que tu sois. Tes fans achètent leur place, envoient des cadeaux et vibrent avec toi en temps réel — sans salle, sans frontière, sans intermédiaire.</p>
+        <div class="show__meta"><span>Portée<b>Monde</b></span><span>Billetterie<b>Intégrée</b></span><span>Revenus<b>Tu gardes 50 %</b></span></div>
+        <a href="artist.html" class="ghost-btn">Diffuser mon concert</a>
+      </div>
+    </div>
+
+    <!-- 3. LE CLIP — vidéo verticale -->
+    <div class="show show--rev reveal">
+      <div class="show__media">
+        <div class="phone">
+          <span class="phone__notch"></span>
+          <video data-src="https://stream.mux.com/EcO013Q00m3BON019ydIrEUd3YaAES4J9nx02arl7U862P4.m3u8" poster="https://image.mux.com/EcO013Q00m3BON019ydIrEUd3YaAES4J9nx02arl7U862P4/thumbnail.jpg?time=4&fit_mode=crop&height=760&width=360" muted loop playsinline preload="none"></video>
+        </div>
+      </div>
+      <div class="show__txt">
+        <span class="eyebrow eyebrow--line">03 — Le Clip</span>
+        <h3>Le clip <em>vertical.</em></h3>
+        <p>Publie tes clips verticaux et horizontaux. Ton public te découvre entre deux lives, partage en un geste et revient pour ton prochain concert. Le feed « Pour toi » fait le reste.</p>
+        <div class="show__meta"><span>Format<b>Vertical & 16:9</b></span><span>Partage<b>1 geste</b></span><span>Découverte<b>Pour toi</b></span></div>
+        <a href="feed.html" class="ghost-btn">Voir les clips</a>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -481,13 +561,22 @@ a{color:inherit;text-decoration:none}
 <script>
 (function(){
   var clamp=function(v,a,b){return Math.max(a,Math.min(b,v));};
-  // ── HLS : charge les 3 vidéos ──
-  document.querySelectorAll('.chapter-video video').forEach(function(v){
-    var src=v.dataset.src;
+  // ── HLS : attache une source à une vidéo ──
+  function attachHls(v){
+    if(v.dataset.loaded) return; v.dataset.loaded='1';
+    var src=v.dataset.src; if(!src) return;
     if(v.canPlayType('application/vnd.apple.mpegurl')){ v.src=src; }
     else if(window.Hls && window.Hls.isSupported()){ var h=new Hls({capLevelToPlayerSize:true}); h.loadSource(src); h.attachMedia(v); }
     v.play().catch(function(){});
-  });
+  }
+  // Hero : charge tout de suite les 3 vidéos
+  document.querySelectorAll('.chapter-video video[data-src]').forEach(attachHls);
+  // Showcase (concert, clip, filmstrip) : charge à l'arrivée dans le viewport
+  var lazyVids=document.querySelectorAll('.show video[data-src], .strip video[data-src]');
+  if('IntersectionObserver' in window){
+    var vio=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){attachHls(en.target);vio.unobserve(en.target);}});},{rootMargin:'200px'});
+    lazyVids.forEach(function(v){vio.observe(v);});
+  }else{ lazyVids.forEach(attachHls); }
 
   var hero=document.getElementById('scrollhero');
   var vids=[].map.call(document.querySelectorAll('.chapter-video'),function(e){return e;});
