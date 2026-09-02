@@ -638,10 +638,7 @@ a{color:inherit;text-decoration:none}
     var lbl=(src.split('/').pop()||'').slice(0,8);
     v.addEventListener('playing',function(){ log('▶ lecture '+lbl); });
     v.addEventListener('error',function(){ log('✖ <video> error '+lbl+' code='+((v.error&&v.error.code)||'?')); });
-    if(v.canPlayType('application/vnd.apple.mpegurl')){ // Safari / iOS : HLS natif
-      v.src=src;
-      if(play!==false) v.play().catch(function(e){ log('play refusé '+lbl+' : '+e.name); });
-    } else if(window.Hls && window.Hls.isSupported()){ // Chrome / Firefox / Edge : hls.js
+    if(window.Hls && window.Hls.isSupported()){ // Chrome / Firefox / Edge : hls.js EN PREMIER
       var h=new window.Hls({capLevelToPlayerSize:true});
       h.loadSource(src); h.attachMedia(v);
       h.on(window.Hls.Events.MANIFEST_PARSED,function(){ log('✓ manifeste OK '+lbl); if(play!==false) v.play().catch(function(e){ log('play refusé '+lbl+' : '+e.name); }); });
@@ -650,6 +647,9 @@ a{color:inherit;text-decoration:none}
         else if(d.type===window.Hls.ErrorTypes.MEDIA_ERROR){ h.recoverMediaError(); }
       }});
       v._hls=h;
+    } else if(v.canPlayType('application/vnd.apple.mpegurl')){ // Safari / iOS : HLS natif (repli)
+      v.src=src;
+      if(play!==false) v.play().catch(function(e){ log('play refusé '+lbl+' : '+e.name); });
     } else { log('✖ aucun support HLS pour '+lbl); }
   }
   // Hero : charge tout de suite les 3 vidéos
