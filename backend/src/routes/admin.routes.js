@@ -1408,6 +1408,49 @@ router.get('/vibe/meetings/:id', requireAdmin, (req, res) => {
   `).all(req.params.id);
   res.json({ status: 'success', data: { ...meeting, actions } });
 });
+// POST /vibe/meetings/:id/assist — assistant IA : prépare des arguments, rédige
+// une réponse à ce qu'on vient de te dire, ou répond à une question, en
+// s'appuyant sur le contexte de la réunion (titre, type, notes) + le CRM.
+router.post('/vibe/meetings/:id/assist', requireAdmin, async (req, res) => {
+  if (!anthropic.isConfigured()) {
+    return res.status(503).json({ status: 'error', message: 'IA non configurée (définir GEMINI_API_KEY gratuit ou ANTHROPIC_API_KEY).' });
+  }
+  const meeting = db.prepare('SELECT * FROM vibe_meetings WHERE id = ?').get(req.params.id);
+  if (!meeting) return res.status(404).json({ status: 'error', message: 'Réunion introuvable.' });
+  const b = req.body || {};
+  const mode = ['points', 'reply', 'ask'].includes(b.mode) ? b.mode : 'ask';
+  const input = String(b.input || '').trim();
+
+  // Contexte CRM léger (pipeline artistes) pour nourrir les réponses.
+  let crm = '';
+  try {
+    const rows = db.prepare("SELECT stage_name, stage, genre FROM vibe_crm ORDER BY id DESC LIMIT 12").all();
+    if (rows.length) crm = rows.map((r) => `- ${r.stage_name || '?'} (${r.stage || '?'}${r.genre ? ', ' + r.genre : ''})`).join('\n');
+  } catch (_) { /* table absente : on ignore */ }
+
+  const ctx = `Contexte de la réunion VybzzZ (plateforme de concerts en live streaming où l'artiste garde 50 % de ses revenus) :
+- Titre : ${meeting.title}
+- Type : ${meeting.type || '—'}
+- Notes déjà prises : ${meeting.summary_md ? meeting.summary_md.slice(0, 1500) : '(aucune)'}${crm ? '\n\nPipeline artistes (CRM) :\n' + crm : ''}`;
+
+  let task;
+  if (mode === 'points') {
+    task = `${ctx}\n\nTâche : prépare-moi 5 points/arguments clés à aborder dans cette réunion, en français, ton pro et chaleureux. Format : une liste à puces courte et actionnable. Réponds uniquement avec la liste.`;
+  } else if (mode === 'reply') {
+    task = `${ctx}\n\nOn vient de me dire ceci en réunion : « ${input || '(non précisé)'} ».\nTâche : rédige une réponse que je peux dire à voix haute, en français, ton pro et chaleureux, 3 à 5 phrases, convaincante et concrète. Réponds uniquement avec le texte de la réponse, sans guillemets.`;
+  } else {
+    task = `${ctx}\n\nQuestion / demande : ${input || 'Aide-moi à mener cette réunion.'}\nTâche : réponds en français, de façon concrète et actionnable, comme un bras droit qui prépare le dirigeant de VybzzZ. Réponds uniquement avec le texte utile.`;
+  }
+
+  try {
+    const text = await anthropic.generateText(task, { maxTokens: 500 });
+    return res.json({ status: 'success', data: { text } });
+  } catch (e) {
+    console.error('[ai meeting-assist]', e.message);
+    return res.status(502).json({ status: 'error', message: `Erreur IA : ${e.message}` });
+  }
+});
+
 router.post('/vibe/meetings', requireAdmin, (req, res) => {
   const b = req.body || {};
   if (!b.title) return res.status(422).json({ status: 'error', message: 'Titre requis.' });

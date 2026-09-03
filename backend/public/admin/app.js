@@ -1864,6 +1864,18 @@ async function openMeeting(id) {
         <div style="display:flex;justify-content:space-between;align-items:center"><b>Actions décidées</b><button class="btn" id="a-add">+ Action</button></div>
         <div id="m-actions" style="margin-top:8px">${actions.length ? actions.map(actionRow).join('') : '<div class="em">Aucune action.</div>'}</div>
       </div>
+    </div>
+    <div style="margin-top:18px;padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:var(--card)">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <b>🤖 Assistant IA</b>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn gold" id="ai-points">🎯 Arguments clés</button>
+          <button class="btn" id="ai-reply">💬 Rédiger une réponse</button>
+          <button class="btn" id="ai-ask">❓ Demander</button>
+        </div>
+      </div>
+      <textarea id="ai-input" style="width:100%;min-height:70px;margin-top:10px" placeholder="Colle ce qu'on vient de te dire (pour « Rédiger une réponse ») ou pose ta question (pour « Demander »)…"></textarea>
+      <div id="ai-out" style="margin-top:10px;white-space:pre-wrap;line-height:1.55"></div>
     </div>`;
   document.getElementById('m-back').onclick = () => { vibeTab = 'reunions'; renderVibeTab(); };
   document.getElementById('m-status').onchange = async (e) => { await api('PUT', '/vibe/meetings/' + id, { status: e.target.value }); toast('Statut mis à jour'); };
@@ -1890,6 +1902,33 @@ async function openMeeting(id) {
     document.getElementById('m-copy').onclick = () => { navigator.clipboard?.writeText(visioUrl); toast('Lien visio copié'); };
   }
   document.getElementById('a-add').onclick = () => actionForm({ meeting_id: id }, () => openMeeting(id));
+
+  // ── Assistant IA : arguments / réponse / question ──
+  (function () {
+    const out = document.getElementById('ai-out');
+    const input = document.getElementById('ai-input');
+    async function ask(mode) {
+      if ((mode === 'reply' || mode === 'ask') && !input.value.trim()) { toast('Écris d’abord dans le champ ci-dessus.'); input.focus(); return; }
+      out.innerHTML = '<span class="em">L’assistant réfléchit…</span>';
+      try {
+        const r = await api('POST', '/vibe/meetings/' + id + '/assist', { mode, input: input.value.trim() });
+        const text = (r.data && r.data.text) || '(réponse vide)';
+        out.innerHTML = '';
+        const box = document.createElement('div');
+        box.textContent = text;
+        const copy = document.createElement('button');
+        copy.className = 'btn'; copy.style.marginTop = '10px'; copy.textContent = '📋 Copier';
+        copy.onclick = () => { navigator.clipboard?.writeText(text); toast('Copié'); };
+        const addNote = document.createElement('button');
+        addNote.className = 'btn'; addNote.style.cssText = 'margin-top:10px;margin-left:8px'; addNote.textContent = '➕ Ajouter aux notes';
+        addNote.onclick = () => { const n = document.getElementById('m-notes'); n.value = (n.value ? n.value + '\n\n' : '') + text; n.dispatchEvent(new Event('input')); toast('Ajouté aux notes'); };
+        out.appendChild(box); out.appendChild(copy); out.appendChild(addNote);
+      } catch (e) { out.innerHTML = '<span style="color:#f88">' + esc(e.message) + '</span>'; }
+    }
+    document.getElementById('ai-points').onclick = () => ask('points');
+    document.getElementById('ai-reply').onclick = () => ask('reply');
+    document.getElementById('ai-ask').onclick = () => ask('ask');
+  })();
   bindActionRows(body, () => openMeeting(id));
 }
 function actionRow(a) {
