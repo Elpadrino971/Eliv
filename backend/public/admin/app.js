@@ -1876,11 +1876,16 @@ async function openMeeting(id) {
   };
   if (visioUrl) {
     document.getElementById('m-join').onclick = () => {
-      if (isJitsi) {
-        document.getElementById('m-visio').innerHTML = `<iframe src="${esc(visioUrl)}" allow="camera; microphone; fullscreen; display-capture; autoplay" style="width:100%;height:520px;border:0;border-radius:12px;margin-top:8px"></iframe>`;
-        document.getElementById('m-visio').scrollIntoView({ behavior: 'smooth' });
-        if (m.status === 'planifiee') api('PUT', '/vibe/meetings/' + id, { status: 'en_cours' });
-      } else { window.open(visioUrl, '_blank'); }
+      // La visio s'ouvre dans un nouvel onglet : Jitsi (et la CSP de l'admin)
+      // interdisent l'intégration en iframe, et un onglet dédié gère bien mieux
+      // la caméra / le micro / le plein écran.
+      window.open(visioUrl, '_blank', 'noopener');
+      if (isJitsi && m.status === 'planifiee') {
+        api('PUT', '/vibe/meetings/' + id, { status: 'en_cours' });
+        const sel = document.getElementById('m-status'); if (sel) sel.value = 'en_cours';
+      }
+      const host = document.getElementById('m-visio');
+      if (host) host.innerHTML = `<div style="margin-top:10px;padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--muted)">🎥 La visio s'est ouverte dans un nouvel onglet. Garde cet onglet-ci ouvert pour prendre tes notes (sauvegarde auto).</div>`;
     };
     document.getElementById('m-copy').onclick = () => { navigator.clipboard?.writeText(visioUrl); toast('Lien visio copié'); };
   }
