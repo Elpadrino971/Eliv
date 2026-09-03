@@ -528,6 +528,13 @@ router.get('/feed-clips', (req, res) => {
   const rows = db
     .prepare('SELECT * FROM feed_clips WHERE feed = ? AND active = 1 ORDER BY position ASC, id ASC')
     .all(feed);
+  // Comptabilise une impression par clip servi (stats API de publication).
+  if (rows.length) {
+    try {
+      const ids = rows.map((r) => r.id);
+      db.prepare(`UPDATE feed_clips SET views = COALESCE(views,0)+1 WHERE id IN (${ids.map(() => '?').join(',')})`).run(...ids);
+    } catch (_) { /* non bloquant */ }
+  }
   const list = rows.map((r) => ({
     id: r.id,
     title: r.title,

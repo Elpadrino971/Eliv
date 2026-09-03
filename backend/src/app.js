@@ -234,6 +234,8 @@ app.use('/api/admin', adminRoutes);
 
 // Vue d'ensemble publique (agrégats OPRAS) sous /api/vibe
 app.use('/api/vibe', require('./routes/vibe.routes'));
+// API de publication machine-à-machine (contrat Atelier -> VybzzZ), auth X-API-Key.
+app.use('/api/v1', require('./routes/publish.routes'));
 
 // Toutes les routes API sous /api (comme baseAPI = mainIP/api)
 app.use('/api', authRoutes);

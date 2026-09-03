@@ -116,6 +116,7 @@ const NAV = [
   ] },
   { group: 'Compte', items: [
     { id: 'access', label: 'Accès & rôles', ic: '🔐' },
+    { id: 'apikeys', label: 'API / Atelier', ic: '🔌' },
     { id: 'profile', label: 'Profil', ic: '👤' },
   ] },
 ];
@@ -572,6 +573,57 @@ async function pageGeo() {
     const host = document.getElementById('geoMap');
     if (host) host.innerHTML = '<p style="color:var(--muted);padding:30px">Carte indisponible (le classement ci-contre reste à jour).</p>';
   }
+}
+
+// ─── Clés API (publication machine-à-machine, ex : Atelier) ───
+async function pageApiKeys() {
+  view().innerHTML = '<div class="head-row"><h1 class="page-title">API / Atelier</h1><button class="add-btn" id="newkey">+ Générer une clé</button></div><p style="color:var(--muted)">Chargement…</p>';
+  let rows = [];
+  try { rows = (await api('GET', '/api-keys')).data || []; } catch (e) { view().innerHTML = '<p style="color:#f88">' + esc(e.message) + '</p>'; return; }
+
+  const list = rows.length ? `
+    <table class="tbl"><thead><tr><th>Nom</th><th>Clé</th><th>Dernier usage</th><th>État</th><th></th></tr></thead>
+    <tbody>${rows.map((k) => `<tr>
+      <td>${esc(k.name || '—')}</td>
+      <td style="font-family:monospace">${esc(k.prefix || '—')}</td>
+      <td>${k.last_used_at ? fmtDate(k.last_used_at) : '<span class="em">jamais</span>'}</td>
+      <td>${k.active ? '<span class="badge active">Active</span>' : '<span class="badge cancelled">Révoquée</span>'}</td>
+      <td>${k.active ? `<button class="btn status revoke" data-id="${k.id}">Révoquer</button>` : ''}</td>
+    </tr>`).join('')}</tbody></table>` : '<p style="color:var(--muted)">Aucune clé pour l’instant.</p>';
+
+  view().innerHTML = `
+    <div class="head-row"><h1 class="page-title">API / Atelier</h1><button class="add-btn" id="newkey">+ Générer une clé</button></div>
+    <p style="color:var(--muted);max-width:70ch">Ces clés permettent à un service externe (ex. <b>Atelier</b>) de publier des clips dans le feed VybzzZ via l’API <code>/api/v1/publish</code> (en-tête <code>X-API-Key</code>). La clé complète n’est affichée <b>qu’une seule fois</b>, à la création.</p>
+    ${list}`;
+
+  view().querySelector('#newkey').onclick = () => {
+    modal({
+      title: 'Générer une clé API',
+      fields: [{ name: 'name', label: 'Nom (ex : Atelier – production)', value: '' }],
+      onSave: async (d) => {
+        const r = await api('POST', '/api-keys', { name: d.name });
+        const key = r.data && r.data.key;
+        showKeyOnce(key);
+      },
+    });
+  };
+  view().querySelectorAll('.revoke').forEach((b) => b.onclick = async () => {
+    if (!confirm('Révoquer cette clé ? Les services qui l’utilisent perdront l’accès.')) return;
+    await api('DELETE', '/api-keys/' + b.dataset.id); toast('Clé révoquée'); pageApiKeys();
+  });
+}
+function showKeyOnce(key) {
+  const bg = document.createElement('div'); bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal">
+    <h3 style="margin:0 0 8px">🔑 Ta clé API</h3>
+    <p style="color:var(--muted);margin:0 0 12px">Copie-la maintenant : elle ne sera <b>plus jamais</b> affichée.</p>
+    <textarea readonly style="width:100%;font-family:monospace;min-height:64px">${esc(key || '')}</textarea>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn gold" id="k-copy">📋 Copier</button><button class="btn" id="k-done">Fermer</button></div>
+  </div>`;
+  document.body.appendChild(bg);
+  bg.querySelector('#k-copy').onclick = () => { navigator.clipboard?.writeText(key); toast('Copié'); };
+  bg.querySelector('#k-done').onclick = () => { bg.remove(); pageApiKeys(); };
+  bg.onclick = (e) => { if (e.target === bg) { bg.remove(); pageApiKeys(); } };
 }
 
 function pageGenres() {
@@ -2092,7 +2144,7 @@ const ROUTES = {
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
-  splash: pageSplash, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess,
+  splash: pageSplash, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
 };
 
 window.addEventListener('hashchange', route);

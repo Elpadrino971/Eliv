@@ -68,6 +68,28 @@ function createDirectUpload({ passthrough, corsOrigin = '*' } = {}) {
   }).then((data) => ({ uploadId: data.id, uploadUrl: data.url }));
 }
 
+/**
+ * Crée un asset Mux directement depuis une URL de média public (ingestion).
+ * Sert au contrat de publication (Atelier -> VybzzZ) : on passe une URL, Mux
+ * télécharge et encode ; le webhook `video.asset.ready` rattachera le
+ * playback_id via le passthrough {kind:'clip', id}.
+ */
+function createAssetFromUrl(url, { passthrough } = {}) {
+  return muxFetch('/video/v1/assets', {
+    method: 'POST',
+    body: {
+      input: [{ url }],
+      playback_policy: ['public'],
+      passthrough: passthrough ? JSON.stringify(passthrough) : undefined,
+      mp4_support: 'none',
+    },
+  }).then((data) => ({
+    assetId: data.id,
+    status: data.status,
+    playbackId: (data.playback_ids && data.playback_ids[0] && data.playback_ids[0].id) || null,
+  }));
+}
+
 function getUpload(uploadId) {
   return muxFetch(`/video/v1/uploads/${uploadId}`);
 }
@@ -146,6 +168,7 @@ function verifyWebhookSignature(rawBody, signatureHeader, secret) {
 module.exports = {
   isConfigured,
   createDirectUpload,
+  createAssetFromUrl,
   getUpload,
   getAsset,
   deleteAsset,

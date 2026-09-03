@@ -90,4 +90,24 @@ function optionalAuth(req, res, next) {
   next();
 }
 
-module.exports = { hash, compare, sign, requireAuth, optionalAuth, SECRET };
+// ─── Auth machine-à-machine par clé API (X-API-Key) ───────────────────────────
+// Sert au contrat de publication (Atelier -> VybzzZ). La clé complète n'est
+// jamais stockée : on compare le SHA-256 de la clé reçue au hash en base.
+const crypto = require('crypto');
+function sha256(s) { return crypto.createHash('sha256').update(String(s)).digest('hex'); }
+
+function requireApiKey(req, res, next) {
+  const key = req.headers['x-api-key'] || (String(req.headers['authorization'] || '').startsWith('ApiKey ') ? req.headers['authorization'].slice(7) : null);
+  if (!key) return res.status(401).json({ status: 'error', message: 'Clé API manquante (en-tête X-API-Key).' });
+  try {
+    const row = db.prepare('SELECT * FROM api_keys WHERE key_hash = ? AND active = 1').get(sha256(key));
+    if (!row) return res.status(401).json({ status: 'error', message: 'Clé API invalide ou révoquée.' });
+    db.prepare('UPDATE api_keys SET last_used_at = datetime("now") WHERE id = ?').run(row.id);
+    req.apiKey = { id: row.id, name: row.name };
+    next();
+  } catch (e) {
+    return res.status(500).json({ status: 'error', message: 'Erreur d’authentification API.' });
+  }
+}
+
+module.exports = { hash, compare, sign, requireAuth, optionalAuth, requireApiKey, sha256, SECRET };

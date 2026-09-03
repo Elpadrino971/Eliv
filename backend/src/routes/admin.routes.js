@@ -5,7 +5,8 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { db } = require('../db');
 const { platformCounters, payoutCountdown } = require('../helpers');
-const { hash, compare, SECRET } = require('../auth');
+const { hash, compare, SECRET, sha256 } = require('../auth');
+const crypto = require('crypto');
 const { saveUpload, saveClipVideo } = require('../uploads');
 const mux = require('../services/mux');
 const anthropic = require('../services/anthropic');
@@ -229,6 +230,25 @@ router.get('/geo', requireAdmin, (req, res) => {
       points: [...points.values()].sort((a, b) => b.count - a.count),
     },
   });
+});
+
+// ─── Clés API (publication machine-à-machine, ex : Atelier) ───
+// La clé complète n'est renvoyée QU'UNE fois, à la création. Ensuite on ne
+// garde que son hash + un préfixe lisible pour la reconnaître.
+router.get('/api-keys', requireAdmin, (req, res) => {
+  const rows = db.prepare('SELECT id, name, prefix, active, last_used_at, created_at FROM api_keys ORDER BY id DESC').all();
+  res.json({ status: 'success', data: rows });
+});
+router.post('/api-keys', requireAdmin, (req, res) => {
+  const name = ((req.body && req.body.name) || '').toString().slice(0, 80) || 'Sans nom';
+  const secret = 'vybz_' + crypto.randomBytes(24).toString('hex'); // clé complète (montrée 1 fois)
+  const prefix = secret.slice(0, 12) + '…';
+  db.prepare('INSERT INTO api_keys (name, prefix, key_hash, active) VALUES (?, ?, ?, 1)').run(name, prefix, sha256(secret));
+  res.json({ status: 'success', data: { name, key: secret, prefix } });
+});
+router.delete('/api-keys/:id', requireAdmin, (req, res) => {
+  db.prepare('UPDATE api_keys SET active = 0 WHERE id = ?').run(req.params.id);
+  res.json({ status: 'success' });
 });
 
 // GET /api/admin/users?type=all|user|artist&search=

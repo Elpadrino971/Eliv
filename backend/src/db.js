@@ -303,6 +303,21 @@ function init() {
     );
   `);
 
+  // Clés API machine-à-machine (ex : Atelier -> VybzzZ). Le secret n'est JAMAIS
+  // stocké en clair : seul son hash SHA-256 est conservé, et la clé complète
+  // n'est montrée qu'une fois à la création.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS api_keys (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      prefix TEXT,
+      key_hash TEXT UNIQUE,
+      active INTEGER DEFAULT 1,
+      last_used_at TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
   // Registre des revenus : pour CHAQUE vente (billet / cadeau), on trace le
   // brut, la part artiste et la part plateforme + le taux appliqué. Source de
   // vérité pour la compta (part plateforme = revenu réel du fondateur, pas le
@@ -586,6 +601,11 @@ function init() {
     "ALTER TABLE feed_clips ADD COLUMN mux_upload_id TEXT",
     "ALTER TABLE feed_clips ADD COLUMN upload_status TEXT",
     "ALTER TABLE feed_clips ADD COLUMN expires_at TEXT",
+    "ALTER TABLE feed_clips ADD COLUMN views INTEGER DEFAULT 0",       // impressions dans le feed (stats API)
+    "ALTER TABLE feed_clips ADD COLUMN likes INTEGER DEFAULT 0",       // likes (stats API)
+    "ALTER TABLE feed_clips ADD COLUMN source TEXT",                   // ex: 'atelier' (origine de la publication)
+    "ALTER TABLE feed_clips ADD COLUMN external_ref TEXT",             // id côté client (Atelier) pour idempotence
+    "ALTER TABLE feed_clips ADD COLUMN api_key_id INTEGER",            // clé API ayant publié (scoping status/stats)
     // Stripe Checkout (paiement carte web, en plus de l'IAP) : Price ID
     // colle a la main dans l'admin (pas de creation auto depuis le backend,
     // pour eviter de dupliquer des objets Stripe a chaque edition).
