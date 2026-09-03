@@ -175,13 +175,20 @@ a{color:inherit;text-decoration:none}
 .phone video,.phone img{width:100%;height:100%;object-fit:cover}
 .phone__notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:96px;height:22px;border-radius:99px;background:#0d1528;z-index:3}
 
+/* clip 16:9 dans un téléphone tourné (paysage) */
+.deviceland{position:relative;width:min(600px,96%);margin:0 auto;aspect-ratio:16/9;border-radius:30px;padding:11px;
+  background:#0d1528;border:1px solid rgba(255,255,255,.06);box-shadow:0 44px 100px -32px rgba(0,0,0,.85)}
+.deviceland__screen{position:relative;width:100%;height:100%;border-radius:19px;overflow:hidden;background:#000}
+.deviceland__screen video,.deviceland__screen img{width:100%;height:100%;object-fit:cover}
+.deviceland__cam{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:5px;height:44px;border-radius:99px;background:#26324c;z-index:3}
+
 /* filmstrip : scroll horizontal de vidéos */
 .strip-wrap{position:relative;margin-top:8px}
 .strip{display:flex;gap:18px;overflow-x:auto;padding:6px 2px 20px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
 .strip::-webkit-scrollbar{height:6px}
 .strip::-webkit-scrollbar-track{background:transparent}
 .strip::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
-.strip__item{flex:0 0 auto;width:236px;aspect-ratio:9/13;border-radius:18px;overflow:hidden;scroll-snap-align:start;
+.strip__item{flex:0 0 auto;width:340px;aspect-ratio:16/9;border-radius:18px;overflow:hidden;scroll-snap-align:start;
   position:relative;border:1px solid rgba(255,255,255,.1);background:#0A1226 center/cover;transition:transform .4s var(--ease),border-color .4s}
 .strip__item:hover{transform:translateY(-6px);border-color:var(--line)}
 .strip__item video,.strip__item img{width:100%;height:100%;object-fit:cover}
@@ -411,12 +418,12 @@ a{color:inherit;text-decoration:none}
       </div>
       <div class="strip-wrap">
         <div class="strip">
-          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk/thumbnail.jpg?width=360&height=520&fit_mode=smartcrop')"><video data-src="https://stream.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>NOVA</b><span>Afrobeats · Clip</span></span></a>
-          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/ex6y2Wc00iV1un00GfuDGKiSTj6QzU49fXtuFKamfYQ1s/thumbnail.jpg?width=360&height=520&fit_mode=smartcrop')"><video data-src="https://stream.mux.com/ex6y2Wc00iV1un00GfuDGKiSTj6QzU49fXtuFKamfYQ1s.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>KODA</b><span>House · Clip</span></span></a>
-          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/a1SB54WoSAeljaRnEmx3iIMdv4IREYoNENgJRvKcC2M/thumbnail.jpg?width=360&height=520&fit_mode=smartcrop')"><video data-src="https://stream.mux.com/a1SB54WoSAeljaRnEmx3iIMdv4IREYoNENgJRvKcC2M.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>SÉLÉNÉ</b><span>Pop · Clip</span></span></a>
-          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/S5gwJ00UP6GtKeYp11SeGabksA6JdpOQQkdCEkkLOBCo/thumbnail.jpg?width=360&height=520&fit_mode=smartcrop')"><span class="strip__cap"><b>AKORI</b><span>Amapiano · Feed</span></span></a>
-          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/fy01PolEvTfQkcE1NpRSYfZ3BJJTuYRpei9FDebfdaXw/thumbnail.jpg?width=360&height=520&fit_mode=smartcrop')"><span class="strip__cap"><b>MIRÖ</b><span>Électro · Feed</span></span></a>
-          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/wsZ7w3n1rZC8hO6f01a5SXd01J1CPtPcsGHJW01VIur2m8/thumbnail.jpg?width=360&height=520&fit_mode=smartcrop')"><span class="strip__cap"><b>NABIL</b><span>R&B · Feed</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk/thumbnail.jpg?time=3')"><video data-src="https://stream.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>NOVA</b><span>Afrobeats · Clip</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/ex6y2Wc00iV1un00GfuDGKiSTj6QzU49fXtuFKamfYQ1s/thumbnail.jpg?time=3')"><video data-src="https://stream.mux.com/ex6y2Wc00iV1un00GfuDGKiSTj6QzU49fXtuFKamfYQ1s.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>KODA</b><span>House · Clip</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/a1SB54WoSAeljaRnEmx3iIMdv4IREYoNENgJRvKcC2M/thumbnail.jpg?time=3')"><video data-src="https://stream.mux.com/a1SB54WoSAeljaRnEmx3iIMdv4IREYoNENgJRvKcC2M.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>SÉLÉNÉ</b><span>Pop · Clip</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/S5gwJ00UP6GtKeYp11SeGabksA6JdpOQQkdCEkkLOBCo/thumbnail.jpg?time=3')"><span class="strip__cap"><b>AKORI</b><span>Amapiano · Feed</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/fy01PolEvTfQkcE1NpRSYfZ3BJJTuYRpei9FDebfdaXw/thumbnail.jpg?time=3')"><span class="strip__cap"><b>MIRÖ</b><span>Électro · Feed</span></span></a>
+          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/wsZ7w3n1rZC8hO6f01a5SXd01J1CPtPcsGHJW01VIur2m8/thumbnail.jpg?time=3')"><span class="strip__cap"><b>NABIL</b><span>R&B · Feed</span></span></a>
         </div>
         <div class="strip-hint">Fais défiler</div>
       </div>
@@ -441,20 +448,22 @@ a{color:inherit;text-decoration:none}
       </div>
     </div>
 
-    <!-- 3. LE CLIP — vidéo verticale -->
+    <!-- 3. LE CLIP — vidéo 16:9 dans un téléphone tourné (paysage) -->
     <div class="show show--rev reveal">
       <div class="show__media">
-        <div class="phone">
-          <span class="phone__notch"></span>
-          <video data-src="https://stream.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk.m3u8" poster="https://image.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk/thumbnail.jpg?fit_mode=smartcrop&height=760&width=360" muted loop playsinline preload="none"></video>
-          <button class="sound-btn" type="button" aria-label="Activer le son"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/><path d="M19 5l-1.4 1.4A7.5 7.5 0 0 1 20 12a7.5 7.5 0 0 1-2.4 5.6L19 19a9.5 9.5 0 0 0 0-14z" opacity=".85"/></svg></button>
+        <div class="deviceland">
+          <span class="deviceland__cam"></span>
+          <div class="deviceland__screen">
+            <video data-src="https://stream.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk.m3u8" poster="https://image.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk/thumbnail.jpg?time=2" muted loop playsinline preload="none"></video>
+            <button class="sound-btn" type="button" aria-label="Activer le son"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/><path d="M19 5l-1.4 1.4A7.5 7.5 0 0 1 20 12a7.5 7.5 0 0 1-2.4 5.6L19 19a9.5 9.5 0 0 0 0-14z" opacity=".85"/></svg></button>
+          </div>
         </div>
       </div>
       <div class="show__txt">
         <span class="eyebrow eyebrow--line">03 — Le Clip</span>
-        <h3>Le clip <em>vertical.</em></h3>
-        <p>Publie tes clips verticaux et horizontaux. Ton public te découvre entre deux lives, partage en un geste et revient pour ton prochain concert. Le feed « Pour toi » fait le reste.</p>
-        <div class="show__meta"><span>Format<b>Vertical & 16:9</b></span><span>Partage<b>1 geste</b></span><span>Découverte<b>Pour toi</b></span></div>
+        <h3>Le clip <em>en grand.</em></h3>
+        <p>Publie tes clips en 16:9. Ton public te découvre entre deux lives, partage en un geste et revient pour ton prochain concert. Le feed « Pour toi » fait le reste.</p>
+        <div class="show__meta"><span>Format<b>16:9 · Paysage</b></span><span>Partage<b>1 geste</b></span><span>Découverte<b>Pour toi</b></span></div>
         <a href="feed.html" class="ghost-btn">Voir les clips</a>
       </div>
     </div>
