@@ -5,6 +5,19 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { db } = require('./db');
+const geo = require('./services/geo');
+
+// Capture best-effort du pays via l'IP, une seule fois (tant que non renseigné).
+// Non bloquant : toute erreur est ignorée pour ne jamais casser une requête.
+function captureGeo(user, req) {
+  try {
+    if (!user || user.country_code) return;
+    const g = geo.fromIp(req.ip || (req.headers && req.headers['x-forwarded-for']));
+    if (!g || !g.code) return;
+    db.prepare('UPDATE users SET country_code = ?, geo_lat = ?, geo_lon = ?, geo_at = datetime("now") WHERE id = ?')
+      .run(g.code, g.lat, g.lon, user.id);
+  } catch (_) { /* silencieux */ }
+}
 
 // Secret de signature JWT. S'il est manquant ou laissé à un placeholder, la
 // clé est publique/devinable -> n'importe qui peut forger un token (y compris
@@ -55,6 +68,7 @@ function requireAuth(req, res, next) {
       return res.status(403).json({ status: 'error', message: 'Account suspended.' });
     }
     req.user = user;
+    captureGeo(user, req);
     next();
   } catch (e) {
     return res.status(401).json({ status: 'error', message: 'Invalid token.' });

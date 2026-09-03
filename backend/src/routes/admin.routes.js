@@ -11,6 +11,7 @@ const mux = require('../services/mux');
 const anthropic = require('../services/anthropic');
 const apporteurBonus = require('../services/apporteur_bonus');
 const statements = require('../services/statements');
+const geo = require('../services/geo');
 const truthy = (v) => v === true || v === 1 || v === '1' || v === 'true' || v === 'on';
 const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
 
@@ -173,6 +174,59 @@ router.get('/stats', requireAdmin, (req, res) => {
       validated_artists: counters.validated_artists,
       users_all: counters.users_total,
       payout: payoutCountdown(),
+    },
+  });
+});
+
+// GET /api/admin/geo — répartition des utilisateurs par pays (+ points carte).
+// Priorité au pays capturé par IP (country_code) ; repli sur l'adresse texte
+// pour les comptes créés avant la capture géo.
+router.get('/geo', requireAdmin, (req, res) => {
+  const rows = db.prepare(
+    "SELECT country_code, geo_lat, geo_lon, address FROM users WHERE role != 'admin'"
+  ).all();
+
+  const byCode = new Map();   // code -> count
+  const points = new Map();   // "lat,lon" -> {lat,lon,count}
+  let located = 0;
+
+  for (const r of rows) {
+    let code = r.country_code || null;
+    let lat = (r.geo_lat != null) ? r.geo_lat : null;
+    let lon = (r.geo_lon != null) ? r.geo_lon : null;
+
+    if (!code) {                       // repli : déduire de l'adresse texte
+      const g = geo.fromAddress(r.address);
+      if (g) { code = g.code; if (lat == null) lat = g.lat; if (lon == null) lon = g.lon; }
+    }
+    if (!code) continue;               // non localisable
+    code = code.toUpperCase();
+    located++;
+    byCode.set(code, (byCode.get(code) || 0) + 1);
+
+    if (lat == null || lon == null) {  // pas de point : centre du pays
+      const c = geo.centroid(code);
+      if (c) { lat = c[0]; lon = c[1]; }
+    }
+    if (lat != null && lon != null) {
+      const key = lat.toFixed(1) + ',' + lon.toFixed(1);
+      const p = points.get(key) || { lat: +lat.toFixed(1), lon: +lon.toFixed(1), count: 0 };
+      p.count++; points.set(key, p);
+    }
+  }
+
+  const countries = [...byCode.entries()]
+    .map(([code, count]) => ({ code, name: geo.name(code), flag: geo.flag(code), count }))
+    .sort((a, b) => b.count - a.count);
+
+  return res.json({
+    status: 'success',
+    data: {
+      total_located: located,
+      total_countries: countries.length,
+      geoip_active: geo.available,     // false = geoip-lite absent (repli adresse seulement)
+      countries,
+      points: [...points.values()].sort((a, b) => b.count - a.count),
     },
   });
 });

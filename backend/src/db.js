@@ -529,6 +529,10 @@ function init() {
     "ALTER TABLE users ADD COLUMN commission_end TEXT",            // fin 12/24 mois (modifiable = renouvelable)
     "ALTER TABLE users ADD COLUMN taux_partage_artiste INTEGER",   // snapshot part artiste courante (info)
     "ALTER TABLE users ADD COLUMN first_live_at TEXT",             // 1er live (déclencheur prime Pionnier + départ des 24 mois)
+    "ALTER TABLE users ADD COLUMN country_code TEXT",              // pays ISO-2 capturé à la connexion (IP) ou déduit
+    "ALTER TABLE users ADD COLUMN geo_lat REAL",                   // latitude approx. pour la carte admin
+    "ALTER TABLE users ADD COLUMN geo_lon REAL",                   // longitude approx. pour la carte admin
+    "ALTER TABLE users ADD COLUMN geo_at TEXT",                    // date de la dernière capture géo
     // Gating encaissement : le paiement de la commission ne s'active qu'une fois
     // les fonds Apple/Google réellement reçus (~J+60), pas à la vente.
     "ALTER TABLE tickets ADD COLUMN encaissed INTEGER DEFAULT 0",

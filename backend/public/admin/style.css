@@ -123,3 +123,23 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 .toast{position:fixed;bottom:24px;right:24px;background:var(--card-2);border:1px solid var(--gold);color:var(--ivory);padding:12px 18px;border-radius:10px;z-index:60;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
 @media(max-width:760px){.sidebar{width:60px}.brand{font-size:0}.brand::after{content:'V';font-size:24px}nav .group,nav a span.lbl{display:none}}
+
+/* ── Pays / Carte (répartition géographique) ── */
+.geo-stats{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 20px}
+.geo-stat{flex:1;min-width:160px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.geo-stat b{display:block;font-size:22px;color:var(--gold-light);margin-bottom:4px}
+.geo-stat span{color:var(--muted);font-size:13px}
+.geo-grid{display:grid;grid-template-columns:1.7fr 1fr;gap:18px;align-items:start}
+@media(max-width:960px){.geo-grid{grid-template-columns:1fr}}
+.geo-map{padding:14px;overflow:hidden}
+.geo-map svg{display:block;background:#081120;border-radius:12px}
+.geo-map svg path{fill:#16233a;stroke:#0b1424;stroke-width:.3;transition:fill .3s}
+.geo-map svg path:hover{fill:#243a5c}
+.geo-list{padding:18px}
+.geo-row{display:grid;grid-template-columns:26px 1fr 90px 34px;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.geo-row:last-child{border-bottom:0}
+.geo-flag{font-size:18px}
+.geo-name{color:var(--ivory);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.geo-bar{height:8px;background:var(--navy-2);border-radius:99px;overflow:hidden}
+.geo-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold-2),var(--gold-light));border-radius:99px}
+.geo-count{text-align:right;color:var(--gold-light);font-weight:700;font-size:14px}

@@ -87,6 +87,7 @@ const NAV = [
   ] },
   { group: 'Gestion', items: [
     { id: 'users', label: 'Utilisateurs', ic: '👥' },
+    { id: 'geo', label: 'Pays / Carte', ic: '🌍' },
     { id: 'genres', label: 'Genres', ic: '🎵' },
     { id: 'user-genres', label: 'Genres par user', ic: '🏷️' },
     { id: 'events', label: 'Concerts', ic: '📅' },
@@ -505,6 +506,74 @@ async function listPage({ title, endpoint, columns, addLabel, onAdd }) {
 }
 
 // Genres
+// ─── Pays / Carte (répartition géographique des utilisateurs) ───
+let _worldSvgCache = null;
+async function loadWorldSvg() {
+  if (_worldSvgCache) return _worldSvgCache;
+  const r = await fetch('assets/world.svg');
+  _worldSvgCache = await r.text();
+  return _worldSvgCache;
+}
+async function pageGeo() {
+  view().innerHTML = '<div class="head-row"><h1 class="page-title">Pays / Carte</h1></div><p style="color:var(--muted)">Chargement…</p>';
+  let res;
+  try { res = await api('GET', '/geo'); } catch (e) { view().innerHTML = '<p style="color:#f88">' + esc(e.message) + '</p>'; return; }
+  const d = res.data || {};
+  const countries = d.countries || [];
+  const max = countries.reduce((m, c) => Math.max(m, c.count), 0) || 1;
+
+  const badge = d.geoip_active
+    ? '<span style="font-size:.72rem;color:#7ee0a8;border:1px solid rgba(126,224,168,.4);border-radius:99px;padding:3px 10px">Capture IP active</span>'
+    : '<span style="font-size:.72rem;color:#e0c07e;border:1px solid rgba(224,192,126,.4);border-radius:99px;padding:3px 10px">Repli adresse (geoip inactif)</span>';
+
+  const list = countries.length
+    ? countries.map((c) => `
+      <div class="geo-row">
+        <span class="geo-flag">${c.flag}</span>
+        <span class="geo-name">${esc(c.name)}</span>
+        <span class="geo-bar"><i style="width:${Math.round((c.count / max) * 100)}%"></i></span>
+        <span class="geo-count">${c.count}</span>
+      </div>`).join('')
+    : '<p style="color:var(--muted)">Aucun utilisateur localisé pour l’instant. Les pays se rempliront à mesure des connexions.</p>';
+
+  view().innerHTML = `
+    <div class="head-row"><h1 class="page-title">Pays / Carte</h1>${badge}</div>
+    <div class="geo-stats">
+      <div class="geo-stat"><b>${d.total_located || 0}</b><span>utilisateurs localisés</span></div>
+      <div class="geo-stat"><b>${d.total_countries || 0}</b><span>pays / territoires</span></div>
+      <div class="geo-stat"><b>${countries[0] ? countries[0].flag + ' ' + esc(countries[0].name) : '—'}</b><span>1ᵉʳ marché</span></div>
+    </div>
+    <div class="geo-grid">
+      <div class="geo-map card" id="geoMap"><div style="color:var(--muted);padding:40px;text-align:center">Chargement de la carte…</div></div>
+      <div class="geo-list card"><h3 style="margin:0 0 14px">Classement des pays</h3>${list}</div>
+    </div>`;
+
+  // Carte : injecte le SVG monde et colore chaque pays selon l'activité (choroplèthe dorée).
+  try {
+    const svg = await loadWorldSvg();
+    const host = document.getElementById('geoMap');
+    if (host) {
+      host.innerHTML = svg;
+      const el = host.querySelector('svg');
+      if (el) { el.removeAttribute('width'); el.removeAttribute('height'); el.style.width = '100%'; el.style.height = 'auto'; }
+      countries.forEach((c) => {
+        const p = host.querySelector('path#' + c.code.toLowerCase());
+        if (!p) return;
+        const ratio = c.count / max;
+        p.style.fill = 'rgba(230,199,106,' + (0.28 + 0.62 * ratio).toFixed(2) + ')';
+        p.style.stroke = '#E6C76A';
+        p.style.strokeWidth = '0.4';
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        t.textContent = c.name + ' — ' + c.count + ' utilisateur' + (c.count > 1 ? 's' : '');
+        p.appendChild(t);
+      });
+    }
+  } catch (_) {
+    const host = document.getElementById('geoMap');
+    if (host) host.innerHTML = '<p style="color:var(--muted);padding:30px">Carte indisponible (le classement ci-contre reste à jour).</p>';
+  }
+}
+
 function pageGenres() {
   EDIT.genre = (id) => {
     const r = currentRows.find((x) => x.id == id); if (!r) return;
@@ -1975,7 +2044,7 @@ function staffForm(u) {
 }
 
 const ROUTES = {
-  dashboard: pageDashboard, lives: pageLives, users: pageUsers, genres: pageGenres, 'user-genres': pageUserGenres,
+  dashboard: pageDashboard, lives: pageLives, users: pageUsers, geo: pageGeo, genres: pageGenres, 'user-genres': pageUserGenres,
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
