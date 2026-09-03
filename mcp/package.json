@@ -1,0 +1,13 @@
+{
+  "name": "vybzzz-mcp",
+  "version": "1.0.0",
+  "description": "Serveur MCP VybzzZ — pilote la plateforme (stats, pays, utilisateurs, concerts, réunions, assistant IA) depuis un client MCP (Claude Desktop, agents…).",
+  "type": "module",
+  "bin": { "vybzzz-mcp": "server.js" },
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
