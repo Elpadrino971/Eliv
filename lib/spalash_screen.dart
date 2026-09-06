@@ -315,7 +315,10 @@ class _SpalashScreenState extends State<SpalashScreen>
       final id = userModel.value.user?.id;
       if (id != null) unawaited(SubscriptionController.syncIdentity(id));
     }
-    Get.offAll(() => hasUser ? MyBottomBar() : LoginScreen());
+    // Ouverture directe sur le Live + Feed (VybzLiveScreen = index 2) au lieu de
+    // l'Accueil : l'utilisateur tombe tout de suite dans "Pour toi / En direct /
+    // Clips". Le X de cet écran ramène à l'Accueil (MyBottomBar index 0).
+    Get.offAll(() => hasUser ? MyBottomBar(index: 2) : LoginScreen());
   }
 
   @override
