@@ -525,17 +525,41 @@ router.post('/subscription/checkout', requireAuth, (req, res) => {
 const feedMuxHls = (id) => (id ? `https://stream.mux.com/${id}.m3u8` : null);
 router.get('/feed-clips', (req, res) => {
   const feed = req.query.feed === 'clips' ? 'clips' : 'for_you';
-  const rows = db
-    .prepare('SELECT * FROM feed_clips WHERE feed = ? AND active = 1 ORDER BY position ASC, id ASC')
+  const rowsRaw = db
+    .prepare('SELECT * FROM feed_clips WHERE feed = ? AND active = 1')
     .all(feed);
-  // Comptabilise une impression par clip servi (stats API de publication).
-  if (rows.length) {
+
+  // Ordre aléatoire à CHAQUE appel (effet "toujours du neuf"), mais pondéré :
+  //  - fraîcheur : les clips < 72 h remontent (le feed ne paraît pas figé) ;
+  //  - équité : les clips peu vus remontent un peu (chaque nouveau post a sa
+  //    chance d'atteindre ses 1res vues) → le système s'auto-équilibre.
+  // Tri par clé -ln(U)/poids : échantillonnage pondéré sans remise (Efraimidis–
+  // Spirakis), robuste et sans biais.
+  const now = Date.now();
+  const rows = rowsRaw
+    .map((r) => {
+      let ageH = 1e6;
+      if (r.created_at) { const t = Date.parse(String(r.created_at).replace(' ', 'T') + 'Z'); if (!isNaN(t)) ageH = (now - t) / 3.6e6; }
+      const fresh = ageH < 72 ? 1.6 : 1;                 // coup de pouce nouveauté
+      const fair = 1 + 1.5 / (1 + (r.views || 0) / 50);  // coup de pouce peu-vus
+      const key = -Math.log(Math.random() + 1e-9) / (fresh * fair);
+      return { r, key };
+    })
+    .sort((a, b) => a.key - b.key)
+    .map((s) => s.r);
+
+  // Limite optionnelle (?limit=) — l'app peut demander un lot et re-tirer ensuite.
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 0, 0), 200);
+  const served = limit ? rows.slice(0, limit) : rows;
+
+  // Comptabilise une impression par clip réellement servi (stats API de publication).
+  if (served.length) {
     try {
-      const ids = rows.map((r) => r.id);
+      const ids = served.map((r) => r.id);
       db.prepare(`UPDATE feed_clips SET views = COALESCE(views,0)+1 WHERE id IN (${ids.map(() => '?').join(',')})`).run(...ids);
     } catch (_) { /* non bloquant */ }
   }
-  const list = rows.map((r) => ({
+  const list = served.map((r) => ({
     id: r.id,
     title: r.title,
     video_url: r.mux_playback_id ? feedMuxHls(r.mux_playback_id) : r.video_url,
