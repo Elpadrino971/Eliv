@@ -46,7 +46,8 @@ class AuthController extends GetxController {
           box.write('user', userModel.value.toJson());
           final id = userModel.value.user?.id;
           if (id != null) unawaited(SubscriptionController.syncIdentity(id));
-          Get.offAll(() => MyBottomBar());
+          // Après connexion : direct sur le Live + Feed (index 2), comme à l'ouverture.
+          Get.offAll(() => MyBottomBar(index: 2));
         }
         Get.back();
       } else {
@@ -83,7 +84,8 @@ class AuthController extends GetxController {
         if (id != null) unawaited(SubscriptionController.syncIdentity(id));
         update();
         Get.back();
-        Get.offAll(() => MyBottomBar());
+        // Après connexion : direct sur le Live + Feed (index 2), comme à l'ouverture.
+        Get.offAll(() => MyBottomBar(index: 2));
       } else {
         parseError(value, doBack: true);
       }
