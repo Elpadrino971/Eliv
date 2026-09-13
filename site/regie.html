@@ -78,7 +78,7 @@ svg{display:block}
 
 /* panneau droit */
 .tabs{display:flex;padding:6px 8px;gap:2px;border-bottom:1px solid var(--line-2)}
-.tab{flex:1;padding:12px 4px;font-weight:700;font-size:13px;color:var(--muted);border-radius:10px;position:relative}
+.tab{flex:1;padding:12px 2px;font-weight:700;font-size:12px;color:var(--muted);border-radius:10px;position:relative;white-space:nowrap}
 .tab.active{color:var(--ivory)}
 .tab.active::after{content:"";position:absolute;left:20%;right:20%;bottom:2px;height:2.5px;border-radius:2px;background:var(--gold)}
 .tab .q{display:inline-block;margin-left:5px;background:var(--gold);color:#22190A;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;vertical-align:1px}
@@ -106,6 +106,10 @@ svg{display:block}
 .req .acts{margin-left:auto;display:flex;gap:6px}
 .give{padding:8px 12px;border-radius:9px;background:var(--ok);color:#062A18;font-weight:700;font-size:12.5px;white-space:nowrap}
 .deny{padding:8px 10px;border-radius:9px;background:rgba(255,77,94,.15);color:#FF8A96;font-weight:700;font-size:12.5px;border:1px solid rgba(255,77,94,.3)}
+.okb{padding:8px 10px;border-radius:9px;background:var(--gold-soft);color:var(--gold);font-weight:700;font-size:12.5px;border:1px solid rgba(230,199,106,.35)}
+.req.feat{border-color:rgba(230,199,106,.6);background:rgba(230,199,106,.08)}
+.req .lk{min-width:44px;text-align:center;line-height:1}.req .lk b{display:block;font-family:var(--display);font-size:18px;color:var(--gold)}.req .lk small{font-size:10px;color:var(--muted)}
+.em{color:var(--muted);font-size:12px}
 .empty{color:var(--muted);text-align:center;padding:30px 10px}
 /* fans / missions */
 .fan{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line-2)}
@@ -154,6 +158,7 @@ svg{display:block}
       <button class="tab active" data-tab="chat">Chat</button>
       <button class="tab" data-tab="queue">File<span class="q" id="qn2">0</span></button>
       <button class="tab" data-tab="fans">Top fans</button>
+      <button class="tab" data-tab="questions">Questions<span class="q" id="qqn">0</span></button>
       <button class="tab" data-tab="missions">Missions</button>
     </div>
     <div class="panelbody">
@@ -166,6 +171,11 @@ svg{display:block}
         <div class="composer"><input id="msgInput" placeholder="Répondre en tant que Prod…" aria-label="Message"><button class="send" id="sendBtn" aria-label="Envoyer"><svg class="icon" viewBox="0 0 24 24" style="width:20px;height:20px"><use href="#i-send"/></svg></button></div>
       </div>
       <div class="tabpane" data-pane="queue"><div class="queue" id="queue"></div></div>
+      <div class="tabpane" data-pane="questions">
+        <div class="composer" style="border-top:0;border-bottom:1px solid var(--line-2)"><input id="qInput" placeholder="Proposer une question (Régie)…" aria-label="Question"><button class="send" id="qSend" aria-label="Proposer"><svg class="icon" viewBox="0 0 24 24" style="width:20px;height:20px"><use href="#i-send"/></svg></button></div>
+        <div class="em" style="padding:8px 14px 0">Triées par likes · la plus likée passe seule à l'écran dès <b id="qMin">3</b> ❤️, sauf si tu en choisis une.</div>
+        <div class="queue" id="qlist"></div>
+      </div>
       <div class="tabpane" data-pane="fans" style="padding:8px 16px;overflow-y:auto"><div id="fans"></div></div>
       <div class="tabpane" data-pane="missions" style="padding:8px 16px;overflow-y:auto"><div id="missions"></div></div>
     </div>
@@ -303,6 +313,41 @@ function heart(){var s=document.createElement('span');s.className='fx';s.textCon
   var d=3.2+Math.random()*1.8;s.style.animationDuration=d+'s';hearts.appendChild(s);setTimeout(function(){s.remove();},d*1000+100);}
 if(!matchMedia('(prefers-reduced-motion:reduce)').matches){setInterval(heart,700);}
 
+// ── Questions du public (Q&A) ──
+// Démo : liste locale. Direct : API /live/:event/questions + événement SSE 'questions_changed'.
+var QUESTIONS=[{id:1,text:'Tu feras une date en Guadeloupe cette année ?',user:'Lyna_973',likes:47,status:'open'},{id:2,text:'C\'est quoi le prochain single ?',user:'Kevin',likes:31,status:'open'},{id:3,text:'Un duo avec Nesly, c\'est possible ?',user:'Maya_Fan',likes:22,status:'open'},{id:4,text:'Tu répètes combien d\'heures par jour ?',user:'Tifany',likes:9,status:'open'}];
+var QMIN=3;
+function qAction(id,action){
+  if(LIVE){return fetch(API+'/live/'+encodeURIComponent(Q.get('event'))+'/questions/'+id+'/'+action,{method:'POST',headers:{'X-API-Key':Q.get('key')}}).then(function(r){if(!r.ok)toast('Action impossible');});}
+  var q=QUESTIONS.find(function(x){return x.id===id;});if(!q)return Promise.resolve();
+  if(action==='feature'){QUESTIONS.forEach(function(x){if(x.status==='featured')x.status='open';});q.status='featured';}
+  else if(action==='unfeature')q.status='open';else if(action==='answered')q.status='answered';else if(action==='hide')q.status='hidden';
+  renderQuestions();return Promise.resolve();
+}
+function renderQuestions(){
+  var host=document.getElementById('qlist');var list=QUESTIONS.filter(function(q){return q.status==='open'||q.status==='featured';})
+    .sort(function(a,b){return (b.status==='featured')-(a.status==='featured')||b.likes-a.likes||a.id-b.id;});
+  document.getElementById('qqn').textContent=list.length;document.getElementById('qMin').textContent=QMIN;
+  host.innerHTML=list.length?'':'<div class="empty">Aucune question pour l\'instant.</div>';
+  list.forEach(function(q,i){var d=document.createElement('div');d.className='req'+(q.status==='featured'?' feat':'');
+    var top=q.status==='featured'?'📺 À l\'écran (choisie)':(i===0&&q.likes>=QMIN?'📺 À l\'écran (la plus likée)':'');
+    d.innerHTML='<div class="lk"><b>'+q.likes+'</b><small>❤️</small></div><div style="min-width:0"><b>'+q.text+'</b><small>— '+q.user+(top?' · <span style="color:var(--gold)">'+top+'</span>':'')+'</small></div>'+
+      '<div class="acts">'+(q.status==='featured'?'<button class="okb" data-q="'+q.id+'" data-a="unfeature">Retirer</button>':'<button class="give" data-q="'+q.id+'" data-a="feature">📺 À l\'écran</button>')+
+      '<button class="okb" data-q="'+q.id+'" data-a="answered">✅ Répondu</button><button class="deny" data-q="'+q.id+'" data-a="hide">Masquer</button></div>';
+    host.appendChild(d);});
+  host.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){qAction(+b.dataset.q,b.dataset.a).then(function(){toast({feature:'Question envoyée au Stage',unfeature:'Retour à la plus likée',answered:'Marquée répondue',hide:'Question masquée'}[b.dataset.a]);});};});
+}
+function loadQuestions(){
+  if(!LIVE){renderQuestions();return;}
+  fetch(API+'/live/'+encodeURIComponent(Q.get('event'))+'/questions',{headers:{'X-API-Key':Q.get('key')}}).then(function(r){return r.json();})
+    .then(function(j){QUESTIONS=j.data||[];if(j.min_likes)QMIN=j.min_likes;renderQuestions();}).catch(function(){});
+}
+function askQuestion(){var i=document.getElementById('qInput'),t=i.value.trim();if(t.length<3)return;i.value='';
+  if(LIVE){fetch(API+'/live/'+encodeURIComponent(Q.get('event'))+'/questions',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':Q.get('key')},body:JSON.stringify({text:t,user:'Régie'})}).then(function(r){toast(r.ok?'Question proposée':'Envoi impossible');});}
+  else{QUESTIONS.push({id:Date.now(),text:t,user:'Régie',likes:0,status:'open'});renderQuestions();toast('Question proposée (démo)');}}
+document.getElementById('qSend').onclick=askQuestion;document.getElementById('qInput').addEventListener('keydown',function(e){if(e.key==='Enter')askQuestion();});
+loadQuestions();
+
 // ── Connexion DIRECT : historique du chat + flux SSE (chat, cadeaux, billets) ──
 if(LIVE){
   document.querySelector('.role').textContent='Console · DIRECT · concert #'+Q.get('event');
@@ -314,6 +359,7 @@ if(LIVE){
   es.addEventListener('chat',function(e){var d=JSON.parse(e.data);if(d.user!=='Prod VybzzZ')addMsg({w:d.user||'Fan',t:d.text,c:(d.user||'').length});});
   es.addEventListener('gift',function(e){var d=JSON.parse(e.data);addMsg({w:d.user||'Un fan',t:(d.gift||'Cadeau')+' 🎁 · '+(d.points||0)+' pts',gift:1,c:0});for(var k=0;k<5;k++)setTimeout(heart,k*90);});
   es.addEventListener('ticket',function(e){var d=JSON.parse(e.data);addMsg({w:d.user||'Un fan',t:'a pris son ticket 🎟️',c:3});});
+  es.addEventListener('questions_changed',loadQuestions);
   es.onerror=function(){document.querySelector('.role').textContent='Console · DIRECT · reconnexion…';};
 }
 </script>

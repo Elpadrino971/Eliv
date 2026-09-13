@@ -107,6 +107,20 @@ svg{display:block}
   transform:translate(-50%,-50%) scale(1);filter:drop-shadow(0 0 70px rgba(230,199,106,.28));animation:kenburns 3.2s var(--ease) forwards}
 @keyframes kenburns{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-50%,-50%) scale(1.08)}}
 
+/* ── QUESTION À RÉPONDRE : bandeau bas (lower third), calme, une seule à la fois ── */
+.qa{position:fixed;left:26px;right:426px;bottom:26px;z-index:40;display:flex;align-items:center;gap:20px;padding:18px 24px;border-radius:20px;
+  background:rgba(12,26,58,.93);backdrop-filter:blur(8px);border:1px solid rgba(230,199,106,.45);
+  box-shadow:0 30px 80px -30px rgba(0,0,0,.85),0 0 60px -24px rgba(230,199,106,.4);
+  transform:translateY(30px);opacity:0;transition:transform .8s var(--ease),opacity .8s var(--ease);pointer-events:none}
+.qa.on{transform:none;opacity:1}
+.qa__k{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:800;margin-bottom:6px}
+.qa__t{font-family:var(--display);font-weight:800;font-size:26px;line-height:1.2;text-wrap:balance}
+.qa__m{color:var(--muted);font-size:15px;font-weight:600;margin-top:5px}
+.qa__likes{margin-left:auto;flex:none;text-align:center;line-height:1}
+.qa__likes b{display:block;font-family:var(--display);font-size:36px;color:var(--gold);font-variant-numeric:tabular-nums}
+.qa__likes span{font-size:14px;color:var(--muted);font-weight:700}
+@media(max-width:1100px){.qa{right:366px}}
+
 /* ── cœurs : rares et lents ── */
 .hearts{position:fixed;right:420px;bottom:40px;width:120px;height:55%;pointer-events:none;z-index:5}
 .fx{position:absolute;bottom:0;font-size:22px;opacity:0;animation:rise linear forwards;filter:drop-shadow(0 3px 6px rgba(0,0,0,.4))}
@@ -150,6 +164,10 @@ svg{display:block}
   <div class="hero__from">envoyé par</div>
   <div class="hero__name" id="hName">Lyna_973</div>
 </div></div>
+<div class="qa" id="qa" role="status" aria-live="polite">
+  <div><div class="qa__k" id="qaK">❓ Question du public · à répondre</div><div class="qa__t" id="qaT"></div><div class="qa__m" id="qaM"></div></div>
+  <div class="qa__likes"><b id="qaL">0</b><span>❤️ likes</span></div>
+</div>
 <div class="hearts" id="hearts"></div>
 <div class="hint">Écran projeté · aucune interaction · touche G = simuler un cadeau</div>
 
@@ -261,11 +279,23 @@ if(LIVE){
   es.addEventListener('ticket',function(e){var d=JSON.parse(e.data);addNote(d.user||'Un fan','a pris son ticket 🎟️');for(var k=0;k<3;k++)setTimeout(heart,k*300);});
   es.addEventListener('note',function(e){var d=JSON.parse(e.data);addNote(d.user||'Régie',d.text||'');});
   es.addEventListener('goal',function(e){var d=JSON.parse(e.data);if(d.title)document.getElementById('goalTitle').textContent=d.title;if(d.max){goal.max=+d.max;document.getElementById('goalMax').textContent=goal.max;}if(d.now!=null)goal.now=+d.now;renderGoal();});
+  // Question à répondre : le backend envoie LA question à afficher (mise à l'écran par la régie, sinon la plus likée)
+  es.addEventListener('question',function(e){var d=JSON.parse(e.data);showQuestion(d.question,d.reason);});
+  fetch(API+'/live/'+encodeURIComponent(Q.get('event'))+'/questions',{headers:{'X-API-Key':Q.get('key')}}).then(function(r){return r.json();}).then(function(j){if(j.board)showQuestion(j.board.question,j.board.reason);}).catch(function(){});
   es.onerror=function(){document.querySelector('.hint').textContent='Écran projeté · DIRECT · reconnexion…';};
 }else{
   setInterval(function(){gift(GIFTS[gi%GIFTS.length]);gi++;},16000);
+  setTimeout(function(){showQuestion(DEMO_Q[0],'top');},7000); // démo : la question la plus likée remonte
 }
-document.addEventListener('keydown',function(e){if(e.key.toLowerCase()==='g'){gift(GIFTS[gi%GIFTS.length]);gi++;}});
+// Bandeau "question à répondre" : une seule à la fois, apparition douce, disparaît quand répondue
+var DEMO_Q=[{text:'Tu feras une date en Guadeloupe cette année ?',user:'Lyna_973',likes:47},{text:'C\'est quoi le prochain single ?',user:'Kevin',likes:31},{text:'Un duo avec Nesly, c\'est possible ?',user:'Maya_Fan',likes:22}],dq=0;
+function showQuestion(q,reason){var el=document.getElementById('qa');if(!q){el.classList.remove('on');return;}
+  document.getElementById('qaK').textContent=(reason==='featured'?'❓ Question choisie par la régie':'❓ Question du public · la plus likée');
+  document.getElementById('qaT').textContent='« '+q.text+' »';document.getElementById('qaM').textContent='— '+(q.user||'Un fan');
+  document.getElementById('qaL').textContent=q.likes||0;el.classList.add('on');}
+document.addEventListener('keydown',function(e){var k=e.key.toLowerCase();
+  if(k==='g'){gift(GIFTS[gi%GIFTS.length]);gi++;}
+  if(k==='q'&&!LIVE){dq++;showQuestion(dq%(DEMO_Q.length+1)===DEMO_Q.length?null:DEMO_Q[dq%(DEMO_Q.length+1)],dq%2?'featured':'top');}});
 
 // cœurs : rares, lents
 var hearts=document.getElementById('hearts'),EMO=['❤️','🧡','💛'];

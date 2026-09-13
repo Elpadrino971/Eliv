@@ -333,6 +333,30 @@ function init() {
     CREATE INDEX IF NOT EXISTS idx_live_messages_event ON live_messages(event_id, id);
   `);
 
+  // Questions du public (Q&A live) : les fans posent, likent ; la plus likée
+  // remonte sur le Stage (bandeau « question à répondre »). La régie peut
+  // proposer une question, la mettre à l'écran (featured), la marquer répondue
+  // ou la masquer. Un like par utilisateur et par question.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS live_questions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_id INTEGER,
+      user_id INTEGER,
+      name TEXT,
+      text TEXT,
+      likes INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'open',       -- open | featured | answered | hidden
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_live_questions_event ON live_questions(event_id, status, likes);
+    CREATE TABLE IF NOT EXISTS live_question_likes (
+      question_id INTEGER,
+      user_id INTEGER,
+      created_at TEXT DEFAULT (datetime('now')),
+      PRIMARY KEY (question_id, user_id)
+    );
+  `);
+
   // Registre des revenus : pour CHAQUE vente (billet / cadeau), on trace le
   // brut, la part artiste et la part plateforme + le taux appliqué. Source de
   // vérité pour la compta (part plateforme = revenu réel du fondateur, pas le
