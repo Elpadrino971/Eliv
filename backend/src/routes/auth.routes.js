@@ -103,8 +103,21 @@ router.post('/login', (req, res) => {
   const b = req.body || {};
   const email = (b.email || '').trim().toLowerCase();
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-  if (!user || !compare(b.password, user.password)) {
-    return fail(res, 'These credentials do not match our records.', 401);
+  // Code précis pour que l'app propose la bonne suite (créer un compte /
+  // mot de passe oublié) au lieu d'un message générique bloquant.
+  if (!user) {
+    return res.status(401).json({
+      status: 'error',
+      code: 'no_account',
+      message: 'Aucun compte VybzzZ avec cet email.',
+    });
+  }
+  if (!compare(b.password, user.password)) {
+    return res.status(401).json({
+      status: 'error',
+      code: 'bad_password',
+      message: 'Mot de passe incorrect.',
+    });
   }
   return authResponse(res, user, 'Logged in.');
 });
