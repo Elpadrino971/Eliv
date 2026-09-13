@@ -108,6 +108,12 @@ svg{display:block}
 .deny{padding:8px 10px;border-radius:9px;background:rgba(255,77,94,.15);color:#FF8A96;font-weight:700;font-size:12.5px;border:1px solid rgba(255,77,94,.3)}
 .okb{padding:8px 10px;border-radius:9px;background:var(--gold-soft);color:var(--gold);font-weight:700;font-size:12.5px;border:1px solid rgba(230,199,106,.35)}
 .req.feat{border-color:rgba(230,199,106,.6);background:rgba(230,199,106,.08)}
+/* questions : 2 lignes — texte en pleine largeur, actions dessous (la colonne est étroite) */
+.req.qa{flex-wrap:wrap;align-items:flex-start}
+.req.qa>div:nth-child(2){flex:1 1 0;min-width:0}
+.req.qa>div:nth-child(2) b{display:block;font-size:14px;line-height:1.35;overflow-wrap:anywhere}
+.req.qa .acts{flex-basis:100%;margin-left:0;justify-content:flex-end;gap:6px;margin-top:2px}
+.req.qa .acts button{font-size:12px;padding:7px 10px;white-space:nowrap}
 .req .lk{min-width:44px;text-align:center;line-height:1}.req .lk b{display:block;font-family:var(--display);font-size:18px;color:var(--gold)}.req .lk small{font-size:10px;color:var(--muted)}
 .em{color:var(--muted);font-size:12px}
 .empty{color:var(--muted);text-align:center;padding:30px 10px}
@@ -329,7 +335,7 @@ function renderQuestions(){
     .sort(function(a,b){return (b.status==='featured')-(a.status==='featured')||b.likes-a.likes||a.id-b.id;});
   document.getElementById('qqn').textContent=list.length;document.getElementById('qMin').textContent=QMIN;
   host.innerHTML=list.length?'':'<div class="empty">Aucune question pour l\'instant.</div>';
-  list.forEach(function(q,i){var d=document.createElement('div');d.className='req'+(q.status==='featured'?' feat':'');
+  list.forEach(function(q,i){var d=document.createElement('div');d.className='req qa'+(q.status==='featured'?' feat':'');
     var top=q.status==='featured'?'📺 À l\'écran (choisie)':(i===0&&q.likes>=QMIN?'📺 À l\'écran (la plus likée)':'');
     d.innerHTML='<div class="lk"><b>'+q.likes+'</b><small>❤️</small></div><div style="min-width:0"><b>'+q.text+'</b><small>— '+q.user+(top?' · <span style="color:var(--gold)">'+top+'</span>':'')+'</small></div>'+
       '<div class="acts">'+(q.status==='featured'?'<button class="okb" data-q="'+q.id+'" data-a="unfeature">Retirer</button>':'<button class="give" data-q="'+q.id+'" data-a="feature">📺 À l\'écran</button>')+
