@@ -10,6 +10,13 @@ const moderation = require('../services/moderation');
 const apporteurLedger = require('../services/apporteur_ledger');
 const apporteurBonus = require('../services/apporteur_bonus');
 const revenuecat = require('../services/revenuecat');
+const livebus = require('../services/livebus');
+
+// Nom affichable d'un utilisateur pour les écrans live (jamais l'e-mail).
+function liveName(userId) {
+  const u = db.prepare('SELECT full_name, artist_name FROM users WHERE id = ?').get(userId);
+  return (u && (u.artist_name || u.full_name)) || 'Un fan';
+}
 
 // GET /api/events?status=&day=&genre_ids=
 // day: today | future ; status: published | live | completed | …
@@ -237,6 +244,9 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
     return fail(res, 'Achat déjà utilisé ou conflit, réessaie.', 409);
   }
 
+  // Temps réel : le billet est inscrit -> les écrans Stage / Régie l'affichent.
+  try { livebus.emit(b.event_id, { type: 'ticket', user: liveName(userId) }); } catch (_) { /* jamais bloquant */ }
+
   const fresh = db.prepare('SELECT * FROM events WHERE id = ?').get(b.event_id);
   return ok(res, serializeEvent(fresh, { currentUserId: userId }));
 });
@@ -427,6 +437,12 @@ router.post('/event-gift', optionalAuth, (req, res) => {
     ).run(userId, b.event_id, gift.name || 'gift', gift.image || null, String(cost));
   });
   send();
+
+  // Temps réel : le cadeau est confirmé (points débités, ledger écrit) -> le
+  // Stage joue l'animation du tip avec le prénom du fan.
+  try {
+    livebus.emit(b.event_id, { type: 'gift', gift: gift.name, gift_id: gift.id, image: gift.image, points: cost, user: liveName(userId) });
+  } catch (_) { /* jamais bloquant */ }
 
   const activity = db
     .prepare('SELECT * FROM activities WHERE event_id = ? ORDER BY id DESC LIMIT 50')

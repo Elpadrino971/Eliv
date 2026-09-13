@@ -235,7 +235,29 @@ function gift(g){
   if(goal.now>=goal.max){setTimeout(function(){document.getElementById('goalTitle').textContent='Objectif atteint 🎉 Rappel !';},1500);}
   for(var k=0;k<5;k++)setTimeout(heart,k*260);
 }
-var gi=0;setInterval(function(){gift(GIFTS[gi%GIFTS.length]);gi++;},16000);
+// ── MODE DIRECT : stage.html?event=<id du concert>&key=<clé API>[&api=https://api.vybzzz.online/api]
+// Le backend pousse en SSE chaque cadeau / billet CONFIRMÉ (inscrit en base) ; sans
+// paramètres, la page reste en démo (cadeaux simulés toutes les 16 s, touche G).
+var Q=new URLSearchParams(location.search), LIVE=Q.get('event')&&Q.get('key');
+var API=(Q.get('api')||'https://api.vybzzz.online/api').replace(/\/$/,'');
+function animFor(name){var n=(name||'').toLowerCase();
+  if(/rose/.test(n))return['🌹','rose'];if(/feu|flamme|fire/.test(n))return['🔥','feu'];if(/diam/.test(n))return['💎','diamant'];
+  if(/couronne|crown/.test(n))return['👑','couronne'];if(/fus|rocket/.test(n))return['🚀','fusee'];if(/ch[âa]teau|castle/.test(n))return['🏰','chateau'];
+  return['🎁',null];}
+var gi=0;
+if(LIVE){
+  document.querySelector('.hint').textContent='Écran projeté · DIRECT · concert #'+Q.get('event');
+  var es=new EventSource(API+'/live/'+encodeURIComponent(Q.get('event'))+'/stream?key='+encodeURIComponent(Q.get('key')));
+  es.addEventListener('gift',function(e){var d=JSON.parse(e.data),a=animFor(d.gift);
+    // valeur provisoire pour l'objectif : 1 "rose" par tranche de 100 pts (à caler sur la grille de prix)
+    gift([a[0],d.gift||'Cadeau',d.user||'Un fan',Math.max(1,Math.round((+d.points||0)/100)),a[1]]);});
+  es.addEventListener('ticket',function(e){var d=JSON.parse(e.data);addNote(d.user||'Un fan','a pris son ticket 🎟️');for(var k=0;k<3;k++)setTimeout(heart,k*300);});
+  es.addEventListener('note',function(e){var d=JSON.parse(e.data);addNote(d.user||'Régie',d.text||'');});
+  es.addEventListener('goal',function(e){var d=JSON.parse(e.data);if(d.title)document.getElementById('goalTitle').textContent=d.title;if(d.max){goal.max=+d.max;document.getElementById('goalMax').textContent=goal.max;}if(d.now!=null)goal.now=+d.now;renderGoal();});
+  es.onerror=function(){document.querySelector('.hint').textContent='Écran projeté · DIRECT · reconnexion…';};
+}else{
+  setInterval(function(){gift(GIFTS[gi%GIFTS.length]);gi++;},16000);
+}
 document.addEventListener('keydown',function(e){if(e.key.toLowerCase()==='g'){gift(GIFTS[gi%GIFTS.length]);gi++;}});
 
 // cœurs : rares, lents

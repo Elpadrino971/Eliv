@@ -236,6 +236,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/vibe', require('./routes/vibe.routes'));
 // API de publication machine-à-machine (contrat Atelier -> VybzzZ), auth X-API-Key.
 app.use('/api/v1', require('./routes/publish.routes'));
+// Flux temps réel (SSE) pour les écrans Stage / Régie : cadeaux, billets… (clé API).
+app.use('/api/live', require('./routes/live.routes'));
 
 // Toutes les routes API sous /api (comme baseAPI = mainIP/api)
 app.use('/api', authRoutes);
