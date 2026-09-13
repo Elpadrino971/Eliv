@@ -17,9 +17,12 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 /// indisponible). Remplace l'ancien gros « Warning » rouge, jugé agressif —
 /// surtout qu'une simple annulation du choix de compte le déclenchait.
 void _showGoogleUnavailable() {
+  // Annulation par l'utilisateur : rien à dire.
+  final reason = googleLastError;
+  if (reason == null) return;
   Get.snackbar(
     'google_signin_title'.tr,
-    'google_signin_failed'.tr,
+    '${'google_signin_failed'.tr} ($reason)',
     snackPosition: SnackPosition.BOTTOM,
     backgroundColor: cardDeep,
     colorText: ivory,
@@ -290,10 +293,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   final user = await signInWithGoogle();
                                   if (user != null) {
                                     await authController.socialLogin(
-                                      email: user.email ?? '',
-                                      name: user.displayName ?? 'Google User',
-                                      phone: user.phoneNumber,
-                                      idToken: googleIdToken,
+                                      email: user.email,
+                                      name: user.name,
+                                      idToken: user.idToken,
                                       provider: 'google',
                                     );
                                   } else {
@@ -328,11 +330,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       final user = await signInWithGoogle();
                                       if (user != null) {
                                         await authController.socialLogin(
-                                          email: user.email ?? '',
-                                          name:
-                                              user.displayName ?? 'Google User',
-                                          phone: user.phoneNumber,
-                                          idToken: googleIdToken,
+                                          email: user.email,
+                                          name: user.name,
+                                          idToken: user.idToken,
                                           provider: 'google',
                                         );
                                       } else {
