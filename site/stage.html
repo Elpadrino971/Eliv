@@ -93,6 +93,15 @@ svg{display:block}
 .hero__what{font-family:var(--display);font-weight:800;font-size:40px;color:var(--gold);margin-bottom:10px}
 .hero__from{font-size:20px;color:var(--muted);font-weight:600;letter-spacing:.04em}
 .hero__name{font-family:var(--display);font-weight:800;font-size:64px;line-height:1.05;margin-top:4px}
+/* quand une animation vidéo joue, la carte descend pour la laisser respirer */
+.hero.with-anim .hero__card{transform:translateY(30vh) scale(.78)}
+.hero.with-anim::before{background:none}
+
+/* ── ANIMATION DU TIP : calque vidéo 3 s (assets/tips/*.mp4) ── */
+.anim{position:fixed;inset:0;z-index:45;display:grid;place-items:center;pointer-events:none;opacity:0;
+  transition:opacity .5s var(--ease);background:rgba(10,22,48,.6)}
+.anim.on{opacity:1}
+.anim video{height:100vh;max-width:100vw;object-fit:contain;filter:drop-shadow(0 0 70px rgba(230,199,106,.28))}
 
 /* ── cœurs : rares et lents ── */
 .hearts{position:fixed;right:420px;bottom:40px;width:120px;height:55%;pointer-events:none;z-index:5}
@@ -130,6 +139,7 @@ svg{display:block}
   </aside>
 </div>
 
+<div class="anim" id="anim"><video id="animV" muted playsinline preload="auto"></video></div>
 <div class="hero" id="hero"><div class="hero__card">
   <div class="hero__gift" id="hGift">🌹</div>
   <div class="hero__what" id="hWhat">Rose ×20</div>
@@ -199,10 +209,25 @@ addNote('Kevin','Quel son ! 🔥');
 addNote('SarahK','On veut la suite ! 🎶');
 
 // CADEAU HÉROS : grand, doux, 4,5 s, puis s'efface
-var hero=document.getElementById('hero'),hT;
-var GIFTS=[['🌹','Rose ×20','Lyna_973',20],['💎','Diamant','DJ Glad',30],['🎟️','Ticket d’Or','Naïma',15],['🌹','Rose ×50','Brayan',50],['🔥','Feu ×10','Océane',10]];
+var hero=document.getElementById('hero'),hT,aT;
+// Catalogue des tips : [emoji, libellé, fan, valeur (roses), animation]
+// L'animation = une vidéo verticale de 3 s dans assets/tips/ (jouée en calque).
+var ANIMS={chateau:'assets/tips/chateau.mp4',couronne:'assets/tips/couronne.mp4',feu:'assets/tips/feu.mp4',diamant:'assets/tips/diamant.mp4',fusee:'assets/tips/fusee.mp4'};
+var GIFTS=[['🌹','Rose ×20','Lyna_973',20,null],['💎','Diamant','DJ Glad',30,'diamant'],['🔥','Feu ×10','Océane',10,'feu'],
+           ['👑','Couronne','Naïma',40,'couronne'],['🚀','Fusée','Brayan',25,'fusee'],['🏰','Château','Kevin',100,'chateau']];
+var anim=document.getElementById('anim'),animV=document.getElementById('animV');
+function stopAnim(){anim.classList.remove('on');hero.classList.remove('with-anim');setTimeout(function(){animV.pause();animV.removeAttribute('src');animV.load();},500);}
+animV.addEventListener('ended',stopAnim);
+animV.addEventListener('error',stopAnim); // vidéo absente (ex. aperçu) -> la carte seule suffit
+function playAnim(key){
+  if(!key||!ANIMS[key])return;
+  animV.src=ANIMS[key];hero.classList.add('with-anim');anim.classList.add('on');
+  animV.currentTime=0;animV.play().catch(stopAnim);
+  clearTimeout(aT);aT=setTimeout(stopAnim,3400); // sécurité : 3 s + fondu
+}
 function gift(g){
   document.getElementById('hGift').textContent=g[0];document.getElementById('hWhat').textContent=g[1];document.getElementById('hName').textContent=g[2];
+  playAnim(g[4]);
   hero.classList.add('on');clearTimeout(hT);hT=setTimeout(function(){hero.classList.remove('on');},4500);
   addNote(g[2],g[1]+' '+g[0],1);
   goal.now=Math.min(goal.max,goal.now+g[3]);renderGoal();
