@@ -212,8 +212,8 @@ addNote('SarahK','On veut la suite ! 🎶');
 var hero=document.getElementById('hero'),hT,aT;
 // Catalogue des tips : [emoji, libellé, fan, valeur (roses), animation]
 // L'animation = une vidéo verticale de 3 s dans assets/tips/ (jouée en calque).
-var ANIMS={chateau:'assets/tips/chateau.mp4',couronne:'assets/tips/couronne.mp4',feu:'assets/tips/feu.mp4',diamant:'assets/tips/diamant.mp4',fusee:'assets/tips/fusee.mp4'};
-var GIFTS=[['🌹','Rose ×20','Lyna_973',20,null],['💎','Diamant','DJ Glad',30,'diamant'],['🔥','Feu ×10','Océane',10,'feu'],
+var ANIMS={rose:'assets/tips/rose.mp4',chateau:'assets/tips/chateau.mp4',couronne:'assets/tips/couronne.mp4',feu:'assets/tips/feu.mp4',diamant:'assets/tips/diamant.mp4',fusee:'assets/tips/fusee.mp4'};
+var GIFTS=[['🌹','Rose ×20','Lyna_973',20,'rose'],['💎','Diamant','DJ Glad',30,'diamant'],['🔥','Feu ×10','Océane',10,'feu'],
            ['👑','Couronne','Naïma',40,'couronne'],['🚀','Fusée','Brayan',25,'fusee'],['🏰','Château','Kevin',100,'chateau']];
 var anim=document.getElementById('anim'),animV=document.getElementById('animV');
 function stopAnim(){anim.classList.remove('on');hero.classList.remove('with-anim');setTimeout(function(){animV.pause();animV.removeAttribute('src');animV.load();},500);}
