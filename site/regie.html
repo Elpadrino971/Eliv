@@ -140,7 +140,7 @@ svg{display:block}
     </header>
     <div class="grid-wrap"><div class="grid" id="grid"></div></div>
     <div class="controls">
-      <div class="status"><span class="hd">HD</span><span>Stage projeté : stage.html</span></div>
+      <div class="status"><span class="hd">HD</span><span id="micStatus">🔇 Aucun micro ouvert</span></div>
       <button class="ctrl" id="muteAll"><svg class="icon" viewBox="0 0 24 24"><use href="#i-mic-off"/></svg><small>Couper tous les micros</small></button>
       <button class="ctrl" id="goQueue"><svg class="icon" viewBox="0 0 24 24"><use href="#i-hand"/></svg><small>File d'attente</small><span class="badge-n" id="qn">0</span></button>
       <button class="ctrl" id="goalBtn"><svg class="icon" viewBox="0 0 24 24"><use href="#i-target"/></svg><small>Objectif rappel</small></button>
@@ -191,13 +191,18 @@ svg{display:block}
 // Sans paramètres : démo (messages / mains simulés). En direct : chat centralisé,
 // cadeaux et billets confirmés arrivent par SSE ; la régie écrit dans le vrai chat.
 var Q=new URLSearchParams(location.search),LIVE=!!(Q.get('event')&&Q.get('key')),API=(Q.get('api')||'https://api.vybzzz.online/api').replace(/\/$/,'');
+// RÈGLE : un seul micro ouvert à la fois sur le mur (c'est un concert). Les fans
+// arrivent micro coupé ; ouvrir un micro coupe tous les autres (voir openMic).
 var GUESTS=[
- {n:'Kay West',mic:1,badge:{t:'Top Supporter',e:'👑'},hue:24},
- {n:'Nesly',mic:1,badge:{t:'Invitée spéciale',e:'⭐'},hue:300},
- {n:'DJ Glad',mic:1,badge:{t:'Meilleur Tippeur',e:'💸'},hue:266},
- {n:'Maya',mic:1,hue:288},{n:'Sabrina',mic:0,hue:210},{n:'Ruddy',mic:1,hue:150},
+ {n:'Kay West',mic:0,badge:{t:'Top Supporter',e:'👑'},hue:24},
+ {n:'Nesly',mic:0,badge:{t:'Invitée spéciale',e:'⭐'},hue:300},
+ {n:'DJ Glad',mic:0,badge:{t:'Meilleur Tippeur',e:'💸'},hue:266},
+ {n:'Maya',mic:0,hue:288},{n:'Sabrina',mic:0,hue:210},{n:'Ruddy',mic:0,hue:150},
  {n:'Léa',mic:0,hue:330},{n:'Tom_973',mic:0,hue:40},{n:'Jordan',mic:0,hue:190},
 ];
+function muteEveryone(){GUESTS.forEach(function(g){g.mic=0;g.onair=0;});}
+function openMic(i){var wasOpen=GUESTS.filter(function(g){return g.mic;}).map(function(g){return g.n;});muteEveryone();GUESTS[i].mic=1;return wasOpen;}
+function updateMicStatus(){var on=GUESTS.find(function(g){return g.mic;});var el=document.getElementById('micStatus');if(el)el.innerHTML=on?'🎙️ Micro ouvert : <b style="color:var(--gold)">'+on.n+'</b>':'🔇 Aucun micro ouvert';}
 var AV=['#F0679B','#E6C76A','#7EA6FF','#63D6A6','#C58BFF','#FF9F6B','#63C6D6','#F58BB0','#9DD16B'];
 function ini(n){return n.replace(/[^A-Za-zÀ-ÿ]/g,'').slice(0,1).toUpperCase();}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('on');},2200);}
@@ -216,8 +221,11 @@ function renderGrid(){
      '<button class="op danger" title="Retirer de l\'écran" data-rm="'+i+'"><svg class="icon" viewBox="0 0 24 24"><use href="#i-x"/></svg></button></div>';
     grid.appendChild(t);
   });
-  grid.querySelectorAll('[data-mic]').forEach(function(b){b.onclick=function(){var g=GUESTS[+b.dataset.mic];g.mic=g.mic?0:1;if(!g.mic)g.onair=0;renderGrid();toast(g.n+(g.mic?' : micro ouvert':' : micro coupé'));};});
+  grid.querySelectorAll('[data-mic]').forEach(function(b){b.onclick=function(){var i=+b.dataset.mic,g=GUESTS[i];
+    if(g.mic){g.mic=0;g.onair=0;renderGrid();toast(g.n+' : micro coupé');}
+    else{var prev=openMic(i);renderGrid();toast(g.n+' : micro ouvert'+(prev.length?' — '+prev.join(', ')+' coupé':''));}};});
   grid.querySelectorAll('[data-rm]').forEach(function(b){b.onclick=function(){var g=GUESTS[+b.dataset.rm];GUESTS[+b.dataset.rm]={n:'Libre',mic:0,hue:220,free:1};renderGrid();toast(g.n+' retiré de l\'écran');};});
+  updateMicStatus();
 }
 renderGrid();
 document.getElementById('muteAll').onclick=function(){GUESTS.forEach(function(g){g.mic=0;g.onair=0;});renderGrid();toast('Tous les micros coupés');};
@@ -243,6 +251,7 @@ function give(i){
   var r=QUEUE.splice(i,1)[0];
   // slot : libre > micro coupé > dernier
   var s=GUESTS.findIndex(function(g){return g.free;});if(s<0)s=GUESTS.findIndex(function(g){return !g.mic&&!g.badge;});if(s<0)s=GUESTS.length-1;
+  muteEveryone(); // un seul micro : le nouvel intervenant prend la parole, les autres sont coupés
   GUESTS[s]={n:r.n,mic:1,onair:1,hue:Math.floor(Math.random()*360)};
   renderGrid();renderQueue();toast('🎙️ '+r.n+' est à l\'antenne');
   for(var k=0;k<5;k++)setTimeout(heart,k*90);
