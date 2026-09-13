@@ -1,0 +1,224 @@
+<title>Stage VybzzZ</title>
+<meta name="description" content="Écran projeté sur scène (v2) : mur de fans, cadeaux en héros, classement permanent et objectif collectif — sans aucun bouton, en mode calme pour ne pas perturber l'artiste.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Sora:wght@700;800&display=swap">
+<style>
+:root{
+  --stage:#0A1630; --tile:#13244A; --panel:#0C1A3A; --panel-2:#16274E;
+  --ivory:#F4EFE3; --muted:#9AA3B8; --muted-2:#66708A;
+  --line:rgba(255,255,255,.09); --gold:#E6C76A; --gold-2:#C6A75E; --gold-soft:rgba(230,199,106,.14);
+  --live:#FF4D5E; --rose:#F0679B;
+  --sans:"Inter",system-ui,sans-serif; --display:"Sora",var(--sans);
+  --ease:cubic-bezier(.22,.7,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--stage);color:var(--ivory);font-family:var(--sans);overflow:hidden;font-size:16px;-webkit-font-smoothing:antialiased}
+svg{display:block}
+.icon{width:20px;height:20px;stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── shell : mur + rail droit, aucun contrôle ── */
+.stage{display:grid;grid-template-columns:1fr 400px;grid-template-rows:auto 1fr;height:100vh}
+.top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:14px 26px;border-bottom:1px solid var(--line)}
+.logo{display:flex;flex-direction:column;line-height:1}
+.logo b{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.02em;
+  background:linear-gradient(180deg,#F6E4A6,#C6A75E);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo span{font-size:9px;letter-spacing:.42em;color:var(--gold-2);margin-top:4px;font-weight:600}
+.livepill{display:flex;align-items:center;gap:10px;padding:10px 18px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);font-size:18px}
+.livepill b{font-weight:800;font-size:22px;font-variant-numeric:tabular-nums}
+.livepill .dot{width:9px;height:9px;border-radius:50%;background:var(--live);box-shadow:0 0 10px var(--live);animation:breathe 3.2s ease-in-out infinite}
+.livepill .n{color:var(--muted);font-weight:600}
+@keyframes breathe{50%{opacity:.45}}
+
+/* ── mur de fans ── */
+.wall{padding:18px 20px 22px 26px;min-height:0}
+.grid{height:100%;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:14px}
+.tile{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);min-height:0;background:var(--tile);isolation:isolate;
+  transition:border-color .8s var(--ease),box-shadow .8s var(--ease)}
+.tile__cam{position:absolute;inset:0;z-index:-1}
+.tile__cam::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(90% 70% at 50% 30%,rgba(255,255,255,.10),transparent 70%),linear-gradient(180deg,transparent 42%,rgba(8,18,42,.86))}
+.tile__mono{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:72px;color:rgba(255,255,255,.13);z-index:-1}
+.tile.speaking{border-color:rgba(230,199,106,.7);box-shadow:0 0 0 1px rgba(230,199,106,.45),0 0 30px -6px rgba(230,199,106,.5)}
+.name{position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:8px;padding:8px 14px 8px 10px;border-radius:999px;
+  background:rgba(10,20,44,.7);backdrop-filter:blur(6px);border:1px solid var(--line);font-weight:700;font-size:17px}
+.name .m{width:17px;height:17px;color:var(--gold)}.name .m.off{color:var(--live)}
+.badge{position:absolute;top:12px;right:12px;z-index:2;display:inline-flex;align-items:center;gap:7px;max-width:calc(100% - 24px);
+  padding:7px 14px;border-radius:999px;white-space:nowrap;background:linear-gradient(180deg,#F6E4A6,#D8B45A);color:#2A2008;
+  font-weight:800;font-size:12px;letter-spacing:.03em;text-transform:uppercase;box-shadow:0 5px 16px -5px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.4)}
+.badge span{font-size:14px}
+
+/* ── rail droit : objectif + top fans + notables (permanents) ── */
+.rail{border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;gap:18px;padding:18px 20px;min-height:0;overflow:hidden}
+.card{background:var(--panel-2);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+.eyebrow{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:8px}
+/* objectif collectif */
+.goal h3{font-family:var(--display);font-weight:800;font-size:20px;line-height:1.15;margin-bottom:12px}
+.goal .num{display:flex;align-items:baseline;gap:6px;margin-bottom:8px}
+.goal .num b{font-family:var(--display);font-size:38px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;line-height:1}
+.goal .num span{color:var(--muted);font-weight:600;font-size:16px}
+.gauge{height:14px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
+.gauge i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--gold-2),var(--gold));transition:width 1.4s var(--ease)}
+/* top fans permanent */
+.fans{flex:none}
+.fan{display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line);transition:transform .9s var(--ease)}
+.fan:last-child{border-bottom:0}
+.fan .rk{width:26px;font-family:var(--display);font-weight:800;color:var(--muted-2);text-align:center;font-size:18px}
+.fan.top1 .rk,.fan.top2 .rk,.fan.top3 .rk{color:var(--gold)}
+.av{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-size:13px;color:#0A1120}
+.fan .nm{font-weight:700;flex:1;font-size:17px}
+.fan .amt{color:var(--gold);font-weight:800;font-size:16px;display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.coin{width:15px;height:15px;border-radius:50%;background:linear-gradient(180deg,#F6E4A6,#C6A75E)}
+/* notables : peu, gros, calmes */
+.notables{flex:1;min-height:0;display:flex;flex-direction:column}
+.notes{display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.note{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+  animation:noteIn 1.1s var(--ease)}
+.note.gift{background:var(--gold-soft);border-color:rgba(230,199,106,.3)}
+.note .who{font-weight:800;color:var(--gold);font-size:17px}
+.note .txt{font-size:18px;line-height:1.3}
+.note.gift .txt{font-weight:700}
+@keyframes noteIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ── CADEAU HÉROS : grand, doux, bref ── */
+.hero{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:50;opacity:0;transition:opacity .7s var(--ease)}
+.hero.on{opacity:1}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 60% at 50% 50%,rgba(230,199,106,.16),transparent 70%)}
+.hero__card{position:relative;text-align:center;padding:44px 64px;border-radius:32px;background:rgba(12,26,58,.86);backdrop-filter:blur(10px);
+  border:1px solid rgba(230,199,106,.45);box-shadow:0 40px 120px -30px rgba(0,0,0,.8),0 0 80px -20px rgba(230,199,106,.45);
+  transform:scale(.9);transition:transform .9s var(--ease)}
+.hero.on .hero__card{transform:scale(1)}
+.hero__gift{font-size:96px;line-height:1;margin-bottom:6px;filter:drop-shadow(0 10px 24px rgba(240,103,155,.5))}
+.hero__what{font-family:var(--display);font-weight:800;font-size:40px;color:var(--gold);margin-bottom:10px}
+.hero__from{font-size:20px;color:var(--muted);font-weight:600;letter-spacing:.04em}
+.hero__name{font-family:var(--display);font-weight:800;font-size:64px;line-height:1.05;margin-top:4px}
+
+/* ── cœurs : rares et lents ── */
+.hearts{position:fixed;right:420px;bottom:40px;width:120px;height:55%;pointer-events:none;z-index:5}
+.fx{position:absolute;bottom:0;font-size:22px;opacity:0;animation:rise linear forwards;filter:drop-shadow(0 3px 6px rgba(0,0,0,.4))}
+@keyframes rise{0%{transform:translateY(0) scale(.7);opacity:0}15%{opacity:.9}100%{transform:translateY(-50vh) translateX(var(--dx,0)) scale(1);opacity:0}}
+
+.hint{position:fixed;left:26px;bottom:14px;font-size:11px;color:var(--muted-2);letter-spacing:.06em}
+@media(max-width:1100px){.stage{grid-template-columns:1fr 340px}.hearts{right:360px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="stage">
+  <header class="top">
+    <div class="logo"><b>VYBZZZ</b><span>LIVE BEGINS HERE</span></div>
+    <div class="livepill"><b id="count">245</b><span class="dot"></span><span class="n">en direct</span></div>
+  </header>
+
+  <section class="wall"><div class="grid" id="grid"></div></section>
+
+  <aside class="rail">
+    <div class="card goal">
+      <div class="eyebrow">Objectif du public</div>
+      <h3 id="goalTitle">100 roses = un rappel 🌹</h3>
+      <div class="num"><b id="goalNow">64</b><span>/ <span id="goalMax">100</span> roses</span></div>
+      <div class="gauge"><i id="gauge"></i></div>
+    </div>
+    <div class="card fans">
+      <div class="eyebrow">Top fans · en direct</div>
+      <div id="fans"></div>
+    </div>
+    <div class="card notables">
+      <div class="eyebrow">Moments</div>
+      <div class="notes" id="notes"></div>
+    </div>
+  </aside>
+</div>
+
+<div class="hero" id="hero"><div class="hero__card">
+  <div class="hero__gift" id="hGift">🌹</div>
+  <div class="hero__what" id="hWhat">Rose ×20</div>
+  <div class="hero__from">envoyé par</div>
+  <div class="hero__name" id="hName">Lyna_973</div>
+</div></div>
+<div class="hearts" id="hearts"></div>
+<div class="hint">Écran projeté · aucune interaction · touche G = simuler un cadeau</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<g id="i-mic"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></g>
+<g id="i-mic-off"><path d="M9 9v2a3 3 0 0 0 4.5 2.6M15 10V6a3 3 0 0 0-5.6-1.5"/><path d="M5 11a7 7 0 0 0 11 5.3M12 18v3"/><path d="M4 4l16 16"/></g>
+</defs></svg>
+
+<script>
+var GUESTS=[
+ {n:'Kay West',mic:1,badge:{t:'Top Supporter',e:'👑'},hue:24},
+ {n:'Nesly',mic:1,badge:{t:'Invitée spéciale',e:'⭐'},hue:300},
+ {n:'DJ Glad',mic:1,badge:{t:'Meilleur Tippeur',e:'💸'},hue:266},
+ {n:'Maya',mic:1,hue:288},{n:'Sabrina',mic:0,hue:210},{n:'Ruddy',mic:1,hue:150},
+ {n:'Léa',mic:0,hue:330},{n:'Tom_973',mic:0,hue:40},{n:'Jordan',mic:0,hue:190},
+];
+var AV=['#F0679B','#E6C76A','#7EA6FF','#63D6A6','#C58BFF','#FF9F6B','#63C6D6','#F58BB0','#9DD16B'];
+function ini(n){return n.replace(/[^A-Za-zÀ-ÿ]/g,'').slice(0,1).toUpperCase();}
+
+// mur
+var grid=document.getElementById('grid');
+GUESTS.forEach(function(g){
+  var t=document.createElement('div');t.className='tile'+(g.mic?' speaking':'');
+  t.innerHTML='<div class="tile__cam" style="background:linear-gradient(150deg,hsl('+g.hue+' 42% 26%),hsl('+((g.hue+40)%360)+' 38% 12%))"></div>'+
+   '<div class="tile__mono">'+ini(g.n)+'</div>'+
+   (g.badge?'<div class="badge"><span>'+g.badge.e+'</span>'+g.badge.t+'</div>':'')+
+   '<div class="name"><svg class="m'+(g.mic?'':' off')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#'+(g.mic?'i-mic':'i-mic-off')+'"/></svg>'+g.n+'</div>';
+  grid.appendChild(t);
+});
+// "qui parle" : lent, discret
+setInterval(function(){[].forEach.call(document.querySelectorAll('.tile'),function(t,i){if(GUESTS[i].mic&&Math.random()<.35)t.classList.toggle('speaking');});},2600);
+
+// top fans permanent
+var FANS=[['Lyna_973',2410],['DJ Glad',1980],['Kevin',1220],['Mimi_off',960],['Tifany',740]];
+function renderFans(){
+  FANS.sort(function(a,b){return b[1]-a[1];});
+  var el=document.getElementById('fans');el.innerHTML='';
+  FANS.slice(0,5).forEach(function(f,i){
+    var d=document.createElement('div');d.className='fan'+(i<3?' top'+(i+1):'');
+    d.innerHTML='<span class="rk">'+(i+1)+'</span><span class="av" style="background:'+AV[i%AV.length]+'">'+ini(f[0])+'</span>'+
+     '<span class="nm">'+f[0]+'</span><span class="amt"><span class="coin"></span>'+f[1].toLocaleString('fr-FR')+'</span>';
+    el.appendChild(d);
+  });
+}
+renderFans();
+
+// objectif
+var goal={now:64,max:100};
+function renderGoal(){document.getElementById('goalNow').textContent=goal.now;document.getElementById('gauge').style.width=Math.min(100,goal.now/goal.max*100)+'%';}
+setTimeout(renderGoal,300);
+
+// moments (peu, gros)
+var notes=document.getElementById('notes');
+function addNote(who,txt,gift){
+  var d=document.createElement('div');d.className='note'+(gift?' gift':'');
+  d.innerHTML='<span class="av" style="background:'+AV[who.length%AV.length]+'">'+ini(who)+'</span><div><div class="who">'+who+'</div><div class="txt">'+txt+'</div></div>';
+  notes.prepend(d);while(notes.children.length>4)notes.lastChild.remove();
+}
+addNote('Lyna_973','Rose ×20 🌹',1);
+addNote('Kevin','Quel son ! 🔥');
+addNote('SarahK','On veut la suite ! 🎶');
+
+// CADEAU HÉROS : grand, doux, 4,5 s, puis s'efface
+var hero=document.getElementById('hero'),hT;
+var GIFTS=[['🌹','Rose ×20','Lyna_973',20],['💎','Diamant','DJ Glad',30],['🎟️','Ticket d’Or','Naïma',15],['🌹','Rose ×50','Brayan',50],['🔥','Feu ×10','Océane',10]];
+function gift(g){
+  document.getElementById('hGift').textContent=g[0];document.getElementById('hWhat').textContent=g[1];document.getElementById('hName').textContent=g[2];
+  hero.classList.add('on');clearTimeout(hT);hT=setTimeout(function(){hero.classList.remove('on');},4500);
+  addNote(g[2],g[1]+' '+g[0],1);
+  goal.now=Math.min(goal.max,goal.now+g[3]);renderGoal();
+  var f=FANS.find(function(x){return x[0]===g[2];});if(f)f[1]+=g[3]*40;else FANS.push([g[2],g[3]*40]);renderFans();
+  if(goal.now>=goal.max){setTimeout(function(){document.getElementById('goalTitle').textContent='Objectif atteint 🎉 Rappel !';},1500);}
+  for(var k=0;k<5;k++)setTimeout(heart,k*260);
+}
+var gi=0;setInterval(function(){gift(GIFTS[gi%GIFTS.length]);gi++;},16000);
+document.addEventListener('keydown',function(e){if(e.key.toLowerCase()==='g'){gift(GIFTS[gi%GIFTS.length]);gi++;}});
+
+// cœurs : rares, lents
+var hearts=document.getElementById('hearts'),EMO=['❤️','🧡','💛'];
+function heart(){var s=document.createElement('span');s.className='fx';s.textContent=EMO[Math.floor(Math.random()*EMO.length)];
+  s.style.right=(Math.random()*80)+'px';s.style.fontSize=(18+Math.random()*12)+'px';s.style.setProperty('--dx',((Math.random()*50-25)|0)+'px');
+  var d=5+Math.random()*2.5;s.style.animationDuration=d+'s';hearts.appendChild(s);setTimeout(function(){s.remove();},d*1000+100);}
+if(!matchMedia('(prefers-reduced-motion:reduce)').matches){setInterval(heart,1900);}
+// compteur qui vit doucement
+setInterval(function(){var c=document.getElementById('count');c.textContent=Math.max(200,parseInt(c.textContent,10)+(Math.random()<.5?-1:1));},5000);
+</script>
