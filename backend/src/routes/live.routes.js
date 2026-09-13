@@ -17,6 +17,8 @@ const router = express.Router();
 const { db } = require('../db');
 const { sha256, optionalAuth } = require('../auth');
 const bus = require('../services/livebus');
+const zegoService = require('../services/zego');
+const badges = require('../services/badges');
 
 function keyOk(req) {
   const key = req.query.key || req.headers['x-api-key'];
@@ -204,6 +206,88 @@ router.post('/:eventId/clock', (req, res) => {
   const out = { ...clockState(req.params.eventId), delta_min: delta, by };
   bus.emit(req.params.eventId, { type: 'clock', ...out });
   return res.json({ status: 'success', data: out });
+});
+
+// ── Jeton Zego pour les écrans web (Stage / Régie) ─────────────────────────
+// Les écrans rejoignent LA room du concert (room = id du concert, comme l'app)
+// pour afficher les vraies cams des fans. Rôle : stage | regie.
+router.get('/:eventId/zego-token', (req, res) => {
+  if (!keyOk(req)) return res.status(401).json({ status: 'error', message: 'Clé API requise.' });
+  if (!zegoService.isConfigured()) return res.status(503).json({ status: 'error', message: 'ZegoCloud non configuré (ZEGO_APP_ID / ZEGO_SERVER_SECRET).' });
+  const role = req.query.role === 'stage' ? 'stage' : 'regie';
+  const userId = 'web_' + role + '_' + req.params.eventId + '_' + Math.random().toString(36).slice(2, 8);
+  try {
+    const { token, appId, expiresAt } = zegoService.generateToken04(userId);
+    return res.json({ status: 'success', data: {
+      app_id: appId, token, expires_at: expiresAt, room_id: String(req.params.eventId),
+      user_id: userId, user_name: role === 'stage' ? 'Stage VybzzZ' : 'Régie VybzzZ',
+      server: 'wss://webliveroom' + appId + '-api.zegocloud.com/ws',
+    } });
+  } catch (e) { return res.status(502).json({ status: 'error', message: 'Erreur Zego : ' + e.message }); }
+});
+
+// ── Mains levées + micro unique ─────────────────────────────────────────────
+// Un fan lève la main depuis l'app (JWT). La régie donne / retire la parole ;
+// UN SEUL micro à la fois : 'mic' porte le flux (`<concert>_<user>_main`) que
+// les écrans laissent sonner, tous les autres sont coupés.
+const HANDS = new Map(); // event_id -> Map(user_id -> {user_id, name, at})
+const MIC = new Map();   // event_id -> {user_id, name, stream_id} | null
+function handsList(id) { return [...(HANDS.get(String(id)) || new Map()).values()].sort((a, b) => a.at - b.at); }
+function broadcastHands(id) { bus.emit(id, { type: 'hands', hands: handsList(id) }); }
+function nameOf(userId) { const u = db.prepare('SELECT full_name, artist_name FROM users WHERE id = ?').get(userId); return (u && (u.artist_name || u.full_name)) || ('Fan ' + userId); }
+
+router.get('/:eventId/hands', optionalAuth, (req, res) => {
+  if (!req.user && !keyOk(req)) return res.status(401).json({ status: 'error', message: 'Connexion ou clé API requise.' });
+  return res.json({ status: 'success', data: { hands: handsList(req.params.eventId), mic: MIC.get(String(req.params.eventId)) || null } });
+});
+router.post('/:eventId/hand', optionalAuth, (req, res) => {
+  if (!req.user) return res.status(401).json({ status: 'error', message: 'Connexion requise.' });
+  const id = String(req.params.eventId);
+  if (!HANDS.has(id)) HANDS.set(id, new Map());
+  const up = (req.body || {}).up !== false;
+  if (up) HANDS.get(id).set(String(req.user.id), { user_id: req.user.id, name: req.user.artist_name || req.user.full_name || 'Un fan', at: Date.now() });
+  else HANDS.get(id).delete(String(req.user.id));
+  broadcastHands(id);
+  return res.json({ status: 'success', data: { up } });
+});
+router.post('/:eventId/hands/:userId/grant', (req, res) => {
+  if (!keyOk(req)) return res.status(401).json({ status: 'error', message: 'Clé API requise.' });
+  const id = String(req.params.eventId), uid = String(req.params.userId);
+  const h = (HANDS.get(id) || new Map()).get(uid);
+  const name = (h && h.name) || String((req.body || {}).name || '').slice(0, 60) || nameOf(uid);
+  if (HANDS.get(id)) HANDS.get(id).delete(uid);
+  const mic = { user_id: uid, name, stream_id: id + '_' + uid + '_main' };
+  MIC.set(id, mic);
+  bus.emit(id, { type: 'mic', ...mic });
+  bus.emit(id, { type: 'note', user: 'Régie', text: '🎙️ ' + name + ' a la parole' });
+  broadcastHands(id);
+  return res.json({ status: 'success', data: mic });
+});
+router.post('/:eventId/hands/:userId/deny', (req, res) => {
+  if (!keyOk(req)) return res.status(401).json({ status: 'error', message: 'Clé API requise.' });
+  const id = String(req.params.eventId);
+  if (HANDS.get(id)) HANDS.get(id).delete(String(req.params.userId));
+  broadcastHands(id);
+  return res.json({ status: 'success' });
+});
+router.post('/:eventId/mic/off', (req, res) => {
+  if (!keyOk(req)) return res.status(401).json({ status: 'error', message: 'Clé API requise.' });
+  const id = String(req.params.eventId);
+  MIC.set(id, null);
+  bus.emit(id, { type: 'mic', user_id: null, name: null, stream_id: null });
+  return res.json({ status: 'success' });
+});
+
+// ── Badges du mur (👑 Top Supporter · 💸 Meilleur Tippeur · ⭐ Invité VIP) ──
+router.get('/:eventId/badges', optionalAuth, (req, res) => {
+  if (!req.user && !keyOk(req)) return res.status(401).json({ status: 'error', message: 'Connexion ou clé API requise.' });
+  return res.json({ status: 'success', data: badges.refresh(req.params.eventId, { announce: false }) || badges.current(req.params.eventId) });
+});
+router.post('/:eventId/badges/vip', (req, res) => {
+  if (!keyOk(req)) return res.status(401).json({ status: 'error', message: 'Clé API requise.' });
+  const b = req.body || {};
+  const data = badges.setVip(req.params.eventId, b.user_id ? (Number(b.user_id) || String(b.user_id)) : null, b.name ? String(b.name).slice(0, 60) : null);
+  return res.json({ status: 'success', data });
 });
 
 module.exports = router;

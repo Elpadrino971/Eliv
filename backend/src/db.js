@@ -357,6 +357,20 @@ function init() {
     );
   `);
 
+  // Porteurs actuels des badges du mur de fans (par concert) — persistés pour
+  // survivre à un redémarrage et appliquer la marge anti-clignotement.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS live_badge_state (
+      event_id INTEGER,
+      badge TEXT,                 -- top_supporter | best_tipper | vip
+      user_id INTEGER,
+      name TEXT,
+      score REAL DEFAULT 0,
+      updated_at TEXT DEFAULT (datetime('now')),
+      PRIMARY KEY (event_id, badge)
+    );
+  `);
+
   // Registre des revenus : pour CHAQUE vente (billet / cadeau), on trace le
   // brut, la part artiste et la part plateforme + le taux appliqué. Source de
   // vérité pour la compta (part plateforme = revenu réel du fondateur, pas le

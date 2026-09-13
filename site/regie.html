@@ -48,6 +48,8 @@ svg{display:block}
 .tile{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);min-height:0;background:var(--tile);isolation:isolate;transition:border-color .4s,box-shadow .4s}
 .tile__cam{position:absolute;inset:0;z-index:-1}
 .tile__cam::after{content:"";position:absolute;inset:0;background:radial-gradient(90% 70% at 50% 30%,rgba(255,255,255,.10),transparent 70%),linear-gradient(180deg,transparent 40%,rgba(8,18,42,.85))}
+.tile video.camv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1;background:#000}
+.tile.free{opacity:.35}
 .tile__mono{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:64px;color:rgba(255,255,255,.14);z-index:-1}
 .tile.speaking{border-color:rgba(230,199,106,.75);box-shadow:0 0 0 1px rgba(230,199,106,.5),0 0 26px -6px rgba(230,199,106,.55)}
 .tile.onair{border-color:rgba(99,214,166,.8);box-shadow:0 0 0 1px rgba(99,214,166,.5),0 0 26px -6px rgba(99,214,166,.55)}
@@ -208,7 +210,7 @@ svg{display:block}
 <g id="i-target"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></g>
 <g id="i-x"><path d="M6 6l12 12M18 6L6 18"/></g>
 </defs></svg>
-
+<script src="https://cdn.jsdelivr.net/npm/zego-express-engine-webrtc/ZegoExpressWebRTC.js"></script>
 <script>
 // ── MODE DIRECT : regie.html?event=<id du concert>&key=<clé API>[&api=https://api.vybzzz.online/api]
 // Sans paramètres : démo (messages / mains simulés). En direct : chat centralisé,
@@ -395,5 +397,66 @@ if(LIVE){
   es.addEventListener('clock',function(e){var d=JSON.parse(e.data);setClockLocal(d.ends_at,d.server_now);if(d.delta_min)toast((d.by||'Régie')+' : '+(d.delta_min>0?'+':'')+d.delta_min+' min');});
   fetch(API+'/live/'+EV+'/clock',{headers:H}).then(function(r){return r.json();}).then(function(j){if(j.data)setClockLocal(j.data.ends_at,j.data.server_now);}).catch(function(){});
   es.onerror=function(){document.querySelector('.role').textContent='Console · DIRECT · reconnexion…';};
+}
+
+// ═══ DIRECT : vraies cams (ZegoCloud) · badges réels · micro unique ═══
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var SLOTS=[],MIC_STREAM=null,BADGES={},ZG=null;
+function badgeFor(uid){uid=String(uid);
+  if(BADGES.vip&&String(BADGES.vip.user_id)===uid)return {t:'Invité VIP',e:'⭐'};
+  if(BADGES.top_supporter&&String(BADGES.top_supporter.user_id)===uid)return {t:'Top Supporter',e:'👑'};
+  if(BADGES.best_tipper&&String(BADGES.best_tipper.user_id)===uid)return {t:'Meilleur Tippeur',e:'💸'};return null;}
+function parseUid(id){var m=String(id).match(/^\d+_(.+?)_main$/);return m?m[1]:String(id);}
+function addStream(st){var uid=parseUid(st.streamID);if(SLOTS.some(function(s){return s.stream_id===st.streamID;}))return;if(SLOTS.length>=9)return;
+  var s={user_id:uid,name:(st.user&&st.user.userName)||('Fan '+uid),stream_id:st.streamID,media:null,video:null};SLOTS.push(s);renderWallLive();
+  ZG.startPlayingStream(st.streamID).then(function(m){s.media=m;renderWallLive();}).catch(function(){});}
+function removeStream(id){var i=SLOTS.findIndex(function(s){return s.stream_id===id;});if(i<0)return;try{ZG.stopPlayingStream(id);}catch(_){}SLOTS.splice(i,1);renderWallLive();}
+function startZego(role,say){
+  if(!window.ZegoExpressEngine){say('Cams : SDK vidéo non chargé (aperçu ?)');return;}
+  fetch(API+'/live/'+EVID+'/zego-token?role='+role,{headers:H}).then(function(r){return r.json();}).then(function(j){var d=j.data;if(!d)throw new Error(j.message||'jeton');
+    ZG=new ZegoExpressEngine(d.app_id,d.server);
+    ZG.on('roomStreamUpdate',function(roomID,type,list){(list||[]).forEach(function(st){if(type==='ADD')addStream(st);else removeStream(st.streamID);});});
+    ZG.on('soundLevelUpdate',function(levels){(levels||[]).forEach(function(l){var s=SLOTS.find(function(x){return x.stream_id===l.streamID;});if(!s||!s.video||!s.video.parentNode)return;s.video.parentNode.classList.toggle('speaking',l.soundLevel>8&&MIC_STREAM===l.streamID);});});
+    try{ZG.setSoundLevelDelegate(true,300);}catch(_){}
+    return ZG.loginRoom(d.room_id,d.token,{userID:d.user_id,userName:d.user_name},{userUpdate:true});
+  }).then(function(){renderWallLive();say('Connecté à la room du concert 🎥');}).catch(function(e){say('Cams indisponibles : '+(e&&e.message?e.message:'Zego'));});
+}
+
+function isVip(uid){return !!(BADGES.vip&&String(BADGES.vip.user_id)===String(uid));}
+function renderWallLive(){
+  var items=SLOTS.slice().sort(function(a,b){return (badgeFor(b.user_id)?1:0)-(badgeFor(a.user_id)?1:0);});while(items.length<9)items.push(null);
+  grid.innerHTML='';
+  items.slice(0,9).forEach(function(s){var t=document.createElement('div');
+    if(!s){t.className='tile free';t.innerHTML='<div class="tile__mono">·</div>';grid.appendChild(t);return;}
+    var b=badgeFor(s.user_id),on=!!MIC_STREAM&&MIC_STREAM===s.stream_id,vip=isVip(s.user_id);t.className='tile'+(on?' onair':'');
+    t.innerHTML='<div class="tile__mono">'+esc(ini(s.name))+'</div>'+(on?'<div class="badge air"><span>🎙️</span>À l\'antenne</div>':(b?'<div class="badge"><span>'+b.e+'</span>'+b.t+'</div>':''))+
+      '<div class="name"><svg class="m'+(on?'':' off')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#'+(on?'i-mic':'i-mic-off')+'"/></svg>'+esc(s.name)+'</div>'+
+      '<div class="ops"><button class="op" title="'+(on?'Couper le micro':'Donner le micro')+'" data-lmic="'+esc(s.user_id)+'" data-on="'+(on?1:0)+'" data-name="'+esc(s.name)+'"><svg class="icon" viewBox="0 0 24 24"><use href="#'+(on?'i-mic-off':'i-mic')+'"/></svg></button>'+
+      '<button class="op" title="'+(vip?'Retirer le badge Invité VIP':'Donner le badge Invité VIP')+'" data-vip="'+esc(s.user_id)+'" data-name="'+esc(s.name)+'" style="font-size:15px">⭐</button></div>';
+    if(s.media){var v=s.video;if(!v){v=document.createElement('video');v.autoplay=true;v.playsInline=true;v.className='camv';v.srcObject=s.media;s.video=v;}v.muted=!on;t.prepend(v);if(v.play)v.play().catch(function(){});}
+    grid.appendChild(t);});
+  var m=SLOTS.find(function(s){return MIC_STREAM&&s.stream_id===MIC_STREAM;});
+  document.getElementById('micStatus').innerHTML=m?'🎙️ Micro ouvert : <b style="color:var(--gold)">'+esc(m.name)+'</b>':'🔇 Aucun micro ouvert';
+  grid.querySelectorAll('[data-lmic]').forEach(function(b){b.onclick=function(){
+    if(b.dataset.on==='1'){fetch(API+'/live/'+EVID+'/mic/off',{method:'POST',headers:H}).then(function(){toast('Micro coupé');});}
+    else{fetch(API+'/live/'+EVID+'/hands/'+encodeURIComponent(b.dataset.lmic)+'/grant',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},H),body:JSON.stringify({name:b.dataset.name})}).then(function(r){toast(r.ok?'🎙️ '+b.dataset.name+' a la parole (les autres sont coupés)':'Échec');});}};});
+  grid.querySelectorAll('[data-vip]').forEach(function(b){b.onclick=function(){var v=isVip(b.dataset.vip);
+    fetch(API+'/live/'+EVID+'/badges/vip',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},H),body:JSON.stringify(v?{user_id:null}:{user_id:b.dataset.vip,name:b.dataset.name})}).then(function(r){toast(r.ok?(v?'Badge VIP retiré':'⭐ '+b.dataset.name+' est Invité VIP'):'Échec');});};});
+}
+if(LIVE){
+  var EVID=encodeURIComponent(Q.get('event'));
+  GUESTS=[];renderGrid=function(){renderWallLive();};grid.innerHTML='';renderWallLive();
+  give=function(i){var r=QUEUE[i];if(!r)return Promise.resolve();
+    return fetch(API+'/live/'+EVID+'/hands/'+encodeURIComponent(r.user_id)+'/grant',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},H),body:JSON.stringify({name:r.n})}).then(function(x){toast(x.ok?'🎙️ '+r.n+' a la parole':'Échec');});};
+  var _rq=renderQueue;renderQueue=function(){_rq();document.querySelectorAll('[data-deny]').forEach(function(b){var i=+b.dataset.deny,r=QUEUE[i];b.onclick=function(){if(r)fetch(API+'/live/'+EVID+'/hands/'+encodeURIComponent(r.user_id)+'/deny',{method:'POST',headers:H}).then(function(){toast(r.n+' : demande refusée');});};});};
+  document.getElementById('muteAll').onclick=function(){fetch(API+'/live/'+EVID+'/mic/off',{method:'POST',headers:H}).then(function(){toast('Tous les micros coupés');});};
+  function applyHands(hs){QUEUE=(hs||[]).map(function(h){return {n:h.name,w:'il y a '+Math.max(1,Math.round((Date.now()-h.at)/1000))+' s',user_id:h.user_id};});renderQueue();}
+  es.addEventListener('hands',function(e){applyHands(JSON.parse(e.data).hands);});
+  es.addEventListener('mic',function(e){var d=JSON.parse(e.data);MIC_STREAM=d.stream_id||null;renderWallLive();});
+  es.addEventListener('badges',function(e){BADGES=JSON.parse(e.data);renderWallLive();});
+  fetch(API+'/live/'+EVID+'/hands',{headers:H}).then(function(r){return r.json();}).then(function(j){if(j.data){applyHands(j.data.hands);if(j.data.mic)MIC_STREAM=j.data.mic.stream_id;renderWallLive();}}).catch(function(){});
+  fetch(API+'/live/'+EVID+'/badges',{headers:H}).then(function(r){return r.json();}).then(function(j){if(j.data){BADGES=j.data;renderWallLive();}}).catch(function(){});
+  document.addEventListener('click',function(){renderWallLive();},{once:true});
+  startZego('regie',toast);
 }
 </script>

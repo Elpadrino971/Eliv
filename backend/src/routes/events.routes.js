@@ -11,6 +11,7 @@ const apporteurLedger = require('../services/apporteur_ledger');
 const apporteurBonus = require('../services/apporteur_bonus');
 const revenuecat = require('../services/revenuecat');
 const livebus = require('../services/livebus');
+const badges = require('../services/badges');
 
 // Nom affichable d'un utilisateur pour les écrans live (jamais l'e-mail).
 function liveName(userId) {
@@ -442,6 +443,7 @@ router.post('/event-gift', optionalAuth, (req, res) => {
   // Stage joue l'animation du tip avec le prénom du fan.
   try {
     livebus.emit(b.event_id, { type: 'gift', gift: gift.name, gift_id: gift.id, image: gift.image, points: cost, user: liveName(userId) });
+    badges.refresh(b.event_id); // 💸 Meilleur Tippeur / 👑 Top Supporter (règles + marge)
   } catch (_) { /* jamais bloquant */ }
 
   const activity = db
