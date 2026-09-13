@@ -11,7 +11,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class CreateAcount extends StatefulWidget {
-  const CreateAcount({super.key});
+  const CreateAcount({super.key, this.initialEmail});
+
+  /// Email saisi sur l'écran de connexion, repris ici pour ne pas le retaper.
+  final String? initialEmail;
 
   @override
   State<CreateAcount> createState() => _CreateAcountState();
@@ -20,7 +23,9 @@ class CreateAcount extends StatefulWidget {
 class _CreateAcountState extends State<CreateAcount> {
   final authController = Get.find<AuthController>();
 
-  final emailController = TextEditingController();
+  late final emailController = TextEditingController(
+    text: widget.initialEmail ?? '',
+  );
   final nameController = TextEditingController();
   final passwordController = TextEditingController();
   bool hiddinPassword = true;

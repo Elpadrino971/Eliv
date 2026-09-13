@@ -6,7 +6,6 @@ import 'package:artist/Controllers/auth_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/services/google_sign_in.dart';
-import 'package:artist/services/push_notification.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
@@ -48,15 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
   var hiddinPassword = true;
   final formKey = GlobalKey<FormState>();
 
-  Future<void> init() async {
-    await PushNotificationSystem().requestIOSPermissions();
-  }
-
-  @override
-  void initState() {
-    init();
-    super.initState();
-  }
+  // La permission de notifications n'est PLUS demandée ici : un visiteur sans
+  // compte voyait surgir la fenêtre système "VybzzZ souhaite vous envoyer des
+  // notifications" dès l'écran de connexion. Elle est demandée après
+  // connexion, dans MyBottomBar.
 
   @override
   Widget build(BuildContext context) {
@@ -418,7 +412,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "Don't have an account?",
+                              'login_no_account_q'.tr,
                               style: TextStyle(
                                 color: Color(0xffA1A1A1),
                                 fontWeight: FontWeight.w400,
@@ -432,7 +426,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Get.to(() => CreateAcount());
                               },
                               child: Text(
-                                "Join Now",
+                                'login_join_now'.tr,
                                 style: TextStyle(
                                   color: Get.isDarkMode
                                       ? goldPrimary

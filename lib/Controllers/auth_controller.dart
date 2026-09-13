@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:artist/Auth/login_screen.dart';
 import 'package:artist/Auth/otp_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
+import 'package:artist/Auth/login_failed_sheet.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Models/banks_model.dart';
@@ -36,24 +37,44 @@ class AuthController extends GetxController {
     response.typeSetter = 'post';
     response.urlSetter = APIs.loginAPI;
     response.bodySetter = {'email': email, 'password': password};
-    await response.hitAPI().then((value) {
-      if (value.split(' ').first != 'error') {
-        userModel.value = userModelFromJson(value);
-        update();
-        if (userModel.value.user?.status == 'pending') {
-          Get.offAll(() => OtpScreen(email: email));
-        } else {
-          box.write('user', userModel.value.toJson());
-          final id = userModel.value.user?.id;
-          if (id != null) unawaited(SubscriptionController.syncIdentity(id));
-          // Après connexion : direct sur le Live + Feed (index 2), comme à l'ouverture.
-          Get.offAll(() => MyBottomBar(index: 2));
-        }
-        Get.back();
+    final String value;
+    try {
+      value = await response.hitAPI();
+    } catch (_) {
+      // Pas de réseau / serveur injoignable : on ferme le loader et on
+      // l'explique doucement, au lieu de laisser le loader tourner.
+      Get.back();
+      await showLoginFailedSheet(code: 'network', email: email);
+      return;
+    }
+    if (value.split(' ').first != 'error') {
+      userModel.value = userModelFromJson(value);
+      update();
+      if (userModel.value.user?.status == 'pending') {
+        Get.offAll(() => OtpScreen(email: email));
       } else {
-        parseError(value, doBack: true);
+        box.write('user', userModel.value.toJson());
+        final id = userModel.value.user?.id;
+        if (id != null) unawaited(SubscriptionController.syncIdentity(id));
+        // Après connexion : direct sur le Live + Feed (index 2), comme à l'ouverture.
+        Get.offAll(() => MyBottomBar(index: 2));
       }
-    });
+      Get.back();
+    } else {
+      // Échec de connexion : feuille d'aide (créer un compte / mot de passe
+      // oublié) au lieu du dialogue "Warning" bloquant.
+      Get.back();
+      await showLoginFailedSheet(code: _errorCode(value), email: email);
+    }
+  }
+
+  /// Extrait le champ `code` d'une réponse d'erreur `error {json}`.
+  static String? _errorCode(String value) {
+    try {
+      final data = jsonDecode(value.split('error ').last);
+      if (data is Map && data['code'] != null) return data['code'].toString();
+    } catch (_) {}
+    return null;
   }
 
   Future socialLogin({
