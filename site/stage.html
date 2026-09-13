@@ -30,6 +30,14 @@ svg{display:block}
 .livepill .dot{width:9px;height:9px;border-radius:50%;background:var(--live);box-shadow:0 0 10px var(--live);animation:breathe 3.2s ease-in-out infinite}
 .livepill .n{color:var(--muted);font-weight:600}
 @keyframes breathe{50%{opacity:.45}}
+/* compte à rebours de fin de live : discret, doré sous 10 min, rouge sous 2 min */
+.top__r{display:flex;align-items:center;gap:14px}
+.clock{display:flex;align-items:center;gap:12px;padding:10px 18px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);transition:border-color .6s}
+.clock__l{color:var(--muted);font-weight:600;font-size:15px}
+.clock b{font-family:var(--display);font-weight:800;font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.clock.warn{border-color:rgba(230,199,106,.5)}.clock.warn b{color:var(--gold)}
+.clock.last{border-color:rgba(255,77,94,.6)}.clock.last b{color:var(--live);animation:breathe 1.2s ease-in-out infinite}
+.clock.over b{color:var(--live)}
 
 /* ── mur de fans ── */
 .wall{padding:18px 20px 22px 26px;min-height:0}
@@ -134,7 +142,10 @@ svg{display:block}
 <div class="stage">
   <header class="top">
     <div class="logo"><b>VybzzZ</b><span>LIVE BEGINS HERE</span></div>
-    <div class="livepill"><b id="count">245</b><span class="dot"></span><span class="n">en direct</span></div>
+    <div class="top__r">
+      <div class="clock" id="clock" hidden><span class="clock__l">⏱ Fin du live dans</span><b id="clockT">45:00</b></div>
+      <div class="livepill"><b id="count">245</b><span class="dot"></span><span class="n">en direct</span></div>
+    </div>
   </header>
 
   <section class="wall"><div class="grid" id="grid"></div></section>
@@ -287,6 +298,28 @@ if(LIVE){
   setInterval(function(){gift(GIFTS[gi%GIFTS.length]);gi++;},16000);
   setTimeout(function(){showQuestion(DEMO_Q[0],'top');},7000); // démo : la question la plus likée remonte
 }
+// ── Compte à rebours de fin de live (heure de fin fixée par la régie, prolongeable / réductible) ──
+// L'heure de fin vient du serveur ; on corrige le décalage d'horloge du poste (offset) pour rester juste.
+var CLOCK={endsAt:null,offset:0,over:false};
+function fmt(s){s=Math.max(0,Math.round(s));var h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':':'')+(h?('0'+m).slice(-2):m)+':'+('0'+x).slice(-2);}
+function setClock(endsAt,serverNow,delta,who){
+  if(serverNow)CLOCK.offset=new Date(serverNow).getTime()-Date.now();
+  CLOCK.endsAt=endsAt?new Date(endsAt).getTime():null;CLOCK.over=false;
+  document.getElementById('clock').hidden=!CLOCK.endsAt;tickClock();
+  if(delta){addNote(who||'L\'artiste',delta>0?'prolonge le live de +'+delta+' min 🎉':'réduit le live de '+delta+' min');if(delta>0)for(var k=0;k<4;k++)setTimeout(heart,k*250);}
+}
+function tickClock(){var el=document.getElementById('clock');if(!CLOCK.endsAt){return;}
+  var rem=(CLOCK.endsAt-(Date.now()+CLOCK.offset))/1000;
+  el.classList.toggle('warn',rem<600&&rem>120);el.classList.toggle('last',rem<=120&&rem>0);el.classList.toggle('over',rem<=0);
+  document.querySelector('.clock__l').textContent=rem<=0?'⏱ Fin du live':(rem<=120?'⏱ Dernières minutes':'⏱ Fin du live dans');
+  document.getElementById('clockT').textContent=fmt(rem);
+  if(rem<=0&&!CLOCK.over){CLOCK.over=true;addNote('VybzzZ','Le live touche à sa fin — merci à tous 🙏');}
+}
+setInterval(tickClock,1000);
+if(LIVE){
+  es.addEventListener('clock',function(e){var d=JSON.parse(e.data);setClock(d.ends_at,d.server_now,d.delta_min,d.by);});
+  fetch(API+'/live/'+encodeURIComponent(Q.get('event'))+'/clock',{headers:{'X-API-Key':Q.get('key')}}).then(function(r){return r.json();}).then(function(j){if(j.data)setClock(j.data.ends_at,j.data.server_now);}).catch(function(){});
+}else{ setClock(new Date(Date.now()+45*60000).toISOString()); }
 // Bandeau "question à répondre" : une seule à la fois, apparition douce, disparaît quand répondue
 var DEMO_Q=[{text:'Tu feras une date en Guadeloupe cette année ?',user:'Lyna_973',likes:47},{text:'C\'est quoi le prochain single ?',user:'Kevin',likes:31},{text:'Un duo avec Nesly, c\'est possible ?',user:'Maya_Fan',likes:22}],dq=0;
 function showQuestion(q,reason){var el=document.getElementById('qa');if(!q){el.classList.remove('on');return;}
@@ -295,7 +328,8 @@ function showQuestion(q,reason){var el=document.getElementById('qa');if(!q){el.c
   document.getElementById('qaL').textContent=q.likes||0;el.classList.add('on');}
 document.addEventListener('keydown',function(e){var k=e.key.toLowerCase();
   if(k==='g'){gift(GIFTS[gi%GIFTS.length]);gi++;}
-  if(k==='q'&&!LIVE){dq++;showQuestion(dq%(DEMO_Q.length+1)===DEMO_Q.length?null:DEMO_Q[dq%(DEMO_Q.length+1)],dq%2?'featured':'top');}});
+  if(k==='q'&&!LIVE){dq++;showQuestion(dq%(DEMO_Q.length+1)===DEMO_Q.length?null:DEMO_Q[dq%(DEMO_Q.length+1)],dq%2?'featured':'top');}
+  if(!LIVE&&(e.key==='+'||e.key==='-')&&CLOCK.endsAt){var d=e.key==='+'?5:-5;setClock(new Date(CLOCK.endsAt+d*60000).toISOString(),null,d);}});
 
 // cœurs : rares, lents
 var hearts=document.getElementById('hearts'),EMO=['❤️','🧡','💛'];

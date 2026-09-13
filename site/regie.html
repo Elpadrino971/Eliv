@@ -75,6 +75,12 @@ svg{display:block}
 .leave{position:absolute;right:18px;display:flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;background:linear-gradient(180deg,#FF5E6E,#E23B4C);color:#fff;font-weight:700}
 .status{position:absolute;left:18px;display:flex;align-items:center;gap:12px;color:var(--muted-2);font-size:11px;font-weight:600}
 .status .hd{border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--muted)}
+/* chrono de fin de live (prolonger / réduire) */
+.clockbox{display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:14px;background:var(--panel-2);border:1px solid var(--line);margin-right:6px}
+.clockbox .cl{font-size:14px;color:var(--muted)}
+.clockbox b{font-family:var(--display);font-size:18px;color:var(--gold);min-width:60px;text-align:center;font-variant-numeric:tabular-nums}
+.clockbox button{padding:6px 9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-weight:700;font-size:12px;color:var(--ivory)}
+.clockbox button:hover{border-color:var(--gold)}
 
 /* panneau droit */
 .tabs{display:flex;padding:6px 8px;gap:2px;border-bottom:1px solid var(--line-2)}
@@ -151,6 +157,7 @@ svg{display:block}
     <div class="grid-wrap"><div class="grid" id="grid"></div></div>
     <div class="controls">
       <div class="status"><span class="hd">HD</span><span id="micStatus">🔇 Aucun micro ouvert</span></div>
+      <div class="clockbox" title="Fin du live — prolonger / réduire"><span class="cl">⏱</span><b id="cT">--:--</b><button data-dm="-5" title="Réduire de 5 min">−5</button><button data-dm="5" title="Prolonger de 5 min">+5</button><button data-dm="10" title="Prolonger de 10 min">+10</button><button id="cSet" title="Définir les minutes restantes / terminer">⚙</button></div>
       <button class="ctrl" id="muteAll"><svg class="icon" viewBox="0 0 24 24"><use href="#i-mic-off"/></svg><small>Couper tous les micros</small></button>
       <button class="ctrl" id="goQueue"><svg class="icon" viewBox="0 0 24 24"><use href="#i-hand"/></svg><small>File d'attente</small><span class="badge-n" id="qn">0</span></button>
       <button class="ctrl" id="goalBtn"><svg class="icon" viewBox="0 0 24 24"><use href="#i-target"/></svg><small>Objectif rappel</small></button>
@@ -319,6 +326,25 @@ function heart(){var s=document.createElement('span');s.className='fx';s.textCon
   var d=3.2+Math.random()*1.8;s.style.animationDuration=d+'s';hearts.appendChild(s);setTimeout(function(){s.remove();},d*1000+100);}
 if(!matchMedia('(prefers-reduced-motion:reduce)').matches){setInterval(heart,700);}
 
+// ── Compte à rebours de fin de live : la régie prolonge / réduit / termine ──
+var CLOCK={endsAt:null,offset:0};
+function fmt(s){s=Math.max(0,Math.round(s));var h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':':'')+(h?('0'+m).slice(-2):m)+':'+('0'+x).slice(-2);}
+function renderClock(){var el=document.getElementById('cT');if(!CLOCK.endsAt){el.textContent='--:--';return;}var rem=(CLOCK.endsAt-(Date.now()+CLOCK.offset))/1000;el.textContent=fmt(rem);el.style.color=rem<=120?'var(--live)':'var(--gold)';}
+setInterval(renderClock,1000);
+function setClockLocal(endsAt,serverNow){if(serverNow)CLOCK.offset=new Date(serverNow).getTime()-Date.now();CLOCK.endsAt=endsAt?new Date(endsAt).getTime():null;renderClock();}
+function clockAction(action,minutes){
+  if(LIVE){return fetch(API+'/live/'+encodeURIComponent(Q.get('event'))+'/clock',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':Q.get('key')},body:JSON.stringify({action:action,minutes:minutes,by:'Régie'})})
+    .then(function(r){return r.json();}).then(function(j){if(j.data)setClockLocal(j.data.ends_at,j.data.server_now);toast(j.status==='success'?'Chrono mis à jour':(j.message||'Échec'));}).catch(function(){toast('Échec (réseau)');});}
+  var now=Date.now(),base=CLOCK.endsAt&&CLOCK.endsAt>now?CLOCK.endsAt:now;
+  if(action==='set')CLOCK.endsAt=now+minutes*60000;else if(action==='end')CLOCK.endsAt=now;else CLOCK.endsAt=Math.max(now,base+(action==='reduce'?-1:1)*minutes*60000);
+  renderClock();toast('Chrono : '+(action==='set'?minutes+' min':action==='end'?'fin du live':(action==='reduce'?'−':'+')+minutes+' min')+' (démo)');return Promise.resolve();
+}
+document.querySelectorAll('[data-dm]').forEach(function(b){b.onclick=function(){var d=+b.dataset.dm;clockAction(d<0?'reduce':'extend',Math.abs(d));};});
+document.getElementById('cSet').onclick=function(){var cur=CLOCK.endsAt?Math.max(0,Math.round((CLOCK.endsAt-(Date.now()+CLOCK.offset))/60000)):45;
+  var v=prompt('Minutes restantes (ex. 45) — 0 pour terminer le live maintenant :',cur);if(v===null)return;var m=parseInt(v,10);if(isNaN(m)||m<0)return;
+  if(m===0&&!confirm('Terminer le live maintenant ?'))return;clockAction(m===0?'end':'set',m);};
+if(!LIVE)setClockLocal(new Date(Date.now()+45*60000).toISOString());
+
 // ── Questions du public (Q&A) ──
 // Démo : liste locale. Direct : API /live/:event/questions + événement SSE 'questions_changed'.
 var QUESTIONS=[{id:1,text:'Tu feras une date en Guadeloupe cette année ?',user:'Lyna_973',likes:47,status:'open'},{id:2,text:'C\'est quoi le prochain single ?',user:'Kevin',likes:31,status:'open'},{id:3,text:'Un duo avec Nesly, c\'est possible ?',user:'Maya_Fan',likes:22,status:'open'},{id:4,text:'Tu répètes combien d\'heures par jour ?',user:'Tifany',likes:9,status:'open'}];
@@ -366,6 +392,8 @@ if(LIVE){
   es.addEventListener('gift',function(e){var d=JSON.parse(e.data);addMsg({w:d.user||'Un fan',t:(d.gift||'Cadeau')+' 🎁 · '+(d.points||0)+' pts',gift:1,c:0});for(var k=0;k<5;k++)setTimeout(heart,k*90);});
   es.addEventListener('ticket',function(e){var d=JSON.parse(e.data);addMsg({w:d.user||'Un fan',t:'a pris son ticket 🎟️',c:3});});
   es.addEventListener('questions_changed',loadQuestions);
+  es.addEventListener('clock',function(e){var d=JSON.parse(e.data);setClockLocal(d.ends_at,d.server_now);if(d.delta_min)toast((d.by||'Régie')+' : '+(d.delta_min>0?'+':'')+d.delta_min+' min');});
+  fetch(API+'/live/'+EV+'/clock',{headers:H}).then(function(r){return r.json();}).then(function(j){if(j.data)setClockLocal(j.data.ends_at,j.data.server_now);}).catch(function(){});
   es.onerror=function(){document.querySelector('.role').textContent='Console · DIRECT · reconnexion…';};
 }
 </script>

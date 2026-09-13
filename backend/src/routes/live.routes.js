@@ -153,4 +153,57 @@ router.post('/:eventId/questions/:id/unfeature', regieAction('open'));
 router.post('/:eventId/questions/:id/answered', regieAction('answered'));
 router.post('/:eventId/questions/:id/hide', regieAction('hidden'));
 
+// ── Compte à rebours de fin de live ─────────────────────────────────────────
+// events.live_ends_at (ISO UTC) = fin réelle du live, initialisée depuis la fin
+// planifiée (end_date_time) si vide. La régie peut fixer / prolonger / réduire /
+// terminer ; chaque changement est poussé en SSE ('clock') à tous les écrans.
+function parseDbDate(s) {
+  if (!s) return null;
+  const t = /[zZ]|[+-]\d\d:\d\d$/.test(s) ? Date.parse(s) : Date.parse(String(s).replace(' ', 'T') + 'Z');
+  return Number.isNaN(t) ? null : t;
+}
+function clockState(eventId) {
+  const ev = db.prepare('SELECT id, live_ends_at, end_date_time, tz_offset_minutes FROM events WHERE id = ?').get(eventId);
+  if (!ev) return null;
+  let ends = parseDbDate(ev.live_ends_at);
+  if (ends == null && ev.end_date_time) {
+    const t = parseDbDate(ev.end_date_time);
+    if (t != null) ends = t - (Number(ev.tz_offset_minutes) || 0) * 60000;
+  }
+  return {
+    ends_at: ends != null ? new Date(ends).toISOString() : null,
+    server_now: new Date().toISOString(),
+    remaining_s: ends != null ? Math.round((ends - Date.now()) / 1000) : null,
+  };
+}
+// GET /api/live/:eventId/clock  (clé API ou JWT)
+router.get('/:eventId/clock', optionalAuth, (req, res) => {
+  if (!req.user && !keyOk(req)) return res.status(401).json({ status: 'error', message: 'Connexion ou clé API requise.' });
+  const s = clockState(req.params.eventId);
+  if (!s) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  return res.json({ status: 'success', data: s });
+});
+// POST /api/live/:eventId/clock { action: set|extend|reduce|end, minutes, by }  (clé API)
+router.post('/:eventId/clock', (req, res) => {
+  if (!keyOk(req)) return res.status(401).json({ status: 'error', message: 'Clé API requise.' });
+  const b = req.body || {};
+  const action = String(b.action || '');
+  const minutes = Math.max(0, Math.min(600, Number(b.minutes) || 0));
+  const by = String(b.by || 'Régie').slice(0, 60);
+  const s = clockState(req.params.eventId);
+  if (!s) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  const now = Date.now();
+  const cur = s.ends_at ? Date.parse(s.ends_at) : null;
+  let next, delta = 0;
+  if (action === 'set' && minutes) next = now + minutes * 60000;
+  else if (action === 'extend' && minutes) { next = (cur != null && cur > now ? cur : now) + minutes * 60000; delta = minutes; }
+  else if (action === 'reduce' && minutes) { next = Math.max(now, (cur != null ? cur : now) - minutes * 60000); delta = -minutes; }
+  else if (action === 'end') next = now;
+  else return res.status(422).json({ status: 'error', message: 'action = set | extend | reduce | end (+ minutes).' });
+  db.prepare('UPDATE events SET live_ends_at = ? WHERE id = ?').run(new Date(next).toISOString(), req.params.eventId);
+  const out = { ...clockState(req.params.eventId), delta_min: delta, by };
+  bus.emit(req.params.eventId, { type: 'clock', ...out });
+  return res.json({ status: 'success', data: out });
+});
+
 module.exports = router;

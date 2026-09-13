@@ -628,6 +628,7 @@ function init() {
     // replay_expires_at au moment où l'enregistrement Mux devient disponible.
     "ALTER TABLE events ADD COLUMN replay_enabled INTEGER DEFAULT 1",
     "ALTER TABLE events ADD COLUMN replay_duration_days INTEGER DEFAULT 60",
+    "ALTER TABLE events ADD COLUMN live_ends_at TEXT",                   // fin RÉELLE du live (ISO UTC), pilotée par la régie (chrono)
     // ─── Géo-blocage (par secteur) ───
     // geo_mode      : 'off' (défaut) | 'block' (bloque les pays listés) | 'only'
     // geo_countries : codes pays ISO-2 séparés par virgule (ex 'FR,GF')
