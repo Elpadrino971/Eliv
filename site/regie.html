@@ -1,3 +1,5 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
 <title>Console Régie VybzzZ</title>
 <meta name="description" content="Console opérateur de régie VybzzZ : mur de fans avec contrôles (micro, retirer), file « lever la main » (donner / refuser le micro), chat, top fans, missions.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -143,6 +145,40 @@ svg{display:block}
 @keyframes rise{0%{transform:translateY(0) scale(.6);opacity:0}12%{opacity:1}100%{transform:translateY(-46vh) translateX(var(--dx,0)) scale(1.1);opacity:0}}
 @media(max-width:1100px){.side{width:300px}.hearts{right:306px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+/* ── MOBILE (téléphone en régie) ─────────────────────────────────────────── */
+.wallToggle{display:none}
+@media(max-width:820px){
+  body{overflow:hidden}
+  .stage{flex-direction:column;height:100dvh}
+  .left{flex:none}
+  .top{padding:8px 10px;gap:8px}
+  .logo b{font-size:18px}.logo span{font-size:7px}
+  .gift-banner,.role,.icon-btn{display:none}
+  .pill{padding:6px 10px;font-size:12px;margin-left:auto}
+  .wallToggle{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);font-size:11px;font-weight:700;color:var(--muted)}
+  .grid-wrap{padding:6px 10px 8px}
+  .grid-wrap.collapsed{display:none}
+  .grid{height:auto;grid-template-rows:none;gap:6px}
+  .tile{aspect-ratio:1/1;border-radius:10px}
+  .tile__mono{font-size:26px}
+  .name{left:4px;bottom:4px;padding:3px 6px 3px 4px;font-size:10px;gap:3px;max-width:calc(100% - 66px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .name .m{width:11px;height:11px;flex:none}
+  .badge{top:4px;right:4px;padding:2px 6px;font-size:7.5px;gap:3px;max-width:calc(100% - 8px)}.badge span{font-size:9px}
+  .ops{opacity:1;transform:none;right:4px;bottom:4px;gap:3px}
+  .op{width:26px;height:26px}.op .icon{width:13px;height:13px}
+  .controls{padding:6px 8px;gap:2px;justify-content:flex-start;overflow-x:auto;scrollbar-width:none}
+  .controls::-webkit-scrollbar{display:none}
+  .status{position:static;font-size:10px;gap:6px;margin-right:6px;flex:none;white-space:nowrap}
+  .ctrl{min-width:0;padding:6px 8px;flex:none}.ctrl small{display:none}.ctrl .badge-n{right:2px}
+  .clockbox{padding:4px 6px;margin-right:2px;flex:none}.clockbox b{min-width:44px;font-size:14px}.clockbox button{padding:4px 6px;font-size:11px}
+  .leave{position:static;padding:7px 10px;font-size:12px;flex:none;margin-left:auto}
+  .side{width:100%;border-left:0;border-top:1px solid var(--line);flex:1;min-height:0}
+  .tabs{padding:4px 6px}.tab{font-size:11px;padding:9px 2px}.tab .q{margin-left:3px}
+  .chat{padding:10px 12px;gap:10px}.msg .txt{font-size:13px}
+  .raise{margin:0 10px 8px;padding:9px 10px;gap:8px}.raise .see{padding:7px 10px;font-size:12px}
+  .composer{padding:8px 10px}.composer input{padding:10px 14px}
+  .hearts,.toast{display:none}
+}
 </style>
 
 <div class="stage">
@@ -150,6 +186,7 @@ svg{display:block}
     <header class="top">
       <div class="logo"><b>VybzzZ</b><span>LIVE BEGINS HERE</span></div>
       <span class="role">Console · régie</span>
+      <button class="wallToggle" id="wallToggle" type="button">Mur ▴</button>
       <div class="gift-banner"><span class="rose">🌹</span><div><b>Rose ×20</b><small>envoyé par Lyna_973</small></div></div>
       <div class="top-right">
         <div class="pill"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px"><use href="#i-users"/></svg><b>245</b><span class="dot"></span><span class="n">en direct</span></div>
@@ -316,6 +353,7 @@ var me=document.getElementById('missions');MISS.forEach(function(m){var d=docume
   d.innerHTML='<div class="row"><span class="emo">'+m[0]+'</span><b>'+m[1]+'</b><span class="rw">'+m[2]+'</span></div><div class="bar"><i style="width:'+m[3]+'%"></i></div>';me.appendChild(d);});
 
 // ── divers ──
+document.getElementById('wallToggle').onclick=function(){var w=document.querySelector('.grid-wrap');w.classList.toggle('collapsed');this.textContent=w.classList.contains('collapsed')?'Mur ▾':'Mur ▴';};
 document.getElementById('goalBtn').onclick=function(){toast('🌹 Objectif « 100 roses = un rappel » affiché sur le Stage');};
 document.getElementById('testGift').onclick=function(){
   if(LIVE){fetch(API+'/live/'+encodeURIComponent(Q.get('event'))+'/emit',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':Q.get('key')},body:JSON.stringify({type:'gift',gift:'Rose',user:'Prod VybzzZ (test)',points:100})})
@@ -460,3 +498,5 @@ if(LIVE){
   startZego('regie',toast);
 }
 </script>
+
+</body></html>

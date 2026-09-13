@@ -1,3 +1,5 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
 <title>Stage VybzzZ</title>
 <meta name="description" content="Écran projeté sur scène (v2) : mur de fans, cadeaux en héros, classement permanent et objectif collectif — sans aucun bouton, en mode calme pour ne pas perturber l'artiste.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -139,6 +141,21 @@ svg{display:block}
 .hint{position:fixed;left:26px;bottom:14px;font-size:11px;color:var(--muted-2);letter-spacing:.06em}
 @media(max-width:1100px){.stage{grid-template-columns:1fr 340px}.hearts{right:360px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* ── petits écrans : le rail passe sous le mur ── */
+@media(max-width:900px){
+  body{overflow:auto}
+  .stage{grid-template-columns:1fr;grid-template-rows:auto auto auto;height:auto;min-height:100dvh}
+  .top{padding:10px 14px}.logo b{font-size:20px}.livepill{font-size:14px;padding:8px 12px}.livepill b{font-size:16px}
+  .clock{padding:8px 12px}.clock b{font-size:16px}.clock__l{font-size:12px}
+  .wall{padding:10px 12px}.grid{height:auto;grid-template-rows:none;gap:8px}.tile{aspect-ratio:1/1;border-radius:12px}
+  .tile__mono{font-size:34px}.name{font-size:12px;padding:5px 9px 5px 7px;left:8px;bottom:8px}.name .m{width:12px;height:12px}
+  .badge{padding:4px 8px;font-size:8.5px;top:8px;right:8px}
+  .rail{border-left:0;border-top:1px solid var(--line);padding:12px 14px;gap:12px;overflow:visible}
+  .qa{left:12px;right:12px;bottom:12px;padding:12px 14px;gap:12px}.qa__t{font-size:17px}.qa__likes b{font-size:24px}
+  .hero__card{padding:22px 26px;border-radius:22px}.hero__gift{font-size:56px}.hero__what{font-size:24px}.hero__name{font-size:32px}.hero__from{font-size:14px}
+  .hero.with-anim .hero__card{transform:translateY(24vh) scale(.8)}
+  .hearts{right:20px;width:60px}
+}
 </style>
 
 <div class="stage">
@@ -387,3 +404,5 @@ if(LIVE){
   startZego('stage',function(m){addNote('VybzzZ',m);});
 }
 </script>
+
+</body></html>
