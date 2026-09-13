@@ -24,7 +24,7 @@ subprojects {
 // l'écart ("Inconsistent JVM-target compatibility"). On aligne tout le monde sur 17,
 // comme :app.
 subprojects {
-    afterEvaluate {
+    val alignJvm: Project.() -> Unit = {
         extensions.findByType<com.android.build.gradle.LibraryExtension>()?.compileOptions {
             sourceCompatibility = JavaVersion.VERSION_17
             targetCompatibility = JavaVersion.VERSION_17
@@ -33,6 +33,9 @@ subprojects {
             compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
+    // :app est déjà évalué à ce stade (evaluationDependsOn ci-dessus) : on applique
+    // directement ; pour les plugins, on attend la fin de leur évaluation.
+    if (state.executed) alignJvm() else afterEvaluate { alignJvm() }
 }
 
 tasks.register<Delete>("clean") {
