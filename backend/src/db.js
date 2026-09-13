@@ -318,6 +318,21 @@ function init() {
     );
   `);
 
+  // Chat live CENTRALISÉ (source de vérité chez nous, plus seulement chez Zego) :
+  // l'app et la régie postent via /api/live/:eventId/messages, chaque message est
+  // conservé ici puis relayé en SSE aux écrans Stage / Régie.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS live_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_id INTEGER,
+      user_id INTEGER,
+      name TEXT,
+      text TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_live_messages_event ON live_messages(event_id, id);
+  `);
+
   // Registre des revenus : pour CHAQUE vente (billet / cadeau), on trace le
   // brut, la part artiste et la part plateforme + le taux appliqué. Source de
   // vérité pour la compta (part plateforme = revenu réel du fondateur, pas le
