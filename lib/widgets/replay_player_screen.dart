@@ -294,7 +294,7 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
     final name = widget.event?.name ?? widget.title ?? 'un concert';
     final artist = widget.event?.artist?.artistName ?? widget.event?.artist?.fullName ?? '';
     myShare(
-      message: 'Regarde "$name"${artist.isNotEmpty ? ' de $artist' : ''} sur VYBZZZ 🎤🔥\nhttps://vybzzz.online',
+      message: 'Regarde "$name"${artist.isNotEmpty ? ' de $artist' : ''} sur VybzzZ 🎤🔥\nhttps://vybzzz.online',
     );
   }
 

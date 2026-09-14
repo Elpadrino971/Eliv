@@ -341,7 +341,7 @@ const Map<String, String> _en = {
   'rev_avg_session': 'Avg Session',
   // Idea Box
   'idea_box_title': 'Idea Box',
-  'idea_box_subtitle': 'Help us improve VYBZZZ',
+  'idea_box_subtitle': 'Help us improve VybzzZ',
   'idea_box_desc': 'An idea, a suggestion, something you\'re missing? Tell us — we read everything.',
   'idea_box_category': 'Category',
   'idea_box_your_idea': 'Your idea',
@@ -675,7 +675,7 @@ const Map<String, String> _fr = {
   'rev_avg_session': 'Session moyenne',
   // Boîte à idées
   'idea_box_title': 'Boîte à idées',
-  'idea_box_subtitle': 'Aide-nous à améliorer VYBZZZ',
+  'idea_box_subtitle': 'Aide-nous à améliorer VybzzZ',
   'idea_box_desc': 'Une idée, une suggestion, un truc qui te manque ? Dis-le nous — on lit tout.',
   'idea_box_category': 'Catégorie',
   'idea_box_your_idea': 'Ton idée',

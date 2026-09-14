@@ -1038,7 +1038,7 @@ class _ClipsFeedState extends State<_ClipsFeed> {
           child: Row(
             children: [
               const Text(
-                'VYBZZZ',
+                'VybzzZ',
                 style: TextStyle(
                   color: whiteColor,
                   fontSize: 16,

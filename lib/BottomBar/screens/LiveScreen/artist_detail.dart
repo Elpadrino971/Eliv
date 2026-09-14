@@ -61,7 +61,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     final name = widget.artist?.artistName ?? widget.artist?.fullName ?? 'cet artiste';
     myShare(
       message:
-          'Découvre $name sur VYBZZZ 🎤🔥\nLives, clips & concerts exclusifs.\nhttps://vybzzz.online',
+          'Découvre $name sur VybzzZ 🎤🔥\nLives, clips & concerts exclusifs.\nhttps://vybzzz.online',
     );
   }
 

@@ -191,10 +191,10 @@ class _FutureScreenState extends State<FutureScreen> {
                               final time = AppDate.time(e.startDateTime);
                               await myShare(
                                 message: '🎟️ Tu es invité(e) au concert live !\n\n'
-                                    '🎤 ${e.name ?? 'Concert VYBZZZ'}'
+                                    '🎤 ${e.name ?? 'Concert VybzzZ'}'
                                     '${artist.isNotEmpty ? '\n★ $artist' : ''}'
                                     '\n📅 $date · $time'
-                                    '\n\nRejoins-moi en direct sur VYBZZZ 🔥\n${APIs.mainIP}',
+                                    '\n\nRejoins-moi en direct sur VybzzZ 🔥\n${APIs.mainIP}',
                               );
                             },
                             child: const Icon(

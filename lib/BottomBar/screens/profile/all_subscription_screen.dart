@@ -448,7 +448,7 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
               letterSpacing: 3,
             ),
             children: [
-              TextSpan(text: 'VYBZZZ', style: TextStyle(color: goldPrimary)),
+              TextSpan(text: 'VybzzZ', style: TextStyle(color: goldPrimary)),
               TextSpan(text: '  LIVE', style: TextStyle(color: ivory)),
             ],
           ),
