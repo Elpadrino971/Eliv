@@ -93,7 +93,7 @@ class _ProfileState extends State<Profile> {
               'title': 'prof_switch_user'.tr,
               'subTitle': 'prof_switch_user_sub'.tr,
               'onTap': () {
-                Get.offAll(() => MyBottomBar());
+                Get.offAll(() => MyBottomBar(index: 2));
               },
             }
           : {
@@ -214,7 +214,7 @@ class _ProfileState extends State<Profile> {
                   GestureDetector(
                     onTap: () {
                       if (widget.fromArtist) {
-                        Get.offAll(() => MyBottomBar());
+                        Get.offAll(() => MyBottomBar(index: 2));
                       } else {
                         Get.offAll(() => ArtistBottomBar());
                       }

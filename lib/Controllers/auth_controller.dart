@@ -326,7 +326,7 @@ class AuthController extends GetxController {
                           Get.offAll(() => ArtistBottomBar());
                         },
                       )
-                    : Get.offAll(() => MyBottomBar());
+                    : Get.offAll(() => MyBottomBar(index: 2));
               },
             );
           } else {
