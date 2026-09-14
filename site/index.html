@@ -4,7 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VybzzZ — La scène est à toi</title>
-<meta name="description" content="VybzzZ — diffuse tes concerts en live. Accès privé, scène ouverte.">
+<meta name="description" content="Un monde de concerts en direct. Gratuit pour les artistes, qui gardent 50 % de leurs revenus. Lives, clips, billets et cadeaux, où que tu sois.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+<meta name="theme-color" content="#0A1226">
+<meta property="og:site_name" content="VybzzZ">
+<meta property="og:type" content="website">
+<meta property="og:title" content="VybzzZ — La scène est à toi">
+<meta property="og:description" content="Un monde de concerts en direct. Gratuit pour les artistes, qui gardent 50 % de leurs revenus. Lives, clips, billets et cadeaux, où que tu sois.">
+<meta property="og:url" content="https://vybzzz.online/">
+<meta property="og:image" content="https://vybzzz.online/assets/brand/og.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:locale" content="fr_FR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="VybzzZ — La scène est à toi">
+<meta name="twitter:description" content="Un monde de concerts en direct. Gratuit pour les artistes, qui gardent 50 % de leurs revenus. Lives, clips, billets et cadeaux, où que tu sois.">
+<meta name="twitter:image" content="https://vybzzz.online/assets/brand/og.jpg">
+<link rel="canonical" href="https://vybzzz.online/">
+<script>if(location.hostname==='www.vybzzz.online'){location.replace('https://vybzzz.online'+location.pathname+location.search+location.hash)}</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -342,7 +361,7 @@ a{color:inherit;text-decoration:none}
   <span class="pillnav__brand">Vybzz<span class="dot">Z</span></span>
   <div class="pillnav__links">
     <a href="feed.html">Feed</a><a href="store.html">Boutique</a><a href="#roles">Le deal</a>
-    <a href="dashboard.html">Studio Pro</a><a href="faq.html">FAQ</a>
+    <a href="#academy">Maîtrise la scène</a><a href="faq.html">FAQ</a>
   </div>
   <a href="artist.html" class="pillnav__cta">Postuler</a>
 </nav>
@@ -351,7 +370,7 @@ a{color:inherit;text-decoration:none}
 <!-- HERO SCROLLYTELLING -->
 <section class="scrollhero" id="scrollhero">
   <div class="scrollhero__stage">
-    <!-- 3 vidéos (placeholder Mux concert — À REMPLACER par tes 3 vidéos). Poster = image de secours tant que la vidéo n'est pas chargée. -->
+    <!-- 3 vidéos du hero (Mux). Poster = image de secours tant que la vidéo n'est pas chargée. -->
     <div class="chapter-video" data-v="0" style="opacity:1;background:#0A1226 url('https://image.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g/thumbnail.jpg?time=6') center/cover"><video data-src="https://stream.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g.m3u8" poster="https://image.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g/thumbnail.jpg?time=6" muted loop playsinline preload="auto"></video></div>
     <div class="chapter-video" data-v="1" style="background:#0A1226 url('https://image.mux.com/S5gwJ00UP6GtKeYp11SeGabksA6JdpOQQkdCEkkLOBCo/thumbnail.jpg?time=4') center/cover"><video data-src="https://stream.mux.com/S5gwJ00UP6GtKeYp11SeGabksA6JdpOQQkdCEkkLOBCo.m3u8" poster="https://image.mux.com/S5gwJ00UP6GtKeYp11SeGabksA6JdpOQQkdCEkkLOBCo/thumbnail.jpg?time=4" muted loop playsinline preload="auto"></video></div>
     <div class="chapter-video" data-v="2" style="background:#0A1226 url('https://image.mux.com/fy01PolEvTfQkcE1NpRSYfZ3BJJTuYRpei9FDebfdaXw/thumbnail.jpg?time=5') center/cover"><video data-src="https://stream.mux.com/fy01PolEvTfQkcE1NpRSYfZ3BJJTuYRpei9FDebfdaXw.m3u8" poster="https://image.mux.com/fy01PolEvTfQkcE1NpRSYfZ3BJJTuYRpei9FDebfdaXw/thumbnail.jpg?time=5" muted loop playsinline preload="auto"></video></div>
@@ -391,11 +410,11 @@ a{color:inherit;text-decoration:none}
 
 <a href="artist.html" class="corner-cta">Postuler</a>
 
-<!-- C'EST QUOI VYBZZZ : 2 vidéos explicatives (son au clic) -->
+<!-- C'est quoi VybzzZ : 2 vidéos explicatives (son au clic) -->
 <section class="section" id="cest-quoi">
   <div class="section__head reveal">
     <span class="eyebrow eyebrow--line">En quelques minutes</span>
-    <h2>C'EST QUOI <em>VYBZZZ ?</em></h2>
+    <h2>C'EST QUOI <em>VybzzZ ?</em></h2>
     <p>La scène live, expliquée. Clique pour lancer — <span style="color:var(--gold)">le son s'active</span>.</p>
   </div>
   <div class="explainer">
@@ -437,7 +456,7 @@ a{color:inherit;text-decoration:none}
       <div class="show__txt" style="max-width:760px;margin:0 auto clamp(26px,4vh,44px);text-align:center">
         <span class="eyebrow eyebrow--line">01 — Le Live</span>
         <h3>Une scène qui <em>défile.</em></h3>
-        <p style="margin:0 auto;max-width:56ch">Fais défiler les lives du moment. Chaque vignette est un concert en direct — touche, entre, vibre. <span style="color:var(--gold)">(vidéos Mux à remplacer par tes lives)</span></p>
+        <p style="margin:0 auto;max-width:56ch">Fais défiler les lives du moment. Chaque vignette est un concert en direct — touche, entre, vibre.</p>
       </div>
       <div class="strip-wrap">
         <div class="strip">
@@ -495,27 +514,27 @@ a{color:inherit;text-decoration:none}
 </section>
 
 <!-- TESTIMONIALS -->
-<section class="section testi" id="temoignages">
+<section class="section testi" id="fondateurs">
   <div class="section__head reveal">
-    <span class="eyebrow eyebrow--line">Ils y étaient</span>
-    <h2>CEUX QUI <em>SAVENT.</em></h2>
-    <p>Des artistes et des fans qui ont vécu la scène VybzzZ, en direct.</p>
+    <span class="eyebrow eyebrow--line">Membres fondateurs</span>
+    <h2>LES PREMIERS SUR <em>SCÈNE.</em></h2>
+    <p>VybzzZ ouvre avec une première vague d'artistes fondateurs. Pas de témoignages inventés : les premiers lives s'écrivent maintenant, et ils s'écrivent avec toi.</p>
   </div>
   <div class="testi__grid">
     <figure class="quote reveal">
-      <span class="quote__mark">&ldquo;</span>
-      <p>Mon premier live VybzzZ a rassemblé plus de monde que n'importe quelle salle. Et j'ai été payé le soir même.</p>
-      <figcaption class="quote__who"><span class="quote__av">N</span><div><b>NOVA</b><span>Artiste Afrobeats</span></div></figcaption>
+      <span class="quote__mark">01</span>
+      <p>Une place réservée dans la première vague. Ton profil est examiné par l'équipe, et tu es accompagné jusqu'à ton premier live.</p>
+      <figcaption class="quote__who"><span class="quote__av">★</span><div><b>Places limitées</b><span>Sélection sur candidature</span></div></figcaption>
     </figure>
     <figure class="quote reveal">
-      <span class="quote__mark">&ldquo;</span>
-      <p>J'étais au premier rang d'un concert à l'autre bout du monde, depuis mon canapé. L'énergie passe l'écran.</p>
-      <figcaption class="quote__who"><span class="quote__av">L</span><div><b>Léa M.</b><span>Fan · Paris</span></div></figcaption>
+      <span class="quote__mark">02</span>
+      <p>Le badge Fondateur reste sur ton profil à vie. Il marque ceux qui étaient là avant tout le monde.</p>
+      <figcaption class="quote__who"><span class="quote__av">F</span><div><b>Badge Fondateur</b><span>Visible sur ton profil, à vie</span></div></figcaption>
     </figure>
     <figure class="quote reveal">
-      <span class="quote__mark">&ldquo;</span>
-      <p>Gratuit à l'entrée, 50 % pour moi, tout dans une seule appli. Je ne monte plus sur scène autrement.</p>
-      <figcaption class="quote__who"><span class="quote__av">K</span><div><b>KODA</b><span>Producteur · Live</span></div></figcaption>
+      <span class="quote__mark">03</span>
+      <p>Une régie et une équipe joignables en direct pendant tes premiers concerts. Tu n'es pas seul sur scène.</p>
+      <figcaption class="quote__who"><span class="quote__av">R</span><div><b>Accompagnement direct</b><span>Régie et support pendant le live</span></div></figcaption>
     </figure>
   </div>
 </section>
@@ -637,9 +656,9 @@ a{color:inherit;text-decoration:none}
       <h4>Vybzz<span class="dot">Z</span></h4>
       <p>Un monde de concerts en direct. La scène est à toi — diffuse, soutiens, vibre, où que tu sois.</p>
     </div>
-    <div class="foot__col"><h5>Explorer</h5><a href="feed.html">Feed & Clips</a><a href="store.html">Boutique</a><a href="#roles">Le deal</a><a href="dashboard.html">Studio Pro</a></div>
-    <div class="foot__col"><h5>Artistes</h5><a href="artist.html">Postuler</a><a href="#roles">Rôles & revenus</a><a href="#academy">Maîtrise la scène</a><a href="#faq">FAQ</a></div>
-    <div class="foot__col"><h5>Contact</h5><a href="#reserver">Réserver un moment</a><a href="mailto:hello@vybzzz.online">hello@vybzzz.online</a><a href="index.html">Mentions légales</a></div>
+    <div class="foot__col"><h5>Explorer</h5><a href="feed.html">Feed & Clips</a><a href="store.html">Boutique</a><a href="#roles">Le deal</a><a href="faq.html">FAQ</a></div>
+    <div class="foot__col"><h5>Artistes</h5><a href="artist.html">Postuler</a><a href="#roles">Rôles & revenus</a><a href="#academy">Maîtrise la scène</a><a href="#fondateurs">Membres fondateurs</a></div>
+    <div class="foot__col"><h5>Contact & légal</h5><a href="#reserver">Réserver un moment</a><a href="mailto:hello@vybzzz.online">hello@vybzzz.online</a><a href="mentions-legales.html">Mentions légales</a><a href="confidentialite.html">Confidentialité</a><a href="cgu.html">CGU</a></div>
   </div>
   <div class="foot__bar">
     <span>© 2026 VybzzZ. Tous droits réservés.</span>

@@ -110,6 +110,7 @@ const NAV = [
     { id: 'leads', label: 'Contacts / Leads', ic: '📞' },
     { id: 'faqs', label: 'FAQ', ic: '❓' },
     { id: 'cms', label: 'CMS', ic: '📄' },
+    { id: 'legal', label: 'Textes légaux', ic: '⚖️' },
   ] },
   { group: 'Pilotage interne', items: [
     { id: 'vibe', label: 'Réunions & CRM', ic: '🎯' },
@@ -1405,6 +1406,38 @@ async function pageProfile() {
   };
 }
 
+
+// ─── Textes légaux (CGU, confidentialité, à propos) affichés dans l'app ───
+async function pageLegal() {
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  const { data } = await api('GET', '/legal-settings');
+  const f = 'width:100%;background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:8px;padding:11px;margin:6px 0 16px;font:inherit';
+  const ta = (id, label, v, rows) => `<label style="color:var(--muted);font-size:13px">${label}</label><textarea id="${id}" rows="${rows}" style="${f}">${esc(v || '')}</textarea>`;
+  view().innerHTML = `<h1 class="page-title">Textes légaux</h1>
+    <div class="tcard" style="max-width:760px">
+      <div class="em" style="margin-bottom:14px">Affichés dans l'app (Profil → À propos, Réglages, inscription). Texte brut, sauts de ligne conservés.
+      Les versions complètes sont sur le site : <a href="https://vybzzz.online/confidentialite.html" target="_blank">confidentialité</a> · <a href="https://vybzzz.online/cgu.html" target="_blank">CGU</a>.</div>
+      ${ta('lg-privacy', 'Politique de confidentialité', data.privacy_policy, 16)}
+      ${ta('lg-terms', "Conditions générales d'utilisation", data.terms_and_conditions, 16)}
+      ${ta('lg-about', 'À propos', data.about_us, 6)}
+      <label style="color:var(--muted);font-size:13px">E-mail de support</label>
+      <input id="lg-email" type="email" value="${esc(data.support_email || '')}" style="${f}">
+      <button class="btn gold" id="lg-save">Enregistrer</button>
+      <div class="em" style="margin-top:10px">Pris en compte immédiatement dans l'app, sans nouvelle version store.</div>
+    </div>`;
+  view().querySelector('#lg-save').onclick = async () => {
+    try {
+      await api('PUT', '/legal-settings', {
+        privacy_policy: view().querySelector('#lg-privacy').value,
+        terms_and_conditions: view().querySelector('#lg-terms').value,
+        about_us: view().querySelector('#lg-about').value,
+        support_email: view().querySelector('#lg-email').value,
+      });
+      toast('Textes légaux enregistrés');
+    } catch (e) { toast(e.message); }
+  };
+}
+
 // ─── Page de lancement (splash) : fond d'écran + animation, lus par l'app au
 // démarrage (GET /api/splash-settings, public) sans nouvelle version store.
 async function pageSplash() {
@@ -2144,7 +2177,7 @@ const ROUTES = {
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
-  splash: pageSplash, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
+  splash: pageSplash, legal: pageLegal, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
 };
 
 window.addEventListener('hashchange', route);

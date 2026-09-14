@@ -1,5 +1,5 @@
 /* ============================================================
-   VYBZZZ — Traductions (i18n)
+   VybzzZ — Traductions (i18n)
    Clés partagées. window.I18N[lang][key].
    Langues : fr, en (puis es, it, de, pt, zh, ko, ja, ar, hi, ru).
    Les clés *_html contiennent du HTML volontaire (à conserver).
@@ -1349,4 +1349,247 @@ window.I18N.ru = {
   Object.assign(window.I18N.fr, FR);
   Object.assign(window.I18N.en, EN);
   Object.keys(window.I18N).forEach(function (l) { if (l !== 'fr' && l !== 'en' && window.I18N[l]) Object.assign(window.I18N[l], EN); });
+})();
+
+/* ============================================================
+   Corrections de cohérence (modèle unique : entrée gratuite, 50 %, euros ;
+   plus de "Founder 79 $", plus de "VyBzzZ Pay", marque écrite VybzzZ).
+   Ce bloc est appliqué en dernier et prime sur tout ce qui précède.
+   ============================================================ */
+(function () {
+  var FIX = {
+    fr: {
+      nav_academy: "Maîtrise la scène", foot_roles: "Rôles & revenus", foot_founders: "Membres fondateurs", foot_book: "Réserver un moment",
+      foot_legal: "Mentions légales", foot_privacy: "Confidentialité", foot_terms: "CGU", store_in_app: "Achat dans l'appli VybzzZ",
+      foot_tagline: "Un monde de concerts en direct. La scène est à toi.", foot_rights: "© 2026 VybzzZ. Tous droits réservés.",
+      foot_secure: "Fait pour ceux qui montent sur scène.",
+      art_eyebrow: "Deviens artiste", art_title_html: 'Monte sur <span class="grad">scène</span>.',
+      art_p_html: "L'entrée est gratuite : pas d'abonnement, pas d'avance. Tu gardes <strong>50 % de tes revenus</strong> (billets, cadeaux, pourboires). Retraits via Stripe ou compte bancaire.",
+      art_accept_html: 'J\'ai lu et j\'accepte le <a href="cgu.html" target="_blank">Contrat artiste VybzzZ</a> (commission, reversements, conditions de diffusion).',
+      cta_reserve: "Créer mon compte artiste",
+      free_word: "Gratuit", free_sub: "Aucun abonnement · tu gardes <b>50 %</b>",
+      deal2_p: "Sur chaque montant payé par un fan : frais store ~15 %, tu gardes 50 %, VybzzZ 35 %. Un billet à 10 € te rapporte 5 €.",
+      faq_q1: "C'est quoi VybzzZ ?", faq_a1: "VybzzZ est une plateforme de concerts en direct : tu regardes tes artistes en live, tu envoies des cadeaux, tu achètes des billets et tu revis les shows en replay. Les artistes diffusent depuis l'appli et sont rémunérés en direct.",
+      faq_a4: "Sur la page d'un concert payant, touche « Prendre ma place » : l'achat se fait dans l'appli via l'App Store ou Google Play, et ton billet apparaît dans « Mes billets ».",
+      faq_a5: "Les achats (Arena Points, billets) passent par l'App Store ou Google Play, avec les moyens de paiement de ton compte. Les artistes retirent leurs gains via Stripe ou un compte bancaire.",
+      faq_q6: "Comment devenir artiste sur VybzzZ ?", faq_a6: "Va sur « Postuler », remplis le formulaire (nom de scène, genre, expérience) et signe le contrat artiste. L'équipe examine ta candidature et te répond sous 48 h. L'entrée est gratuite : tu gardes 50 % de tes revenus.",
+      faq_a7: "Depuis l'appli : Profil → Revenus → « Retirer ». Choisis ta méthode (Stripe ou compte bancaire), saisis le montant en euros et confirme. Délai moyen : 24 h."
+    },
+    en: {
+      nav_academy: "Master the stage", foot_roles: "Roles & earnings", foot_founders: "Founding members", foot_book: "Book a moment",
+      foot_legal: "Legal notice", foot_privacy: "Privacy", foot_terms: "Terms", store_in_app: "Purchase in the VybzzZ app",
+      foot_tagline: "A world of live concerts. The stage is yours.", foot_rights: "© 2026 VybzzZ. All rights reserved.",
+      foot_secure: "Made for those who take the stage.",
+      art_eyebrow: "Become an artist", art_title_html: 'Take the <span class="grad">stage</span>.',
+      art_p_html: "Joining is free: no subscription, no upfront cost. You keep <strong>50% of your revenue</strong> (tickets, gifts, tips). Payouts via Stripe or bank account.",
+      art_accept_html: 'I have read and accept the <a href="cgu.html" target="_blank">VybzzZ artist agreement</a> (commission, payouts, broadcasting terms).',
+      cta_reserve: "Create my artist account",
+      free_word: "Free", free_sub: "No subscription · you keep <b>50%</b>",
+      deal1_h: "🆓 Free to join", deal1_p: "No subscription, no credit card, no commitment to broadcast.",
+      deal2_h: "💰 You keep 50%", deal2_p: "On every amount a fan pays: store fees ~15%, you keep 50%, VybzzZ 35%. A €10 ticket earns you €5.",
+      deal3_h: "🎥 90 min of live included", deal3_p: "Every month. A live that earns pays for itself — your successful concerts are always free.",
+      deal4_h: "🏦 Simple payouts", deal4_p: "Via Stripe or bank account, 24h on average.",
+      faq_q1: "What is VybzzZ?", faq_a1: "VybzzZ is a live concert platform: watch your artists live, send gifts, buy tickets and rewatch shows as replays. Artists stream from the app and get paid live.",
+      faq_a4: "On a paid concert page, tap “Get my ticket”: the purchase goes through the App Store or Google Play inside the app, and your ticket appears in “My tickets”.",
+      faq_a5: "Purchases (Arena Points, tickets) go through the App Store or Google Play with your account's payment methods. Artists withdraw their earnings via Stripe or a bank account.",
+      faq_q6: "How do I become an artist on VybzzZ?", faq_a6: "Go to “Apply”, fill in the form (stage name, genre, experience) and sign the artist agreement. The team reviews your application and replies within 48h. Joining is free: you keep 50% of your revenue.",
+      faq_a7: "From the app: Profile → Earnings → “Withdraw”. Pick your method (Stripe or bank account), enter the amount in euros and confirm. Average delay: 24h."
+    },
+    es: {
+      nav_academy: "Domina el escenario", foot_roles: "Roles e ingresos", foot_founders: "Miembros fundadores", foot_book: "Reservar un momento",
+      foot_legal: "Aviso legal", foot_privacy: "Privacidad", foot_terms: "Términos", store_in_app: "Compra en la app VybzzZ",
+      foot_tagline: "Un mundo de conciertos en directo. El escenario es tuyo.", foot_rights: "© 2026 VybzzZ. Todos los derechos reservados.",
+      foot_secure: "Hecho para quienes suben al escenario.",
+      art_eyebrow: "Conviértete en artista", art_title_html: 'Sube al <span class="grad">escenario</span>.',
+      art_p_html: "La entrada es gratuita: sin suscripción, sin adelanto. Te quedas con el <strong>50% de tus ingresos</strong> (entradas, regalos, propinas). Retiros por Stripe o cuenta bancaria.",
+      art_accept_html: 'He leído y acepto el <a href="cgu.html" target="_blank">contrato de artista VybzzZ</a> (comisión, pagos, condiciones de emisión).',
+      cta_reserve: "Crear mi cuenta de artista", free_word: "Gratis", free_sub: "Sin suscripción · te quedas con el <b>50%</b>",
+      deal1_h: "🆓 Entrada gratuita", deal1_p: "Sin suscripción, sin tarjeta, sin compromiso para emitir.",
+      deal2_h: "💰 Te quedas con el 50%", deal2_p: "De cada importe que paga un fan: comisión de la tienda ~15%, tú 50%, VybzzZ 35%. Una entrada de 10 € te da 5 €.",
+      deal3_h: "🎥 90 min de directo incluidos", deal3_p: "Cada mes. Un directo que genera ingresos paga su coste: tus conciertos que funcionan siempre son gratis.",
+      deal4_h: "🏦 Retiros sencillos", deal4_p: "Por Stripe o cuenta bancaria, 24 h de media.",
+      faq_q1: "¿Qué es VybzzZ?", faq_a1: "VybzzZ es una plataforma de conciertos en directo: ves a tus artistas en vivo, envías regalos, compras entradas y revives los shows en replay. Los artistas emiten desde la app y cobran en directo.",
+      faq_a4: "En la página de un concierto de pago, toca «Conseguir mi entrada»: la compra se hace en la app a través de App Store o Google Play y tu entrada aparece en «Mis entradas».",
+      faq_a5: "Las compras (Arena Points, entradas) pasan por App Store o Google Play con los métodos de pago de tu cuenta. Los artistas retiran sus ingresos por Stripe o cuenta bancaria.",
+      faq_q6: "¿Cómo ser artista en VybzzZ?", faq_a6: "Ve a «Postular», rellena el formulario (nombre artístico, género, experiencia) y firma el contrato de artista. El equipo revisa tu candidatura y responde en 48 h. La entrada es gratuita: te quedas con el 50% de tus ingresos.",
+      faq_a7: "Desde la app: Perfil → Ingresos → «Retirar». Elige tu método (Stripe o cuenta bancaria), introduce el importe en euros y confirma. Plazo medio: 24 h."
+    },
+    it: {
+      nav_academy: "Padroneggia il palco", foot_roles: "Ruoli e guadagni", foot_founders: "Membri fondatori", foot_book: "Prenota un momento",
+      foot_legal: "Note legali", foot_privacy: "Privacy", foot_terms: "Termini", store_in_app: "Acquisto nell'app VybzzZ",
+      foot_tagline: "Un mondo di concerti dal vivo. Il palco è tuo.", foot_rights: "© 2026 VybzzZ. Tutti i diritti riservati.",
+      foot_secure: "Fatto per chi sale sul palco.",
+      art_eyebrow: "Diventa artista", art_title_html: 'Sali sul <span class="grad">palco</span>.',
+      art_p_html: "L'ingresso è gratuito: nessun abbonamento, nessun anticipo. Tieni il <strong>50% dei tuoi ricavi</strong> (biglietti, regali, mance). Prelievi via Stripe o conto bancario.",
+      art_accept_html: 'Ho letto e accetto il <a href="cgu.html" target="_blank">contratto artista VybzzZ</a> (commissione, pagamenti, condizioni di diffusione).',
+      cta_reserve: "Crea il mio account artista", free_word: "Gratis", free_sub: "Nessun abbonamento · tieni il <b>50%</b>",
+      deal1_h: "🆓 Ingresso gratuito", deal1_p: "Nessun abbonamento, nessuna carta, nessun impegno per trasmettere.",
+      deal2_h: "💰 Tieni il 50%", deal2_p: "Su ogni importo pagato da un fan: commissioni store ~15%, tu 50%, VybzzZ 35%. Un biglietto da 10 € ti rende 5 €.",
+      deal3_h: "🎥 90 min di live inclusi", deal3_p: "Ogni mese. Un live che guadagna ripaga il suo costo: i tuoi concerti che funzionano sono sempre gratuiti.",
+      deal4_h: "🏦 Prelievi semplici", deal4_p: "Via Stripe o conto bancario, 24 h in media.",
+      faq_q1: "Cos'è VybzzZ?", faq_a1: "VybzzZ è una piattaforma di concerti dal vivo: guardi i tuoi artisti in diretta, invii regali, compri biglietti e rivedi gli show in replay. Gli artisti trasmettono dall'app e vengono pagati in diretta.",
+      faq_a4: "Nella pagina di un concerto a pagamento, tocca «Prendi il biglietto»: l'acquisto avviene nell'app tramite App Store o Google Play e il biglietto compare in «I miei biglietti».",
+      faq_a5: "Gli acquisti (Arena Points, biglietti) passano da App Store o Google Play con i metodi di pagamento del tuo account. Gli artisti prelevano i guadagni via Stripe o conto bancario.",
+      faq_q6: "Come diventare artista su VybzzZ?", faq_a6: "Vai su «Candidati», compila il modulo (nome d'arte, genere, esperienza) e firma il contratto artista. Il team esamina la candidatura e risponde entro 48 h. L'ingresso è gratuito: tieni il 50% dei tuoi ricavi.",
+      faq_a7: "Dall'app: Profilo → Guadagni → «Preleva». Scegli il metodo (Stripe o conto bancario), inserisci l'importo in euro e conferma. Tempo medio: 24 h."
+    },
+    de: {
+      nav_academy: "Die Bühne meistern", foot_roles: "Rollen & Einnahmen", foot_founders: "Gründungsmitglieder", foot_book: "Einen Moment reservieren",
+      foot_legal: "Impressum", foot_privacy: "Datenschutz", foot_terms: "AGB", store_in_app: "Kauf in der VybzzZ-App",
+      foot_tagline: "Eine Welt voller Live-Konzerte. Die Bühne gehört dir.", foot_rights: "© 2026 VybzzZ. Alle Rechte vorbehalten.",
+      foot_secure: "Gemacht für alle, die auf die Bühne gehen.",
+      art_eyebrow: "Künstler werden", art_title_html: 'Betritt die <span class="grad">Bühne</span>.',
+      art_p_html: "Der Einstieg ist kostenlos: kein Abo, keine Vorauszahlung. Du behältst <strong>50 % deiner Einnahmen</strong> (Tickets, Geschenke, Trinkgelder). Auszahlung per Stripe oder Bankkonto.",
+      art_accept_html: 'Ich habe den <a href="cgu.html" target="_blank">VybzzZ-Künstlervertrag</a> gelesen und akzeptiere ihn (Provision, Auszahlungen, Sendebedingungen).',
+      cta_reserve: "Mein Künstlerkonto erstellen", free_word: "Kostenlos", free_sub: "Kein Abo · du behältst <b>50 %</b>",
+      deal1_h: "🆓 Kostenloser Einstieg", deal1_p: "Kein Abo, keine Kreditkarte, keine Verpflichtung zu senden.",
+      deal2_h: "💰 Du behältst 50 %", deal2_p: "Von jedem Betrag, den ein Fan zahlt: Store-Gebühren ~15 %, du 50 %, VybzzZ 35 %. Ein 10-€-Ticket bringt dir 5 €.",
+      deal3_h: "🎥 90 Min. Live inklusive", deal3_p: "Jeden Monat. Ein Live, das Einnahmen bringt, deckt seine Kosten: erfolgreiche Konzerte sind immer kostenlos.",
+      deal4_h: "🏦 Einfache Auszahlungen", deal4_p: "Per Stripe oder Bankkonto, im Schnitt 24 h.",
+      faq_q1: "Was ist VybzzZ?", faq_a1: "VybzzZ ist eine Plattform für Live-Konzerte: Du siehst deine Künstler live, schickst Geschenke, kaufst Tickets und erlebst Shows als Replay. Künstler senden aus der App und werden live bezahlt.",
+      faq_a4: "Auf der Seite eines kostenpflichtigen Konzerts tippst du auf „Ticket holen“: Der Kauf läuft in der App über den App Store oder Google Play, das Ticket erscheint unter „Meine Tickets“.",
+      faq_a5: "Käufe (Arena Points, Tickets) laufen über den App Store oder Google Play mit den Zahlungsmethoden deines Kontos. Künstler zahlen ihre Einnahmen per Stripe oder Bankkonto aus.",
+      faq_q6: "Wie werde ich Künstler auf VybzzZ?", faq_a6: "Gehe auf „Bewerben“, fülle das Formular aus (Künstlername, Genre, Erfahrung) und unterschreibe den Künstlervertrag. Das Team prüft deine Bewerbung und antwortet innerhalb von 48 h. Der Einstieg ist kostenlos: Du behältst 50 % deiner Einnahmen.",
+      faq_a7: "In der App: Profil → Einnahmen → „Auszahlen“. Wähle die Methode (Stripe oder Bankkonto), gib den Betrag in Euro ein und bestätige. Durchschnittliche Dauer: 24 h."
+    },
+    pt: {
+      nav_academy: "Domina o palco", foot_roles: "Papéis e receitas", foot_founders: "Membros fundadores", foot_book: "Reservar um momento",
+      foot_legal: "Aviso legal", foot_privacy: "Privacidade", foot_terms: "Termos", store_in_app: "Compra na app VybzzZ",
+      foot_tagline: "Um mundo de concertos ao vivo. O palco é teu.", foot_rights: "© 2026 VybzzZ. Todos os direitos reservados.",
+      foot_secure: "Feito para quem sobe ao palco.",
+      art_eyebrow: "Torna-te artista", art_title_html: 'Sobe ao <span class="grad">palco</span>.',
+      art_p_html: "A entrada é gratuita: sem subscrição, sem adiantamento. Ficas com <strong>50% das tuas receitas</strong> (bilhetes, presentes, gorjetas). Levantamentos via Stripe ou conta bancária.",
+      art_accept_html: 'Li e aceito o <a href="cgu.html" target="_blank">contrato de artista VybzzZ</a> (comissão, pagamentos, condições de transmissão).',
+      cta_reserve: "Criar a minha conta de artista", free_word: "Grátis", free_sub: "Sem subscrição · ficas com <b>50%</b>",
+      deal1_h: "🆓 Entrada gratuita", deal1_p: "Sem subscrição, sem cartão, sem compromisso para transmitir.",
+      deal2_h: "💰 Ficas com 50%", deal2_p: "De cada valor pago por um fã: taxas da loja ~15%, tu 50%, VybzzZ 35%. Um bilhete de 10 € rende-te 5 €.",
+      deal3_h: "🎥 90 min de live incluídos", deal3_p: "Todos os meses. Um live que rende paga o seu custo: os teus concertos que funcionam são sempre gratuitos.",
+      deal4_h: "🏦 Levantamentos simples", deal4_p: "Via Stripe ou conta bancária, 24 h em média.",
+      faq_q1: "O que é a VybzzZ?", faq_a1: "A VybzzZ é uma plataforma de concertos ao vivo: vês os teus artistas em direto, envias presentes, compras bilhetes e revês os shows em replay. Os artistas transmitem a partir da app e são pagos em direto.",
+      faq_a4: "Na página de um concerto pago, toca em «Obter bilhete»: a compra é feita na app através da App Store ou do Google Play e o bilhete aparece em «Os meus bilhetes».",
+      faq_a5: "As compras (Arena Points, bilhetes) passam pela App Store ou Google Play com os métodos de pagamento da tua conta. Os artistas levantam os ganhos via Stripe ou conta bancária.",
+      faq_q6: "Como ser artista na VybzzZ?", faq_a6: "Vai a «Candidatar-me», preenche o formulário (nome artístico, género, experiência) e assina o contrato de artista. A equipa analisa a candidatura e responde em 48 h. A entrada é gratuita: ficas com 50% das receitas.",
+      faq_a7: "Na app: Perfil → Receitas → «Levantar». Escolhe o método (Stripe ou conta bancária), indica o valor em euros e confirma. Prazo médio: 24 h."
+    },
+    zh: {
+      nav_academy: "掌握舞台", foot_roles: "角色与收益", foot_founders: "创始成员", foot_book: "预约交流",
+      foot_legal: "法律声明", foot_privacy: "隐私政策", foot_terms: "使用条款", store_in_app: "在 VybzzZ 应用内购买",
+      foot_tagline: "一个现场音乐会的世界。舞台属于你。", foot_rights: "© 2026 VybzzZ。保留所有权利。",
+      foot_secure: "为登上舞台的人而生。",
+      art_eyebrow: "成为艺人", art_title_html: '登上<span class="grad">舞台</span>。',
+      art_p_html: "免费加入：无订阅，无预付。你保留 <strong>50% 的收入</strong>（门票、礼物、打赏）。通过 Stripe 或银行账户提现。",
+      art_accept_html: '我已阅读并接受 <a href="cgu.html" target="_blank">VybzzZ 艺人协议</a>（佣金、结算、直播条款）。',
+      cta_reserve: "创建我的艺人账号", free_word: "免费", free_sub: "无订阅 · 你保留 <b>50%</b>",
+      deal1_h: "🆓 免费加入", deal1_p: "无订阅，无需信用卡，无直播义务。",
+      deal2_h: "💰 你保留 50%", deal2_p: "粉丝支付的每一笔：应用商店费用约 15%，你 50%，VybzzZ 35%。一张 10 € 的门票为你带来 5 €。",
+      deal3_h: "🎥 每月含 90 分钟直播", deal3_p: "有收益的直播会覆盖其成本：你成功的演出永远免费。",
+      deal4_h: "🏦 提现简单", deal4_p: "通过 Stripe 或银行账户，平均 24 小时。",
+      faq_q1: "VybzzZ 是什么？", faq_a1: "VybzzZ 是一个现场音乐会平台：观看你喜欢的艺人直播、发送礼物、购买门票并回看演出。艺人通过应用直播并实时获得收入。",
+      faq_a4: "在付费演出页面点击「获取门票」：购买通过应用内的 App Store 或 Google Play 完成，门票会出现在「我的门票」。",
+      faq_a5: "购买（Arena 积分、门票）通过 App Store 或 Google Play 使用你账户的支付方式完成。艺人通过 Stripe 或银行账户提现。",
+      faq_q6: "如何成为 VybzzZ 艺人？", faq_a6: "进入「申请」，填写表单（艺名、风格、经验）并签署艺人协议。团队会在 48 小时内审核并回复。免费加入：你保留 50% 的收入。",
+      faq_a7: "在应用内：个人资料 → 收益 → 「提现」。选择方式（Stripe 或银行账户），输入欧元金额并确认。平均 24 小时到账。"
+    },
+    ko: {
+      nav_academy: "무대 마스터하기", foot_roles: "역할 & 수익", foot_founders: "창립 멤버", foot_book: "상담 예약",
+      foot_legal: "법적 고지", foot_privacy: "개인정보", foot_terms: "이용약관", store_in_app: "VybzzZ 앱에서 구매",
+      foot_tagline: "라이브 콘서트의 세계. 무대는 당신의 것.", foot_rights: "© 2026 VybzzZ. All rights reserved.",
+      foot_secure: "무대에 오르는 이들을 위해.",
+      art_eyebrow: "아티스트 되기", art_title_html: '<span class="grad">무대</span>에 오르세요.',
+      art_p_html: "가입은 무료입니다: 구독도, 선불도 없습니다. 수익의 <strong>50%</strong>(티켓, 선물, 팁)를 가져가세요. Stripe 또는 은행 계좌로 출금.",
+      art_accept_html: '<a href="cgu.html" target="_blank">VybzzZ 아티스트 계약</a>(수수료, 정산, 방송 조건)을 읽고 동의합니다.',
+      cta_reserve: "아티스트 계정 만들기", free_word: "무료", free_sub: "구독 없음 · <b>50%</b> 수익",
+      deal1_h: "🆓 무료 가입", deal1_p: "구독도, 카드도, 방송 의무도 없습니다.",
+      deal2_h: "💰 50% 수익", deal2_p: "팬이 결제한 모든 금액에서: 스토어 수수료 약 15%, 아티스트 50%, VybzzZ 35%. 10 € 티켓이면 5 €를 받습니다.",
+      deal3_h: "🎥 매월 90분 라이브 포함", deal3_p: "수익이 나는 라이브는 비용을 스스로 충당합니다. 성공한 공연은 언제나 무료입니다.",
+      deal4_h: "🏦 간편한 출금", deal4_p: "Stripe 또는 은행 계좌, 평균 24시간.",
+      faq_q1: "VybzzZ란?", faq_a1: "VybzzZ는 라이브 콘서트 플랫폼입니다. 아티스트를 실시간으로 보고, 선물을 보내고, 티켓을 사고, 다시보기로 공연을 즐기세요. 아티스트는 앱에서 방송하고 실시간으로 수익을 받습니다.",
+      faq_a4: "유료 공연 페이지에서 「티켓 받기」를 누르세요. 결제는 앱 내 App Store 또는 Google Play로 진행되며 티켓은 「내 티켓」에 표시됩니다.",
+      faq_a5: "구매(Arena 포인트, 티켓)는 계정의 결제 수단으로 App Store 또는 Google Play를 통해 이루어집니다. 아티스트는 Stripe 또는 은행 계좌로 출금합니다.",
+      faq_q6: "VybzzZ 아티스트가 되려면?", faq_a6: "「지원하기」에서 양식(예명, 장르, 경력)을 작성하고 아티스트 계약에 서명하세요. 팀이 검토 후 48시간 내에 답변합니다. 가입은 무료이며 수익의 50%를 가져갑니다.",
+      faq_a7: "앱에서: 프로필 → 수익 → 「출금」. 방법(Stripe 또는 은행 계좌)을 선택하고 유로 금액을 입력한 뒤 확인하세요. 평균 24시간."
+    },
+    ja: {
+      nav_academy: "ステージを極める", foot_roles: "役割と収益", foot_founders: "創設メンバー", foot_book: "相談を予約",
+      foot_legal: "法的表記", foot_privacy: "プライバシー", foot_terms: "利用規約", store_in_app: "VybzzZ アプリ内で購入",
+      foot_tagline: "ライブコンサートの世界。ステージは君のもの。", foot_rights: "© 2026 VybzzZ. All rights reserved.",
+      foot_secure: "ステージに立つ人のために。",
+      art_eyebrow: "アーティストになる", art_title_html: '<span class="grad">ステージ</span>へ。',
+      art_p_html: "参加は無料：サブスクも前払いもありません。収益（チケット、ギフト、チップ）の <strong>50%</strong> を受け取れます。Stripe または銀行口座で出金。",
+      art_accept_html: '<a href="cgu.html" target="_blank">VybzzZ アーティスト契約</a>（手数料、支払い、配信条件）を読み、同意します。',
+      cta_reserve: "アーティストアカウントを作成", free_word: "無料", free_sub: "サブスクなし · <b>50%</b> があなたに",
+      deal1_h: "🆓 参加無料", deal1_p: "サブスクなし、カード不要、配信の義務なし。",
+      deal2_h: "💰 50% があなたに", deal2_p: "ファンが支払う各金額のうち：ストア手数料 約15%、あなた 50%、VybzzZ 35%。10 € のチケットで 5 € を受け取ります。",
+      deal3_h: "🎥 毎月 90 分のライブ込み", deal3_p: "収益のあるライブはその費用を自ら賄います。成功した公演はいつでも無料。",
+      deal4_h: "🏦 かんたん出金", deal4_p: "Stripe または銀行口座、平均 24 時間。",
+      faq_q1: "VybzzZ とは？", faq_a1: "VybzzZ はライブコンサートのプラットフォームです。アーティストをライブで見て、ギフトを送り、チケットを買い、リプレイで公演を見返せます。アーティストはアプリから配信し、リアルタイムで収益を受け取ります。",
+      faq_a4: "有料公演のページで「チケットを取る」をタップ。購入はアプリ内の App Store または Google Play で行われ、チケットは「マイチケット」に表示されます。",
+      faq_a5: "購入（Arena ポイント、チケット）は、アカウントの支払い方法で App Store または Google Play を通じて行われます。アーティストは Stripe または銀行口座で出金します。",
+      faq_q6: "VybzzZ のアーティストになるには？", faq_a6: "「応募」からフォーム（芸名、ジャンル、経験）に記入し、アーティスト契約に署名します。チームが審査し、48 時間以内に返信します。参加は無料で、収益の 50% を受け取れます。",
+      faq_a7: "アプリで：プロフィール → 収益 → 「出金」。方法（Stripe または銀行口座）を選び、ユーロで金額を入力して確認。平均 24 時間。"
+    },
+    ar: {
+      nav_academy: "أتقن المسرح", foot_roles: "الأدوار والأرباح", foot_founders: "الأعضاء المؤسسون", foot_book: "احجز موعدًا",
+      foot_legal: "إشعار قانوني", foot_privacy: "الخصوصية", foot_terms: "الشروط", store_in_app: "الشراء داخل تطبيق VybzzZ",
+      foot_tagline: "عالم من الحفلات المباشرة. المسرح لك.", foot_rights: "© 2026 VybzzZ. جميع الحقوق محفوظة.",
+      foot_secure: "صُنع لمن يصعدون إلى المسرح.",
+      art_eyebrow: "كن فنانًا", art_title_html: 'اصعد إلى <span class="grad">المسرح</span>.',
+      art_p_html: "الانضمام مجاني: بلا اشتراك وبلا دفعة مسبقة. تحتفظ بـ <strong>50% من أرباحك</strong> (التذاكر، الهدايا، الإكراميات). السحب عبر Stripe أو حساب بنكي.",
+      art_accept_html: 'قرأت وأوافق على <a href="cgu.html" target="_blank">عقد الفنان VybzzZ</a> (العمولة، المدفوعات، شروط البث).',
+      cta_reserve: "إنشاء حساب الفنان", free_word: "مجاني", free_sub: "بلا اشتراك · تحتفظ بـ <b>50%</b>",
+      deal1_h: "🆓 انضمام مجاني", deal1_p: "بلا اشتراك، بلا بطاقة، بلا التزام بالبث.",
+      deal2_h: "💰 تحتفظ بـ 50%", deal2_p: "من كل مبلغ يدفعه المعجب: رسوم المتجر ~15%، أنت 50%، VybzzZ 35%. تذكرة بـ 10 € تمنحك 5 €.",
+      deal3_h: "🎥 90 دقيقة بث مضمّنة", deal3_p: "كل شهر. البث الذي يحقق أرباحًا يغطي تكلفته: حفلاتك الناجحة مجانية دائمًا.",
+      deal4_h: "🏦 سحوبات سهلة", deal4_p: "عبر Stripe أو حساب بنكي، خلال 24 ساعة في المتوسط.",
+      faq_q1: "ما هو VybzzZ؟", faq_a1: "VybzzZ منصة حفلات مباشرة: تشاهد فنانيك مباشرة، ترسل الهدايا، تشتري التذاكر وتعيد مشاهدة العروض. يبث الفنانون من التطبيق ويحصلون على أرباحهم مباشرة.",
+      faq_a4: "في صفحة حفلة مدفوعة، اضغط «احصل على تذكرتي»: يتم الشراء داخل التطبيق عبر App Store أو Google Play، وتظهر تذكرتك في «تذاكري».",
+      faq_a5: "تتم عمليات الشراء (نقاط Arena، التذاكر) عبر App Store أو Google Play بوسائل الدفع في حسابك. يسحب الفنانون أرباحهم عبر Stripe أو حساب بنكي.",
+      faq_q6: "كيف أصبح فنانًا على VybzzZ؟", faq_a6: "اذهب إلى «قدّم طلبك»، املأ النموذج (الاسم الفني، النوع، الخبرة) ووقّع عقد الفنان. يراجع الفريق طلبك ويرد خلال 48 ساعة. الانضمام مجاني: تحتفظ بـ 50% من أرباحك.",
+      faq_a7: "من التطبيق: الملف الشخصي → الأرباح → «سحب». اختر الطريقة (Stripe أو حساب بنكي)، أدخل المبلغ باليورو وأكّد. المدة المتوسطة: 24 ساعة."
+    },
+    hi: {
+      nav_academy: "मंच में महारत", foot_roles: "भूमिकाएँ और कमाई", foot_founders: "संस्थापक सदस्य", foot_book: "समय बुक करें",
+      foot_legal: "कानूनी सूचना", foot_privacy: "गोपनीयता", foot_terms: "शर्तें", store_in_app: "VybzzZ ऐप में खरीदें",
+      foot_tagline: "लाइव कॉन्सर्ट की दुनिया। मंच आपका है।", foot_rights: "© 2026 VybzzZ. सर्वाधिकार सुरक्षित।",
+      foot_secure: "उनके लिए जो मंच पर चढ़ते हैं।",
+      art_eyebrow: "कलाकार बनें", art_title_html: '<span class="grad">मंच</span> पर आइए।',
+      art_p_html: "जुड़ना मुफ़्त है: कोई सब्सक्रिप्शन नहीं, कोई अग्रिम नहीं। आप अपनी कमाई का <strong>50%</strong> रखते हैं (टिकट, गिफ्ट, टिप)। Stripe या बैंक खाते से निकासी।",
+      art_accept_html: 'मैंने <a href="cgu.html" target="_blank">VybzzZ कलाकार अनुबंध</a> (कमीशन, भुगतान, प्रसारण शर्तें) पढ़ा है और स्वीकार करता/करती हूँ।',
+      cta_reserve: "मेरा कलाकार खाता बनाएँ", free_word: "मुफ़्त", free_sub: "कोई सब्सक्रिप्शन नहीं · आप <b>50%</b> रखते हैं",
+      deal1_h: "🆓 मुफ़्त प्रवेश", deal1_p: "कोई सब्सक्रिप्शन नहीं, कोई कार्ड नहीं, प्रसारण की कोई बाध्यता नहीं।",
+      deal2_h: "💰 आप 50% रखते हैं", deal2_p: "फ़ैन द्वारा भुगतान की गई हर राशि से: स्टोर शुल्क ~15%, आप 50%, VybzzZ 35%। 10 € का टिकट आपको 5 € देता है।",
+      deal3_h: "🎥 हर महीने 90 मिनट लाइव शामिल", deal3_p: "कमाई वाला लाइव अपनी लागत खुद निकालता है: आपके सफल कॉन्सर्ट हमेशा मुफ़्त।",
+      deal4_h: "🏦 आसान निकासी", deal4_p: "Stripe या बैंक खाते से, औसतन 24 घंटे।",
+      faq_q1: "VybzzZ क्या है?", faq_a1: "VybzzZ लाइव कॉन्सर्ट का प्लेटफ़ॉर्म है: अपने कलाकारों को लाइव देखें, गिफ्ट भेजें, टिकट खरीदें और शो को रीप्ले में दोबारा देखें। कलाकार ऐप से प्रसारण करते हैं और लाइव भुगतान पाते हैं।",
+      faq_a4: "किसी पेड कॉन्सर्ट पेज पर «मेरा टिकट लें» दबाएँ: खरीद ऐप के भीतर App Store या Google Play से होती है और टिकट «मेरे टिकट» में दिखता है।",
+      faq_a5: "खरीद (Arena Points, टिकट) आपके खाते की भुगतान विधियों से App Store या Google Play के ज़रिए होती है। कलाकार Stripe या बैंक खाते से कमाई निकालते हैं।",
+      faq_q6: "VybzzZ पर कलाकार कैसे बनें?", faq_a6: "«आवेदन करें» पर जाएँ, फ़ॉर्म भरें (मंच नाम, शैली, अनुभव) और कलाकार अनुबंध पर हस्ताक्षर करें। टीम 48 घंटे में जवाब देती है। जुड़ना मुफ़्त है: आप कमाई का 50% रखते हैं।",
+      faq_a7: "ऐप से: प्रोफ़ाइल → कमाई → «निकालें»। विधि चुनें (Stripe या बैंक खाता), यूरो में राशि डालें और पुष्टि करें। औसत समय: 24 घंटे।"
+    },
+    ru: {
+      nav_academy: "Освой сцену", foot_roles: "Роли и доход", foot_founders: "Основатели", foot_book: "Записаться на встречу",
+      foot_legal: "Правовая информация", foot_privacy: "Конфиденциальность", foot_terms: "Условия", store_in_app: "Покупка в приложении VybzzZ",
+      foot_tagline: "Мир живых концертов. Сцена — твоя.", foot_rights: "© 2026 VybzzZ. Все права защищены.",
+      foot_secure: "Для тех, кто выходит на сцену.",
+      art_eyebrow: "Стать артистом", art_title_html: 'Выйди на <span class="grad">сцену</span>.',
+      art_p_html: "Вход бесплатный: без подписки и предоплаты. Ты оставляешь себе <strong>50% дохода</strong> (билеты, подарки, чаевые). Вывод через Stripe или банковский счёт.",
+      art_accept_html: 'Я прочитал(а) и принимаю <a href="cgu.html" target="_blank">договор артиста VybzzZ</a> (комиссия, выплаты, условия трансляции).',
+      cta_reserve: "Создать аккаунт артиста", free_word: "Бесплатно", free_sub: "Без подписки · ты оставляешь <b>50%</b>",
+      deal1_h: "🆓 Бесплатный вход", deal1_p: "Без подписки, без карты, без обязательств по трансляциям.",
+      deal2_h: "💰 Ты оставляешь 50%", deal2_p: "С каждой суммы, которую платит фанат: комиссия магазина ~15%, тебе 50%, VybzzZ 35%. Билет за 10 € приносит тебе 5 €.",
+      deal3_h: "🎥 90 минут эфира включены", deal3_p: "Каждый месяц. Эфир, который приносит доход, окупает себя: успешные концерты всегда бесплатны.",
+      deal4_h: "🏦 Простой вывод", deal4_p: "Через Stripe или банковский счёт, в среднем 24 ч.",
+      faq_q1: "Что такое VybzzZ?", faq_a1: "VybzzZ — платформа живых концертов: смотри артистов в прямом эфире, отправляй подарки, покупай билеты и пересматривай шоу в записи. Артисты ведут трансляции из приложения и получают доход в реальном времени.",
+      faq_a4: "На странице платного концерта нажми «Взять билет»: покупка проходит в приложении через App Store или Google Play, билет появится в «Мои билеты».",
+      faq_a5: "Покупки (Arena Points, билеты) проходят через App Store или Google Play со способами оплаты твоего аккаунта. Артисты выводят доход через Stripe или банковский счёт.",
+      faq_q6: "Как стать артистом на VybzzZ?", faq_a6: "Перейди в «Подать заявку», заполни форму (сценическое имя, жанр, опыт) и подпиши договор артиста. Команда рассмотрит заявку и ответит в течение 48 ч. Вход бесплатный: ты оставляешь себе 50% дохода.",
+      faq_a7: "В приложении: Профиль → Доход → «Вывести». Выбери способ (Stripe или банковский счёт), укажи сумму в евро и подтверди. В среднем 24 ч."
+    }
+  };
+  Object.keys(FIX).forEach(function (l) { if (window.I18N[l]) Object.assign(window.I18N[l], FIX[l]); });
+  // Marque : toujours "VybzzZ" dans les textes (jamais Vybzzz / VYBZZZ / VyBzzZ).
+  Object.keys(window.I18N).forEach(function (l) {
+    var d = window.I18N[l];
+    Object.keys(d).forEach(function (k) { if (typeof d[k] === 'string') d[k] = d[k].replace(/VyBzzZ Pay/g, 'VybzzZ').replace(/\bV[Yy][Bb][Zz][Zz][Zz]\b/g, 'VybzzZ'); });
+  });
 })();

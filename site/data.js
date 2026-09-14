@@ -1,6 +1,6 @@
 /* ============================================================
    VYBZZZ — Données partagées (réalistes, alignées sur l'app)
-   Devise : $ pour le fiat, ARENA POINTS (PTS) pour la monnaie interne.
+   Devise : € pour le fiat, ARENA POINTS (PTS) pour la monnaie interne.
    Branchable plus tard sur https://vybzzz.fryandeatfood.com/api
    ============================================================ */
 window.VYBZZZ = (function () {
@@ -88,8 +88,8 @@ window.VYBZZZ = (function () {
 
   // FAQ (cf. /api/settings/get-management — ici en dur, réaliste)
   const faq = [
-    { q: "C'est quoi Vybzzz ?", a: "Vybzzz est une plateforme de concerts en direct : tu regardes tes artistes en live HD, tu envoies des cadeaux virtuels, tu achètes des tickets et tu revis les shows en replay. Les artistes diffusent depuis l'appli et sont rémunérés en temps réel." },
-    { q: "Qu'est-ce que les Arena Points ?", a: "Les ARENA POINTS (PTS) sont la monnaie interne de Vybzzz. Tu les recharges via la boutique, puis tu les utilises pour envoyer des cadeaux pendant les lives. Plus le pack est gros, plus le bonus est élevé." },
+    { q: "C'est quoi VybzzZ ?", a: "VybzzZ est une plateforme de concerts en direct : tu regardes tes artistes en live HD, tu envoies des cadeaux virtuels, tu achètes des tickets et tu revis les shows en replay. Les artistes diffusent depuis l'appli et sont rémunérés en temps réel." },
+    { q: "Qu'est-ce que les Arena Points ?", a: "Les ARENA POINTS (PTS) sont la monnaie interne de VybzzZ. Tu les recharges via la boutique, puis tu les utilises pour envoyer des cadeaux pendant les lives. Plus le pack est gros, plus le bonus est élevé." },
     { q: "Comment envoyer un cadeau pendant un live ?", a: "Pendant un concert, ouvre le panneau cadeaux, choisis ton cadeau (Rose 5 PTS, Diamant 100 PTS, Château 5000 PTS…), confirme, et l'animation se déclenche en direct à l'écran. Le montant est reversé à l'artiste." },
     { q: "Comment acheter un ticket de concert ?", a: "Sur la page d'un événement payant, clique sur « Get Ticket », passe au paiement (carte, Apple Pay, Google Pay ou VyBzzZ Pay), et ton ticket apparaît dans « Mes tickets ». Le replay est inclus." },
     { q: "Quels moyens de paiement sont acceptés ?", a: "Carte bancaire, Apple Pay, Google Pay et VyBzzZ Pay. Tous les paiements sont chiffrés en SSL 256-bit. Les artistes peuvent connecter Stripe ou un compte bancaire pour leurs retraits." },

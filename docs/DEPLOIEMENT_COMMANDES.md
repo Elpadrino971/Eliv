@@ -141,3 +141,23 @@ un achat de points (sandbox RevenueCat), un cadeau envoyé, un billet.
 3. iOS IPA → TestFlight, puis soumission.
 4. Test régie réel : `https://vybzzz.online/stage.html?event=ID&key=CLE` sur l'écran de scène,
    `https://vybzzz.online/regie.html?event=ID&key=CLE` sur le téléphone / la tablette.
+
+---
+
+## 4) Site : nginx après l'audit (une fois)
+
+Le site n'a plus de pages de démo et possède une vraie page 404, des pages légales,
+un favicon et une image de partage. Pour que la 404 et les redirections soient réelles,
+nginx doit cesser de renvoyer `index.html` pour toute adresse. Le bloc à appliquer est
+dans `site/nginx.vybzzz.conf` (commenté ligne par ligne).
+
+```bash
+sudo nano /etc/nginx/sites-available/vybzzz     # coller les directives de site/nginx.vybzzz.conf
+sudo nginx -t && sudo systemctl reload nginx
+curl -s -o /dev/null -w "%{http_code}\n" https://vybzzz.online/page-inexistante   # attendu : 404
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" https://www.vybzzz.online/ # attendu : 301 -> https://vybzzz.online/
+curl -s -o /dev/null -w "%{http_code}\n" https://vybzzz.online/confidentialite.html # attendu : 200
+```
+
+Sans ce changement, le site reste fonctionnel : les anciennes pages redirigent d'elles-mêmes
+vers l'accueil, mais une adresse inexistante affichera encore l'accueil au lieu de la 404.

@@ -424,7 +424,7 @@ body>*:not(.grain):not(.aurora){position:relative;z-index:2}
    IDENTITÉ — wordmark serif + plans + carte Founder
    ============================================================ */
 body{background:radial-gradient(120% 80% at 50% -10%,#0e2438 0%,var(--bg) 55%) fixed}
-.brand{font-family:var(--serif);font-weight:800;font-size:1.5rem;letter-spacing:.14em;text-transform:uppercase;background:linear-gradient(120deg,var(--gold-soft),var(--gold) 60%,#a8843f);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
+.brand{font-family:var(--serif);font-weight:800;font-size:1.5rem;letter-spacing:.08em;text-transform:none;background:linear-gradient(120deg,var(--gold-soft),var(--gold) 60%,#a8843f);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
 .brand-logo{width:34px;height:34px;flex:0 0 auto;filter:drop-shadow(0 0 8px rgba(200,168,94,.35))}
 .nav__brand{display:flex;align-items:center;gap:10px}
 .eyebrow{font-family:var(--serif);font-style:italic;text-transform:none;letter-spacing:.04em;font-weight:600;font-size:.95rem}
@@ -693,3 +693,19 @@ body{background:radial-gradient(120% 80% at 50% -10%,#0e2438 0%,var(--bg) 55%) f
 @media(max-width:440px){.promo-band .hero-perks{grid-template-columns:1fr;max-width:360px}}
 
 @media (prefers-reduced-motion:reduce){ .hero-wave__g{animation:none} }
+
+/* ---------- Pages légales ---------- */
+.legal .page__head p{max-width:60ch}
+.legal__nav{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 22px}
+.legal__nav a{padding:8px 14px;border-radius:99px;border:1px solid var(--panel-line);color:var(--muted);font-size:.85rem}
+.legal__nav a.active,.legal__nav a:hover{color:var(--text);border-color:var(--gold)}
+.legal__body{padding:clamp(22px,4vw,44px);border-radius:var(--radius);max-width:820px}
+.legal__body h2{font-family:"Sora",sans-serif;font-size:1.15rem;margin:30px 0 10px;color:var(--gold-2)}
+.legal__body h2:first-child{margin-top:0}
+.legal__body p,.legal__body li{color:var(--text);font-size:.97rem;line-height:1.7}
+.legal__body ul{padding-left:20px;margin:8px 0 14px}
+.legal__body li{margin:6px 0}
+.legal__body a{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+.legal__lead{font-size:1.05rem;color:var(--muted)}
+.legal__date{margin-top:30px;color:var(--muted);font-size:.85rem}
+mark.todo{background:rgba(230,199,106,.18);color:var(--gold-2);padding:1px 6px;border-radius:6px;font-weight:600}

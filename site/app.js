@@ -2,6 +2,7 @@
    VYBZZZ — Moteur partagé (chrome, animations, rendu des pages)
    ============================================================ */
 (function () {
+  if (location.hostname === "www.vybzzz.online") { location.replace("https://vybzzz.online" + location.pathname + location.search + location.hash); return; }
   "use strict";
   const D = window.VYBZZZ;
   const H = D.helpers;
@@ -42,12 +43,12 @@
   window.__vybLang = openLangSheet;
 
   /* ---------- Chrome : header + footer injectés ---------- */
+  // Même menu que la page d'accueil (index.html) : Feed, Boutique, Le deal, FAQ.
   const NAV = [
-    { href: "index.html",            key: "nav_home",   id: "home" },
     { href: "feed.html",             key: "nav_feed",   id: "feed" },
     { href: "store.html",            key: "nav_store",  id: "store" },
-    { href: "index.html#avantages",  key: "nav_deal",   id: "_deal" },
-    { href: "dashboard.html",        key: "nav_studio", id: "dashboard" },
+    { href: "index.html#roles",      key: "nav_deal",   id: "_deal" },
+    { href: "index.html#academy",    key: "nav_academy", id: "_academy" },
     { href: "faq.html",              key: "nav_faq",    id: "faq" },
   ];
 
@@ -59,12 +60,11 @@
     <header class="nav" id="nav">
       <a href="index.html" class="nav__brand" data-cursor="hover">
         <img src="assets/logo.svg" alt="" class="brand-logo" />
-        <span class="brand">Vybzzz</span>
+        <span class="brand">Vybzz<span style="color:var(--gold)">Z</span></span>
       </a>
       <nav class="nav__links" style="margin-left:auto">${links}</nav>
       <div class="nav__cta">
         <button class="lang-btn" data-cursor="hover" onclick="window.__vybLang&&window.__vybLang()">🌐 ${LANG.toUpperCase()}</button>
-        <a href="dashboard.html" class="btn btn--ghost" data-cursor="hover">${t("nav_login")}</a>
         <a href="artist.html" class="btn btn--gold magnetic" data-cursor="hover"><span>${t("nav_apply")}</span></a>
       </div>
       <button class="nav__burger" id="burger" aria-label="Menu"><i></i><i></i><i></i></button>
@@ -76,13 +76,13 @@
     <footer class="footer">
       <div class="footer__top">
         <div class="footer__brand">
-          <a href="index.html" class="nav__brand"><img src="assets/logo.svg" alt="" class="brand-logo" /><span class="brand">Vybzzz</span></a>
+          <a href="index.html" class="nav__brand"><img src="assets/logo.svg" alt="" class="brand-logo" /><span class="brand">Vybzz<span style="color:var(--gold)">Z</span></span></a>
           <p>${t("foot_tagline")}</p>
         </div>
         <div class="footer__cols">
-          <div><h4>${t("foot_discover")}</h4><a href="index.html">${t("nav_home")}</a><a href="feed.html">Feed</a><a href="store.html">Boutique</a></div>
-          <div><h4>${t("foot_artists")}</h4><a href="dashboard.html">${t("nav_studio")}</a><a href="artist.html">${t("nav_apply")}</a><a href="artist.html#contrat">Contrat</a></div>
-          <div><h4>${t("foot_help")}</h4><a href="faq.html">${t("nav_faq")}</a><a href="checkout.html">Paiement</a><a href="#">Contact</a></div>
+          <div><h4>${t("foot_discover")}</h4><a href="feed.html">${t("nav_feed")}</a><a href="store.html">${t("nav_store")}</a><a href="index.html#roles">${t("nav_deal")}</a><a href="faq.html">${t("nav_faq")}</a></div>
+          <div><h4>${t("foot_artists")}</h4><a href="artist.html">${t("nav_apply")}</a><a href="index.html#roles">${t("foot_roles")}</a><a href="index.html#academy">${t("nav_academy")}</a><a href="index.html#fondateurs">${t("foot_founders")}</a></div>
+          <div><h4>${t("foot_help")}</h4><a href="index.html#reserver">${t("foot_book")}</a><a href="mailto:hello@vybzzz.online">hello@vybzzz.online</a><a href="mentions-legales.html">${t("foot_legal")}</a><a href="confidentialite.html">${t("foot_privacy")}</a><a href="cgu.html">${t("foot_terms")}</a></div>
         </div>
       </div>
       <div class="footer__bottom">
@@ -308,7 +308,7 @@
       : `${H.nb(ev.likes)} j'aime · ${ev.scheduled}`;
     return `
     <article class="vcard reveal" data-cursor="hover" data-event="${ev.id}">
-      <a href="checkout.html?event=${ev.id}" class="vcard__thumb">
+      <a href="index.html#roles" class="vcard__thumb" title="Disponible dans l'appli VybzzZ">
         <img src="${ev.thumb}" alt="${ev.name}" loading="lazy" />
         ${ev.live ? liveBadge : `<span class="badge-soon">${ev.scheduled}</span>`}
         <span class="vcard__price">${ev.price === 0 ? "Gratuit" : "$" + ev.price.toFixed(2)}</span>
@@ -506,15 +506,14 @@
         <div class="pack__coin">🪙</div>
         <strong class="pack__pts">${total.toLocaleString("fr-FR")}<small>PTS</small></strong>
         ${p.bonus ? `<small class="pack__base">${p.points.toLocaleString("fr-FR")} + ${(total - p.points).toLocaleString("fr-FR")} bonus</small>` : `<small class="pack__base">${p.title}</small>`}
-        <a href="checkout.html?pack=${p.id}" class="btn ${p.featured ? "btn--gold" : "btn--outline"}" data-cursor="hover"><span>$${p.price.toFixed(2)}</span></a>
+        <a href="index.html#roles" class="btn ${p.featured ? "btn--gold" : "btn--outline"}" data-cursor="hover" title="${t("store_in_app")}"><span>${p.price.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</span></a>
       </article>`;
     }).join("");
     // gifts catalogue
     const gg = document.getElementById("giftGrid");
     if (gg) gg.innerHTML = D.gifts.map(g =>
       `<div class="giftc giftc--lg reveal" data-cursor="hover"><span>${g.emoji}</span><strong>${g.name}</strong><small>★ ${g.coins} PTS</small></div>`).join("");
-    // plans (créateur — Founder/Starter/Elite ou Growth après)
-    renderPlans();
+    // (l'ancien bloc "plans Founder" n'existe plus : entrée gratuite, 50 %)
     // try gift demo button
     const demo = document.getElementById("giftDemo");
     demo && demo.addEventListener("click", openGiftPanel);

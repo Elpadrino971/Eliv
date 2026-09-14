@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /regie.html
+Disallow: /stage.html
+Sitemap: https://vybzzz.online/sitemap.xml

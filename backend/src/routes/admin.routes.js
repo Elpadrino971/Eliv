@@ -1056,6 +1056,25 @@ const SPLASH_ANIMATION_STYLES = [
   'none',
 ];
 
+// ─── Textes légaux de l'app (Profil → À propos / Réglages) ───────────────────
+// Lus par l'app via GET /api/settings/get-settings (public). Éditables ici.
+const LEGAL_KEYS = ['privacy_policy', 'terms_and_conditions', 'about_us', 'support_email'];
+router.get('/legal-settings', requireAdmin, (req, res) => {
+  const get = db.prepare('SELECT value FROM settings WHERE key = ?');
+  const data = {};
+  for (const k of LEGAL_KEYS) data[k] = get.get(k)?.value || '';
+  return res.json({ status: 'success', data });
+});
+router.put('/legal-settings', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const set = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+  const tx = db.transaction(() => {
+    for (const k of LEGAL_KEYS) if (typeof b[k] === 'string') set.run(k, b[k].trim());
+  });
+  tx();
+  return res.json({ status: 'success', message: 'Textes légaux enregistrés.' });
+});
+
 router.get('/splash-settings', requireAdmin, (req, res) => {
   const rows = db.prepare(
     `SELECT key, value FROM settings WHERE key IN ('splash_background_image', 'splash_background_video', 'splash_logo_image', 'splash_text_color', 'splash_overlay', 'splash_animation_style')`

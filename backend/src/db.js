@@ -797,6 +797,21 @@ function init() {
     });
     backfill();
   }
+
+  // Textes légaux de l'app (CGU, confidentialité, à propos, e-mail support) :
+  // seedés UNIQUEMENT si la clé est absente ou vide, pour ne jamais écraser
+  // une version éditée dans l'admin (Support & contenu → Textes légaux).
+  try {
+    const legal = require('./legal_texts');
+    const getS = db.prepare('SELECT value FROM settings WHERE key = ?');
+    const putS = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+    for (const key of ['privacy_policy', 'terms_and_conditions', 'about_us', 'support_email']) {
+      const row = getS.get(key);
+      if (!row || !String(row.value || '').trim()) putS.run(key, legal[key]);
+    }
+  } catch (e) {
+    console.warn('[db] seed textes légaux ignoré :', e.message);
+  }
 }
 
 module.exports = { db, init, DB_PATH };
