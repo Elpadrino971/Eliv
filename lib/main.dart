@@ -4,7 +4,6 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Global/locale_service.dart';
 import 'package:artist/Global/translations/app_translations.dart';
-import 'package:artist/OnBoarding/onboarding_1.dart';
 import 'package:artist/firebase_options.dart';
 import 'package:artist/services/push_notification.dart';
 import 'package:artist/spalash_screen.dart';
@@ -89,9 +88,10 @@ class MyApp extends StatelessWidget {
         // écrans, pour qu'il survive aux changements de page.
         builder: (context, child) =>
             MiniPlayerHost(child: child ?? const SizedBox.shrink()),
-        home: (box.read('init') == null)
-            ? const Onboarding1()
-            : const SpalashScreen(),
+        // Pas d'écrans de présentation au premier lancement : chaque écran
+        // avant le contenu fait perdre des utilisateurs. Splash -> Live + Feed
+        // (ou connexion s'il n'y a pas de compte).
+        home: const SpalashScreen(),
       ),
     );
   }
