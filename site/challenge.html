@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0A1226" />
+<title>VybzzZ Live Challenge — Monte sur scène. Fais ton live. Gagne.</title>
+<meta name="description" content="Concours artistes du 20 septembre au 24 octobre 2026 : 1er prix nouvel iPhone Pro. Inscris-toi, récupère ton lien, ramène ta communauté, fais tes lives.">
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png"><link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+<meta property="og:site_name" content="VybzzZ"><meta property="og:type" content="website"><meta property="og:title" content="VybzzZ Live Challenge — Monte sur scène. Fais ton live. Gagne."><meta property="og:description" content="Concours artistes du 20 septembre au 24 octobre 2026 : 1er prix nouvel iPhone Pro. Inscris-toi, récupère ton lien, ramène ta communauté, fais tes lives."><meta property="og:url" content="https://vybzzz.online/challenge.html"><meta property="og:image" content="https://vybzzz.online/assets/challenge/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://vybzzz.online/assets/challenge/og.jpg">
+<link rel="canonical" href="https://vybzzz.online/challenge.html">
+<script>if(location.hostname==='www.vybzzz.online'){location.replace('https://vybzzz.online'+location.pathname+location.search)}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+:root{--bordeaux:#7A1F33;--bordeaux-2:#A32C46}
+.chal{--pad:clamp(16px,4vw,46px)}
+.chal-hero{position:relative;padding:118px var(--pad) 56px;overflow:hidden;background:radial-gradient(90% 60% at 50% 0%,rgba(200,168,94,.16),transparent 60%),linear-gradient(180deg,#0A1226,#070C18)}
+.chal-hero__grid{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center}
+.chal-hero .eyebrow{color:var(--gold-2)}
+.chal-hero h1{font-family:"Plus Jakarta Sans",sans-serif;font-weight:800;font-size:clamp(2.4rem,6vw,4.6rem);line-height:1;letter-spacing:.02em;margin:8px 0 12px}
+.chal-hero h1 span{display:block;color:var(--gold);letter-spacing:.14em;font-size:.62em}
+.chal-hero .tag{font-size:.9rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+.chal-dates{display:inline-flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:12px 18px;border:1px solid rgba(200,168,94,.4);border-radius:14px;background:rgba(200,168,94,.06);margin-bottom:22px;font-weight:600}
+.chal-dates b{color:var(--gold)}
+.countdown{display:flex;gap:10px;margin:14px 0 26px;flex-wrap:wrap}
+.countdown div{min-width:74px;padding:10px 8px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--panel-line);text-align:center}
+.countdown b{display:block;font-family:"Sora",sans-serif;font-size:1.6rem;color:var(--gold);font-variant-numeric:tabular-nums}
+.countdown small{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.chal-hero__cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.chal-hero__flyer{position:relative;border-radius:22px;overflow:hidden;box-shadow:0 40px 90px -30px rgba(0,0,0,.8);border:1px solid rgba(200,168,94,.25)}
+.chal-hero__flyer img{display:block;width:100%;height:auto}
+.badge18{position:absolute;left:14px;bottom:14px;width:46px;height:46px;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;font-weight:800;background:rgba(0,0,0,.55)}
+.chal-section{padding:56px var(--pad)}
+.chal-section__in{max-width:var(--maxw);margin:0 auto}
+.chal-section h2{font-family:"Sora",sans-serif;font-weight:800;font-size:clamp(1.6rem,3.4vw,2.4rem);margin:0 0 8px}
+.chal-section .lead{color:var(--muted);max-width:64ch;margin:0 0 26px}
+.prizes{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:16px}
+.prize{padding:26px 24px;border-radius:18px;border:1px solid var(--panel-line);background:rgba(255,255,255,.03);position:relative}
+.prize--1{background:linear-gradient(160deg,rgba(200,168,94,.16),rgba(122,31,51,.25));border-color:rgba(200,168,94,.5)}
+.prize .rank{font-family:"Sora",sans-serif;font-weight:800;font-size:2.4rem;color:var(--gold);line-height:1}
+.prize h3{font-family:"Sora",sans-serif;font-size:1.25rem;margin:8px 0 4px}
+.prize p{color:var(--muted);font-size:.92rem;margin:0}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.step{padding:22px 20px;border-radius:16px;border:1px solid var(--panel-line);background:rgba(255,255,255,.03)}
+.step .n{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--gold);color:var(--gold);display:grid;place-items:center;font-weight:700;margin-bottom:12px}
+.step h3{font-family:"Sora",sans-serif;font-size:1.02rem;margin:0 0 6px}
+.step p{color:var(--muted);font-size:.9rem;margin:0}
+.crit{display:grid;gap:10px;max-width:760px}
+.crit div{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.crit .bar{grid-column:1/-1;height:6px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+.crit .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--bordeaux-2),var(--gold))}
+.crit b{color:var(--gold)}
+.rules-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.rule{padding:18px;border-radius:14px;border:1px solid var(--panel-line);background:rgba(255,255,255,.03);font-size:.92rem}
+.rule b{display:block;color:var(--gold-2);margin-bottom:4px}
+.chal-form{max-width:640px;padding:clamp(22px,4vw,38px);border-radius:20px;border:1px solid rgba(200,168,94,.35);background:rgba(10,18,38,.6)}
+.chal-form label{display:block;font-size:.82rem;color:var(--muted);margin:12px 0 6px}
+.chal-form input,.chal-form select,.chal-form textarea{width:100%;padding:13px 14px;border-radius:11px;background:#0D1528;border:1px solid var(--panel-line);color:var(--text);font:inherit}
+.chal-form input:focus,.chal-form select:focus{outline:none;border-color:var(--gold)}
+.chal-form .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chal-form .chk{display:flex;gap:10px;align-items:flex-start;font-size:.9rem;margin-top:14px;color:var(--text)}
+.chal-form .chk input{width:auto;margin-top:3px}
+.chal-form .btn{width:100%;margin-top:18px;justify-content:center}
+.linkbox{margin-top:18px;padding:18px;border-radius:14px;background:rgba(200,168,94,.08);border:1px solid rgba(200,168,94,.4)}
+.linkbox code{display:block;word-break:break-all;font-size:1.05rem;color:var(--gold);margin:8px 0 12px}
+.linkbox .acts{display:flex;gap:10px;flex-wrap:wrap}
+.mystats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:14px}
+.mystats div{padding:10px;border-radius:10px;background:rgba(255,255,255,.04);text-align:center}
+.mystats b{display:block;font-size:1.3rem;color:var(--gold)}
+.mystats small{color:var(--muted);font-size:.72rem}
+.board{width:100%;border-collapse:collapse;font-size:.94rem}
+.board th,.board td{padding:12px 10px;border-bottom:1px solid var(--panel-line);text-align:left}
+.board th{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.board td.r{text-align:right;font-variant-numeric:tabular-nums}
+.board .top3 td:first-child{color:var(--gold);font-weight:800}
+.board .no{color:var(--muted);font-size:.8rem}
+.org{text-align:center;color:var(--muted);font-size:.86rem;padding:10px var(--pad) 40px}
+.msg{margin-top:12px;font-size:.9rem;color:var(--gold-2)}
+@media(max-width:900px){.chal-hero__grid{grid-template-columns:1fr}.chal-hero__flyer{max-width:420px;margin:0 auto}.prizes,.steps,.rules-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.prizes,.steps,.rules-grid,.chal-form .row{grid-template-columns:1fr}.chal-hero{padding-top:98px}.chal-dates{font-size:.92rem;padding:10px 14px}.countdown div{min-width:64px}}
+</style>
+</head>
+<body data-page="challenge" class="chal">
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor" id="cursor"></div><div class="cursor-dot" id="cursorDot"></div>
+<div class="scroll-progress" id="scrollProgress"></div>
+<div id="site-header"></div>
+
+<section class="chal-hero">
+  <div class="chal-hero__grid">
+    <div class="reveal">
+      <span class="eyebrow">Concours artistes · 5 semaines</span>
+      <h1>VybzzZ<span>Live Challenge</span></h1>
+      <p class="tag">Monte sur scène. Fais ton live. Gagne.</p>
+      <div class="chal-dates">📅 Du <b>20 septembre</b> au <b>24 octobre 2026</b></div>
+      <div class="countdown" id="countdown" aria-live="polite"></div>
+      <p style="color:var(--muted);max-width:56ch;margin:0 0 22px">Inscris-toi, récupère ton lien personnel, ramène ta communauté, publie et fais tes lives. Ton talent mérite plus qu'un algorithme : ici, c'est l'activité réelle qui fait monter au classement.</p>
+      <div class="chal-hero__cta">
+        <a href="#inscription" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span>Inscris-toi et lance ton challenge</span></a>
+        <a href="#gagner" class="btn btn--outline" data-cursor="hover">Comment on gagne ?</a>
+      </div>
+    </div>
+    <div class="chal-hero__flyer reveal">
+      <img src="assets/challenge/flyer.jpg" alt="Affiche VybzzZ Live Challenge : 1er prix nouvel iPhone Pro, 2e prix 600 € de matériel, 3e prix 400 €" width="1024" height="1536" loading="eager">
+      <span class="badge18">+18</span>
+    </div>
+  </div>
+</section>
+
+<section class="chal-section" id="lots">
+  <div class="chal-section__in">
+    <span class="eyebrow">Récompenses</span>
+    <h2>Trois prix, un seul critère : être vraiment actif.</h2>
+    <p class="lead">Pas de tirage au sort. Les lots vont aux artistes qui font vivre VybzzZ pendant cinq semaines, après contrôle final de l'équipe.</p>
+    <div class="prizes">
+      <div class="prize prize--1 reveal"><div class="rank">1<sup style="font-size:.5em">er</sup></div><h3>Nouvel iPhone Pro</h3><p>Ou un équipement créateur de valeur équivalente, autour de 1 500 €.</p></div>
+      <div class="prize reveal"><div class="rank">2<sup style="font-size:.5em">e</sup></div><h3>600 € de matériel</h3><p>Pack matériel création / live : caméra, son, lumière.</p></div>
+      <div class="prize reveal"><div class="rank">3<sup style="font-size:.5em">e</sup></div><h3>400 €</h3><p>Matériel ou accompagnement artistique.</p></div>
+    </div>
+    <p class="lead" style="margin-top:16px;font-size:.9rem">En plus : mise en avant des gagnants sur VybzzZ, promotion de leur prochain live, badge et contenu éditorial.</p>
+  </div>
+</section>
+
+<section class="chal-section" id="participer" style="background:rgba(255,255,255,.02)">
+  <div class="chal-section__in">
+    <span class="eyebrow">Comment participer</span>
+    <h2>Quatre étapes, cinq semaines.</h2>
+    <div class="steps">
+      <div class="step reveal"><div class="n">1</div><h3>Crée ton compte artiste</h3><p>Inscris-toi au challenge ci-dessous, puis crée ou complète ton profil artiste dans l'appli VybzzZ avec le même e-mail.</p></div>
+      <div class="step reveal"><div class="n">2</div><h3>Publie ton contenu</h3><p>Clips, extraits, coulisses, annonces de concert : environ 3 contenus par semaine dans le feed. Le format est libre.</p></div>
+      <div class="step reveal"><div class="n">3</div><h3>Fais au moins un live</h3><p>Gratuit ou payant, c'est toi qui choisis. Règle essentielle : pas de live, pas de victoire.</p></div>
+      <div class="step reveal"><div class="n">4</div><h3>Invite tes fans</h3><p>Partage ton lien personnel partout. Chaque personne qui rejoint VybzzZ par ton lien compte pour toi.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="chal-section" id="gagner">
+  <div class="chal-section__in">
+    <span class="eyebrow">Le VybzzZ Score</span>
+    <h2>Comment on gagne.</h2>
+    <p class="lead">Les vues ne suffisent pas. Le classement combine cinq critères mesurés dans l'appli. Les simples clics sur ton lien ne comptent pas : seuls les fans qui créent un compte vérifié sont retenus.</p>
+    <div class="crit reveal">
+      <div><span>Audience réelle de tes lives</span><b>35 %</b><span class="bar"><i style="width:35%"></i></span></div>
+      <div><span>Nouveaux utilisateurs amenés par ton lien</span><b>25 %</b><span class="bar"><i style="width:25%"></i></span></div>
+      <div><span>Engagement pendant tes lives : chat, cadeaux, questions</span><b>20 %</b><span class="bar"><i style="width:20%"></i></span></div>
+      <div><span>Billets et pourboires, quand il y en a</span><b>10 %</b><span class="bar"><i style="width:10%"></i></span></div>
+      <div><span>Contenus publiés et lives réalisés</span><b>10 %</b><span class="bar"><i style="width:10%"></i></span></div>
+    </div>
+    <div class="rules-grid" style="margin-top:26px">
+      <div class="rule reveal"><b>Top 40 public</b>Le classement est visible sur cette page et mis à jour en continu.</div>
+      <div class="rule reveal"><b>Anti-fraude</b>Bots, faux comptes, vues achetées ou auto-achats : disqualification. Contrôle final avant remise des lots.</div>
+      <div class="rule reveal"><b>18 ans et plus</b>Ouvert à tous les artistes majeurs, inscriptions illimitées, aucun frais.</div>
+      <div class="rule reveal"><b>Contenu libre, mais propre</b>Tout contenu déplacé, haineux, sexuellement explicite ou sans droits entraîne l'exclusion immédiate.</div>
+    </div>
+  </div>
+</section>
+
+<section class="chal-section" id="inscription" style="background:rgba(255,255,255,.02)">
+  <div class="chal-section__in">
+    <span class="eyebrow">Inscription</span>
+    <h2>Inscris-toi et récupère ton lien.</h2>
+    <p class="lead">Une minute. Ton lien personnel s'affiche tout de suite, et tu retrouves ton tableau de bord ici à tout moment.</p>
+    <form class="chal-form reveal" id="chalForm" autocomplete="on">
+      <div class="row">
+        <div><label for="cStage">Nom de scène *</label><input id="cStage" required maxlength="60" placeholder="ex. NOVA"></div>
+        <div><label for="cGenre">Genre principal</label><select id="cGenre"><option value="">Choisir</option><option>Afrobeats</option><option>Hip-Hop</option><option>R&amp;B / Soul</option><option>Amapiano</option><option>Zouk / Kompa</option><option>Dancehall / Reggae</option><option>Électro / House</option><option>Pop</option><option>Jazz</option><option>Gospel</option><option>Autre</option></select></div>
+      </div>
+      <div class="row">
+        <div><label for="cEmail">E-mail (le même que ton compte VybzzZ) *</label><input id="cEmail" type="email" required placeholder="toi@email.com"></div>
+        <div><label for="cPhone">Téléphone / WhatsApp</label><input id="cPhone" type="tel" placeholder="+590 …"></div>
+      </div>
+      <label for="cSocials">Tes réseaux (Instagram, TikTok, YouTube…)</label><input id="cSocials" placeholder="@toncompte, lien YouTube…">
+      <label class="chk"><input type="checkbox" id="cAdult" required> J'ai 18 ans ou plus.</label>
+      <label class="chk"><input type="checkbox" id="cAccept" required> J'ai lu et j'accepte le <a href="challenge-reglement.html" target="_blank" style="color:var(--gold)">règlement du VybzzZ Live Challenge</a> et les <a href="cgu.html" target="_blank" style="color:var(--gold)">CGU</a>.</label>
+      <button class="btn btn--gold btn--lg" type="submit" data-cursor="hover"><span>Valider mon inscription</span></button>
+      <div class="msg" id="chalMsg"></div>
+    </form>
+    <div class="chal-form linkbox reveal" id="linkBox" hidden>
+      <b>🎉 Tu es inscrit·e, <span id="lbName"></span>.</b> Voici ton lien personnel à partager partout :
+      <code id="lbLink"></code>
+      <div class="acts">
+        <button class="btn btn--gold" id="lbCopy" data-cursor="hover"><span>Copier le lien</span></button>
+        <a class="btn btn--outline" id="lbWa" target="_blank" rel="noopener" data-cursor="hover">WhatsApp</a>
+        <button class="btn btn--outline" id="lbShare" data-cursor="hover">Partager…</button>
+      </div>
+      <p style="margin:14px 0 0;font-size:.88rem;color:var(--muted)">Étape suivante : ouvre l'appli VybzzZ, crée ou complète ton profil artiste avec <b id="lbEmail"></b>, publie, et programme ton premier live.</p>
+      <div class="mystats" id="myStats"></div>
+    </div>
+  </div>
+</section>
+
+<section class="chal-section" id="classement">
+  <div class="chal-section__in">
+    <span class="eyebrow">Classement</span>
+    <h2>Top 40 en direct.</h2>
+    <p class="lead">Score sur 100, recalculé toutes les minutes. Un artiste sans live apparaît mais n'est pas éligible aux lots.</p>
+    <div style="overflow-x:auto"><table class="board"><thead><tr><th>#</th><th>Artiste</th><th class="r">Score</th><th class="r">Lives</th><th class="r">Fans amenés</th></tr></thead><tbody id="boardBody"><tr><td colspan="5" class="no">Chargement…</td></tr></tbody></table></div>
+  </div>
+</section>
+
+<p class="org">Organisé par <b>Axen Digital</b>, en collaboration avec <b>Alizés Records</b>. Concours réservé aux artistes de 18 ans et plus. <a href="challenge-reglement.html" style="color:var(--gold)">Règlement complet</a>.</p>
+<div id="site-footer"></div>
+<script src="data.js"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+<script>
+(function(){
+  var API='https://api.vybzzz.online/api/challenge';
+  if(location.hostname==='localhost'||location.protocol==='file:') API='http://localhost:8099/api/challenge';
+  var cfg=null;
+  function $(id){return document.getElementById(id)}
+  function pad(n){return String(n).padStart(2,'0')}
+  function tick(){
+    if(!cfg) return; var now=Date.now(), start=Date.parse(cfg.start), end=Date.parse(cfg.end);
+    var target=now<start?start:end, label=now<start?'avant le départ':(now<end?'avant la clôture':'');
+    var el=$('countdown'); if(!label){el.innerHTML='<div><b>Terminé</b><small>challenge clos</small></div>';return}
+    var d=Math.max(0,target-now), j=Math.floor(d/864e5), h=Math.floor(d%864e5/36e5), m=Math.floor(d%36e5/6e4), s=Math.floor(d%6e4/1e3);
+    el.innerHTML='<div><b>'+j+'</b><small>jours</small></div><div><b>'+pad(h)+'</b><small>heures</small></div><div><b>'+pad(m)+'</b><small>min</small></div><div><b>'+pad(s)+'</b><small>sec</small></div><div style="min-width:auto;background:none;border:0;text-align:left"><small>'+label+'</small></div>';
+  }
+  fetch(API+'/config').then(function(r){return r.json()}).then(function(d){cfg=d.data;tick();setInterval(tick,1000)}).catch(function(){});
+  function board(){
+    fetch(API+'/leaderboard').then(function(r){return r.json()}).then(function(d){
+      var rows=d.data.top||[]; var tb=$('boardBody');
+      if(!rows.length){tb.innerHTML='<tr><td colspan="5" class="no">Le classement s\'affichera dès les premières inscriptions.</td></tr>';return}
+      tb.innerHTML=rows.map(function(r){return '<tr class="'+(r.rank<=3&&r.eligible?'top3':'')+'"><td>'+r.rank+'</td><td>'+esc(r.stage_name)+(r.eligible?'':' <span class="no">· pas encore de live</span>')+'</td><td class="r">'+r.score+'</td><td class="r">'+r.lives+'</td><td class="r">'+r.referrals+'</td></tr>'}).join('');
+    }).catch(function(){$('boardBody').innerHTML='<tr><td colspan="5" class="no">Classement indisponible pour le moment.</td></tr>'});
+  }
+  function esc(s){return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  board(); setInterval(board,60000);
+  function showLink(data){
+    $('chalForm').hidden=true; var b=$('linkBox'); b.hidden=false; b.classList.add('in');
+    $('lbName').textContent=data.stage_name; $('lbLink').textContent=data.link; $('lbEmail').textContent=data.email||'';
+    var txt='Rejoins-moi sur VybzzZ, la scène live : '+data.link;
+    $('lbWa').href='https://wa.me/?text='+encodeURIComponent(txt);
+    $('lbCopy').onclick=function(){navigator.clipboard&&navigator.clipboard.writeText(data.link).then(function(){$('lbCopy').querySelector('span').textContent='Copié ✓'})};
+    $('lbShare').onclick=function(){ if(navigator.share) navigator.share({title:'VybzzZ Live Challenge',text:txt,url:data.link}).catch(function(){}); else $('lbCopy').click(); };
+    try{localStorage.setItem('vyb_challenge',JSON.stringify({code:data.code,link:data.link,stage_name:data.stage_name,email:data.email}))}catch(e){}
+    fetch(API+'/stats/'+encodeURIComponent(data.code)).then(function(r){return r.json()}).then(function(d){
+      var s=d.data&&d.data.stats; if(!s) return;
+      $('myStats').innerHTML=[['Rang',s.rank],['Score',s.score],['Lives',s.lives],['Contenus',s.clips],['Fans amenés',s.referrals],['Clics',s.clicks]].map(function(x){return '<div><b>'+x[1]+'</b><small>'+x[0]+'</small></div>'}).join('')
+        +(d.data.linked?'':'<div style="grid-column:1/-1;text-align:left"><small>Compte VybzzZ pas encore relié : crée ton profil artiste dans l\'appli avec cet e-mail.</small></div>');
+    }).catch(function(){});
+  }
+  try{ var saved=JSON.parse(localStorage.getItem('vyb_challenge')||'null'); if(saved&&saved.code) showLink(saved); }catch(e){}
+  $('chalForm').addEventListener('submit',function(e){
+    e.preventDefault(); var btn=e.target.querySelector('button'); btn.disabled=true; $('chalMsg').textContent='';
+    var payload={stage_name:$('cStage').value.trim(),email:$('cEmail').value.trim(),phone:$('cPhone').value.trim(),genre:$('cGenre').value,socials:$('cSocials').value.trim(),adult:$('cAdult').checked,accept:$('cAccept').checked};
+    fetch(API+'/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){return r.json()}).then(function(d){
+        if(d.status==='success'){ d.data.email=payload.email; showLink(d.data); location.hash='#inscription'; }
+        else $('chalMsg').textContent=d.message||'Erreur, réessaie.';
+      }).catch(function(){$('chalMsg').textContent='Réseau indisponible, réessaie dans un instant.'}).finally(function(){btn.disabled=false});
+  });
+})();
+</script>
+</body>
+</html>

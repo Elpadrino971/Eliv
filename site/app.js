@@ -50,6 +50,7 @@
     { href: "index.html#roles",      key: "nav_deal",   id: "_deal" },
     { href: "index.html#academy",    key: "nav_academy", id: "_academy" },
     { href: "faq.html",              key: "nav_faq",    id: "faq" },
+    { href: "challenge.html",        key: "nav_challenge", id: "challenge" },
   ];
 
   function renderHeader() {

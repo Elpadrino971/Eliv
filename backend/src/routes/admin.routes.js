@@ -1056,6 +1056,33 @@ const SPLASH_ANIMATION_STYLES = [
   'none',
 ];
 
+// ─── VybzzZ Live Challenge : inscrits, score, disqualification ─────────────
+const challengeSvc = require('../services/challenge');
+router.get('/challenge', requireAdmin, (req, res) => {
+  const board = challengeSvc.leaderboard(true);
+  const artists = db.prepare('SELECT * FROM challenge_artists ORDER BY id DESC').all();
+  const byId = Object.fromEntries(board.map((r) => [r.id, r]));
+  const list = artists.map((a) => ({ ...a, link: challengeSvc.linkFor(a.code), stats: byId[a.id] || null }));
+  const totals = {
+    artists: artists.length,
+    referrals_pre: db.prepare("SELECT COUNT(*) c FROM challenge_referrals WHERE status = 'pre'").get().c,
+    referrals_qualified: db.prepare("SELECT COUNT(*) c FROM challenge_referrals WHERE status = 'qualified'").get().c,
+    clicks: db.prepare('SELECT COALESCE(SUM(count),0) c FROM challenge_clicks').get().c,
+  };
+  return res.json({ status: 'success', data: { config: challengeSvc.publicConfig(), totals, list } });
+});
+router.get('/challenge/:id/referrals', requireAdmin, (req, res) => {
+  const rows = db.prepare('SELECT id, email, name, status, user_id, ip, created_at, qualified_at FROM challenge_referrals WHERE artist_id = ? ORDER BY id DESC').all(req.params.id);
+  return res.json({ status: 'success', data: rows });
+});
+router.post('/challenge/:id/status', requireAdmin, (req, res) => {
+  const st = String(req.body?.status || '');
+  if (!['active', 'disqualified', 'winner'].includes(st)) return res.status(422).json({ status: 'error', message: 'Statut invalide.' });
+  db.prepare('UPDATE challenge_artists SET status = ? WHERE id = ?').run(st, req.params.id);
+  challengeSvc.leaderboard(true);
+  return res.json({ status: 'success', message: 'Statut mis à jour.' });
+});
+
 // ─── Textes légaux de l'app (Profil → À propos / Réglages) ───────────────────
 // Lus par l'app via GET /api/settings/get-settings (public). Éditables ici.
 const LEGAL_KEYS = ['privacy_policy', 'terms_and_conditions', 'about_us', 'support_email'];

@@ -1587,6 +1587,7 @@ window.I18N.ru = {
     }
   };
   Object.keys(FIX).forEach(function (l) { if (window.I18N[l]) Object.assign(window.I18N[l], FIX[l]); });
+  Object.keys(window.I18N).forEach(function (l) { window.I18N[l].nav_challenge = 'Challenge'; });
   // Marque : toujours "VybzzZ" dans les textes (jamais Vybzzz / VYBZZZ / VyBzzZ).
   Object.keys(window.I18N).forEach(function (l) {
     var d = window.I18N[l];

@@ -9,6 +9,7 @@ const { saveUpload } = require('../uploads');
 const moderation = require('../services/moderation');
 const emailService = require('../services/email');
 const socialAuth = require('../services/social_auth');
+const challenge = require('../services/challenge');
 
 const OTP_TTL_MINUTES = 15;
 
@@ -191,6 +192,7 @@ router.post('/social-login', async (req, res) => {
         isApple ? (verified?.sub || null) : null
       );
     user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
+    challenge.onVerifiedUser(user); // compte social = e-mail vérifié par le fournisseur
   } else if (isApple && verified?.sub && !user.apple_sub) {
     db.prepare('UPDATE users SET apple_sub = ? WHERE id = ?').run(verified.sub, user.id);
   }
@@ -206,6 +208,7 @@ router.post('/verify', (req, res) => {
   if (otpExpired(user)) return fail(res, 'OTP code expired. Request a new one.', 422);
   db.prepare('UPDATE users SET is_verified = 1, updated_at = datetime(\'now\') WHERE id = ?').run(user.id);
   const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+  challenge.onVerifiedUser(fresh); // Live Challenge : qualifie une pré-inscription via lien d'artiste
   return authResponse(res, fresh, 'Verified.');
 });
 

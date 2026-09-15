@@ -111,6 +111,7 @@ const NAV = [
     { id: 'faqs', label: 'FAQ', ic: '❓' },
     { id: 'cms', label: 'CMS', ic: '📄' },
     { id: 'legal', label: 'Textes légaux', ic: '⚖️' },
+    { id: 'challenge', label: 'Live Challenge', ic: '🏆' },
   ] },
   { group: 'Pilotage interne', items: [
     { id: 'vibe', label: 'Réunions & CRM', ic: '🎯' },
@@ -1407,6 +1408,50 @@ async function pageProfile() {
 }
 
 
+// ─── VybzzZ Live Challenge : inscrits, score, fans amenés, disqualification ───
+async function pageChallenge() {
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  const { data } = await api('GET', '/challenge');
+  const { config, totals, list } = data;
+  const fmt = (d) => d ? String(d).slice(0, 10) : '—';
+  const badge = (st) => st === 'disqualified' ? '<span class="badge pending">Disqualifié</span>'
+    : st === 'winner' ? '<span class="badge live">Gagnant</span>' : '<span class="badge active">Actif</span>';
+  view().innerHTML = `<h1 class="page-title">Live Challenge</h1>
+    <div class="em" style="margin-bottom:12px">${esc(config.name)} · du ${fmt(config.start)} au ${fmt(config.end)} · ${esc(config.organizer)} ·
+      <a href="https://vybzzz.online/challenge.html" target="_blank">page publique</a></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px">
+      ${[['Artistes inscrits', totals.artists], ['Fans qualifiés', totals.referrals_qualified], ['Pré-inscrits (en attente)', totals.referrals_pre], ['Clics sur les liens', totals.clicks]]
+        .map(([l, v]) => `<div class="tcard" style="padding:12px"><div class="em">${l}</div><div style="font-size:22px;color:var(--gold);font-weight:700">${v}</div></div>`).join('')}
+    </div>
+    <div class="tcard" style="overflow:auto">
+      <table class="tbl"><thead><tr><th>#</th><th>Artiste</th><th>E-mail</th><th>Lien</th><th>Compte</th><th>Score</th><th>Lives</th><th>Contenus</th><th>Fans</th><th>Clics</th><th>Statut</th><th></th></tr></thead>
+      <tbody>${list.map((a) => { const s = a.stats || {}; return `<tr>
+        <td>${s.rank ?? '—'}</td><td><b>${esc(a.stage_name)}</b><div class="em">${esc(a.genre || '')} ${esc(a.socials || '')}</div></td>
+        <td>${esc(a.email)}<div class="em">${esc(a.phone || '')}</div></td>
+        <td><code style="font-size:11px">${esc(a.code)}</code> <button class="btn edit" data-copy="${esc(a.link)}">copier</button></td>
+        <td>${a.user_id ? '✅ relié' : '<span style="color:#ffb3b3">non relié</span>'}</td>
+        <td><b>${s.score ?? 0}</b>${s.eligible === false ? '<div class="em">pas de live</div>' : ''}</td>
+        <td>${s.lives ?? 0}</td><td>${s.clips ?? 0}</td>
+        <td>${s.referrals ?? 0}<div class="em">${s.pre ?? 0} en attente</div></td><td>${s.clicks ?? 0}</td>
+        <td>${badge(a.status)}</td>
+        <td style="white-space:nowrap">
+          <button class="btn edit" data-refs="${a.id}">fans</button>
+          ${a.status === 'disqualified' ? `<button class="btn status" data-st="active" data-id="${a.id}">réactiver</button>` : `<button class="btn del" data-st="disqualified" data-id="${a.id}">disqualifier</button>`}
+          ${a.status === 'winner' ? '' : `<button class="btn gold" data-st="winner" data-id="${a.id}">gagnant</button>`}
+        </td></tr><tr id="refs-${a.id}" hidden><td colspan="12" class="em">…</td></tr>`; }).join('') || '<tr><td colspan="12" class="empty">Aucun inscrit pour le moment.</td></tr>'}</tbody></table>
+    </div>`;
+  view().querySelectorAll('[data-copy]').forEach((b) => b.onclick = () => { navigator.clipboard?.writeText(b.dataset.copy); toast('Lien copié'); });
+  view().querySelectorAll('[data-st]').forEach((b) => b.onclick = async () => {
+    if (b.dataset.st === 'disqualified' && !confirm('Disqualifier cet artiste ? Il disparaît du classement.')) return;
+    try { await api('POST', `/challenge/${b.dataset.id}/status`, { status: b.dataset.st }); toast('Statut mis à jour'); pageChallenge(); } catch (e) { toast(e.message); }
+  });
+  view().querySelectorAll('[data-refs]').forEach((b) => b.onclick = async () => {
+    const row = view().querySelector(`#refs-${b.dataset.refs}`); row.hidden = !row.hidden; if (row.hidden) return;
+    const { data: refs } = await api('GET', `/challenge/${b.dataset.refs}/referrals`);
+    row.firstElementChild.innerHTML = refs.length ? `<table class="tbl" style="font-size:12px"><thead><tr><th>E-mail</th><th>Prénom</th><th>Statut</th><th>Pré-inscrit le</th><th>Qualifié le</th><th>IP</th></tr></thead><tbody>${refs.map((r) => `<tr><td>${esc(r.email)}</td><td>${esc(r.name || '')}</td><td>${r.status === 'qualified' ? '✅ qualifié' : r.status === 'existing' ? 'déjà membre (ne compte pas)' : 'en attente du compte'}</td><td>${esc(r.created_at)}</td><td>${esc(r.qualified_at || '—')}</td><td class="em">${esc(r.ip || '')}</td></tr>`).join('')}</tbody></table>` : 'Aucun fan pré-inscrit via ce lien.';
+  });
+}
+
 // ─── Textes légaux (CGU, confidentialité, à propos) affichés dans l'app ───
 async function pageLegal() {
   view().innerHTML = '<div class="empty">Chargement…</div>';
@@ -2177,7 +2222,7 @@ const ROUTES = {
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
-  splash: pageSplash, legal: pageLegal, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
+  splash: pageSplash, legal: pageLegal, challenge: pageChallenge, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
 };
 
 window.addEventListener('hashchange', route);

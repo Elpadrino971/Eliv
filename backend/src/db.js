@@ -143,6 +143,43 @@ function init() {
       value TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS challenge_artists (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT UNIQUE,
+      email TEXT UNIQUE,
+      stage_name TEXT,
+      phone TEXT,
+      genre TEXT,
+      socials TEXT,
+      user_id INTEGER,
+      status TEXT DEFAULT 'active',
+      accepted_rules INTEGER DEFAULT 0,
+      adult INTEGER DEFAULT 0,
+      ip TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS challenge_referrals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      artist_id INTEGER,
+      email TEXT UNIQUE,
+      name TEXT,
+      user_id INTEGER,
+      status TEXT DEFAULT 'pre',
+      ip TEXT,
+      ua TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      qualified_at DATETIME
+    );
+
+    CREATE TABLE IF NOT EXISTS challenge_clicks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      artist_id INTEGER,
+      day TEXT,
+      count INTEGER DEFAULT 0,
+      UNIQUE(artist_id, day)
+    );
+
     CREATE TABLE IF NOT EXISTS abusive_words (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       word TEXT

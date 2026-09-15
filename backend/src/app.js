@@ -59,6 +59,8 @@ app.use(
     '/api/update-password',
     '/api/verify',
     '/api/admin/login',
+    '/api/challenge/register',
+    '/api/challenge/join',
   ],
   authLimiter,
 );
@@ -238,6 +240,7 @@ app.use('/api/vibe', require('./routes/vibe.routes'));
 app.use('/api/v1', require('./routes/publish.routes'));
 // Flux temps réel (SSE) pour les écrans Stage / Régie : cadeaux, billets… (clé API).
 app.use('/api/live', require('./routes/live.routes'));
+app.use('/api/challenge', require('./routes/challenge.routes'));
 
 // Toutes les routes API sous /api (comme baseAPI = mainIP/api)
 app.use('/api', authRoutes);
