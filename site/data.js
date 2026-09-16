@@ -108,8 +108,8 @@ window.VYBZZZ = (function () {
   // Vide = le bouton correspondant n'est pas affiché.
   const links = {
     whatsapp: "",          // ex. https://chat.whatsapp.com/XXXXXXXX
-    appStore: "",          // ex. https://apps.apple.com/app/id...
-    playStore: "",         // ex. https://play.google.com/store/apps/details?id=com.app.vybzz
+    appStore: "",          // https://apps.apple.com/fr/app/id<APPLE_ID> — à remplir dès la fiche App Store Connect créée
+    playStore: "https://play.google.com/store/apps/details?id=com.app.vybzz",
     api: "https://api.vybzzz.online/api",
   };
 

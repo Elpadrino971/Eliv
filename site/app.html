@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0A1226" />
+<title>Télécharger VybzzZ</title>
+<meta name="description" content="Télécharge l'appli VybzzZ sur iPhone ou Android : lives, clips, billets et cadeaux, où que tu sois.">
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+<meta property="og:site_name" content="VybzzZ"><meta property="og:title" content="Télécharger VybzzZ"><meta property="og:description" content="Lives, clips, billets et cadeaux, où que tu sois."><meta property="og:image" content="https://vybzzz.online/assets/brand/og.jpg"><meta property="og:url" content="https://vybzzz.online/app.html"><meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://vybzzz.online/app.html">
+<link rel="stylesheet" href="styles.css" />
+<style>
+body{min-height:100vh;display:flex;flex-direction:column}
+.dl{flex:1;display:grid;place-items:center;padding:32px 20px;text-align:center;background:radial-gradient(80% 50% at 50% 0%,rgba(200,168,94,.16),transparent 60%),#0A1226}
+.dl__card{max-width:460px;width:100%}
+.dl__icon{width:96px;height:96px;border-radius:26px;margin:0 auto 18px;display:block;box-shadow:0 20px 50px -20px rgba(0,0,0,.8)}
+.dl h1{font-family:"Sora",sans-serif;font-size:clamp(1.7rem,6vw,2.4rem);margin:0 0 8px}
+.dl p{color:var(--muted);margin:0 0 24px}
+.stores{display:grid;gap:12px}
+.store{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 20px;border-radius:14px;border:1px solid var(--panel-line);background:rgba(255,255,255,.04);color:var(--text);font-weight:600;text-decoration:none;font-size:1.05rem}
+.store--main{background:var(--gold);color:#0a1828;border-color:var(--gold)}
+.store svg{width:26px;height:26px;flex:0 0 auto}
+.store small{display:block;font-size:.72rem;font-weight:400;opacity:.8}
+.store.soon{opacity:.55;pointer-events:none}
+.dl__note{margin-top:18px;font-size:.82rem;color:var(--muted)}
+.dl__wa{margin-top:22px}
+.qr{margin:22px auto 0;padding:14px;background:#fff;border-radius:14px;width:180px;display:none}
+.qr img{display:block;width:100%}
+@media(min-width:900px){.qr{display:block}}
+</style>
+</head>
+<body>
+<main class="dl">
+  <div class="dl__card">
+    <img class="dl__icon" src="assets/brand/icon-192.png" alt="VybzzZ" width="96" height="96">
+    <h1>Télécharger VybzzZ</h1>
+    <p id="dlLead">Lives, clips, billets et cadeaux. La scène est à toi, où que tu sois.</p>
+    <div class="stores" id="stores"></div>
+    <div class="dl__note" id="dlNote"></div>
+    <div class="dl__wa" id="dlWa"></div>
+    <div class="qr" id="qr"><img alt="QR code vers cette page" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=https%3A%2F%2Fvybzzz.online%2Fapp.html"></div>
+    <p class="dl__note"><a href="index.html" style="color:var(--gold)">← Retour au site</a></p>
+  </div>
+</main>
+<script src="data.js"></script>
+<script>
+(function(){
+  var L=(window.VYBZZZ&&window.VYBZZZ.links)||{};
+  var ua=navigator.userAgent||'', isIOS=/iPhone|iPad|iPod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1), isAndroid=/Android/i.test(ua);
+  var apple='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.6c0-2.5 2-3.7 2.1-3.8-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.8-1.7 0-3.2 1-4.1 2.5-1.8 3-.5 7.5 1.3 10 .8 1.2 1.8 2.6 3.2 2.5 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.2 3.1-2.5.9-1.4 1.3-2.7 1.4-2.8-.1 0-2.9-1.1-2.9-4zM13.9 5.1c.7-.8 1.2-2 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"/></svg>';
+  var play='<svg viewBox="0 0 24 24"><path fill="#34A853" d="M3.6 2.4 13 12l-9.4 9.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z"/><path fill="#FBBC04" d="M17 8 13 12l4 4 3.5-2c.7-.4.7-1.5 0-2L17 8z"/><path fill="#EA4335" d="M13 12 3.6 21.6c.4.3 1 .3 1.6 0L17 16l-4-4z"/><path fill="#4285F4" d="M13 12 17 8 5.2 2.4c-.6-.3-1.2-.3-1.6 0L13 12z"/></svg>';
+  function btn(href,icon,label,sub,main){ return href?'<a class="store'+(main?' store--main':'')+'" href="'+href+'">'+icon+'<span>'+label+'<small>'+sub+'</small></span></a>':'<span class="store soon">'+icon+'<span>'+label+'<small>bientôt disponible</small></span></span>'; }
+  var s=document.getElementById('stores'), note=document.getElementById('dlNote');
+  var ios=btn(L.appStore,apple,'App Store','iPhone & iPad',isIOS), and=btn(L.playStore,play,'Google Play','Android',isAndroid);
+  s.innerHTML=isIOS?ios+and:and+ios;
+  // Un clic = le bon store, directement, si son lien existe.
+  if(isIOS&&L.appStore){ note.textContent='Ouverture de l\'App Store…'; setTimeout(function(){location.href=L.appStore},600); }
+  else if(isAndroid&&L.playStore){ note.textContent='Ouverture de Google Play…'; setTimeout(function(){location.href=L.playStore},600); }
+  else if(isIOS&&!L.appStore){ note.textContent='La version iPhone arrive sur l\'App Store dans quelques jours. Laisse ton e-mail sur la page Challenge pour être prévenu.'; }
+  if(L.whatsapp) document.getElementById('dlWa').innerHTML='<a class="btn btn--outline" href="'+L.whatsapp+'" target="_blank" rel="noopener"><span>💬 Rejoindre le groupe WhatsApp</span></a>';
+})();
+</script>
+</body>
+</html>

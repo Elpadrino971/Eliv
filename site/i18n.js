@@ -1588,6 +1588,8 @@ window.I18N.ru = {
   };
   Object.keys(FIX).forEach(function (l) { if (window.I18N[l]) Object.assign(window.I18N[l], FIX[l]); });
   Object.keys(window.I18N).forEach(function (l) { window.I18N[l].nav_challenge = 'Challenge'; });
+  var DL = { fr: "Télécharger l'appli", en: 'Get the app', es: 'Descargar la app', it: "Scarica l'app", de: 'App laden', pt: 'Baixar o app', zh: '下载应用', ko: '앱 다운로드', ja: 'アプリを入手', ar: 'حمّل التطبيق', hi: 'ऐप डाउनलोड करें', ru: 'Скачать приложение' };
+  Object.keys(window.I18N).forEach(function (l) { window.I18N[l].nav_download = DL[l] || DL.en; });
   // Marque : toujours "VybzzZ" dans les textes (jamais Vybzzz / VYBZZZ / VyBzzZ).
   Object.keys(window.I18N).forEach(function (l) {
     var d = window.I18N[l];

@@ -12,7 +12,7 @@
   --serif:"Playfair Display",Georgia,serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;background:var(--bg)}
 body{font-family:"Inter",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}img{max-width:100%;display:block}
 h1,h2,h3,h4{font-family:"Playfair Display",sans-serif;line-height:1.08;letter-spacing:-.02em}
@@ -717,3 +717,10 @@ mark.todo{background:rgba(230,199,106,.18);color:var(--gold-2);padding:1px 6px;b
 .feed__cta-item .feed__title{font-size:clamp(1.3rem,4vw,2rem)}
 .feed__artist a.feed__follow{text-decoration:none}
 .fa-btn i{display:block;font-size:.7rem;font-style:normal;color:var(--muted);margin-top:2px}
+
+/* ---------- Téléchargement : bouton header + barre mobile ---------- */
+.nav__dl{white-space:nowrap}
+.dlbar{display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:950;align-items:center;gap:10px;padding:12px 16px;border-radius:14px;
+  background:rgba(10,18,38,.94);backdrop-filter:blur(14px);border:1px solid rgba(200,168,94,.45);color:var(--text);font-size:.9rem;box-shadow:0 14px 40px -12px rgba(0,0,0,.8)}
+.dlbar span{flex:1}.dlbar b{padding:8px 14px;border-radius:99px;background:var(--gold);color:#0a1828;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase}
+@media(max-width:700px){.dlbar{display:flex}.footer{padding-bottom:96px}.nav__dl{display:none}}

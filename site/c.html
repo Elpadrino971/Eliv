@@ -125,8 +125,6 @@
 (function(){
   var API='https://api.vybzzz.online/api/challenge';
   if(location.hostname==='localhost'||location.protocol==='file:') API='http://localhost:8099/api/challenge';
-  // Liens des stores : à renseigner dès la publication (laisser vide = message d'attente).
-  var APP_STORE_URL='', PLAY_STORE_URL='';
   function $(id){return document.getElementById(id)}
   var m=location.pathname.match(/\/c\/([A-Za-z0-9]+)/); var code=(m&&m[1])||new URLSearchParams(location.search).get('r')||'';
   code=code.toUpperCase(); var artist='ton artiste';
@@ -146,10 +144,10 @@
         if(st==='existing') $('doneTitle').textContent='Tu as déjà un compte VybzzZ : ouvre l\'appli et retrouve '+artist+'.';
         else if(st==='other_artist') $('doneTitle').textContent='Tu es déjà invité·e par un autre artiste, mais bienvenue quand même !';
         else if(st==='already') $('doneTitle').textContent='Déjà noté. Il ne te reste plus qu\'à créer ton compte dans l\'appli.';
-        var links=[];
-        if(APP_STORE_URL) links.push('<a class="btn btn--gold" href="'+APP_STORE_URL+'"><span>App Store</span></a>');
-        if(PLAY_STORE_URL) links.push('<a class="btn btn--gold" href="'+PLAY_STORE_URL+'"><span>Google Play</span></a>');
-        $('storeLinks').innerHTML=links.length?links.join(''):'<span style="color:var(--muted);font-size:.9rem">L\'appli arrive sur l\'App Store et Google Play : tu recevras le lien par e-mail dès sa sortie.</span>';
+        var L=(window.VYBZZZ&&window.VYBZZZ.links)||{};
+        var links=['<a class="btn btn--gold" href="app.html"><span>📲 Télécharger l\'appli</span></a>'];
+        if(L.whatsapp) links.push('<a class="btn btn--outline" href="'+L.whatsapp+'" target="_blank" rel="noopener"><span>💬 Groupe WhatsApp</span></a>');
+        $('storeLinks').innerHTML=links.join('');
       }).catch(function(){$('joinMsg').textContent='Réseau indisponible, réessaie dans un instant.'}).finally(function(){btn.disabled=false});
   });
 })();

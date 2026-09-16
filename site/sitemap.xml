@@ -10,4 +10,5 @@
   <url><loc>https://vybzzz.online/cgu.html</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://vybzzz.online/challenge.html</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
   <url><loc>https://vybzzz.online/challenge-reglement.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://vybzzz.online/app.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
 </urlset>

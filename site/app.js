@@ -66,10 +66,12 @@
       <nav class="nav__links" style="margin-left:auto">${links}</nav>
       <div class="nav__cta">
         <button class="lang-btn" data-cursor="hover" onclick="window.__vybLang&&window.__vybLang()">🌐 ${LANG.toUpperCase()}</button>
+        <a href="app.html" class="btn btn--ghost nav__dl" data-cursor="hover">📲 ${t("nav_download")}</a>
         <a href="artist.html" class="btn btn--gold magnetic" data-cursor="hover"><span>${t("nav_apply")}</span></a>
       </div>
       <button class="nav__burger" id="burger" aria-label="Menu"><i></i><i></i><i></i></button>
-    </header>`;
+    </header>
+    ${page === "c" || page === "challenge" || page === "artist" ? "" : `<a href="app.html" class="dlbar">📲 <span>${t("nav_download")} VybzzZ</span> <b>Ouvrir</b></a>`}`;
   }
 
   function renderFooter() {
@@ -81,7 +83,7 @@
           <p>${t("foot_tagline")}</p>
         </div>
         <div class="footer__cols">
-          <div><h4>${t("foot_discover")}</h4><a href="feed.html">${t("nav_feed")}</a><a href="store.html">${t("nav_store")}</a><a href="index.html#roles">${t("nav_deal")}</a><a href="faq.html">${t("nav_faq")}</a></div>
+          <div><h4>${t("foot_discover")}</h4><a href="app.html">${t("nav_download")}</a><a href="feed.html">${t("nav_feed")}</a><a href="store.html">${t("nav_store")}</a><a href="index.html#roles">${t("nav_deal")}</a><a href="faq.html">${t("nav_faq")}</a></div>
           <div><h4>${t("foot_artists")}</h4><a href="artist.html">${t("nav_apply")}</a><a href="index.html#roles">${t("foot_roles")}</a><a href="index.html#academy">${t("nav_academy")}</a><a href="index.html#fondateurs">${t("foot_founders")}</a></div>
           <div><h4>${t("foot_help")}</h4><a href="index.html#reserver">${t("foot_book")}</a><a href="mailto:hello@vybzzz.online">hello@vybzzz.online</a><a href="mentions-legales.html">${t("foot_legal")}</a><a href="confidentialite.html">${t("foot_privacy")}</a><a href="cgu.html">${t("foot_terms")}</a></div>
         </div>
@@ -369,12 +371,12 @@
   // une carte d'installation. Repli sur data.js si l'API ne répond pas.
   const LINKS = (D.links || {});
   const API = LINKS.api || "https://api.vybzzz.online/api";
-  const appHref = LINKS.appStore || LINKS.playStore || "index.html#roles";
+  const appHref = "app.html";
   function storeButtons(cls) {
     const b = [];
     if (LINKS.appStore) b.push(`<a class="btn ${cls}" href="${LINKS.appStore}"><span>App Store</span></a>`);
     if (LINKS.playStore) b.push(`<a class="btn ${cls}" href="${LINKS.playStore}"><span>Google Play</span></a>`);
-    if (!b.length) b.push(`<a class="btn ${cls}" href="challenge.html"><span>Rejoindre VybzzZ</span></a>`);
+    if (!b.length) b.push(`<a class="btn ${cls}" href="app.html"><span>Télécharger l'appli</span></a>`);
     if (LINKS.whatsapp) b.push(`<a class="btn btn--outline" href="${LINKS.whatsapp}" target="_blank" rel="noopener"><span>💬 Groupe WhatsApp</span></a>`);
     return b.join("");
   }

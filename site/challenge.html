@@ -186,6 +186,7 @@
         <button class="btn btn--outline" id="lbShare" data-cursor="hover">Partager…</button>
       </div>
       <p style="margin:14px 0 0;font-size:.88rem;color:var(--muted)">Étape suivante : ouvre l'appli VybzzZ, crée ou complète ton profil artiste avec <b id="lbEmail"></b>, publie, et programme ton premier live.</p>
+      <div class="acts" style="margin-top:12px"><a class="btn btn--outline" href="app.html"><span>📲 Télécharger l'appli</span></a><span id="lbWaGroup"></span></div>
       <div class="mystats" id="myStats"></div>
     </div>
   </div>
@@ -244,6 +245,7 @@
     }).catch(function(){});
   }
   try{ var saved=JSON.parse(localStorage.getItem('vyb_challenge')||'null'); if(saved&&saved.code) showLink(saved); }catch(e){}
+  var LK=(window.VYBZZZ&&window.VYBZZZ.links)||{}; if(LK.whatsapp) $('lbWaGroup').innerHTML='<a class="btn btn--outline" href="'+LK.whatsapp+'" target="_blank" rel="noopener"><span>💬 Groupe WhatsApp</span></a>';
   $('chalForm').addEventListener('submit',function(e){
     e.preventDefault(); var btn=e.target.querySelector('button'); btn.disabled=true; $('chalMsg').textContent='';
     var payload={stage_name:$('cStage').value.trim(),email:$('cEmail').value.trim(),phone:$('cPhone').value.trim(),genre:$('cGenre').value,socials:$('cSocials').value.trim(),adult:$('cAdult').checked,accept:$('cAccept').checked};
