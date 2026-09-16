@@ -104,5 +104,14 @@ window.VYBZZZ = (function () {
     nb: (v) => v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1).replace(".", ",") + "K" : String(v),
   };
 
-  return { categories, artists, events, packages, gifts, founder, elite, plansNormal, faq, helpers };
+  // Liens à renseigner une fois : groupe WhatsApp de la communauté, stores.
+  // Vide = le bouton correspondant n'est pas affiché.
+  const links = {
+    whatsapp: "",          // ex. https://chat.whatsapp.com/XXXXXXXX
+    appStore: "",          // ex. https://apps.apple.com/app/id...
+    playStore: "",         // ex. https://play.google.com/store/apps/details?id=com.app.vybzz
+    api: "https://api.vybzzz.online/api",
+  };
+
+  return { categories, artists, events, packages, gifts, founder, elite, plansNormal, faq, helpers, links };
 })();

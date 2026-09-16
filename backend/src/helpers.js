@@ -355,6 +355,7 @@ function isGeoBlocked(event, country) {
 }
 
 module.exports = {
+  profileUrl,
   serializeUser,
   serializeEvent,
   serializeTicket,

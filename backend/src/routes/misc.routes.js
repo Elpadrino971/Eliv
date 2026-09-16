@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
-const { ok, list, fail, serializeUser } = require('../helpers');
+const { ok, list, fail, serializeUser, profileUrl } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
 const { saveUpload, saveClipVideo, PUBLIC_BASE_URL } = require('../uploads');
 const mux = require('../services/mux');
@@ -559,12 +559,31 @@ router.get('/feed-clips', (req, res) => {
       db.prepare(`UPDATE feed_clips SET views = COALESCE(views,0)+1 WHERE id IN (${ids.map(() => '?').join(',')})`).run(...ids);
     } catch (_) { /* non bloquant */ }
   }
-  const list = served.map((r) => ({
-    id: r.id,
-    title: r.title,
-    video_url: r.mux_playback_id ? feedMuxHls(r.mux_playback_id) : r.video_url,
-    mux_playback_id: r.mux_playback_id,
-  }));
+  // Artiste (nom de scène + photo) : utilisé par le site vybzzz.online (feed
+  // public jouable sans compte) ; champs supplémentaires ignorés par l'app.
+  const artistOf = db.prepare('SELECT id, artist_name, full_name, profile_image FROM users WHERE id = ?');
+  const artistCache = {};
+  const list = served.map((r) => {
+    let artist = null;
+    if (r.user_id) {
+      if (!(r.user_id in artistCache)) {
+        const u = artistOf.get(r.user_id);
+        artistCache[r.user_id] = u ? { id: u.id, name: u.artist_name || u.full_name || 'Artiste VybzzZ', image: profileUrl(u.profile_image) } : null;
+      }
+      artist = artistCache[r.user_id];
+    }
+    return {
+      id: r.id,
+      title: r.title,
+      video_url: r.mux_playback_id ? feedMuxHls(r.mux_playback_id) : r.video_url,
+      mux_playback_id: r.mux_playback_id,
+      feed,
+      likes: r.likes || 0,
+      views: r.views || 0,
+      created_at: r.created_at,
+      artist,
+    };
+  });
   return res.json({ status: 'success', count: list.length, list });
 });
 

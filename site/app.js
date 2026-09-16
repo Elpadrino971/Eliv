@@ -364,48 +364,81 @@
     refresh();
   }
 
-  // ---- Feed item (réutilisé par feed.html ET le split-screen de l'accueil) ----
-  function feedItemHTML(ev) {
-    const bg = ev.video ? `https://image.mux.com/${ev.video}/thumbnail.jpg?width=720` : ev.thumb;
-    const videoTag = ev.video
-      ? `<video class="feed__video" data-src="https://stream.mux.com/${ev.video}.m3u8" poster="${bg}" muted loop playsinline preload="none"></video>`
+  // ---- Feed public : VRAI contenu de l'API (clips, "Pour toi", lives) ----
+  // Jouable sans compte. Chaque clip pousse vers l'app ; toutes les 4 vidéos,
+  // une carte d'installation. Repli sur data.js si l'API ne répond pas.
+  const LINKS = (D.links || {});
+  const API = LINKS.api || "https://api.vybzzz.online/api";
+  const appHref = LINKS.appStore || LINKS.playStore || "index.html#roles";
+  function storeButtons(cls) {
+    const b = [];
+    if (LINKS.appStore) b.push(`<a class="btn ${cls}" href="${LINKS.appStore}"><span>App Store</span></a>`);
+    if (LINKS.playStore) b.push(`<a class="btn ${cls}" href="${LINKS.playStore}"><span>Google Play</span></a>`);
+    if (!b.length) b.push(`<a class="btn ${cls}" href="challenge.html"><span>Rejoindre VybzzZ</span></a>`);
+    if (LINKS.whatsapp) b.push(`<a class="btn btn--outline" href="${LINKS.whatsapp}" target="_blank" rel="noopener"><span>💬 Groupe WhatsApp</span></a>`);
+    return b.join("");
+  }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+  function feedItemHTML(it) {
+    const pid = it.video;
+    const bg = pid ? `https://image.mux.com/${pid}/thumbnail.jpg?width=720&fit_mode=smartcrop` : (it.thumb || "");
+    const videoTag = pid
+      ? `<video class="feed__video" data-src="https://stream.mux.com/${pid}.m3u8" poster="${bg}" muted loop playsinline preload="none"></video>`
+      : "";
+    const artist = it.artist ? `<div class="feed__artist">${it.artist.image ? `<img src="${esc(it.artist.image)}" alt="" loading="lazy">` : ""}<span>${esc(it.artist.name)}</span><a class="feed__follow" href="${appHref}">Suivre dans l'app</a></div>` : "";
+    const badge = it.live ? liveBadge : (it.upcoming ? `<span class="badge-soon">${esc(it.when)}</span>` : (it.feed === "clips" ? `<span class="feed__cat">Clip</span>` : ""));
+    const cta = it.upcoming
+      ? `<a class="btn btn--gold feed__ticket" href="${appHref}"><span>${it.price ? "Prendre ma place · " + it.price + " €" : "Entrer gratuitement"}</span></a>`
       : "";
     return `
-      <section class="feed__item" style="--bg:url('${bg}')">
+      <section class="feed__item" id="clip-${esc(it.id)}" style="--bg:url('${bg}')">
         ${videoTag}
         <div class="feed__overlay"></div>
         <div class="feed__content">
-          <div class="feed__meta">${liveBadge}</div>
-          ${ev.name ? `<h2 class="feed__title">${ev.name}</h2>` : ""}
+          <div class="feed__meta">${badge}</div>
+          ${artist}
+          ${it.name ? `<h2 class="feed__title">${esc(it.name)}</h2>` : ""}
+          ${cta}
         </div>
         <aside class="feed__actions">
-          <button class="fa-btn" data-act="like" data-cursor="hover"><span>♥</span></button>
+          <button class="fa-btn" data-act="like" data-cursor="hover"><span>♥</span>${it.likes ? `<i>${H.nb(it.likes)}</i>` : ""}</button>
           <button class="fa-btn" data-act="gift" data-cursor="hover"><span>🎁</span><i>Cadeau</i></button>
-          <button class="fa-btn" data-act="share" data-cursor="hover"><span>↗</span><i>Partager</i></button>
+          <button class="fa-btn" data-act="share" data-id="${esc(it.id)}" data-name="${esc(it.name || (it.artist && it.artist.name) || "VybzzZ")}" data-cursor="hover"><span>↗</span><i>Partager</i></button>
         </aside>
+      </section>`;
+  }
+  function feedCtaHTML() {
+    return `
+      <section class="feed__item feed__cta-item">
+        <div class="feed__overlay"></div>
+        <div class="feed__content" style="justify-content:center;text-align:center;align-items:center">
+          <span class="eyebrow">Toute la scène est dans l'app</span>
+          <h2 class="feed__title">Suis tes artistes, entre dans leurs lives, envoie des cadeaux.</h2>
+          <p style="color:var(--muted);max-width:44ch;margin:0 0 18px">Ce que tu vois ici n'est qu'un extrait. Les lives en direct, le chat et les billets sont dans l'appli VybzzZ.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${storeButtons("btn--gold")}</div>
+        </div>
       </section>`;
   }
   function bindFeed(container) {
     container.addEventListener("click", e => {
       const b = e.target.closest(".fa-btn"); if (!b) return;
       const act = b.dataset.act;
-      if (act === "like") { b.classList.toggle("liked"); }
+      if (act === "like") { b.classList.toggle("liked"); toast(b.classList.contains("liked") ? "❤️ Pour de vrai, c'est dans l'app" : ""); }
       else if (act === "gift") { openGiftPanel(); }
-      else if (act === "share") { toast("Lien copié dans le presse-papier ✓"); }
-      else if (act === "chat") { toast("Le chat en direct est disponible dans l'app 📱"); }
+      else if (act === "share") {
+        const url = location.origin.startsWith("http") ? `${location.origin}/feed.html?clip=${b.dataset.id}` : `https://vybzzz.online/feed.html?clip=${b.dataset.id}`;
+        const text = `${b.dataset.name} sur VybzzZ`;
+        if (navigator.share) navigator.share({ title: "VybzzZ", text, url }).catch(() => {});
+        else if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast("Lien copié ✓"));
+      }
     });
-    container.querySelectorAll(".feed__follow").forEach(b => b.addEventListener("click", ev => {
-      ev.preventDefault(); b.classList.toggle("on");
-      b.textContent = b.classList.contains("on") ? "Suivi ✓" : "Suivre";
-    }));
     initFeedVideos(container);
     bindMicro(container);
   }
   // ---- Lecture des vidéos Mux (autoplay muet quand visible, pause sinon) ----
   function attachHls(video, src) {
-    if (video.canPlayType("application/vnd.apple.mpegurl")) { video.src = src; }      // Safari
-    else if (window.Hls && window.Hls.isSupported()) { const h = new Hls({ capLevelToPlayerSize: true }); h.loadSource(src); h.attachMedia(video); }
-    else { video.src = src; }
+    if (window.Hls && window.Hls.isSupported()) { const h = new Hls({ capLevelToPlayerSize: true }); h.loadSource(src); h.attachMedia(video); }
+    else { video.src = src; }   // Safari / iOS : HLS natif
   }
   function initFeedVideos(container) {
     const vids = container.querySelectorAll(".feed__video");
@@ -421,15 +454,54 @@
     }, { threshold: 0.55 });
     vids.forEach(v => vio.observe(v));
   }
-  // ---- Montage du feed : uniquement les vraies vidéos Mux + bouton son ----
+  // ---- Chargement depuis l'API ----
+  const getJSON = (u) => fetch(u).then(r => r.json());
+  function fromClip(c) { return { id: c.id, video: c.mux_playback_id, name: c.title, artist: c.artist, likes: c.likes, feed: c.feed }; }
+  function fromEvent(ev, live) {
+    const d = ev.start_date_time ? new Date(ev.start_date_time) : null;
+    const when = d ? d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + " · " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "";
+    const artist = ev.artist ? { id: ev.artist.id, name: ev.artist.artist_name || ev.artist.full_name || "Artiste", image: ev.artist.profile_image } : null;
+    return { id: "ev" + ev.id, video: live ? (ev.mux_live_playback_id || ev.mux_playback_id) : null, thumb: ev.cover_image, name: ev.name, artist, live, upcoming: !live, when, price: Number(ev.ticket_price) || 0 };
+  }
+  async function loadFeed(kind) {
+    if (kind === "lives") {
+      const [live, future] = await Promise.all([getJSON(`${API}/events?status=live`).catch(() => ({})), getJSON(`${API}/events?day=future`).catch(() => ({}))]);
+      return [...(live.data || []).map(e => fromEvent(e, true)), ...(future.data || []).filter(e => e.status !== "live").map(e => fromEvent(e, false))];
+    }
+    const feed = kind === "clips" ? "clips" : "for_you";
+    const [clips, live] = await Promise.all([getJSON(`${API}/feed-clips?feed=${feed}&limit=40`), kind === "clips" ? Promise.resolve({}) : getJSON(`${API}/events?status=live`).catch(() => ({}))]);
+    return [...(live.data || []).map(e => fromEvent(e, true)), ...(clips.list || []).map(fromClip)];
+  }
+  function withCtas(items) {
+    const out = [];
+    items.forEach((it, i) => { out.push(feedItemHTML(it)); if ((i + 1) % 4 === 0) out.push(feedCtaHTML()); });
+    if (items.length && items.length % 4 !== 0) out.push(feedCtaHTML());
+    return out.join("");
+  }
+  // ---- Montage du feed : onglets Pour toi / Clips / Lives + bouton son ----
   function setupFeed(feedEl, catsEl, soundEl) {
     if (!feedEl) return;
-    if (catsEl) catsEl.style.display = "none";   // pas de catégories factices pour l'instant
-    let soundOn = false;
+    let soundOn = false, current = "for_you";
     function applySound() { feedEl.querySelectorAll(".feed__video").forEach(v => { v.muted = !soundOn; }); }
-    feedEl.innerHTML = D.events.map(feedItemHTML).join("");
-    bindFeed(feedEl);
-    applySound();
+    const wanted = new URLSearchParams(location.search).get("clip");
+    async function show(kind) {
+      current = kind;
+      if (catsEl) catsEl.querySelectorAll(".feed__cat").forEach(b => b.classList.toggle("on", b.dataset.kind === kind));
+      feedEl.innerHTML = `<section class="feed__item feed__empty"><div class="feed__content"><p style="color:var(--muted)">Chargement…</p></div></section>`;
+      let items = [];
+      try { items = await loadFeed(kind); } catch (e) { items = (D.events || []).map(ev => ({ id: ev.id, video: ev.video, name: ev.name, live: false })); }
+      if (wanted && kind === "for_you") { const i = items.findIndex(x => String(x.id) === String(wanted)); if (i > 0) items.unshift(items.splice(i, 1)[0]); }
+      feedEl.innerHTML = items.length ? withCtas(items) : `<section class="feed__item feed__empty"><div class="feed__content"><h2 class="feed__title">Rien ici pour l'instant.</h2><p style="color:var(--muted)">Les prochains lives s'annoncent dans l'app.</p>${storeButtons("btn--gold")}</div></section>`;
+      feedEl.scrollTop = 0;
+      bindFeed(feedEl);
+      applySound();
+    }
+    if (catsEl) {
+      catsEl.style.display = "";
+      catsEl.innerHTML = [["for_you", "Pour toi"], ["clips", "Clips"], ["lives", "Lives"]].map(([k, l]) => `<button class="feed__cat" data-kind="${k}" data-cursor="hover">${l}</button>`).join("");
+      catsEl.addEventListener("click", e => { const b = e.target.closest(".feed__cat"); if (b && b.dataset.kind !== current) show(b.dataset.kind); });
+    }
+    show(wanted ? "for_you" : "for_you");
     if (soundEl) {
       soundEl.addEventListener("click", () => {
         soundOn = !soundOn;

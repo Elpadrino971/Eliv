@@ -53,7 +53,7 @@ a{color:inherit;text-decoration:none}
   border:1px solid rgba(255,255,255,.12);border-radius:99px;box-shadow:0 12px 40px -12px rgba(0,0,0,.6)}
 .pillnav__brand{font-family:var(--serif);font-weight:800;letter-spacing:.1em;font-size:1.08rem;padding-right:14px}
 .pillnav__brand .dot{color:var(--gold)}
-.pillnav__links{display:flex;gap:22px;padding:0 16px;border-left:1px solid rgba(255,255,255,.12)}
+.pillnav__links{display:flex;gap:18px;padding:0 14px;border-left:1px solid rgba(255,255,255,.12);white-space:nowrap}
 .pillnav__links a{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);transition:color .3s}
 .pillnav__links a:hover{color:var(--ivory)}
 .pillnav__cta{margin-left:6px;padding:10px 20px;border-radius:99px;background:var(--gold);color:#0A1226;
@@ -494,16 +494,11 @@ a{color:inherit;text-decoration:none}
       <div class="show__txt" style="max-width:760px;margin:0 auto clamp(26px,4vh,44px);text-align:center">
         <span class="eyebrow eyebrow--line">01 — Le Live</span>
         <h3>Une scène qui <em>défile.</em></h3>
-        <p style="margin:0 auto;max-width:56ch">Fais défiler les lives du moment. Chaque vignette est un concert en direct — touche, entre, vibre.</p>
+        <p style="margin:0 auto;max-width:56ch">Fais défiler ce que les artistes publient en ce moment. Chaque vignette est un vrai clip — touche, entre, vibre.</p>
       </div>
       <div class="strip-wrap">
-        <div class="strip">
-          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk/thumbnail.jpg?time=3')"><video data-src="https://stream.mux.com/018QAsRdcWngBbGPS201A8Ep01C9oCfifMTQjCBJ01WJnbk.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>NOVA</b><span>Afrobeats · Clip</span></span></a>
-          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/ex6y2Wc00iV1un00GfuDGKiSTj6QzU49fXtuFKamfYQ1s/thumbnail.jpg?time=3')"><video data-src="https://stream.mux.com/ex6y2Wc00iV1un00GfuDGKiSTj6QzU49fXtuFKamfYQ1s.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>KODA</b><span>House · Clip</span></span></a>
-          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/a1SB54WoSAeljaRnEmx3iIMdv4IREYoNENgJRvKcC2M/thumbnail.jpg?time=3')"><video data-src="https://stream.mux.com/a1SB54WoSAeljaRnEmx3iIMdv4IREYoNENgJRvKcC2M.m3u8" muted loop playsinline preload="none"></video><span class="strip__cap"><b>SÉLÉNÉ</b><span>Pop · Clip</span></span></a>
-          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/S5gwJ00UP6GtKeYp11SeGabksA6JdpOQQkdCEkkLOBCo/thumbnail.jpg?time=3')"><span class="strip__cap"><b>AKORI</b><span>Amapiano · Feed</span></span></a>
-          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/fy01PolEvTfQkcE1NpRSYfZ3BJJTuYRpei9FDebfdaXw/thumbnail.jpg?time=3')"><span class="strip__cap"><b>MIRÖ</b><span>Électro · Feed</span></span></a>
-          <a class="strip__item" href="feed.html" style="background-image:url('https://image.mux.com/wsZ7w3n1rZC8hO6f01a5SXd01J1CPtPcsGHJW01VIur2m8/thumbnail.jpg?time=3')"><span class="strip__cap"><b>NABIL</b><span>R&B · Feed</span></span></a>
+        <div class="strip" id="liveStrip">
+          <!-- rempli par l'API : derniers clips publiés par les artistes (voir script en bas de page) -->
         </div>
         <div class="strip-hint">Fais défiler</div>
       </div>
@@ -737,11 +732,29 @@ a{color:inherit;text-decoration:none}
   // Hero : charge tout de suite les 3 vidéos
   document.querySelectorAll('.chapter-video video[data-src]').forEach(function(v){attachHls(v);});
   // Showcase (concert, clip, filmstrip) : charge à l'arrivée dans le viewport
-  var lazyVids=document.querySelectorAll('.show video[data-src], .strip video[data-src]');
-  if('IntersectionObserver' in window){
-    var vio=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){attachHls(en.target);vio.unobserve(en.target);}});},{rootMargin:'200px'});
-    lazyVids.forEach(function(v){vio.observe(v);});
-  }else{ lazyVids.forEach(function(v){attachHls(v);}); }
+  var vio=('IntersectionObserver' in window)?new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){attachHls(en.target);vio.unobserve(en.target);}});},{rootMargin:'200px'}):null;
+  function lazyAll(sel){ document.querySelectorAll(sel).forEach(function(v){ if(vio) vio.observe(v); else attachHls(v); }); }
+  lazyAll('.show video[data-src]');
+  // Bande "Le Live" : VRAIS clips publiés par les artistes (API), nom de scène réel.
+  (function(){
+    var strip=document.getElementById('liveStrip'); if(!strip) return;
+    function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+    fetch('https://api.vybzzz.online/api/feed-clips?feed=clips&limit=8').then(function(r){return r.json()}).then(function(d){
+      var list=(d.list||[]).filter(function(c){return c.mux_playback_id});
+      if(!list.length) return fetch('https://api.vybzzz.online/api/feed-clips?feed=for_you&limit=8').then(function(r){return r.json()}).then(function(d2){return d2.list||[]});
+      return list;
+    }).then(function(list){
+      list=(list||[]).filter(function(c){return c.mux_playback_id});
+      if(!list.length){ strip.innerHTML='<div class="strip__item" style="display:grid;place-items:center;color:var(--muted)">Les premiers clips arrivent.</div>'; return; }
+      strip.innerHTML=list.map(function(c){
+        var id=c.mux_playback_id, who=c.artist&&c.artist.name?c.artist.name:'Artiste VybzzZ';
+        return '<a class="strip__item" href="feed.html?clip='+encodeURIComponent(c.id)+'" style="background-image:url(\'https://image.mux.com/'+id+'/thumbnail.jpg?width=680&fit_mode=smartcrop&time=3\')">'
+          +'<video data-src="https://stream.mux.com/'+id+'.m3u8" muted loop playsinline preload="none"></video>'
+          +'<span class="strip__cap"><b>'+esc(who)+'</b><span>'+(c.feed==='clips'?'Clip':'Pour toi')+(c.title?' · '+esc(c.title):'')+'</span></span></a>';
+      }).join('');
+      lazyAll('#liveStrip video[data-src]');
+    }).catch(function(){ strip.innerHTML='<a class="strip__item" href="feed.html" style="display:grid;place-items:center;color:var(--gold)">Voir le feed →</a>'; });
+  })();
   // Explicatives : PRÉ-charge sans lire (pour que le clic démarre le son dans le geste)
   var expVids=document.querySelectorAll('.exp video[data-src]');
   if('IntersectionObserver' in window){
