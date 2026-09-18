@@ -140,6 +140,12 @@ a{color:inherit;text-decoration:none}
   background:rgba(10,18,38,.92);backdrop-filter:blur(14px);border:1px solid rgba(230,199,106,.45);color:var(--ivory);font-size:.9rem;box-shadow:0 14px 40px -12px rgba(0,0,0,.8)}
 .dlbar span{flex:1}.dlbar b{padding:8px 14px;border-radius:99px;background:var(--gold);color:#0A1226;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase}
 @media(max-width:700px){.dlbar{display:flex}.foot{padding-bottom:90px}}
+.ch1__ctas{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:26px}
+.ch1__concours h1{font-size:clamp(2.5rem,7.4vw,6rem)}
+.pillnav__cta{white-space:nowrap}
+.ch1__ctas .pillnav__cta{padding:14px 26px}
+body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(--gold)}
+@media(max-width:700px){.ch1__ctas{gap:8px}.ch1__ctas .pillnav__cta,.ch1__ctas .ghost-btn{padding:12px 16px;font-size:.7rem}}
 /* Indicateurs bas */
 .scroll-hint{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:5;
   font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);opacity:.8}
@@ -413,9 +419,22 @@ a{color:inherit;text-decoration:none}
 
     <!-- Chapitre 1 -->
     <div class="chapter ch1" data-c="0">
-      <span class="eyebrow eyebrow--line">Membres fondateurs · Live depuis 2026</span>
-      <h1>LA SCÈNE<br>EST <em>À TOI.</em><br>MONTE<br><em>MAINTENANT.</em></h1>
-      <p>Un monde de concerts en direct. Gratuit. Sans salle, sans frontières, sans intermédiaire.</p>
+      <!-- Mode normal -->
+      <div class="ch1__default">
+        <span class="eyebrow eyebrow--line">Membres fondateurs · Live depuis 2026</span>
+        <h1>LA SCÈNE<br>EST <em>À TOI.</em><br>MONTE<br><em>MAINTENANT.</em></h1>
+        <p>Un monde de concerts en direct. Gratuit. Sans salle, sans frontières, sans intermédiaire.</p>
+      </div>
+      <!-- Mode concours : affiché automatiquement du 18 septembre au 24 octobre 2026 (voir script) -->
+      <div class="ch1__concours" hidden>
+        <span class="eyebrow eyebrow--line" id="chalEyebrow">VybzzZ Live Challenge · 20 sept → 24 oct</span>
+        <h1>MONTE<br>SUR <em>SCÈNE.</em><br>FAIS TON LIVE.<br><em>GAGNE.</em></h1>
+        <p>Concours artistes · 1er prix : nouvel iPhone Pro · Inscris-toi, récupère ton lien, ramène ta commu, fais tes lives.</p>
+        <div class="ch1__ctas">
+          <a href="challenge.html" class="pillnav__cta">Je participe</a>
+          <a href="app.html" class="ghost-btn" style="margin-top:0">Télécharger l'appli</a>
+        </div>
+      </div>
     </div>
 
     <!-- Chapitre 2 -->
@@ -768,6 +787,21 @@ a{color:inherit;text-decoration:none}
     var eio=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){attachHls(en.target,false);eio.unobserve(en.target);}});},{rootMargin:'400px'});
     expVids.forEach(function(v){eio.observe(v);});
   }else{ expVids.forEach(function(v){attachHls(v,false);}); }
+
+  // ── Mode concours : hero remplacé par le Live Challenge pendant la campagne ──
+  (function(){
+    var start=Date.parse('2026-09-18T00:00:00+02:00'), end=Date.parse('2026-10-24T23:59:59+02:00'), now=Date.now();
+    var q=new URLSearchParams(location.search).get('mode'); // ?mode=concours / ?mode=normal pour forcer (tests)
+    var on = q==='concours' ? true : q==='normal' ? false : (now>=start && now<=end);
+    if(!on) return;
+    document.body.classList.add('mode-concours');
+    var d=document.querySelector('.ch1__default'), c=document.querySelector('.ch1__concours');
+    if(d) d.hidden=true; if(c) c.hidden=false;
+    var eb=document.getElementById('chalEyebrow'), s0=Date.parse('2026-09-20T00:00:00+02:00');
+    if(eb){ var days=Math.ceil((s0-now)/864e5); eb.textContent = 'VybzzZ Live Challenge · ' + (days>0 ? 'départ dans '+days+' jour'+(days>1?'s':'') : 'en cours jusqu\'au 24 octobre'); }
+    var cta=document.querySelector('.pillnav__cta'); if(cta){ cta.textContent='Je participe'; cta.href='challenge.html'; }
+    var corner=document.querySelector('.corner-cta'); if(corner){ corner.textContent='Je participe'; corner.href='challenge.html'; }
+  })();
 
   var hero=document.getElementById('scrollhero');
   var vids=[].map.call(document.querySelectorAll('.chapter-video'),function(e){return e;});
