@@ -85,9 +85,24 @@ if not pat.search(bloc):
 
 neuf = pat.sub(BLOC, bloc, count=1)
 
-# HTTP/2 (nginx 1.24 : directive séparée)
-if 'http2 on;' not in neuf:
-    neuf = re.sub(r'(\n([ \t]*)listen 443 ssl;[^\n]*\n)', r'\1\2http2 on;\n', neuf, count=1)
+# HTTP/2 — l'écriture dépend de la version :
+#   nginx < 1.25.1 : « listen 443 ssl http2; »
+#   nginx >= 1.25.1 : « http2 on; » sur sa propre ligne (l'autre est refusée)
+def nginx_version():
+    try:
+        r = subprocess.run(['nginx', '-v'], capture_output=True, text=True)
+        m2 = re.search(r'nginx/(\d+)\.(\d+)\.(\d+)', r.stdout + r.stderr)
+        return tuple(int(x) for x in m2.groups()) if m2 else (0, 0, 0)
+    except Exception:
+        return (0, 0, 0)
+
+ver = nginx_version()
+if 'http2' not in neuf:
+    if ver >= (1, 25, 1):
+        neuf = re.sub(r'(\n([ \t]*)listen 443 ssl;[^\n]*\n)', r'\1\2http2 on;\n', neuf, count=1)
+    else:
+        neuf = re.sub(r'(\n[ \t]*listen 443 ssl);([^\n]*\n)', r'\1 http2;\2', neuf, count=1)
+print('  nginx %d.%d.%d — HTTP/2 activé en écriture %s' % (ver + ('récente' if ver >= (1, 25, 1) else 'classique',)))
 
 shutil.copy2(PATH, PATH + '.bak-' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
 open(PATH, 'w', encoding='utf-8').write(src.replace(bloc, neuf, 1))
