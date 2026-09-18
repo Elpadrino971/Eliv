@@ -28,7 +28,7 @@ a{color:inherit}
 /* ─── LAYOUT ─── */
 .app{display:flex;min-height:100vh}
 .sidebar{width:236px;background:linear-gradient(180deg,var(--navy-2),#060f1c);border-right:1px solid var(--line);flex-shrink:0;padding-bottom:30px;position:sticky;top:0;height:100vh;overflow-y:auto}
-.brand{font-size:26px;font-weight:800;letter-spacing:3px;padding:22px 20px;background:linear-gradient(120deg,var(--gold-light),var(--gold-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand{font-size:26px;font-weight:800;letter-spacing:1px;padding:22px 20px;background:linear-gradient(120deg,var(--gold-light),var(--gold-2));-webkit-background-clip:text;background-clip:text;color:transparent}
 nav .group{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);opacity:.8;padding:16px 20px 6px}
 nav a{display:flex;align-items:center;gap:11px;padding:11px 20px;color:var(--muted);text-decoration:none;font-size:14.5px;border-left:3px solid transparent}
 nav a .ic{width:18px;text-align:center}

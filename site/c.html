@@ -140,6 +140,7 @@
       .then(function(r){return r.json()}).then(function(d){
         if(d.status!=='success'){$('joinMsg').textContent=d.message||'Erreur, réessaie.';return}
         var st=d.data.status;
+        window.vyTrack&&vyTrack('fan_join');
         $('joinForm').hidden=true; $('joinDone').hidden=false; $('doneEmail').textContent=email; $('doneArtist').textContent=artist;
         if(st==='existing') $('doneTitle').textContent='Tu as déjà un compte VybzzZ : ouvre l\'appli et retrouve '+artist+'.';
         else if(st==='other_artist') $('doneTitle').textContent='Tu es déjà invité·e par un autre artiste, mais bienvenue quand même !';
@@ -152,5 +153,6 @@
   });
 })();
 </script>
+<script src="vy.js" defer></script>
 </body>
 </html>

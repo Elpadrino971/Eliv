@@ -316,6 +316,23 @@ router.get('/get-abusive-words', (req, res) => {
   return ok(res, db.prepare('SELECT * FROM abusive_words').all());
 });
 
+// POST /api/track — mesure d'audience, sans cookie ni donnée personnelle.
+// Réponse 204 immédiate : la page du visiteur n'attend jamais après nous.
+const analytics = require('../services/analytics');
+router.post('/track', (req, res) => {
+  res.status(204).end();
+  try {
+    const b = req.body || {};
+    analytics.track({
+      name: String(b.n || 'pageview'),
+      path: b.p, ref: b.r, lang: b.l,
+      ip: (req.headers['x-forwarded-for'] || req.ip || '').toString().split(',')[0].trim(),
+      ua: req.headers['user-agent'] || '',
+      host: 'vybzzz.online',
+    });
+  } catch (e) { /* la mesure ne doit jamais casser quoi que ce soit */ }
+});
+
 // GET /api/merch — boutique merch publique (produits actifs seulement, site vybzzz.online)
 router.get('/merch', (req, res) => {
   const rows = db.prepare('SELECT id, name, description, price_eur, image_url, buy_url, category FROM merch_products WHERE active = 1 ORDER BY sort ASC, id ASC').all();

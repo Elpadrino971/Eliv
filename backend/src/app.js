@@ -243,6 +243,12 @@ app.use('/api/v1', require('./routes/publish.routes'));
 app.use('/api/live', require('./routes/live.routes'));
 app.use('/api/challenge', require('./routes/challenge.routes'));
 
+// Mesure d'audience : généreux pour un humain, bloquant pour un script.
+app.use('/api/track', rateLimit({
+  windowMs: 60 * 1000, max: 120, standardHeaders: false, legacyHeaders: false,
+  message: { status: 'error' },
+}));
+
 // Toutes les routes API sous /api (comme baseAPI = mainIP/api)
 app.use('/api', authRoutes);
 app.use('/api', eventRoutes);

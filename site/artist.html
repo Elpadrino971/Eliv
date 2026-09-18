@@ -140,6 +140,7 @@
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data && data.status === "success") {
+          window.vyTrack && vyTrack("artist_apply");
           UI.toast("Candidature envoyée ! Notre équipe te recontacte sous 48h 🎉");
           form.reset();
         } else {
@@ -155,5 +156,6 @@
   });
 })();
 </script>
+<script src="vy.js" defer></script>
 </body>
 </html>

@@ -143,6 +143,21 @@ function init() {
       value TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS analytics_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      day TEXT,
+      vid TEXT,
+      path TEXT,
+      name TEXT,
+      ref TEXT,
+      country TEXT,
+      device TEXT,
+      lang TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_analytics_day ON analytics_events (day, name);
+    CREATE INDEX IF NOT EXISTS idx_analytics_path ON analytics_events (day, path);
+
     CREATE TABLE IF NOT EXISTS merch_products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,

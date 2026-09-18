@@ -83,6 +83,7 @@ function logout() {
 const NAV = [
   { group: 'Vue d\'ensemble', items: [
     { id: 'dashboard', label: 'Tableau de bord', ic: '🏠' },
+    { id: 'audience', label: 'Audience du site', ic: '📊' },
     { id: 'lives', label: 'Lives en direct', ic: '🔴' },
   ] },
   { group: 'Gestion', items: [
@@ -159,12 +160,14 @@ function boot() {
   route();
 }
 function route() {
-  let id = (location.hash.replace('#', '') || 'dashboard');
+  // Un module peut porter un paramètre dans le hash (ex. #audience?days=30) :
+  // il ne fait pas partie de l'identifiant du module.
+  let id = (location.hash.replace('#', '').split('?')[0] || 'dashboard');
   // Un staff qui vise un module non autorisé est renvoyé vers son 1er module.
   if (!allowedModule(id)) {
     const first = NAV.flatMap((g) => g.items).find((i) => allowedModule(i.id));
     id = first ? first.id : 'vibe';
-    if (location.hash.replace('#', '') !== id) { location.hash = id; return; }
+    if (location.hash.replace('#', '').split('?')[0] !== id) { location.hash = id; return; }
   }
   setActive(id);
   (ROUTES[id] || ROUTES.dashboard)();
@@ -1409,6 +1412,56 @@ async function pageProfile() {
 }
 
 
+// ─── Audience du site : mesure maison, sans cookie ni donnée personnelle ───
+async function pageAudience() {
+  const days = +(location.hash.split('?days=')[1] || 7);
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  const { data } = await api('GET', '/analytics?days=' + days);
+  const LABELS = {
+    pageview: 'Vues de page', cta_apply: 'Clic « Postuler »', cta_challenge: 'Clic « Challenge »',
+    challenge_signup: 'Inscription au Challenge', fan_join: 'Fan pré-inscrit via un lien',
+    store_click: 'Clic App Store / Google Play', whatsapp_click: 'Clic WhatsApp',
+    contact_lead: 'Formulaire « Réserve ton moment »', artist_apply: 'Candidature artiste envoyée',
+    share_link: 'Lien de Challenge partagé', app_page: 'Page de téléchargement', feed_view: 'Feed consulté',
+  };
+  const maxDay = Math.max(1, ...data.byDay.map((d) => d.visiteurs));
+  const bars = data.byDay.map((d) => `<div style="flex:1;max-width:60px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px">
+      <div title="${d.visiteurs} visiteurs · ${d.vues} vues" style="width:70%;min-height:2px;height:${Math.round(d.visiteurs / maxDay * 110)}px;background:linear-gradient(180deg,var(--gold),#7A1F33);border-radius:4px 4px 0 0"></div>
+      <span class="em" style="font-size:10px">${esc(d.day.slice(8))}/${esc(d.day.slice(5, 7))}</span>
+    </div>`).join('');
+  const kpi = (l, v, s) => `<div class="tcard" style="padding:14px"><div class="em">${l}</div>
+      <div style="font-size:26px;color:var(--gold);font-weight:700;line-height:1.2">${v}</div>${s ? `<div class="em">${s}</div>` : ''}</div>`;
+  const list = (rows, key, val, extra) => rows.length
+    ? `<table class="tbl">${rows.map((r) => `<tr><td>${extra ? extra(r) : ''}${esc(String(r[key] ?? '—'))}</td><td style="text-align:right;color:var(--gold)">${r[val]}</td></tr>`).join('')}</table>`
+    : '<div class="empty">Aucune donnée</div>';
+  const maxF = Math.max(1, ...data.funnel.map((f) => f.n));
+  view().innerHTML = `<h1 class="page-title">Audience du site</h1>
+    <div class="em" style="margin-bottom:12px">Sans cookie, sans donnée personnelle : aucun bandeau de consentement n'est nécessaire.
+      ${[7, 30, 90].map((d) => `<a href="#audience?days=${d}" style="margin-left:10px;${d === days ? 'color:var(--gold);font-weight:700' : ''}">${d} jours</a>`).join('')}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px">
+      ${kpi('Visiteurs uniques', data.totals.visiteurs, `sur ${data.jours} jours`)}
+      ${kpi('Vues de page', data.totals.vues, data.totals.visiteurs ? (data.totals.vues / data.totals.visiteurs).toFixed(1) + ' pages par visiteur' : '')}
+      ${kpi('Inscriptions Challenge', (data.actions.find((a) => a.name === 'challenge_signup') || {}).visiteurs || 0, 'artistes')}
+      ${kpi('Fans pré-inscrits', (data.actions.find((a) => a.name === 'fan_join') || {}).visiteurs || 0, 'via un lien d\'artiste')}
+    </div>
+    <div class="tcard" style="margin-bottom:16px"><h3 style="margin:0 0 12px">Visiteurs par jour</h3>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:140px">${bars || '<div class="empty">Aucune donnée</div>'}</div></div>
+    <div class="tcard" style="margin-bottom:16px"><h3 style="margin:0 0 4px">Tunnel du Live Challenge</h3>
+      <div class="em" style="margin-bottom:12px">En visiteurs distincts, sur la période.</div>
+      ${data.funnel.map((f) => `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${esc(f.etape)}</span><b style="color:var(--gold)">${f.n}</b></div>
+        <div style="height:8px;border-radius:99px;background:var(--navy-2);overflow:hidden;margin-top:4px"><i style="display:block;height:100%;width:${Math.round(f.n / maxF * 100)}%;background:linear-gradient(90deg,#7A1F33,var(--gold))"></i></div></div>`).join('')}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px">
+      <div class="tcard"><h3 style="margin:0 0 10px">D'où viennent les visiteurs</h3>${list(data.refs, 'source', 'visiteurs')}</div>
+      <div class="tcard"><h3 style="margin:0 0 10px">Pages les plus vues</h3>${list(data.pages, 'path', 'vues')}</div>
+      <div class="tcard"><h3 style="margin:0 0 10px">Pays</h3>${list(data.countries, 'nom', 'visiteurs', (r) => r.drapeau + ' ')}</div>
+      <div class="tcard"><h3 style="margin:0 0 10px">Appareils</h3>${list(data.devices, 'device', 'visiteurs')}</div>
+      <div class="tcard" style="grid-column:1/-1"><h3 style="margin:0 0 10px">Actions</h3>
+        ${data.actions.length ? `<table class="tbl"><thead><tr><th>Action</th><th style="text-align:right">Visiteurs</th><th style="text-align:right">Total</th></tr></thead><tbody>
+          ${data.actions.map((a) => `<tr><td>${esc(LABELS[a.name] || a.name)}</td><td style="text-align:right;color:var(--gold)">${a.visiteurs}</td><td style="text-align:right">${a.total}</td></tr>`).join('')}
+        </tbody></table>` : '<div class="empty">Aucune action enregistrée pour le moment</div>'}</div>
+    </div>`;
+}
+
 // ─── Boutique merch (print à la demande) : produits affichés sur vybzzz.online/store.html ───
 function pageMerch() {
   const CATS = [{ value: 'textile', label: 'Textile' }, { value: 'accessoire', label: 'Accessoire' }, { value: 'print', label: 'Affiche / print' }, { value: 'autre', label: 'Autre' }];
@@ -2257,7 +2310,7 @@ const ROUTES = {
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
-  splash: pageSplash, legal: pageLegal, challenge: pageChallenge, merch: pageMerch, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
+  splash: pageSplash, legal: pageLegal, challenge: pageChallenge, merch: pageMerch, audience: pageAudience, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
 };
 
 window.addEventListener('hashchange', route);

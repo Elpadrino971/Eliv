@@ -1056,6 +1056,13 @@ const SPLASH_ANIMATION_STYLES = [
   'none',
 ];
 
+// ─── Audience du site (mesure maison, sans cookie) ──────────────────────────
+const analyticsSvc = require('../services/analytics');
+router.get('/analytics', requireAdmin, (req, res) => {
+  analyticsSvc.purge();
+  return res.json({ status: 'success', data: analyticsSvc.report(req.query.days) });
+});
+
 // ─── Boutique merch (print à la demande) ────────────────────────────────────
 router.get('/merch', requireAdmin, (req, res) => {
   const rows = db.prepare('SELECT * FROM merch_products ORDER BY sort ASC, id ASC').all();

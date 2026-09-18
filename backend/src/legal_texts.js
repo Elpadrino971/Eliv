@@ -20,6 +20,7 @@ Ce que nous collectons
 • Achats : identifiants de transaction App Store / Google Play / RevenueCat. Nous ne voyons jamais votre numéro de carte.
 • Artistes : candidature, signature du contrat, coordonnées de versement (Stripe ou IBAN), revenus et retraits.
 • Techniques : adresse IP et pays approximatif, appareil, version de l'app, jeton de notification.
+• Mesure d'audience du site vybzzz.online : outil maison hébergé sur notre serveur, sans cookie ; identifiant à sens unique recalculé chaque jour, adresse IP jamais enregistrée ; page consultée, provenance, pays, type d'appareil et langue uniquement.
 • Caméra et micro : uniquement pendant un live ou une prise de parole, après votre autorisation.
 
 Pourquoi

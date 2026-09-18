@@ -298,11 +298,12 @@
     var payload={stage_name:$('cStage').value.trim(),email:$('cEmail').value.trim(),phone:$('cPhone').value.trim(),genre:$('cGenre').value,socials:$('cSocials').value.trim(),adult:$('cAdult').checked,accept:$('cAccept').checked};
     fetch(API+'/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){return r.json()}).then(function(d){
-        if(d.status==='success'){ d.data.email=payload.email; showLink(d.data); location.hash='#inscription'; }
+        if(d.status==='success'){ d.data.email=payload.email; showLink(d.data); location.hash='#inscription'; window.vyTrack&&vyTrack('challenge_signup'); }
         else $('chalMsg').textContent=d.message||'Erreur, réessaie.';
       }).catch(function(){$('chalMsg').textContent='Réseau indisponible, réessaie dans un instant.'}).finally(function(){btn.disabled=false});
   });
 })();
 </script>
+<script src="vy.js" defer></script>
 </body>
 </html>

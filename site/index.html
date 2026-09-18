@@ -1077,11 +1077,12 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
     if(btn) btn.disabled=true;
     fetch('https://api.vybzzz.online/api/contact-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){return r.json();})
-      .then(function(d){ if(d&&d.status==='success'){ alert('Demande envoyée ! On te recontacte sous 48 h 🎉'); f.reset(); } else { alert((d&&d.message)||'Erreur, réessaie dans un instant.'); } })
+      .then(function(d){ if(d&&d.status==='success'){ window.vyTrack&&vyTrack('contact_lead'); alert('Demande envoyée ! On te recontacte sous 48 h 🎉'); f.reset(); } else { alert((d&&d.message)||'Erreur, réessaie dans un instant.'); } })
       .catch(function(){ alert('Erreur réseau, réessaie dans un instant.'); })
       .finally(function(){ if(btn) btn.disabled=false; });
   });
 })();
 </script>
+<script src="vy.js" defer></script>
 </body>
 </html>
