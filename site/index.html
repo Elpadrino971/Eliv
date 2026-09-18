@@ -38,8 +38,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-html{overflow-x:clip}
-body{background:var(--bg);color:var(--ivory);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:clip}
+body{background:var(--bg);color:var(--ivory);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 img,video{max-width:100%;display:block}
 a{color:inherit;text-decoration:none}
 .serif{font-family:var(--serif)}
@@ -187,28 +186,6 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 .demo-tag{position:absolute;right:18px;top:18px;z-index:2;padding:8px 14px;border-radius:99px;background:rgba(12,18,38,.72);border:1px solid var(--line);color:var(--gold);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;backdrop-filter:blur(8px)}
 .show__note{margin-top:16px;font-size:.78rem;color:var(--muted);line-height:1.5}.show__note a{color:var(--gold)}
 .hero__note{margin-top:10px!important;font-size:.62rem!important;letter-spacing:.14em!important;opacity:.6}
-/* -- Décor de scène (truss, enceintes, piano) -----------------------------
-   Règle : jamais plus de deux objets visibles à la fois, toujours en retrait
-   du contenu, aucun sur mobile sauf le truss (réduit). Purement décoratif. */
-.sfx{position:absolute;pointer-events:none;user-select:none;-webkit-user-select:none}
-.sfx img{display:block;width:100%;height:auto}
-.sfx-wrap{position:relative}
-.sfx--truss{top:-7%;left:50%;width:min(780px,96vw);transform:translateX(-50%);z-index:5;
-  opacity:.5;transition:opacity .45s var(--ease),filter .45s var(--ease)}
-.sfx--truss img{animation:beamBreath 7.5s ease-in-out infinite}
-.sfx--truss.flash{opacity:.78;filter:brightness(1.14)}
-@keyframes beamBreath{0%,100%{opacity:.88}50%{opacity:1}}
-.sfx--spk{bottom:-30px;width:min(215px,17vw);opacity:.32;z-index:0}
-.sfx--spk-l{left:calc(50% - 50vw - 42px)}
-.sfx--spk-r{right:calc(50% - 50vw - 42px);transform:scaleX(-1)}
-.sfx--piano{left:calc(50% - 50vw - 70px);bottom:6px;width:min(370px,28vw);opacity:.22;z-index:0}
-.sfx--truss2{top:-6%;left:50%;width:min(540px,86vw);transform:translateX(-50%);opacity:.22;z-index:0}
-.concierge__inner,.closing>*:not(.sfx),.show>*:not(.sfx){position:relative;z-index:1}
-@media(max-width:900px){
-  .sfx--spk,.sfx--piano,.sfx--truss2{display:none}
-  .sfx--truss{width:104vw;top:-3%;opacity:.3}
-}
-@media(prefers-reduced-motion:reduce){.sfx--truss img{animation:none}}
 /* Indicateurs bas */
 .scroll-hint{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:5;
   font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);opacity:.8}
@@ -511,8 +488,6 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
     <div class="chapter-video" data-v="1" style="background:#0A1226 url('https://image.mux.com/S5gwJ00UP6GtKeYp11SeGabksA6JdpOQQkdCEkkLOBCo/thumbnail.jpg?time=4') center/cover"><video data-src="https://stream.mux.com/S5gwJ00UP6GtKeYp11SeGabksA6JdpOQQkdCEkkLOBCo.m3u8" poster="https://image.mux.com/S5gwJ00UP6GtKeYp11SeGabksA6JdpOQQkdCEkkLOBCo/thumbnail.jpg?time=4" muted loop playsinline preload="auto"></video></div>
     <div class="chapter-video" data-v="2" style="background:#0A1226 url('https://image.mux.com/fy01PolEvTfQkcE1NpRSYfZ3BJJTuYRpei9FDebfdaXw/thumbnail.jpg?time=5') center/cover"><video data-src="https://stream.mux.com/fy01PolEvTfQkcE1NpRSYfZ3BJJTuYRpei9FDebfdaXw.m3u8" poster="https://image.mux.com/fy01PolEvTfQkcE1NpRSYfZ3BJJTuYRpei9FDebfdaXw/thumbnail.jpg?time=5" muted loop playsinline preload="auto"></video></div>
     <div class="stage-scrim"></div>
-    <!-- Décor de scène : purement visuel, jamais cliquable. Les faisceaux conduisent l'oeil vers le titre puis le bouton. -->
-    <div class="sfx sfx--truss" aria-hidden="true"><img src="assets/stage/truss.webp" srcset="assets/stage/truss-sm.webp 410w, assets/stage/truss.webp 820w" sizes="(max-width:700px) 96vw, 780px" width="820" height="611" alt=""></div>
     <div class="live-fx" id="liveFx" aria-hidden="true"></div>
 
     <!-- Chapitre 1 -->
@@ -628,9 +603,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
     </div>
 
     <!-- 2. LE CONCERT — grande vidéo paysage -->
-    <div class="show reveal sfx-wrap">
-      <div class="sfx sfx--spk sfx--spk-l" aria-hidden="true"><img src="assets/stage/speaker.webp" srcset="assets/stage/speaker-sm.webp 180w, assets/stage/speaker.webp 360w" sizes="(max-width:900px) 0px, 220px" width="360" height="480" alt="" loading="lazy" decoding="async"></div>
-      <div class="sfx sfx--spk sfx--spk-r" aria-hidden="true"><img src="assets/stage/speaker.webp" srcset="assets/stage/speaker-sm.webp 180w, assets/stage/speaker.webp 360w" sizes="(max-width:900px) 0px, 220px" width="360" height="480" alt="" loading="lazy" decoding="async"></div>
+    <div class="show reveal">
       <div class="show__media">
         <div class="media16" style="background-image:url('https://image.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g/thumbnail.jpg?time=6')">
           <video data-src="https://stream.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g.m3u8" poster="https://image.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g/thumbnail.jpg?time=6" muted loop playsinline preload="none"></video>
@@ -779,8 +752,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 </section>
 
 <!-- CONCIERGE / contact -->
-<section class="section concierge sfx-wrap" id="reserver">
-  <div class="sfx sfx--piano" aria-hidden="true"><img src="assets/stage/piano.webp" srcset="assets/stage/piano-sm.webp 280w, assets/stage/piano.webp 560w" sizes="(max-width:900px) 0px, 400px" width="560" height="424" alt="" loading="lazy" decoding="async"></div>
+<section class="section concierge" id="reserver">
   <div class="concierge__inner">
     <div class="concierge__intro reveal">
       <span class="eyebrow eyebrow--line" data-t="t123">Parlons de ta scène</span>
@@ -803,8 +775,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 </section>
 
 <!-- CLÔTURE -->
-<section class="closing sfx-wrap">
-  <div class="sfx sfx--truss2" aria-hidden="true"><img src="assets/stage/truss.webp" srcset="assets/stage/truss-sm.webp 410w, assets/stage/truss.webp 820w" sizes="(max-width:700px) 0px, 620px" width="820" height="611" alt="" loading="lazy" decoding="async"></div>
+<section class="closing">
   <span class="eyebrow eyebrow--line" style="margin-bottom:20px" data-t="t137">Le prochain grand concert</span>
   <h2 data-t="t138">Il commence <em>maintenant</em>, dans ta poche.</h2>
   <p data-t="t139">Ne rate plus jamais un artiste. Diffuse, soutiens, vibre — en direct, où que tu sois.</p>
@@ -1071,35 +1042,9 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
       var dur=3.2+Math.random()*1.2; e.style.animationDuration=dur+'s';
       fx.appendChild(e); setTimeout(function(){e.remove();}, dur*1000+120);
     }
-    // Le décor réagit au produit : les faisceaux s'intensifient quand une réaction apparaît.
-    var truss=document.querySelector('.sfx--truss');
-    function flash(){ if(!truss) return; truss.classList.add('flash'); setTimeout(function(){truss.classList.remove('flash');},520); }
-    var _pop=pop; pop=function(){ _pop(); flash(); };
     var hi=setInterval(heart,window.innerWidth<700?1100:620), pi=setInterval(pop,window.innerWidth<700?5200:2600);
     heart(); setTimeout(pop,900);
     window.addEventListener('pagehide',function(){clearInterval(hi);clearInterval(pi);});
-  })();
-
-  // ── Parallaxe douce du décor : l'objet glisse moins vite que la page, ce qui
-  //    donne la profondeur d'une salle. Coupée sur mobile et si mouvement réduit. ──
-  (function(){
-    if(window.matchMedia('(prefers-reduced-motion:reduce)').matches || window.innerWidth<=900) return;
-    var items=[].slice.call(document.querySelectorAll('.sfx--spk,.sfx--piano,.sfx--truss2'));
-    if(!items.length) return;
-    var ticking=false;
-    function place(){
-      ticking=false; var vh=window.innerHeight;
-      items.forEach(function(el){
-        var r=el.getBoundingClientRect();
-        if(r.bottom<-200||r.top>vh+200) return;
-        var prog=(vh-r.top)/(vh+r.height);
-        var dy=(prog-.5)*-46;
-        var flip=el.classList.contains('sfx--spk-r')?' scaleX(-1)':(el.classList.contains('sfx--truss2')?' translateX(-50%)':'');
-        el.style.transform='translate3d(0,'+dy.toFixed(1)+'px,0)'+flip;
-      });
-    }
-    addEventListener('scroll',function(){ if(!ticking){ ticking=true; requestAnimationFrame(place); } },{passive:true});
-    addEventListener('resize',place); place();
   })();
 
   // ── Reveal au scroll ──
