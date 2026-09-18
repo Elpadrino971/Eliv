@@ -16,7 +16,14 @@
     { code: "zh", name: "中文" }, { code: "ko", name: "한국어" }, { code: "ja", name: "日本語" },
     { code: "ar", name: "العربية" }, { code: "hi", name: "हिन्दी" }, { code: "ru", name: "Русский" },
   ];
-  let LANG = localStorage.getItem("vyb_lang") || "fr";
+  // Langue : choix mémorisé, sinon langue du navigateur si disponible, sinon français.
+  let LANG = (function () {
+    let st = null; try { st = localStorage.getItem("vyb_lang"); } catch (e) {}
+    const codes = LANGS.map(l => l.code);
+    if (st && codes.includes(st)) return st;
+    const nav = (navigator.language || "fr").slice(0, 2).toLowerCase();
+    return codes.includes(nav) ? nav : "fr";
+  })();
   function dict() { return (window.I18N && (window.I18N[LANG] || window.I18N.fr)) || {}; }
   function t(k) { const d = dict(), f = (window.I18N && window.I18N.fr) || {}; return d[k] != null ? d[k] : (f[k] != null ? f[k] : k); }
   function applyI18n(root) {
@@ -66,7 +73,7 @@
       </a>
       <nav class="nav__links" style="margin-left:auto">${links}</nav>
       <div class="nav__cta">
-        <button class="lang-btn" data-cursor="hover" onclick="window.__vybLang&&window.__vybLang()">🌐 ${LANG.toUpperCase()}</button>
+        <select class="langsel" aria-label="Langue" onchange="try{localStorage.setItem('vyb_lang',this.value)}catch(e){};location.reload()">${LANGS.map(l => `<option value="${l.code}" ${l.code === LANG ? "selected" : ""}>${l.name}</option>`).join("")}</select>
         <a href="app.html" class="btn btn--ghost nav__dl" data-cursor="hover">📲 ${t("nav_download")}</a>
         <a href="artist.html" class="btn btn--gold magnetic" data-cursor="hover"><span>${t("nav_apply")}</span></a>
       </div>

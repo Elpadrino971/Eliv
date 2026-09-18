@@ -179,6 +179,13 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 .tier__badges{margin-top:14px;justify-content:center}.closing__badges{justify-content:center;margin-top:18px}
 .foot__stores{max-width:1180px;margin:0 auto;padding:6px 0 18px}
 @media(max-width:700px){.ch1__badges{margin-top:16px}.pillnav__dl{display:none}}
+.langsel{appearance:none;-webkit-appearance:none;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23E6C76A'/%3E%3C/svg%3E") no-repeat right 8px center;border:1px solid rgba(255,255,255,.14);color:var(--ivory);border-radius:99px;padding:7px 24px 7px 12px;font:inherit;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-left:6px}
+.langsel option{background:#0A1226;color:#F4EFE3;text-transform:none;letter-spacing:0}
+.langsel--menu{position:fixed;top:30px;right:84px;z-index:201;padding:9px 26px 9px 14px}
+@media(max-width:900px){.pillnav .langsel{display:none}}
+.demo-tag{position:absolute;right:18px;top:18px;z-index:2;padding:8px 14px;border-radius:99px;background:rgba(12,18,38,.72);border:1px solid var(--line);color:var(--gold);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;backdrop-filter:blur(8px)}
+.show__note{margin-top:16px;font-size:.78rem;color:var(--muted);line-height:1.5}.show__note a{color:var(--gold)}
+.hero__note{margin-top:10px!important;font-size:.62rem!important;letter-spacing:.14em!important;opacity:.6}
 /* Indicateurs bas */
 .scroll-hint{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:5;
   font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);opacity:.8}
@@ -434,11 +441,12 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 <nav class="pillnav">
   <span class="pillnav__brand">Vybzz<span class="dot">Z</span></span>
   <div class="pillnav__links">
-    <a href="feed.html">Feed</a><a href="store.html">Boutique</a><a href="#roles">Le deal</a>
-    <a href="#academy">Maîtrise la scène</a><a href="faq.html">FAQ</a><a href="challenge.html" style="color:var(--gold)">Challenge</a>
+    <a href="feed.html" data-t="t1">Feed</a><a href="store.html" data-t="t2">Boutique</a><a href="#roles" data-t="t3">Le deal</a>
+    <a href="#academy" data-t="t4">Maîtrise la scène</a><a href="faq.html" data-t="t5">FAQ</a><a href="challenge.html" style="color:var(--gold)" data-t="t6">Challenge</a>
   </div>
-  <a href="app.html" class="pillnav__dl">L'appli</a>
-  <a href="artist.html" class="pillnav__cta">Postuler</a>
+  <select class="langsel" id="langSel" aria-label="Langue"></select>
+  <a href="app.html" class="pillnav__dl" data-t="t7">L'appli</a>
+  <a href="artist.html" class="pillnav__cta" data-t="t8">Postuler</a>
   <button class="pillnav__burger" type="button" data-menu aria-label="Ouvrir le menu" aria-expanded="false"><i></i><i></i><i></i></button>
 </nav>
 <button class="menupill" type="button" data-menu aria-expanded="false" aria-controls="menuOverlay">Menu <span class="plus">+</span></button>
@@ -447,26 +455,27 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 <div class="menu" id="menuOverlay" hidden>
   <div class="menu__inner">
     <button class="menu__close" type="button" data-menu-close aria-label="Fermer le menu">✕</button>
+    <select class="langsel langsel--menu" id="langSelMenu" aria-label="Langue"></select>
     <span class="menu__brand">Vybzz<span class="dot">Z</span></span>
     <nav class="menu__main">
-      <a href="challenge.html" class="menu__hot">Live Challenge <small>20 sept → 24 oct · 1er prix iPhone Pro</small></a>
-      <a href="feed.html">Feed & Clips</a>
-      <a href="store.html">Boutique</a>
-      <a href="#roles" data-menu-close>Le deal</a>
-      <a href="#academy" data-menu-close>Maîtrise la scène</a>
-      <a href="faq.html">FAQ</a>
-      <a href="artist.html">Postuler comme artiste</a>
+      <a href="challenge.html" class="menu__hot" data-t="t9">Live Challenge <small>20 sept → 24 oct · 1er prix iPhone Pro</small></a>
+      <a href="feed.html" data-t="t10">Feed & Clips</a>
+      <a href="store.html" data-t="t11">Boutique</a>
+      <a href="#roles" data-menu-close data-t="t12">Le deal</a>
+      <a href="#academy" data-menu-close data-t="t13">Maîtrise la scène</a>
+      <a href="faq.html" data-t="t14">FAQ</a>
+      <a href="artist.html" data-t="t15">Postuler comme artiste</a>
     </nav>
     <div class="menu__side">
-      <span class="eyebrow">L'appli</span>
+      <span class="eyebrow" data-t="t16">L'appli</span>
       <div class="storebadges storebadges--sm"><a class="sbadge" href="app.html?store=ios" aria-label="Télécharger sur l'App Store"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.6c0-2.5 2-3.7 2.1-3.8-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.8-1.7 0-3.2 1-4.1 2.5-1.8 3-.5 7.5 1.3 10 .8 1.2 1.8 2.6 3.2 2.5 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.2 3.1-2.5.9-1.4 1.3-2.7 1.4-2.8-.1 0-2.9-1.1-2.9-4zM13.9 5.1c.7-.8 1.2-2 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"/></svg><span><small>Télécharger sur</small>App Store</span></a><a class="sbadge" href="app.html?store=android" aria-label="Disponible sur Google Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#34A853" d="M3.6 2.4 13 12l-9.4 9.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z"/><path fill="#FBBC04" d="M17 8 13 12l4 4 3.5-2c.7-.4.7-1.5 0-2L17 8z"/><path fill="#EA4335" d="M13 12 3.6 21.6c.4.3 1 .3 1.6 0L17 16l-4-4z"/><path fill="#4285F4" d="M13 12 17 8 5.2 2.4c-.6-.3-1.2-.3-1.6 0L13 12z"/></svg><span><small>Disponible sur</small>Google Play</span></a></div>
-      <span class="eyebrow" style="margin-top:26px">Contact</span>
-      <a href="#reserver" data-menu-close>Réserver un moment</a>
-      <a href="mailto:hello@vybzzz.online">hello@vybzzz.online</a>
-      <span class="eyebrow" style="margin-top:26px">Légal</span>
-      <a href="mentions-legales.html">Mentions légales</a>
-      <a href="confidentialite.html">Confidentialité</a>
-      <a href="cgu.html">CGU</a>
+      <span class="eyebrow" style="margin-top:26px" data-t="t17">Contact</span>
+      <a href="#reserver" data-menu-close data-t="t18">Réserver un moment</a>
+      <a href="mailto:hello@vybzzz.online" data-t="t19">hello@vybzzz.online</a>
+      <span class="eyebrow" style="margin-top:26px" data-t="t20">Légal</span>
+      <a href="mentions-legales.html" data-t="t21">Mentions légales</a>
+      <a href="confidentialite.html" data-t="t22">Confidentialité</a>
+      <a href="cgu.html" data-t="t23">CGU</a>
     </div>
   </div>
 </div>
@@ -485,18 +494,19 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
     <div class="chapter ch1" data-c="0">
       <!-- Mode normal -->
       <div class="ch1__default">
-        <span class="eyebrow eyebrow--line">Membres fondateurs · Live depuis 2026</span>
-        <h1>LA SCÈNE<br>EST <em>À TOI.</em><br>MONTE<br><em>MAINTENANT.</em></h1>
-        <p>Un monde de concerts en direct. Gratuit. Sans salle, sans frontières, sans intermédiaire.</p>
+        <span class="eyebrow eyebrow--line" data-t="t24">Membres fondateurs · Live depuis 2026</span>
+        <h1 data-t="t25">LA SCÈNE<br>EST <em>À TOI.</em><br>MONTE<br><em>MAINTENANT.</em></h1>
+        <p data-t="t26">Un monde de concerts en direct. Gratuit. Sans salle, sans frontières, sans intermédiaire.</p>
+        <p class="hero__note" data-t="t173">Images et réactions à l'écran : démonstration.</p>
         <div class="storebadges ch1__badges"><a class="sbadge" href="app.html?store=ios" aria-label="Télécharger sur l'App Store"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.6c0-2.5 2-3.7 2.1-3.8-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.8-1.7 0-3.2 1-4.1 2.5-1.8 3-.5 7.5 1.3 10 .8 1.2 1.8 2.6 3.2 2.5 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.2 3.1-2.5.9-1.4 1.3-2.7 1.4-2.8-.1 0-2.9-1.1-2.9-4zM13.9 5.1c.7-.8 1.2-2 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"/></svg><span><small>Télécharger sur</small>App Store</span></a><a class="sbadge" href="app.html?store=android" aria-label="Disponible sur Google Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#34A853" d="M3.6 2.4 13 12l-9.4 9.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z"/><path fill="#FBBC04" d="M17 8 13 12l4 4 3.5-2c.7-.4.7-1.5 0-2L17 8z"/><path fill="#EA4335" d="M13 12 3.6 21.6c.4.3 1 .3 1.6 0L17 16l-4-4z"/><path fill="#4285F4" d="M13 12 17 8 5.2 2.4c-.6-.3-1.2-.3-1.6 0L13 12z"/></svg><span><small>Disponible sur</small>Google Play</span></a></div>
       </div>
       <!-- Mode concours : affiché automatiquement du 18 septembre au 24 octobre 2026 (voir script) -->
       <div class="ch1__concours" hidden>
-        <span class="eyebrow eyebrow--line" id="chalEyebrow">VybzzZ Live Challenge · 20 sept → 24 oct</span>
-        <h1>MONTE<br>SUR <em>SCÈNE.</em><br>FAIS TON LIVE.<br><em>GAGNE.</em></h1>
-        <p>Concours artistes · 1er prix : nouvel iPhone Pro · Inscris-toi, récupère ton lien, ramène ta commu, fais tes lives.</p>
+        <span class="eyebrow eyebrow--line" id="chalEyebrow" data-t="t27">VybzzZ Live Challenge · 20 sept → 24 oct</span>
+        <h1 data-t="t28">MONTE<br>SUR <em>SCÈNE.</em><br>FAIS TON LIVE.<br><em>GAGNE.</em></h1>
+        <p data-t="t29">Concours artistes · 1er prix : nouvel iPhone Pro · Inscris-toi, récupère ton lien, ramène ta commu, fais tes lives.</p>
         <div class="ch1__ctas">
-          <a href="challenge.html" class="pillnav__cta">Je participe</a>
+          <a href="challenge.html" class="pillnav__cta" data-t="t30">Je participe</a>
         </div>
         <div class="storebadges ch1__badges"><a class="sbadge" href="app.html?store=ios" aria-label="Télécharger sur l'App Store"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.6c0-2.5 2-3.7 2.1-3.8-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.8-1.7 0-3.2 1-4.1 2.5-1.8 3-.5 7.5 1.3 10 .8 1.2 1.8 2.6 3.2 2.5 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.2 3.1-2.5.9-1.4 1.3-2.7 1.4-2.8-.1 0-2.9-1.1-2.9-4zM13.9 5.1c.7-.8 1.2-2 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"/></svg><span><small>Télécharger sur</small>App Store</span></a><a class="sbadge" href="app.html?store=android" aria-label="Disponible sur Google Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#34A853" d="M3.6 2.4 13 12l-9.4 9.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z"/><path fill="#FBBC04" d="M17 8 13 12l4 4 3.5-2c.7-.4.7-1.5 0-2L17 8z"/><path fill="#EA4335" d="M13 12 3.6 21.6c.4.3 1 .3 1.6 0L17 16l-4-4z"/><path fill="#4285F4" d="M13 12 17 8 5.2 2.4c-.6-.3-1.2-.3-1.6 0L13 12z"/></svg><span><small>Disponible sur</small>Google Play</span></a></div>
       </div>
@@ -505,20 +515,20 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
     <!-- Chapitre 2 -->
     <div class="chapter ch2" data-c="1">
       <div class="glass">
-        <span class="eyebrow eyebrow--line">La philosophie VybzzZ</span>
-        <h2>ACCÈS PRIVÉ.<br><em>SCÈNE OUVERTE.</em></h2>
-        <p>On crée des expériences pour ceux qui veulent être vus et entendus. Depuis le premier live, les artistes gardent la plus grosse part — et les fans sont au premier rang, où qu'ils soient.</p>
-        <a href="#fondateurs" class="ghost-btn">Les membres fondateurs</a>
+        <span class="eyebrow eyebrow--line" data-t="t31">La philosophie VybzzZ</span>
+        <h2 data-t="t32">ACCÈS PRIVÉ.<br><em>SCÈNE OUVERTE.</em></h2>
+        <p data-t="t33">On crée des expériences pour ceux qui veulent être vus et entendus. Depuis le premier live, les artistes gardent la plus grosse part — et les fans sont au premier rang, où qu'ils soient.</p>
+        <a href="#fondateurs" class="ghost-btn" data-t="t34">Les membres fondateurs</a>
       </div>
     </div>
 
     <!-- Chapitre 3 -->
     <div class="chapter ch3" data-c="2">
-      <h2 class="ch3__title">LA VIE<br>AU-DELÀ<br><em>DE LA SCÈNE</em></h2>
+      <h2 class="ch3__title" data-t="t35">LA VIE<br>AU-DELÀ<br><em>DE LA SCÈNE</em></h2>
       <div class="ch3__cards">
-        <div class="gcard"><span class="eyebrow">Concerts</span><h3>Lives mondiaux</h3><p>Diffuse en direct partout dans le monde, sans salle ni intermédiaire — tes fans achètent leur place et envoient des cadeaux.</p></div>
-        <div class="gcard"><span class="eyebrow">Studio Pro</span><h3>Tout pour créer</h3><p>Lives, billetterie, cadeaux, replays : tes outils professionnels réunis dans un seul studio.</p></div>
-        <div class="gcard"><span class="eyebrow">Revenus</span><h3>Payé en direct</h3><p>Billets, cadeaux, pourboires — tu gardes 50 % (à 15 % de frais store), versé rapidement.</p></div>
+        <div class="gcard"><span class="eyebrow" data-t="t36">Concerts</span><h3 data-t="t37">Lives mondiaux</h3><p data-t="t38">Diffuse en direct partout dans le monde, sans salle ni intermédiaire — tes fans achètent leur place et envoient des cadeaux.</p></div>
+        <div class="gcard"><span class="eyebrow" data-t="t39">Studio Pro</span><h3 data-t="t40">Tout pour créer</h3><p data-t="t41">Lives, billetterie, cadeaux, replays : tes outils professionnels réunis dans un seul studio.</p></div>
+        <div class="gcard"><span class="eyebrow" data-t="t42">Revenus</span><h3 data-t="t43">Payé en direct</h3><p data-t="t44">Billets, cadeaux, pourboires — tu gardes 50 % (à 15 % de frais store), versé rapidement.</p></div>
       </div>
     </div>
 
@@ -526,22 +536,22 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
   </div>
 </section>
 
-<a href="artist.html" class="corner-cta">Postuler</a>
+<a href="artist.html" class="corner-cta" data-t="t45">Postuler</a>
 
 
 <!-- Bandeau Live Challenge -->
 <a href="challenge.html" class="chalband reveal" aria-label="VybzzZ Live Challenge, du 20 septembre au 24 octobre 2026">
-  <span class="chalband__tag">Live Challenge</span>
+  <span class="chalband__tag" data-t="t46">Live Challenge</span>
   <span class="chalband__txt"><b>Du 20 septembre au 24 octobre</b> · 1er prix : nouvel iPhone Pro · Inscris-toi, récupère ton lien, ramène ta commu, fais tes lives.</span>
-  <span class="chalband__cta">Participer →</span>
+  <span class="chalband__cta" data-t="t47">Participer →</span>
 </a>
 
 <!-- C'est quoi VybzzZ : 2 vidéos explicatives (son au clic) -->
 <section class="section" id="cest-quoi">
   <div class="section__head reveal">
-    <span class="eyebrow eyebrow--line">En quelques minutes</span>
-    <h2>C'EST QUOI <em>VybzzZ ?</em></h2>
-    <p>La scène live, expliquée. Clique pour lancer — <span style="color:var(--gold)">le son s'active</span>.</p>
+    <span class="eyebrow eyebrow--line" data-t="t48">En quelques minutes</span>
+    <h2 data-t="t49">C'EST QUOI <em>VybzzZ ?</em></h2>
+    <p data-t="t50">La scène live, expliquée. Clique pour lancer — <span style="color:var(--gold)">le son s'active</span>.</p>
   </div>
   <div class="explainer">
 
@@ -552,7 +562,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
         <button class="exp__full" type="button" aria-label="Plein écran"><svg viewBox="0 0 24 24"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm14 3v-3h2v5h-5v-2h3z"/></svg></button>
         <button class="exp__play" type="button"><span class="tri"></span>Regarder l'explication</button>
       </div>
-      <p class="exp__cap"><b>La version complète</b> — tout comprendre, en grand.</p>
+      <p class="exp__cap" data-t="t52"><b>La version complète</b> — tout comprendre, en grand.</p>
     </div>
 
     <!-- Verticale (format story) -->
@@ -562,7 +572,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
         <video data-src="https://stream.mux.com/02w00bKWNzqftUMUYFub8dQcgbow2bsCrSIZcumjjzLcg.m3u8" poster="https://image.mux.com/02w00bKWNzqftUMUYFub8dQcgbow2bsCrSIZcumjjzLcg/thumbnail.jpg?fit_mode=smartcrop&height=760&width=360" playsinline preload="none"></video>
         <button class="exp__play" type="button"><span class="tri"></span>Voir</button>
       </div>
-      <p class="exp__cap"><b>La version courte</b> — format story.</p>
+      <p class="exp__cap" data-t="t53"><b>La version courte</b> — format story.</p>
     </div>
 
   </div>
@@ -571,24 +581,24 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 <!-- FLEET : 3 scènes -->
 <section class="section" id="scenes">
   <div class="section__head reveal">
-    <span class="eyebrow eyebrow--line">Trois façons de briller</span>
-    <h2>TROIS SCÈNES.<br><em>UN SEUL STANDARD.</em></h2>
-    <p>Le live, le clip, le studio. Trois manières d'exister sur VybzzZ — chacune pensée pour te mettre en lumière et te faire gagner ta part.</p>
+    <span class="eyebrow eyebrow--line" data-t="t54">Trois façons de briller</span>
+    <h2 data-t="t55">TROIS SCÈNES.<br><em>UN SEUL STANDARD.</em></h2>
+    <p data-t="t56">Le live, le clip, le studio. Trois manières d'exister sur VybzzZ — chacune pensée pour te mettre en lumière et te faire gagner ta part.</p>
   </div>
   <div class="showcase">
 
     <!-- 1. LE LIVE — scroll horizontal de vidéos Mux -->
     <div class="show-scroll reveal">
       <div class="show__txt" style="max-width:760px;margin:0 auto clamp(26px,4vh,44px);text-align:center">
-        <span class="eyebrow eyebrow--line">01 — Le Live</span>
-        <h3>Une scène qui <em>défile.</em></h3>
-        <p style="margin:0 auto;max-width:56ch">Fais défiler ce que les artistes publient en ce moment. Chaque vignette est un vrai clip — touche, entre, vibre.</p>
+        <span class="eyebrow eyebrow--line" data-t="t57">01 — Le Live</span>
+        <h3 data-t="t58">Une scène qui <em>défile.</em></h3>
+        <p style="margin:0 auto;max-width:56ch" data-t="t59">Fais défiler ce que les artistes publient en ce moment. Chaque vignette est un vrai clip — touche, entre, vibre.</p>
       </div>
       <div class="strip-wrap">
         <div class="strip" id="liveStrip">
           <!-- rempli par l'API : derniers clips publiés par les artistes (voir script en bas de page) -->
         </div>
-        <div class="strip-hint">Fais défiler</div>
+        <div class="strip-hint" data-t="t60">Fais défiler</div>
       </div>
     </div>
 
@@ -597,17 +607,18 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
       <div class="show__media">
         <div class="media16" style="background-image:url('https://image.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g/thumbnail.jpg?time=6')">
           <video data-src="https://stream.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g.m3u8" poster="https://image.mux.com/BC702qp42F2svVH2n4OU4nHDZz7YwMjSvx02r8gQkRA6g/thumbnail.jpg?time=6" muted loop playsinline preload="none"></video>
-          <span class="live-dot">En direct</span>
-          <span class="play-badge"><span class="tri"></span>Concert live</span>
+          <span class="demo-tag" data-t="t170">Exemple*</span>
+          <span class="play-badge"><span class="tri"></span><span data-t="t171">Aperçu d'un concert</span></span>
           <button class="sound-btn" type="button" aria-label="Activer le son"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/><path d="M19 5l-1.4 1.4A7.5 7.5 0 0 1 20 12a7.5 7.5 0 0 1-2.4 5.6L19 19a9.5 9.5 0 0 0 0-14z" opacity=".85"/></svg></button>
         </div>
       </div>
       <div class="show__txt">
-        <span class="eyebrow eyebrow--line">02 — Le Concert</span>
-        <h3>Le grand <em>live.</em></h3>
-        <p>Monte sur scène en direct, où que tu sois. Tes fans achètent leur place, envoient des cadeaux et vibrent avec toi en temps réel — sans salle, sans frontière, sans intermédiaire.</p>
+        <span class="eyebrow eyebrow--line" data-t="t62">02 — Le Concert</span>
+        <h3 data-t="t63">Le grand <em>live.</em></h3>
+        <p data-t="t64">Monte sur scène en direct, où que tu sois. Tes fans achètent leur place, envoient des cadeaux et vibrent avec toi en temps réel — sans salle, sans frontière, sans intermédiaire.</p>
         <div class="show__meta"><span>Portée<b>Monde</b></span><span>Billetterie<b>Intégrée</b></span><span>Revenus<b>Tu gardes 50 %</b></span></div>
-        <a href="artist.html" class="ghost-btn">Diffuser mon concert</a>
+        <a href="artist.html" class="ghost-btn" data-t="t65">Diffuser mon concert</a>
+        <p class="show__note" data-t="t172">* Extrait de démonstration, pas un direct. Les vrais concerts en direct se regardent dans l'appli, et s'annoncent dans le <a href="feed.html">Feed</a>.</p>
       </div>
     </div>
 
@@ -623,11 +634,11 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
         </div>
       </div>
       <div class="show__txt">
-        <span class="eyebrow eyebrow--line">03 — Le Clip</span>
-        <h3>Le clip <em>en grand.</em></h3>
-        <p>Publie tes clips en 16:9. Ton public te découvre entre deux lives, partage en un geste et revient pour ton prochain concert. Le feed « Pour toi » fait le reste.</p>
+        <span class="eyebrow eyebrow--line" data-t="t67">03 — Le Clip</span>
+        <h3 data-t="t68">Le clip <em>en grand.</em></h3>
+        <p data-t="t69">Publie tes clips en 16:9. Ton public te découvre entre deux lives, partage en un geste et revient pour ton prochain concert. Le feed « Pour toi » fait le reste.</p>
         <div class="show__meta"><span>Format<b>16:9 · Paysage</b></span><span>Partage<b>1 geste</b></span><span>Découverte<b>Pour toi</b></span></div>
-        <a href="feed.html" class="ghost-btn">Voir les clips</a>
+        <a href="feed.html" class="ghost-btn" data-t="t70">Voir les clips</a>
       </div>
     </div>
 
@@ -637,25 +648,25 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 <!-- TESTIMONIALS -->
 <section class="section testi" id="fondateurs">
   <div class="section__head reveal">
-    <span class="eyebrow eyebrow--line">Membres fondateurs</span>
-    <h2>LES PREMIERS SUR <em>SCÈNE.</em></h2>
-    <p>VybzzZ ouvre avec une première vague d'artistes fondateurs. Pas de témoignages inventés : les premiers lives s'écrivent maintenant, et ils s'écrivent avec toi.</p>
+    <span class="eyebrow eyebrow--line" data-t="t71">Membres fondateurs</span>
+    <h2 data-t="t72">LES PREMIERS SUR <em>SCÈNE.</em></h2>
+    <p data-t="t73">VybzzZ ouvre avec une première vague d'artistes fondateurs. Pas de témoignages inventés : les premiers lives s'écrivent maintenant, et ils s'écrivent avec toi.</p>
   </div>
   <div class="testi__grid">
     <figure class="quote reveal">
       <span class="quote__mark">01</span>
-      <p>Une place réservée dans la première vague. Ton profil est examiné par l'équipe, et tu es accompagné jusqu'à ton premier live.</p>
-      <figcaption class="quote__who"><span class="quote__av">★</span><div><b>Places limitées</b><span>Sélection sur candidature</span></div></figcaption>
+      <p data-t="t74">Une place réservée dans la première vague. Ton profil est examiné par l'équipe, et tu es accompagné jusqu'à ton premier live.</p>
+      <figcaption class="quote__who"><span class="quote__av">★</span><div><b data-t="t75">Places limitées</b><span>Sélection sur candidature</span></div></figcaption>
     </figure>
     <figure class="quote reveal">
       <span class="quote__mark">02</span>
-      <p>Le badge Fondateur reste sur ton profil à vie. Il marque ceux qui étaient là avant tout le monde.</p>
-      <figcaption class="quote__who"><span class="quote__av">F</span><div><b>Badge Fondateur</b><span>Visible sur ton profil, à vie</span></div></figcaption>
+      <p data-t="t76">Le badge Fondateur reste sur ton profil à vie. Il marque ceux qui étaient là avant tout le monde.</p>
+      <figcaption class="quote__who"><span class="quote__av">F</span><div><b data-t="t77">Badge Fondateur</b><span>Visible sur ton profil, à vie</span></div></figcaption>
     </figure>
     <figure class="quote reveal">
       <span class="quote__mark">03</span>
-      <p>Une régie et une équipe joignables en direct pendant tes premiers concerts. Tu n'es pas seul sur scène.</p>
-      <figcaption class="quote__who"><span class="quote__av">R</span><div><b>Accompagnement direct</b><span>Régie et support pendant le live</span></div></figcaption>
+      <p data-t="t78">Une régie et une équipe joignables en direct pendant tes premiers concerts. Tu n'es pas seul sur scène.</p>
+      <figcaption class="quote__who"><span class="quote__av">R</span><div><b data-t="t79">Accompagnement direct</b><span>Régie et support pendant le live</span></div></figcaption>
     </figure>
   </div>
 </section>
@@ -663,49 +674,49 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 <!-- TIERS / rôles -->
 <span id="pourquoi"></span><section class="section" id="roles">
   <div class="section__head reveal">
-    <span class="eyebrow eyebrow--line">Choisis ta place</span>
-    <h2>ENTRE DANS <em>LE CERCLE.</em></h2>
-    <p>Pas d'abonnement caché, pas d'avance. Tu choisis ton rôle — l'entrée reste gratuite, tu partages seulement ce que tu gagnes.</p>
+    <span class="eyebrow eyebrow--line" data-t="t80">Choisis ta place</span>
+    <h2 data-t="t81">ENTRE DANS <em>LE CERCLE.</em></h2>
+    <p data-t="t82">Pas d'abonnement caché, pas d'avance. Tu choisis ton rôle — l'entrée reste gratuite, tu partages seulement ce que tu gagnes.</p>
   </div>
   <div class="tiers">
     <article class="tier reveal">
-      <h3>Fan</h3>
+      <h3 data-t="t83">Fan</h3>
       <div class="tier__price">Gratuit</div>
-      <p class="tier__sub">Pour vivre chaque concert.</p>
+      <p class="tier__sub" data-t="t84">Pour vivre chaque concert.</p>
       <ul>
-        <li>Accès à tous les lives et clips</li>
-        <li>Achat de billets à l'unité</li>
-        <li>Cadeaux et pourboires en direct</li>
-        <li>Replays des concerts</li>
+        <li data-t="t85">Accès à tous les lives et clips</li>
+        <li data-t="t86">Achat de billets à l'unité</li>
+        <li data-t="t87">Cadeaux et pourboires en direct</li>
+        <li data-t="t88">Replays des concerts</li>
       </ul>
-      <a href="app.html" class="tier__cta tier__cta--ghost">Télécharger l'appli</a>
+      <a href="app.html" class="tier__cta tier__cta--ghost" data-t="t89">Télécharger l'appli</a>
       <div class="storebadges storebadges--sm tier__badges"><a class="sbadge" href="app.html?store=ios" aria-label="Télécharger sur l'App Store"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.6c0-2.5 2-3.7 2.1-3.8-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.8-1.7 0-3.2 1-4.1 2.5-1.8 3-.5 7.5 1.3 10 .8 1.2 1.8 2.6 3.2 2.5 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.2 3.1-2.5.9-1.4 1.3-2.7 1.4-2.8-.1 0-2.9-1.1-2.9-4zM13.9 5.1c.7-.8 1.2-2 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"/></svg><span><small>Télécharger sur</small>App Store</span></a><a class="sbadge" href="app.html?store=android" aria-label="Disponible sur Google Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#34A853" d="M3.6 2.4 13 12l-9.4 9.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z"/><path fill="#FBBC04" d="M17 8 13 12l4 4 3.5-2c.7-.4.7-1.5 0-2L17 8z"/><path fill="#EA4335" d="M13 12 3.6 21.6c.4.3 1 .3 1.6 0L17 16l-4-4z"/><path fill="#4285F4" d="M13 12 17 8 5.2 2.4c-.6-.3-1.2-.3-1.6 0L13 12z"/></svg><span><small>Disponible sur</small>Google Play</span></a></div>
     </article>
     <article class="tier tier--feature reveal">
       <span class="tier__tag">Le plus choisi</span>
-      <h3>Artiste</h3>
+      <h3 data-t="t90">Artiste</h3>
       <div class="tier__price">Gratuit <small>· tu gardes 50 %</small></div>
-      <p class="tier__sub">Pour monter sur scène.</p>
+      <p class="tier__sub" data-t="t91">Pour monter sur scène.</p>
       <ul>
-        <li>Lives mondiaux illimités</li>
-        <li>90 min de live incluses / mois</li>
-        <li>Billetterie, cadeaux, pourboires</li>
-        <li>Tu gardes 50 % (frais store ~15 %)</li>
-        <li>Retraits Stripe ou banque ~24 h</li>
+        <li data-t="t92">Lives mondiaux illimités</li>
+        <li data-t="t93">90 min de live incluses / mois</li>
+        <li data-t="t94">Billetterie, cadeaux, pourboires</li>
+        <li data-t="t95">Tu gardes 50 % (frais store ~15 %)</li>
+        <li data-t="t96">Retraits Stripe ou banque ~24 h</li>
       </ul>
-      <a href="artist.html" class="tier__cta tier__cta--gold">Postuler comme artiste</a>
+      <a href="artist.html" class="tier__cta tier__cta--gold" data-t="t97">Postuler comme artiste</a>
     </article>
     <article class="tier reveal">
-      <h3>Studio Pro</h3>
+      <h3 data-t="t98">Studio Pro</h3>
       <div class="tier__price">Sur demande</div>
-      <p class="tier__sub">Pour les labels & équipes.</p>
+      <p class="tier__sub" data-t="t99">Pour les labels & équipes.</p>
       <ul>
-        <li>Multi-artistes & régie avancée</li>
-        <li>Statistiques et revenus détaillés</li>
-        <li>Lives programmés et co-diffusion</li>
-        <li>Accompagnement dédié</li>
+        <li data-t="t100">Multi-artistes & régie avancée</li>
+        <li data-t="t101">Statistiques et revenus détaillés</li>
+        <li data-t="t102">Lives programmés et co-diffusion</li>
+        <li data-t="t103">Accompagnement dédié</li>
       </ul>
-      <a href="#reserver" class="tier__cta tier__cta--ghost">Nous contacter</a>
+      <a href="#reserver" class="tier__cta tier__cta--ghost" data-t="t104">Nous contacter</a>
     </article>
   </div>
 </section>
@@ -713,30 +724,30 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 <!-- ACADEMY -->
 <section class="section academy" id="academy">
   <div class="section__head reveal">
-    <span class="eyebrow eyebrow--line">L'école de la scène</span>
-    <h2>MAÎTRISE <em>LA SCÈNE.</em></h2>
-    <p>Quatre guides courts et concrets pour réussir ton live, fédérer ton public et transformer tes concerts en revenus.</p>
+    <span class="eyebrow eyebrow--line" data-t="t105">L'école de la scène</span>
+    <h2 data-t="t106">MAÎTRISE <em>LA SCÈNE.</em></h2>
+    <p data-t="t107">Quatre guides courts et concrets pour réussir ton live, fédérer ton public et transformer tes concerts en revenus.</p>
   </div>
   <div class="modules">
-    <a class="module reveal" href="academie.html#m1"><span class="module__no">01</span><div><h3>Réussir ton premier live</h3><p>Cadrage, son, lumière, connexion : la checklist pour un concert net dès la première fois.</p><span class="module__go">Lire le guide →</span></div></a>
-    <a class="module reveal" href="academie.html#m2"><span class="module__no">02</span><div><h3>Faire venir ton public</h3><p>Clips, teasers et partage en un geste pour remplir la salle avant même de monter sur scène.</p><span class="module__go">Lire le guide →</span></div></a>
-    <a class="module reveal" href="academie.html#m3"><span class="module__no">03</span><div><h3>Monétiser en direct</h3><p>Billetterie, cadeaux, pourboires : les leviers pour être payé le soir même du concert.</p><span class="module__go">Lire le guide →</span></div></a>
-    <a class="module reveal" href="academie.html#m4"><span class="module__no">04</span><div><h3>Fidéliser tes fans</h3><p>Replays, rendez-vous réguliers et communauté : transforme un public en vrais supporters.</p><span class="module__go">Lire le guide →</span></div></a>
+    <a class="module reveal" href="academie.html#m1"><span class="module__no">01</span><div><h3 data-t="t108">Réussir ton premier live</h3><p data-t="t109">Cadrage, son, lumière, connexion : la checklist pour un concert net dès la première fois.</p><span class="module__go">Lire le guide →</span></div></a>
+    <a class="module reveal" href="academie.html#m2"><span class="module__no">02</span><div><h3 data-t="t110">Faire venir ton public</h3><p data-t="t111">Clips, teasers et partage en un geste pour remplir la salle avant même de monter sur scène.</p><span class="module__go">Lire le guide →</span></div></a>
+    <a class="module reveal" href="academie.html#m3"><span class="module__no">03</span><div><h3 data-t="t112">Monétiser en direct</h3><p data-t="t113">Billetterie, cadeaux, pourboires : les leviers pour être payé le soir même du concert.</p><span class="module__go">Lire le guide →</span></div></a>
+    <a class="module reveal" href="academie.html#m4"><span class="module__no">04</span><div><h3 data-t="t114">Fidéliser tes fans</h3><p data-t="t115">Replays, rendez-vous réguliers et communauté : transforme un public en vrais supporters.</p><span class="module__go">Lire le guide →</span></div></a>
   </div>
 </section>
 
 <!-- FAQ -->
 <section class="section" id="faq">
   <div class="section__head reveal">
-    <span class="eyebrow eyebrow--line">Ce qu'il faut savoir</span>
-    <h2>LES BONNES <em>QUESTIONS.</em></h2>
+    <span class="eyebrow eyebrow--line" data-t="t116">Ce qu'il faut savoir</span>
+    <h2 data-t="t117">LES BONNES <em>QUESTIONS.</em></h2>
   </div>
   <div class="faqwrap reveal">
-    <div class="faq"><button class="faq__q" type="button">Combien coûte VybzzZ pour un artiste ?<span class="ic"></span></button><div class="faq__a"><p>Rien à l'entrée : aucun abonnement, aucune carte bancaire, aucun engagement pour diffuser. Tu partages seulement une part de ce que tu gagnes — tu gardes 50 % de chaque montant payé par un fan (après ~15 % de frais store).</p></div></div>
-    <div class="faq"><button class="faq__q" type="button">Comment suis-je payé ?<span class="ic"></span></button><div class="faq__a"><p>Billets, cadeaux et pourboires sont crédités en direct. Tu retires via Stripe ou compte bancaire, avec un délai moyen de 24 h.</p></div></div>
-    <div class="faq"><button class="faq__q" type="button">De quel matériel ai-je besoin ?<span class="ic"></span></button><div class="faq__a"><p>Un smartphone récent et une bonne connexion suffisent pour démarrer. Le Studio Pro te permet ensuite de brancher caméras, son et régie pour passer à l'échelle supérieure.</p></div></div>
-    <div class="faq"><button class="faq__q" type="button">Mes fans doivent-ils payer pour regarder ?<span class="ic"></span></button><div class="faq__a"><p>C'est toi qui décides : certains lives sont gratuits, d'autres sur billet. Dans tous les cas, tes fans peuvent envoyer cadeaux et pourboires pour te soutenir en direct.</p></div></div>
-    <div class="faq"><button class="faq__q" type="button">Que se passe-t-il après ma candidature ?<span class="ic"></span></button><div class="faq__a"><p>Notre équipe examine ta candidature et te recontacte sous 48 h. Une fois validé, tu accèdes au Studio Pro et tu peux programmer ton premier live.</p></div></div>
+    <div class="faq"><button class="faq__q" type="button"><span data-t="faq1">Combien coûte VybzzZ pour un artiste ?</span><span class="ic"></span></button><div class="faq__a"><p data-t="t118">Rien à l'entrée : aucun abonnement, aucune carte bancaire, aucun engagement pour diffuser. Tu partages seulement une part de ce que tu gagnes — tu gardes 50 % de chaque montant payé par un fan (après ~15 % de frais store).</p></div></div>
+    <div class="faq"><button class="faq__q" type="button"><span data-t="faq2">Comment suis-je payé ?</span><span class="ic"></span></button><div class="faq__a"><p data-t="t119">Billets, cadeaux et pourboires sont crédités en direct. Tu retires via Stripe ou compte bancaire, avec un délai moyen de 24 h.</p></div></div>
+    <div class="faq"><button class="faq__q" type="button"><span data-t="faq3">De quel matériel ai-je besoin ?</span><span class="ic"></span></button><div class="faq__a"><p data-t="t120">Un smartphone récent et une bonne connexion suffisent pour démarrer. Le Studio Pro te permet ensuite de brancher caméras, son et régie pour passer à l'échelle supérieure.</p></div></div>
+    <div class="faq"><button class="faq__q" type="button"><span data-t="faq4">Mes fans doivent-ils payer pour regarder ?</span><span class="ic"></span></button><div class="faq__a"><p data-t="t121">C'est toi qui décides : certains lives sont gratuits, d'autres sur billet. Dans tous les cas, tes fans peuvent envoyer cadeaux et pourboires pour te soutenir en direct.</p></div></div>
+    <div class="faq"><button class="faq__q" type="button"><span data-t="faq5">Que se passe-t-il après ma candidature ?</span><span class="ic"></span></button><div class="faq__a"><p data-t="t122">Notre équipe examine ta candidature et te recontacte sous 48 h. Une fois validé, tu accèdes au Studio Pro et tu peux programmer ton premier live.</p></div></div>
   </div>
 </section>
 
@@ -744,47 +755,47 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 <section class="section concierge" id="reserver">
   <div class="concierge__inner">
     <div class="concierge__intro reveal">
-      <span class="eyebrow eyebrow--line">Parlons de ta scène</span>
-      <h2>RÉSERVE <em>TON MOMENT.</em></h2>
-      <p>Artiste, label ou organisateur : dis-nous ton projet, on te prépare une scène sur mesure. Réponse sous 48 h.</p>
+      <span class="eyebrow eyebrow--line" data-t="t123">Parlons de ta scène</span>
+      <h2 data-t="t124">RÉSERVE <em>TON MOMENT.</em></h2>
+      <p data-t="t125">Artiste, label ou organisateur : dis-nous ton projet, on te prépare une scène sur mesure. Réponse sous 48 h.</p>
     </div>
     <form class="cform reveal" id="expForm">
       <div class="row">
-        <div><label>Nom / projet</label><input id="cName" required placeholder="Ton nom de scène"></div>
-        <div><label>E-mail</label><input id="cEmail" type="email" required placeholder="toi@email.com"></div>
+        <div><label data-t="t126">Nom / projet</label><input id="cName" required data-t-ph="t161" placeholder="Ton nom de scène"></div>
+        <div><label data-t="t127">E-mail</label><input id="cEmail" type="email" required data-t-ph="t162" placeholder="toi@email.com"></div>
       </div>
       <div class="row">
-        <div><label>Téléphone</label><input id="cPhone" placeholder="+33 6 …"></div>
-        <div><label>Tu es…</label><select id="cRole"><option>Artiste solo</option><option>Groupe</option><option>Label / production</option><option>Organisateur</option><option>Fan curieux</option></select></div>
+        <div><label data-t="t128">Téléphone</label><input id="cPhone" data-t-ph="t163" placeholder="+33 6 …"></div>
+        <div><label data-t="t129">Tu es…</label><select id="cRole"><option data-t="t130">Artiste solo</option><option data-t="t131">Groupe</option><option data-t="t132">Label / production</option><option data-t="t133">Organisateur</option><option data-t="t134">Fan curieux</option></select></div>
       </div>
-      <div><label>Ton projet</label><textarea id="cMsg" placeholder="Parle-nous de ton univers, ton public, ton prochain live…"></textarea></div>
-      <button class="cform__submit" type="submit">Envoyer ma demande</button>
+      <div><label data-t="t135">Ton projet</label><textarea id="cMsg" data-t-ph="t164" placeholder="Parle-nous de ton univers, ton public, ton prochain live…"></textarea></div>
+      <button class="cform__submit" type="submit" data-t="t136">Envoyer ma demande</button>
     </form>
   </div>
 </section>
 
 <!-- CLÔTURE -->
 <section class="closing">
-  <span class="eyebrow eyebrow--line" style="margin-bottom:20px">Le prochain grand concert</span>
-  <h2>Il commence <em>maintenant</em>, dans ta poche.</h2>
-  <p>Ne rate plus jamais un artiste. Diffuse, soutiens, vibre — en direct, où que tu sois.</p>
-  <a href="artist.html" class="pillnav__cta">Créer mon compte artiste</a>
+  <span class="eyebrow eyebrow--line" style="margin-bottom:20px" data-t="t137">Le prochain grand concert</span>
+  <h2 data-t="t138">Il commence <em>maintenant</em>, dans ta poche.</h2>
+  <p data-t="t139">Ne rate plus jamais un artiste. Diffuse, soutiens, vibre — en direct, où que tu sois.</p>
+  <a href="artist.html" class="pillnav__cta" data-t="t140">Créer mon compte artiste</a>
   <div class="storebadges closing__badges"><a class="sbadge" href="app.html?store=ios" aria-label="Télécharger sur l'App Store"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.6c0-2.5 2-3.7 2.1-3.8-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.8-1.7 0-3.2 1-4.1 2.5-1.8 3-.5 7.5 1.3 10 .8 1.2 1.8 2.6 3.2 2.5 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.2 3.1-2.5.9-1.4 1.3-2.7 1.4-2.8-.1 0-2.9-1.1-2.9-4zM13.9 5.1c.7-.8 1.2-2 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"/></svg><span><small>Télécharger sur</small>App Store</span></a><a class="sbadge" href="app.html?store=android" aria-label="Disponible sur Google Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#34A853" d="M3.6 2.4 13 12l-9.4 9.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z"/><path fill="#FBBC04" d="M17 8 13 12l4 4 3.5-2c.7-.4.7-1.5 0-2L17 8z"/><path fill="#EA4335" d="M13 12 3.6 21.6c.4.3 1 .3 1.6 0L17 16l-4-4z"/><path fill="#4285F4" d="M13 12 17 8 5.2 2.4c-.6-.3-1.2-.3-1.6 0L13 12z"/></svg><span><small>Disponible sur</small>Google Play</span></a></div>
 </section>
 
 <!-- FOOTER -->
 
 <!-- Barre mobile : téléchargement en un clic -->
-<a href="app.html" class="dlbar" id="dlbar">📲 <span>Télécharger l'appli VybzzZ</span> <b>Ouvrir</b></a>
+<a href="app.html" class="dlbar" id="dlbar">📲 <span>Télécharger l'appli VybzzZ</span> <b data-t="t141">Ouvrir</b></a>
 <footer class="foot">
   <div class="foot__top">
     <div class="foot__brand">
       <h4>Vybzz<span class="dot">Z</span></h4>
-      <p>Un monde de concerts en direct. La scène est à toi — diffuse, soutiens, vibre, où que tu sois.</p>
+      <p data-t="t143">Un monde de concerts en direct. La scène est à toi — diffuse, soutiens, vibre, où que tu sois.</p>
     </div>
-    <div class="foot__col"><h5>Explorer</h5><a href="app.html">Télécharger l'appli</a><a href="feed.html">Feed & Clips</a><a href="store.html">Boutique</a><a href="#roles">Le deal</a><a href="faq.html">FAQ</a></div>
-    <div class="foot__col"><h5>Artistes</h5><a href="artist.html">Postuler</a><a href="#roles">Rôles & revenus</a><a href="#academy">Maîtrise la scène</a><a href="#fondateurs">Membres fondateurs</a></div>
-    <div class="foot__col"><h5>Contact & légal</h5><a href="#reserver">Réserver un moment</a><a href="mailto:hello@vybzzz.online">hello@vybzzz.online</a><a href="mentions-legales.html">Mentions légales</a><a href="confidentialite.html">Confidentialité</a><a href="cgu.html">CGU</a></div>
+    <div class="foot__col"><h5 data-t="t144">Explorer</h5><a href="app.html" data-t="t145">Télécharger l'appli</a><a href="feed.html" data-t="t146">Feed & Clips</a><a href="store.html" data-t="t147">Boutique</a><a href="#roles" data-t="t148">Le deal</a><a href="faq.html" data-t="t149">FAQ</a></div>
+    <div class="foot__col"><h5 data-t="t150">Artistes</h5><a href="artist.html" data-t="t151">Postuler</a><a href="#roles" data-t="t152">Rôles & revenus</a><a href="#academy" data-t="t153">Maîtrise la scène</a><a href="#fondateurs" data-t="t154">Membres fondateurs</a></div>
+    <div class="foot__col"><h5 data-t="t155">Contact & légal</h5><a href="#reserver" data-t="t156">Réserver un moment</a><a href="mailto:hello@vybzzz.online" data-t="t157">hello@vybzzz.online</a><a href="mentions-legales.html" data-t="t158">Mentions légales</a><a href="confidentialite.html" data-t="t159">Confidentialité</a><a href="cgu.html" data-t="t160">CGU</a></div>
   </div>
   <div class="foot__stores"><div class="storebadges storebadges--sm"><a class="sbadge" href="app.html?store=ios" aria-label="Télécharger sur l'App Store"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.6c0-2.5 2-3.7 2.1-3.8-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.8-1.7 0-3.2 1-4.1 2.5-1.8 3-.5 7.5 1.3 10 .8 1.2 1.8 2.6 3.2 2.5 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.2 3.1-2.5.9-1.4 1.3-2.7 1.4-2.8-.1 0-2.9-1.1-2.9-4zM13.9 5.1c.7-.8 1.2-2 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"/></svg><span><small>Télécharger sur</small>App Store</span></a><a class="sbadge" href="app.html?store=android" aria-label="Disponible sur Google Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#34A853" d="M3.6 2.4 13 12l-9.4 9.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z"/><path fill="#FBBC04" d="M17 8 13 12l4 4 3.5-2c.7-.4.7-1.5 0-2L17 8z"/><path fill="#EA4335" d="M13 12 3.6 21.6c.4.3 1 .3 1.6 0L17 16l-4-4z"/><path fill="#4285F4" d="M13 12 17 8 5.2 2.4c-.6-.3-1.2-.3-1.6 0L13 12z"/></svg><span><small>Disponible sur</small>Google Play</span></a></div></div>
   <div class="foot__bar">
@@ -793,6 +804,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
   </div>
 </footer>
 
+<script src="i18n-home.js"></script>
 <script src="vendor/hls.min.js"></script>
 <script>window.Hls||document.write('<script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16"><\/script>');</script>
 <script>
@@ -858,6 +870,32 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
     var eio=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){attachHls(en.target,false);eio.unobserve(en.target);}});},{rootMargin:'400px'});
     expVids.forEach(function(v){eio.observe(v);});
   }else{ expVids.forEach(function(v){attachHls(v,false);}); }
+
+  // ── Langue : sélecteur + traduction de la page (FR natif, EN, autres langues → EN) ──
+  (function(){
+    var LANGS=[["fr","Français"],["en","English"],["es","Español"],["it","Italiano"],["de","Deutsch"],["pt","Português"],["zh","中文"],["ko","한국어"],["ja","日本語"],["ar","العربية"],["hi","हिन्दी"],["ru","Русский"]];
+    var HOME=window.I18N_HOME||{}; var codes=LANGS.map(function(l){return l[0]});
+    var stored=null; try{stored=localStorage.getItem('vyb_lang')}catch(e){}
+    var nav=(navigator.language||'fr').slice(0,2).toLowerCase();
+    var lang=(stored&&codes.indexOf(stored)>-1)?stored:(codes.indexOf(nav)>-1?nav:'fr');
+    var FRDICT={};
+    document.querySelectorAll('[data-t]').forEach(function(el){FRDICT[el.getAttribute('data-t')]=el.innerHTML;});
+    document.querySelectorAll('[data-t-ph]').forEach(function(el){FRDICT[el.getAttribute('data-t-ph')]=el.getAttribute('placeholder');});
+    function dict(l){ return l==='fr'?FRDICT:Object.assign({},FRDICT,HOME.en||{},HOME[l]||{}); }
+    function apply(l){
+      var d=dict(l);
+      document.querySelectorAll('[data-t]').forEach(function(el){var k=el.getAttribute('data-t'); if(d[k]!=null) el.innerHTML=d[k];});
+      document.querySelectorAll('[data-t-ph]').forEach(function(el){var k=el.getAttribute('data-t-ph'); if(d[k]!=null) el.setAttribute('placeholder',d[k]);});
+      document.documentElement.lang=l; document.documentElement.dir=(l==='ar')?'rtl':'ltr';
+      document.querySelectorAll('.langsel').forEach(function(sel){sel.value=l;});
+    }
+    document.querySelectorAll('.langsel').forEach(function(sel){
+      sel.innerHTML=LANGS.map(function(l){return '<option value="'+l[0]+'">'+l[1]+'</option>'}).join('');
+      sel.value=lang;
+      sel.addEventListener('change',function(){ lang=sel.value; try{localStorage.setItem('vyb_lang',lang)}catch(e){} apply(lang); });
+    });
+    if(lang!=='fr') apply(lang);
+  })();
 
   // ── Menu plein écran ──
   (function(){

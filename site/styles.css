@@ -734,3 +734,8 @@ mark.todo{background:rgba(230,199,106,.18);color:var(--gold-2);padding:1px 6px;b
 .sbadge small{font-size:.58rem;font-weight:500;opacity:.85;letter-spacing:.04em;text-transform:none}
 .storebadges--sm .sbadge{padding:6px 11px 6px 9px}.storebadges--sm .sbadge span{font-size:.86rem}.storebadges--sm .sbadge svg{width:18px;height:18px}
 .footer__stores{padding:0 0 22px}
+
+/* ---------- Sélecteur de langue ---------- */
+.langsel{appearance:none;-webkit-appearance:none;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23c8a85e'/%3E%3C/svg%3E") no-repeat right 8px center;border:1px solid var(--panel-line);color:var(--text);border-radius:99px;padding:8px 24px 8px 12px;font:inherit;font-size:.82rem;cursor:pointer}
+.langsel option{background:#0b1020;color:#eaf1f9}
+@media(max-width:900px){.nav__cta .langsel{padding:7px 22px 7px 10px;font-size:.78rem}}
