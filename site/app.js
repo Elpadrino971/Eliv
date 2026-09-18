@@ -389,7 +389,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
   function feedItemHTML(it) {
     const pid = it.video;
-    const bg = pid ? `https://image.mux.com/${pid}/thumbnail.jpg?width=720&fit_mode=smartcrop` : (it.thumb || "");
+    const bg = pid ? `https://image.mux.com/${pid}/thumbnail.webp?width=720&fit_mode=smartcrop` : (it.thumb || "");
     const videoTag = pid
       ? `<video class="feed__video" data-src="https://stream.mux.com/${pid}.m3u8" poster="${bg}" muted loop playsinline preload="none"></video>`
       : "";

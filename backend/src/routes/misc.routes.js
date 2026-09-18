@@ -602,7 +602,7 @@ router.get('/feed-clips', (req, res) => {
 const feedMuxThumb = (id, feed) => {
   if (!id) return null;
   const dims = feed === 'clips' ? 'width=640&height=360' : 'width=320&height=568';
-  return `https://image.mux.com/${id}/thumbnail.jpg?${dims}&fit_mode=smartcrop`;
+  return `https://image.mux.com/${id}/thumbnail.webp?${dims}&fit_mode=smartcrop`;
 };
 router.get('/artist/:id/clips', (req, res) => {
   const artistId = req.params.id;
