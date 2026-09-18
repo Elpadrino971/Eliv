@@ -104,14 +104,20 @@ if 'http2' not in neuf:
         neuf = re.sub(r'(\n[ \t]*listen 443 ssl);([^\n]*\n)', r'\1 http2;\2', neuf, count=1)
 print('  nginx %d.%d.%d — HTTP/2 activé en écriture %s' % (ver + ('récente' if ver >= (1, 25, 1) else 'classique',)))
 
-shutil.copy2(PATH, PATH + '.bak-' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
+# La sauvegarde NE DOIT PAS rester dans sites-enabled : nginx charge tout ce
+# qui s'y trouve (include sites-enabled/*), ce qui déclare les blocs en double.
+import os
+BACKUP_DIR = '/root/nginx-sauvegardes'
+os.makedirs(BACKUP_DIR, exist_ok=True)
+backup = os.path.join(BACKUP_DIR, 'vybzzz.bak-' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
+shutil.copy2(PATH, backup)
 open(PATH, 'w', encoding='utf-8').write(src.replace(bloc, neuf, 1))
 
-print('\n  Configuration écrite. Sauvegarde : ' + PATH + '.bak-*')
+print('\n  Configuration écrite. Sauvegarde : ' + backup)
 print('  Vérification de la syntaxe…\n')
 r = subprocess.run(['nginx', '-t'], capture_output=True, text=True)
 print((r.stdout + r.stderr).strip())
 if r.returncode == 0:
     print('\n  Syntaxe correcte. Applique maintenant :  sudo systemctl reload nginx\n')
 else:
-    print('\n  Syntaxe refusée. Restaure :  sudo cp /root/vybzzz.nginx.bak ' + PATH + '\n')
+    print('\n  Syntaxe refusée. Restaure :  sudo cp ' + backup + ' ' + PATH + '\n')
