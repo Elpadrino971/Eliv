@@ -835,10 +835,12 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
       if(play!==false) v.play().catch(function(e){ log('play refusé '+lbl+' : '+e.name); });
     } else { log('✖ aucun support HLS pour '+lbl); }
   }
-  // Hero : charge tout de suite les 3 vidéos
   // Hero : la 1re vidéo charge tout de suite ; les 2 autres seulement quand le défilement s'en approche (données mobiles).
   var heroVids=[].slice.call(document.querySelectorAll('.chapter-video video[data-src]'));
-  function loadHeroVid(i){ var v=heroVids[i]; if(v && !v.dataset.loaded){ v.dataset.loaded='1'; attachHls(v); } }
+  // Le drapeau de chargement appartient à attachHls : le poser ici lui faisait
+  // croire que la source était déjà attachée, il se contentait alors d'un
+  // v.play() sur une vidéo vide et la lecture ne démarrait jamais.
+  function loadHeroVid(i){ var v=heroVids[i]; if(v && !v._heroInit){ v._heroInit=1; attachHls(v); } }
   loadHeroVid(0);
   // Showcase (concert, clip, filmstrip) : charge à l'arrivée dans le viewport
   var vio=('IntersectionObserver' in window)?new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){attachHls(en.target);vio.unobserve(en.target);}});},{rootMargin:'200px'}):null;
