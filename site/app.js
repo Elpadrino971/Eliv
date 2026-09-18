@@ -49,7 +49,7 @@
     { href: "feed.html",             key: "nav_feed",   id: "feed" },
     { href: "store.html",            key: "nav_store",  id: "store" },
     { href: "index.html#roles",      key: "nav_deal",   id: "_deal" },
-    { href: "index.html#academy",    key: "nav_academy", id: "_academy" },
+    { href: "academie.html",         key: "nav_academy", id: "academie" },
     { href: "faq.html",              key: "nav_faq",    id: "faq" },
     { href: "challenge.html",        key: "nav_challenge", id: "challenge" },
   ];
@@ -85,7 +85,7 @@
         </div>
         <div class="footer__cols">
           <div><h4>${t("foot_discover")}</h4><a href="app.html">${t("nav_download")}</a><a href="feed.html">${t("nav_feed")}</a><a href="store.html">${t("nav_store")}</a><a href="index.html#roles">${t("nav_deal")}</a><a href="faq.html">${t("nav_faq")}</a></div>
-          <div><h4>${t("foot_artists")}</h4><a href="artist.html">${t("nav_apply")}</a><a href="index.html#roles">${t("foot_roles")}</a><a href="index.html#academy">${t("nav_academy")}</a><a href="index.html#fondateurs">${t("foot_founders")}</a></div>
+          <div><h4>${t("foot_artists")}</h4><a href="artist.html">${t("nav_apply")}</a><a href="index.html#roles">${t("foot_roles")}</a><a href="academie.html">${t("nav_academy")}</a><a href="index.html#fondateurs">${t("foot_founders")}</a></div>
           <div><h4>${t("foot_help")}</h4><a href="index.html#reserver">${t("foot_book")}</a><a href="mailto:hello@vybzzz.online">hello@vybzzz.online</a><a href="mentions-legales.html">${t("foot_legal")}</a><a href="confidentialite.html">${t("foot_privacy")}</a><a href="cgu.html">${t("foot_terms")}</a></div>
         </div>
       </div>
