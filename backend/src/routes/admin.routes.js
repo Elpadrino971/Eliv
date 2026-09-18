@@ -1056,6 +1056,43 @@ const SPLASH_ANIMATION_STYLES = [
   'none',
 ];
 
+// ─── Boutique merch (print à la demande) ────────────────────────────────────
+router.get('/merch', requireAdmin, (req, res) => {
+  const rows = db.prepare('SELECT * FROM merch_products ORDER BY sort ASC, id ASC').all();
+  return res.json({ status: 'success', data: rows });
+});
+function merchFields(req) {
+  const b = req.body || {};
+  const img = saveUpload(req, ['image'], 'merch', 'merch-images');
+  return {
+    name: String(b.name || '').trim(), description: String(b.description || '').trim(),
+    price_eur: Number(String(b.price_eur || '0').replace(',', '.')) || 0,
+    buy_url: String(b.buy_url || '').trim(), category: String(b.category || 'textile'),
+    active: truthy(b.active) ? 1 : 0, sort: parseInt(b.sort, 10) || 0, image_url: img,
+  };
+}
+router.post('/merch', requireAdmin, (req, res) => {
+  const f = merchFields(req);
+  if (!f.name) return res.status(422).json({ status: 'error', message: 'Nom requis.' });
+  db.prepare('INSERT INTO merch_products (name, description, price_eur, image_url, buy_url, category, active, sort) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(f.name, f.description, f.price_eur, f.image_url || (req.body?.image_url || null), f.buy_url, f.category, f.active, f.sort);
+  return res.json({ status: 'success', message: 'Produit ajouté.' });
+});
+router.put('/merch/:id', requireAdmin, (req, res) => {
+  const f = merchFields(req);
+  const cur = db.prepare('SELECT * FROM merch_products WHERE id = ?').get(req.params.id);
+  if (!cur) return res.status(404).json({ status: 'error', message: 'Produit introuvable.' });
+  const b = req.body || {};
+  const keep = (k, v) => (b[k] === undefined ? cur[k] : v); // champ absent de la requête = inchangé
+  db.prepare('UPDATE merch_products SET name = ?, description = ?, price_eur = ?, image_url = ?, buy_url = ?, category = ?, active = ?, sort = ? WHERE id = ?')
+    .run(keep('name', f.name) || cur.name, keep('description', f.description), keep('price_eur', f.price_eur), f.image_url || cur.image_url, keep('buy_url', f.buy_url), keep('category', f.category), keep('active', f.active), keep('sort', f.sort), req.params.id);
+  return res.json({ status: 'success', message: 'Produit modifié.' });
+});
+router.delete('/merch/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM merch_products WHERE id = ?').run(req.params.id);
+  return res.json({ status: 'success', message: 'Produit supprimé.' });
+});
+
 // ─── VybzzZ Live Challenge : inscrits, score, disqualification ─────────────
 const challengeSvc = require('../services/challenge');
 router.get('/challenge', requireAdmin, (req, res) => {

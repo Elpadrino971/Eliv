@@ -66,6 +66,11 @@
 .linkbox{margin-top:18px;padding:18px;border-radius:14px;background:rgba(200,168,94,.08);border:1px solid rgba(200,168,94,.4)}
 .linkbox code{display:block;word-break:break-all;font-size:1.05rem;color:var(--gold);margin:8px 0 12px}
 .linkbox .acts{display:flex;gap:10px;flex-wrap:wrap}
+.sharekit{margin-top:18px;padding-top:16px;border-top:1px solid rgba(200,168,94,.25)}
+.sharekit__msgs{display:grid;gap:8px}
+.sharemsg{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--panel-line);font-size:.86rem}
+.sharemsg small{display:block;color:var(--gold);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px}
+.sharemsg button{padding:8px 12px;border-radius:8px;border:1px solid var(--gold);background:transparent;color:var(--gold);font:inherit;font-size:.78rem;cursor:pointer;white-space:nowrap}
 .mystats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:14px}
 .mystats div{padding:10px;border-radius:10px;background:rgba(255,255,255,.04);text-align:center}
 .mystats b{display:block;font-size:1.3rem;color:var(--gold)}
@@ -189,6 +194,15 @@
       </div>
       <p style="margin:14px 0 0;font-size:.88rem;color:var(--muted)">Étape suivante : ouvre l'appli VybzzZ, crée ou complète ton profil artiste avec <b id="lbEmail"></b>, publie, et programme ton premier live.</p>
       <div class="acts" style="margin-top:12px"><a class="btn btn--outline" href="app.html"><span>📲 Télécharger l'appli</span></a><span id="lbWaGroup"></span></div>
+      <div class="sharekit">
+        <b>Ton kit de partage, à ton nom</b>
+        <p style="margin:6px 0 12px;font-size:.86rem;color:var(--muted)">Quand quelqu'un ouvre ton lien, il voit « <span class="lbName2"></span> t'invite sur VybzzZ ». Copie un message tout prêt, ou télécharge ton visuel story.</p>
+        <div class="sharekit__msgs" id="shareMsgs"></div>
+        <div class="acts" style="margin-top:12px">
+          <button class="btn btn--gold" id="lbStory" data-cursor="hover"><span>⬇️ Télécharger mon visuel story</span></button>
+        </div>
+        <canvas id="storyCanvas" width="1080" height="1920" hidden></canvas>
+      </div>
       <div class="mystats" id="myStats"></div>
     </div>
   </div>
@@ -240,12 +254,43 @@
     $('lbCopy').onclick=function(){navigator.clipboard&&navigator.clipboard.writeText(data.link).then(function(){$('lbCopy').querySelector('span').textContent='Copié ✓'})};
     $('lbShare').onclick=function(){ if(navigator.share) navigator.share({title:'VybzzZ Live Challenge',text:txt,url:data.link}).catch(function(){}); else $('lbCopy').click(); };
     try{localStorage.setItem('vyb_challenge',JSON.stringify({code:data.code,link:data.link,stage_name:data.stage_name,email:data.email}))}catch(e){}
+    // Kit de partage nominatif
+    document.querySelectorAll('.lbName2').forEach(function(e){e.textContent=data.stage_name});
+    var MSGS=[
+      ['WhatsApp / SMS','Yo ! Je participe au VybzzZ Live Challenge 🎤🔥 Rejoins-moi sur la scène live, c\'est gratuit et tu seras au premier rang de mes prochains concerts : '+data.link],
+      ['Story / légende Instagram · TikTok','Je monte sur scène avec VybzzZ 🎤 Concerts en direct, clips, cadeaux… Inscris-toi avec MON lien pour me soutenir dans le Live Challenge 👇 '+data.link+' #VybzzZ #LiveChallenge #LiveBeginsHere'],
+      ['Bio (lien court)','🎤 Mes lives sur VybzzZ → '+data.link]
+    ];
+    $('shareMsgs').innerHTML=MSGS.map(function(m,i){return '<div class="sharemsg"><div><small>'+m[0]+'</small>'+esc(m[1])+'</div><button data-i="'+i+'">Copier</button></div>'}).join('');
+    $('shareMsgs').querySelectorAll('button').forEach(function(b){b.onclick=function(){var t=MSGS[+b.dataset.i][1]; if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){b.textContent='Copié ✓'; setTimeout(function(){b.textContent='Copier'},1800)});}});
+    $('lbStory').onclick=function(){ makeStory(data.stage_name, data.link); };
     fetch(API+'/stats/'+encodeURIComponent(data.code)).then(function(r){return r.json()}).then(function(d){
       var s=d.data&&d.data.stats; if(!s) return;
       $('myStats').innerHTML=[['Rang',s.rank],['Score',s.score],['Lives',s.lives],['Contenus',s.clips],['Fans amenés',s.referrals],['Clics',s.clicks]].map(function(x){return '<div><b>'+x[1]+'</b><small>'+x[0]+'</small></div>'}).join('')
         +(d.data.linked?'':'<div style="grid-column:1/-1;text-align:left"><small>Compte VybzzZ pas encore relié : crée ton profil artiste dans l\'appli avec cet e-mail.</small></div>');
     }).catch(function(){});
   }
+  // Visuel story 1080x1920 généré dans le navigateur : flyer + nom + lien
+  function makeStory(name, link){
+    var cv=$('storyCanvas'), ctx=cv.getContext('2d'), img=new Image();
+    img.onload=function(){
+      ctx.fillStyle='#070C18'; ctx.fillRect(0,0,1080,1920);
+      var h=1080*img.height/img.width; ctx.drawImage(img,0,0,1080,h);
+      var g=ctx.createLinearGradient(0,h-320,0,1920); g.addColorStop(0,'rgba(7,12,24,0)'); g.addColorStop(.35,'rgba(7,12,24,.96)'); g.addColorStop(1,'#070C18'); ctx.fillStyle=g; ctx.fillRect(0,h-320,1080,1920-h+320);
+      ctx.textAlign='center'; ctx.fillStyle='#E6C76A'; ctx.font='600 30px Inter, Arial, sans-serif';
+      ctx.fillText('REJOINS-MOI SUR LA SCÈNE LIVE',540,1600);
+      ctx.fillStyle='#F4EFE3'; ctx.font='800 72px "Plus Jakarta Sans", Arial, sans-serif';
+      var t=name.toUpperCase(); if(ctx.measureText(t).width>980){ctx.font='800 54px "Plus Jakarta Sans", Arial, sans-serif';}
+      ctx.fillText(t,540,1690);
+      ctx.fillStyle='#0A1226'; roundRect(ctx,140,1740,800,92,46); ctx.fill(); ctx.strokeStyle='#E6C76A'; ctx.lineWidth=3; roundRect(ctx,140,1740,800,92,46); ctx.stroke();
+      ctx.fillStyle='#E6C76A'; ctx.font='700 40px Inter, Arial, sans-serif'; ctx.fillText(link.replace(/^https?:\/\//,''),540,1800);
+      ctx.fillStyle='#B9C0D0'; ctx.font='500 26px Inter, Arial, sans-serif'; ctx.fillText('VybzzZ Live Challenge · 20 sept → 24 oct 2026 · LIVE BEGINS HERE',540,1868);
+      cv.toBlob(function(b){ var a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='vybzzz-story-'+name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.png'; document.body.appendChild(a); a.click(); a.remove(); },'image/png');
+    };
+    img.onerror=function(){ alert('Visuel indisponible pour le moment.'); };
+    img.crossOrigin='anonymous'; img.src='assets/challenge/flyer.jpg';
+  }
+  function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
   try{ var saved=JSON.parse(localStorage.getItem('vyb_challenge')||'null'); if(saved&&saved.code) showLink(saved); }catch(e){}
   var LK=(window.VYBZZZ&&window.VYBZZZ.links)||{}; if(LK.whatsapp) $('lbWaGroup').innerHTML='<a class="btn btn--outline" href="'+LK.whatsapp+'" target="_blank" rel="noopener"><span>💬 Groupe WhatsApp</span></a>';
   $('chalForm').addEventListener('submit',function(e){

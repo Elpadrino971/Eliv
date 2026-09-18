@@ -316,6 +316,13 @@ router.get('/get-abusive-words', (req, res) => {
   return ok(res, db.prepare('SELECT * FROM abusive_words').all());
 });
 
+// GET /api/merch — boutique merch publique (produits actifs seulement, site vybzzz.online)
+router.get('/merch', (req, res) => {
+  const rows = db.prepare('SELECT id, name, description, price_eur, image_url, buy_url, category FROM merch_products WHERE active = 1 ORDER BY sort ASC, id ASC').all();
+  res.set('Cache-Control', 'public, max-age=120');
+  return res.json({ status: 'success', count: rows.length, data: rows });
+});
+
 // GET /api/settings/get-settings -> { status, data: {...} }
 router.get('/settings/get-settings', (req, res) => {
   const rows = db.prepare('SELECT * FROM settings').all();

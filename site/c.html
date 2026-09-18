@@ -126,8 +126,8 @@
   var API='https://api.vybzzz.online/api/challenge';
   if(location.hostname==='localhost'||location.protocol==='file:') API='http://localhost:8099/api/challenge';
   function $(id){return document.getElementById(id)}
-  var m=location.pathname.match(/\/c\/([A-Za-z0-9]+)/); var code=(m&&m[1])||new URLSearchParams(location.search).get('r')||'';
-  code=code.toUpperCase(); var artist='ton artiste';
+  var m=location.pathname.match(/\/c\/([A-Za-z0-9-]+)/); var code=(m&&m[1])||new URLSearchParams(location.search).get('r')||'';
+  code=code.toLowerCase(); var artist='ton artiste';
   if(!code){ $('joinMsg').textContent='Lien incomplet : demande son lien à ton artiste.'; }
   else fetch(API+'/artist/'+encodeURIComponent(code)).then(function(r){return r.json()}).then(function(d){
     if(d.status!=='success'){$('joinMsg').textContent='Ce lien n\'est plus valide.';return}

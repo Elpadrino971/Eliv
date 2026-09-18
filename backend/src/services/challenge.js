@@ -24,6 +24,7 @@ const CONFIG = {
   end: '2026-10-24T23:59:59Z',
   organizer: 'Axen Digital, en collaboration avec Alizés Records',
   linkBase: process.env.CHALLENGE_LINK_BASE || 'https://vybzzz.online/c/',
+  siteBase: process.env.SITE_BASE_URL || 'https://vybzzz.online',
   minLives: 1,
   topN: 40,
   // Pondérations du brief (base à confirmer avec les données réelles).
@@ -35,12 +36,18 @@ const CONFIG = {
   ],
 };
 
+/** Lien nominatif : vybzzz.online/c/nom-de-scene (slug lisible, unique). */
+function slugify(seed) {
+  return String(seed || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 28) || 'artiste';
+}
 function genCode(seed) {
-  const base = String(seed || '')
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase();
-  const rnd = crypto.randomBytes(3).toString('hex').toUpperCase().slice(0, 4);
-  return (base || 'VYB') + rnd;
+  const base = slugify(seed);
+  const exists = (s) => !!db.prepare('SELECT 1 FROM challenge_artists WHERE lower(code) = ?').get(s);
+  if (!exists(base)) return base;
+  for (let i = 2; i < 500; i++) if (!exists(`${base}-${i}`)) return `${base}-${i}`;
+  return `${base}-${crypto.randomBytes(2).toString('hex')}`;
 }
 
 function cleanEmail(e) { return String(e || '').trim().toLowerCase(); }
@@ -58,8 +65,7 @@ function registerArtist({ stage_name, email, phone, genre, socials, adult, accep
   const existing = db.prepare('SELECT * FROM challenge_artists WHERE email = ?').get(email);
   if (existing) return { ...existing, link: linkFor(existing.code), already: true };
   const user = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-  let code = genCode(stage_name);
-  while (db.prepare('SELECT 1 FROM challenge_artists WHERE code = ?').get(code)) code = genCode(stage_name);
+  const code = genCode(stage_name);
   const info = db.prepare(
     `INSERT INTO challenge_artists (code, email, stage_name, phone, genre, socials, user_id, accepted_rules, adult, ip)
      VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?)`
@@ -69,7 +75,7 @@ function registerArtist({ stage_name, email, phone, genre, socials, adult, accep
 }
 
 function artistByCode(code) {
-  return db.prepare('SELECT * FROM challenge_artists WHERE code = ?').get(String(code || '').trim().toUpperCase());
+  return db.prepare('SELECT * FROM challenge_artists WHERE lower(code) = ?').get(String(code || '').trim().toLowerCase());
 }
 
 function countClick(artistId) {
@@ -203,9 +209,29 @@ function leaderboard(force) {
   return data;
 }
 
+/** HTML de la page d'invitation nominative : balises Open Graph au nom de
+ *  l'artiste (aperçu WhatsApp / Instagram / Facebook), puis redirection vers
+ *  la page d'atterrissage du site. */
+function inviteHtml(artist) {
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const name = esc(artist.stage_name);
+  const url = `${CONFIG.siteBase}/c/${esc(artist.code)}`;
+  const landing = `${CONFIG.siteBase}/c.html?r=${encodeURIComponent(artist.code)}`;
+  const title = `${name} t'invite sur VybzzZ`;
+  const desc = `Rejoins ${name} sur VybzzZ, la scène live : ses concerts en direct, ses clips, et ta place au premier rang.`;
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title}</title><meta name="description" content="${desc}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="VybzzZ"><meta property="og:title" content="${title}"><meta property="og:description" content="${desc}"><meta property="og:url" content="${url}"><meta property="og:image" content="${CONFIG.siteBase}/assets/challenge/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:locale" content="fr_FR">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${title}"><meta name="twitter:description" content="${desc}"><meta name="twitter:image" content="${CONFIG.siteBase}/assets/challenge/og.jpg">
+<link rel="canonical" href="${url}"><link rel="icon" href="${CONFIG.siteBase}/favicon.ico">
+<meta http-equiv="refresh" content="0;url=${landing}"><script>location.replace(${JSON.stringify(landing)});</script>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0A1226;color:#F4EFE3;font-family:system-ui,sans-serif;text-align:center;padding:24px}a{color:#E6C76A}</style></head>
+<body><div><p>${name} t'invite sur VybzzZ.</p><a href="${landing}">Continuer →</a></div></body></html>`;
+}
+
 function publicConfig() {
   const { slug, name, start, end, organizer, weights, prizes, minLives, topN } = CONFIG;
   return { slug, name, start, end, organizer, weights, prizes, minLives, topN, now: new Date().toISOString() };
 }
 
-module.exports = { CONFIG, registerArtist, artistByCode, countClick, joinViaLink, onVerifiedUser, leaderboard, publicConfig, linkFor };
+module.exports = { CONFIG, registerArtist, artistByCode, countClick, joinViaLink, onVerifiedUser, leaderboard, publicConfig, linkFor, inviteHtml, slugify };

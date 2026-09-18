@@ -594,6 +594,23 @@
     const gg = document.getElementById("giftGrid");
     if (gg) gg.innerHTML = D.gifts.map(g =>
       `<div class="giftc giftc--lg reveal" data-cursor="hover"><span>${g.emoji}</span><strong>${g.name}</strong><small>★ ${g.coins} PTS</small></div>`).join("");
+    // Merch officiel (print à la demande) : produits actifs de l'API, section masquée si vide
+    const ms = document.getElementById("merchSection"), mg = document.getElementById("merchGrid");
+    if (ms && mg) getJSON(`${API}/merch`).then(d => {
+      const rows = d.data || []; if (!rows.length) return;
+      mg.innerHTML = rows.map(p => `
+        <article class="merch glass reveal" data-cursor="hover">
+          <div class="merch__img">${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">` : ""}</div>
+          <div class="merch__body">
+            <h3>${esc(p.name)}</h3>
+            <p>${esc(p.description || "")}</p>
+            <div class="merch__row"><strong>${Number(p.price_eur).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</strong>
+              ${p.buy_url ? `<a class="btn btn--gold" href="${esc(p.buy_url)}" target="_blank" rel="noopener"><span>Commander</span></a>` : `<span class="btn btn--outline" style="opacity:.6;pointer-events:none"><span>Bientôt</span></span>`}
+            </div>
+          </div>
+        </article>`).join("");
+      ms.hidden = false; refresh(ms);
+    }).catch(() => {});
     // (l'ancien bloc "plans Founder" n'existe plus : entrée gratuite, 50 %)
     // try gift demo button
     const demo = document.getElementById("giftDemo");

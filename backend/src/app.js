@@ -98,6 +98,7 @@ app.use('/events/covers', express.static(path.join(__dirname, '..', 'storage', '
 app.use('/events/videos', express.static(path.join(__dirname, '..', 'storage', 'videos')));
 app.use('/giftImages', express.static(path.join(__dirname, '..', 'storage', 'gifts')));
 app.use('/splash', express.static(path.join(__dirname, '..', 'storage', 'splash')));
+app.use('/merch-images', express.static(path.join(__dirname, '..', 'storage', 'merch')));
 
 // Santé
 app.get('/', (req, res) => res.json({ status: 'success', service: 'vybzzz-backend', version: '1.0.0' }));

@@ -143,6 +143,19 @@ function init() {
       value TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS merch_products (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      description TEXT,
+      price_eur REAL DEFAULT 0,
+      image_url TEXT,
+      buy_url TEXT,
+      category TEXT DEFAULT 'textile',
+      active INTEGER DEFAULT 0,
+      sort INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS challenge_artists (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT UNIQUE,
@@ -833,6 +846,21 @@ function init() {
       for (const [, points, , rcId] of DEFAULT_PACKS) fillPack.run(rcId, points);
     });
     backfill();
+  }
+
+  // Boutique merch (print à la demande) : 4 produits d'exemple, INACTIFS tant
+  // que le fournisseur d'impression n'est pas branché (lien d'achat vide).
+  try {
+    if (!db.prepare('SELECT 1 FROM merch_products LIMIT 1').get()) {
+      const ins = db.prepare('INSERT INTO merch_products (name, description, price_eur, image_url, buy_url, category, active, sort) VALUES (?, ?, ?, ?, ?, ?, 0, ?)');
+      const base = 'https://vybzzz.online/assets/merch/';
+      ins.run('T-shirt « Live Begins Here »', 'Coton bio 180 g, coupe unisexe, logo brodé or sur bleu nuit. Tailles XS à 3XL.', 29, base + 'tshirt.jpg', '', 'textile', 1);
+      ins.run('Hoodie VybzzZ', 'Sweat à capuche molletonné, bleu nuit, wordmark VybzzZ poitrine et « LIVE BEGINS HERE » dans le dos.', 59, base + 'hoodie.jpg', '', 'textile', 2);
+      ins.run('Casquette V', 'Casquette brodée, emblème V doré, réglable.', 24, base + 'cap.jpg', '', 'accessoire', 3);
+      ins.run('Affiche Live Challenge 2026', 'Affiche 50 × 70 cm, papier mat 200 g, édition du premier VybzzZ Live Challenge.', 19, base + 'poster.jpg', '', 'print', 4);
+    }
+  } catch (e) {
+    console.warn('[db] seed merch ignoré :', e.message);
   }
 
   // Textes légaux de l'app (CGU, confidentialité, à propos, e-mail support) :

@@ -112,6 +112,7 @@ const NAV = [
     { id: 'cms', label: 'CMS', ic: '📄' },
     { id: 'legal', label: 'Textes légaux', ic: '⚖️' },
     { id: 'challenge', label: 'Live Challenge', ic: '🏆' },
+    { id: 'merch', label: 'Boutique merch', ic: '👕' },
   ] },
   { group: 'Pilotage interne', items: [
     { id: 'vibe', label: 'Réunions & CRM', ic: '🎯' },
@@ -1408,6 +1409,40 @@ async function pageProfile() {
 }
 
 
+// ─── Boutique merch (print à la demande) : produits affichés sur vybzzz.online/store.html ───
+function pageMerch() {
+  const CATS = [{ value: 'textile', label: 'Textile' }, { value: 'accessoire', label: 'Accessoire' }, { value: 'print', label: 'Affiche / print' }, { value: 'autre', label: 'Autre' }];
+  const fields = (r = {}) => [
+    { name: 'name', label: 'Nom du produit', value: r.name },
+    { name: 'description', label: 'Description', type: 'textarea', value: r.description },
+    { name: 'price_eur', label: 'Prix (€)', type: 'number', value: r.price_eur },
+    { name: 'category', label: 'Catégorie', type: 'select', value: r.category || 'textile', options: CATS },
+    { name: 'buy_url', label: "Lien d'achat (page produit chez le fournisseur print à la demande)", value: r.buy_url, placeholder: 'https://…' },
+    { name: 'image', label: 'Visuel (JPG/PNG, carré conseillé)', type: 'file' },
+    { name: 'sort', label: 'Ordre', type: 'number', value: r.sort ?? 0 },
+    { name: 'active', label: 'Visible sur le site', type: 'checkbox', value: !!r.active },
+  ];
+  EDIT.merch = (id) => {
+    const r = currentRows.find((x) => x.id == id); if (!r) return;
+    modal({ title: 'Modifier le produit', wide: true, fields: fields(r), onSave: async (d) => { await api('PUT', '/merch/' + id, d); toast('Produit modifié'); pageMerch(); } });
+  };
+  listPage({
+    title: 'Boutique merch', endpoint: '/merch', addLabel: '+ Ajouter un produit',
+    columns: [
+      { label: '', render: (r) => r.image_url ? `<img src="${esc(r.image_url)}" style="width:52px;height:52px;object-fit:cover;border-radius:8px">` : '' },
+      { label: 'Produit', render: (r) => `<b>${esc(r.name)}</b><div class="em">${esc(r.category)} · ordre ${r.sort}</div>` },
+      { label: 'Prix', render: (r) => `${Number(r.price_eur).toFixed(2)} €` },
+      { label: "Lien d'achat", render: (r) => r.buy_url ? `<a href="${esc(r.buy_url)}" target="_blank">ouvrir</a>` : '<span style="color:#ffb3b3">manquant</span>' },
+      { label: 'Statut', render: (r) => r.active ? '<span class="badge active">Visible</span>' : '<span class="badge pending">Masqué</span>' },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="merch:${r.id}">Modifier</button><button class="btn del" data-del="/merch/${r.id}">Supprimer</button>` },
+    ],
+    onAdd: (reload) => modal({ title: 'Ajouter un produit', wide: true, fields: fields(), onSave: async (d) => { await api('POST', '/merch', d); toast('Produit ajouté'); reload(); } }),
+  });
+  const note = document.createElement('div'); note.className = 'em'; note.style.marginTop = '10px';
+  note.textContent = "Un produit n'apparaît sur le site que s'il est « Visible ». Le bouton « Commander » du site ouvre le lien d'achat : sans lien, le produit affiche « Bientôt ».";
+  view().appendChild(note);
+}
+
 // ─── VybzzZ Live Challenge : inscrits, score, fans amenés, disqualification ───
 async function pageChallenge() {
   view().innerHTML = '<div class="empty">Chargement…</div>';
@@ -2222,7 +2257,7 @@ const ROUTES = {
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
-  splash: pageSplash, legal: pageLegal, challenge: pageChallenge, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
+  splash: pageSplash, legal: pageLegal, challenge: pageChallenge, merch: pageMerch, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
 };
 
 window.addEventListener('hashchange', route);

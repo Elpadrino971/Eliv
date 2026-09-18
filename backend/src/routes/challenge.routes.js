@@ -33,6 +33,16 @@ router.get('/artist/:code', (req, res) => {
   return res.json({ status: 'success', data: { code: a.code, stage_name: a.stage_name } });
 });
 
+// Page d'invitation nominative (aperçu Open Graph au nom de l'artiste) :
+// nginx proxifie vybzzz.online/c/<slug> vers cette route.
+router.get('/invite/:code', (req, res) => {
+  const a = ch.artistByCode(req.params.code);
+  if (!a || a.status === 'disqualified') return res.redirect(302, `${ch.CONFIG.siteBase}/challenge.html`);
+  if (req.query.click !== '0') ch.countClick(a.id);
+  res.set('Cache-Control', 'public, max-age=300');
+  return res.type('html').send(ch.inviteHtml(a));
+});
+
 // Pré-inscription d'un fan via le lien
 router.post('/join', (req, res) => {
   try {
