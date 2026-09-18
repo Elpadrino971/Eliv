@@ -42,6 +42,7 @@
   }
   window.__vybLang = openLangSheet;
 
+  const STORE_BADGES = `<div class="storebadges "><a class="sbadge" href="app.html?store=ios" aria-label="Télécharger sur l'App Store"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.6c0-2.5 2-3.7 2.1-3.8-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.8-1.7 0-3.2 1-4.1 2.5-1.8 3-.5 7.5 1.3 10 .8 1.2 1.8 2.6 3.2 2.5 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.2 3.1-2.5.9-1.4 1.3-2.7 1.4-2.8-.1 0-2.9-1.1-2.9-4zM13.9 5.1c.7-.8 1.2-2 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"/></svg><span><small>Télécharger sur</small>App Store</span></a><a class="sbadge" href="app.html?store=android" aria-label="Disponible sur Google Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#34A853" d="M3.6 2.4 13 12l-9.4 9.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z"/><path fill="#FBBC04" d="M17 8 13 12l4 4 3.5-2c.7-.4.7-1.5 0-2L17 8z"/><path fill="#EA4335" d="M13 12 3.6 21.6c.4.3 1 .3 1.6 0L17 16l-4-4z"/><path fill="#4285F4" d="M13 12 17 8 5.2 2.4c-.6-.3-1.2-.3-1.6 0L13 12z"/></svg><span><small>Disponible sur</small>Google Play</span></a></div>`;
   /* ---------- Chrome : header + footer injectés ---------- */
   // Même menu que la page d'accueil (index.html) : Feed, Boutique, Le deal, FAQ.
   const NAV = [
@@ -88,6 +89,7 @@
           <div><h4>${t("foot_help")}</h4><a href="index.html#reserver">${t("foot_book")}</a><a href="mailto:hello@vybzzz.online">hello@vybzzz.online</a><a href="mentions-legales.html">${t("foot_legal")}</a><a href="confidentialite.html">${t("foot_privacy")}</a><a href="cgu.html">${t("foot_terms")}</a></div>
         </div>
       </div>
+      <div class="footer__stores">${STORE_BADGES.replace('class="storebadges ', 'class="storebadges storebadges--sm ')}</div>
       <div class="footer__bottom">
         <span>${t("foot_rights")}</span>
         <span class="footer__made">${t("foot_secure")}</span>
@@ -372,11 +374,8 @@
   const LINKS = (D.links || {});
   const API = LINKS.api || "https://api.vybzzz.online/api";
   const appHref = "app.html";
-  function storeButtons(cls) {
-    const b = [];
-    if (LINKS.appStore) b.push(`<a class="btn ${cls}" href="${LINKS.appStore}"><span>App Store</span></a>`);
-    if (LINKS.playStore) b.push(`<a class="btn ${cls}" href="${LINKS.playStore}"><span>Google Play</span></a>`);
-    if (!b.length) b.push(`<a class="btn ${cls}" href="app.html"><span>Télécharger l'appli</span></a>`);
+  function storeButtons() {
+    const b = [STORE_BADGES];
     if (LINKS.whatsapp) b.push(`<a class="btn btn--outline" href="${LINKS.whatsapp}" target="_blank" rel="noopener"><span>💬 Groupe WhatsApp</span></a>`);
     return b.join("");
   }
@@ -417,7 +416,7 @@
           <span class="eyebrow">Toute la scène est dans l'app</span>
           <h2 class="feed__title">Suis tes artistes, entre dans leurs lives, envoie des cadeaux.</h2>
           <p style="color:var(--muted);max-width:44ch;margin:0 0 18px">Ce que tu vois ici n'est qu'un extrait. Les lives en direct, le chat et les billets sont dans l'appli VybzzZ.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${storeButtons("btn--gold")}</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${storeButtons()}</div>
         </div>
       </section>`;
   }
@@ -493,7 +492,7 @@
       let items = [];
       try { items = await loadFeed(kind); } catch (e) { items = (D.events || []).map(ev => ({ id: ev.id, video: ev.video, name: ev.name, live: false })); }
       if (wanted && kind === "for_you") { const i = items.findIndex(x => String(x.id) === String(wanted)); if (i > 0) items.unshift(items.splice(i, 1)[0]); }
-      feedEl.innerHTML = items.length ? withCtas(items) : `<section class="feed__item feed__empty"><div class="feed__content"><h2 class="feed__title">Rien ici pour l'instant.</h2><p style="color:var(--muted)">Les prochains lives s'annoncent dans l'app.</p>${storeButtons("btn--gold")}</div></section>`;
+      feedEl.innerHTML = items.length ? withCtas(items) : `<section class="feed__item feed__empty"><div class="feed__content"><h2 class="feed__title">Rien ici pour l'instant.</h2><p style="color:var(--muted)">Les prochains lives s'annoncent dans l'app.</p>${storeButtons()}</div></section>`;
       feedEl.scrollTop = 0;
       bindFeed(feedEl);
       applySound();

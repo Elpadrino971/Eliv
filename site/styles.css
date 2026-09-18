@@ -724,3 +724,13 @@ mark.todo{background:rgba(230,199,106,.18);color:var(--gold-2);padding:1px 6px;b
   background:rgba(10,18,38,.94);backdrop-filter:blur(14px);border:1px solid rgba(200,168,94,.45);color:var(--text);font-size:.9rem;box-shadow:0 14px 40px -12px rgba(0,0,0,.8)}
 .dlbar span{flex:1}.dlbar b{padding:8px 14px;border-radius:99px;background:var(--gold);color:#0a1828;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase}
 @media(max-width:700px){.dlbar{display:flex}.footer{padding-bottom:96px}.nav__dl{display:none}}
+
+/* ---------- Badges App Store / Google Play ---------- */
+.storebadges{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.sbadge{display:inline-flex;align-items:center;gap:9px;padding:8px 14px 8px 11px;border-radius:10px;background:#000;border:1px solid rgba(255,255,255,.28);color:#fff;text-decoration:none;line-height:1.05;transition:transform .25s,border-color .25s;text-transform:none;letter-spacing:0}
+.sbadge:hover{transform:translateY(-2px);border-color:#E6C76A}
+.sbadge svg{width:22px;height:22px;flex:0 0 auto}
+.sbadge span{display:flex;flex-direction:column;font-weight:700;font-size:.98rem;letter-spacing:0}
+.sbadge small{font-size:.58rem;font-weight:500;opacity:.85;letter-spacing:.04em;text-transform:none}
+.storebadges--sm .sbadge{padding:6px 11px 6px 9px}.storebadges--sm .sbadge span{font-size:.86rem}.storebadges--sm .sbadge svg{width:18px;height:18px}
+.footer__stores{padding:0 0 22px}
