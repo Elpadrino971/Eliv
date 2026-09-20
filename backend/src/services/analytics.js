@@ -18,6 +18,10 @@ const crypto = require('crypto');
 const { db } = require('../db');
 const geo = require('./geo');
 
+// Décalage d'affichage des heures : le serveur enregistre en UTC, l'équipe lit
+// en heure locale (Guadeloupe, UTC-4). Modifiable avec ANALYTICS_TZ_OFFSET.
+const TZ = process.env.ANALYTICS_TZ_OFFSET || '-4 hours';
+
 // Sel quotidien, gardé en mémoire : il disparaît au redémarrage, ce qui ne fait
 // que renforcer l'anonymat (au pire, un visiteur est compté deux fois ce jour-là).
 let _saltDay = '';
@@ -74,14 +78,21 @@ function cleanPath(p) {
 const ALLOWED = new Set(['pageview', 'cta_apply', 'cta_challenge', 'challenge_signup', 'fan_join',
   'store_click', 'whatsapp_click', 'contact_lead', 'artist_apply', 'feed_view', 'share_link', 'app_page']);
 
-function track({ name, path, ref, lang, ip, ua, host }) {
+const clean = (s, n) => String(s || '').replace(/[^\w .·\-]/g, '').trim().slice(0, n);
+
+function track({ name, path, ref, lang, ip, ua, host, utmSource, utmCampaign }) {
   if (isBot(ua)) return { ok: false, reason: 'bot' };
   const ev = ALLOWED.has(name) ? name : 'pageview';
   const country = (geo.fromIp(ip) || {}).code || null;
+  // Une publicité balisée prime sur le référent : « Instagram · lancement-sept »
+  // se distingue du trafic Instagram organique.
+  let source = refHost(ref, host);
+  const us = clean(utmSource, 24), uc = clean(utmCampaign, 30);
+  if (us || uc) source = (us ? us.charAt(0).toUpperCase() + us.slice(1) : source) + (uc ? ' · ' + uc : '');
   db.prepare(
     `INSERT INTO analytics_events (day, vid, path, name, ref, country, device, lang)
      VALUES (date('now'), ?, ?, ?, ?, ?, ?, ?)`
-  ).run(visitorId(ip, ua), cleanPath(path), ev, refHost(ref, host), country,
+  ).run(visitorId(ip, ua), cleanPath(path), ev, source, country,
         deviceOf(ua || ''), String(lang || '').slice(0, 5) || null);
   return { ok: true };
 }
@@ -94,8 +105,11 @@ function purge() {
 function report(days = 7) {
   const d = Math.min(Math.max(parseInt(days, 10) || 7, 1), 365);
   const since = `date('now','-${d - 1} days')`;
-  const q = (sql, ...p) => db.prepare(sql.replace('@since', since)).all(...p);
-  const one = (sql, ...p) => db.prepare(sql.replace('@since', since)).get(...p);
+  // replaceAll : certaines requêtes utilisent @since plusieurs fois, et
+  // String.replace ne remplacerait que la première occurrence — les autres
+  // seraient alors prises pour des paramètres nommés absents.
+  const q = (sql, ...p) => db.prepare(sql.replaceAll('@since', since)).all(...p);
+  const one = (sql, ...p) => db.prepare(sql.replaceAll('@since', since)).get(...p);
 
   const totals = one(
     `SELECT COUNT(*) vues, COUNT(DISTINCT vid) visiteurs
@@ -141,7 +155,34 @@ function report(days = 7) {
     { etape: 'Ont ouvert un lien d\'artiste', n: uniq("name='pageview' AND path='/c/*'") },
     { etape: 'Fans pré-inscrits via un lien', n: uniq("name='fan_join'") },
   ];
-  return { jours: d, totals, byDay, pages, refs, countries, devices, actions, funnel };
+  // Aujourd'hui, heure par heure : indispensable pour lire l'effet d'une
+  // publicité lancée dans la journée.
+  const byHour = q(
+    `SELECT strftime('%H', created_at, '${TZ}') h,
+            COUNT(*) vues, COUNT(DISTINCT vid) visiteurs
+       FROM analytics_events
+      WHERE date(created_at, '${TZ}') = date('now', '${TZ}') AND name = 'pageview'
+      GROUP BY h ORDER BY h`
+  );
+
+  // Conversions RATTACHÉES À LA SOURCE D'ORIGINE du visiteur : un visiteur venu
+  // d'Instagram puis inscrit reste compté sur Instagram, même si l'inscription
+  // s'est faite deux pages plus loin (où le référent serait devenu « direct »).
+  const CONV = "('challenge_signup','artist_apply','fan_join','contact_lead','store_click')";
+  const bySource = q(
+    `SELECT src.ref source,
+            COUNT(DISTINCT src.vid) visiteurs,
+            COUNT(DISTINCT c.vid) conversions
+       FROM (SELECT e.vid, e.ref FROM analytics_events e
+              WHERE e.day >= @since
+                AND e.id = (SELECT MIN(x.id) FROM analytics_events x
+                             WHERE x.vid = e.vid AND x.day >= @since)) src
+       LEFT JOIN (SELECT DISTINCT vid FROM analytics_events
+                   WHERE day >= @since AND name IN ${CONV}) c ON c.vid = src.vid
+      GROUP BY src.ref ORDER BY visiteurs DESC LIMIT 12`
+  ).map((r) => ({ ...r, taux: r.visiteurs ? Math.round((r.conversions / r.visiteurs) * 1000) / 10 : 0 }));
+
+  return { jours: d, tz: TZ, totals, byDay, byHour, pages, refs, bySource, countries, devices, actions, funnel };
 }
 
 module.exports = { track, report, purge };

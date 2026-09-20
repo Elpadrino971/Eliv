@@ -325,7 +325,7 @@ router.post('/track', (req, res) => {
     const b = req.body || {};
     analytics.track({
       name: String(b.n || 'pageview'),
-      path: b.p, ref: b.r, lang: b.l,
+      path: b.p, ref: b.r, lang: b.l, utmSource: b.us, utmCampaign: b.uc,
       ip: (req.headers['x-forwarded-for'] || req.ip || '').toString().split(',')[0].trim(),
       ua: req.headers['user-agent'] || '',
       host: 'vybzzz.online',

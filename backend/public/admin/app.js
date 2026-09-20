@@ -1437,7 +1437,7 @@ async function pageAudience() {
   const maxF = Math.max(1, ...data.funnel.map((f) => f.n));
   view().innerHTML = `<h1 class="page-title">Audience du site</h1>
     <div class="em" style="margin-bottom:12px">Sans cookie, sans donnée personnelle : aucun bandeau de consentement n'est nécessaire.
-      ${[7, 30, 90].map((d) => `<a href="#audience?days=${d}" style="margin-left:10px;${d === days ? 'color:var(--gold);font-weight:700' : ''}">${d} jours</a>`).join('')}</div>
+      ${[[1, "Aujourd'hui"], [7, '7 jours'], [30, '30 jours'], [90, '90 jours']].map(([d, l]) => `<a href="#audience?days=${d}" style="margin-left:10px;${d === days ? 'color:var(--gold);font-weight:700' : ''}">${l}</a>`).join('')}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px">
       ${kpi('Visiteurs uniques', data.totals.visiteurs, `sur ${data.jours} jours`)}
       ${kpi('Vues de page', data.totals.vues, data.totals.visiteurs ? (data.totals.vues / data.totals.visiteurs).toFixed(1) + ' pages par visiteur' : '')}
@@ -1446,6 +1446,27 @@ async function pageAudience() {
     </div>
     <div class="tcard" style="margin-bottom:16px"><h3 style="margin:0 0 12px">Visiteurs par jour</h3>
       <div style="display:flex;align-items:flex-end;gap:4px;height:140px">${bars || '<div class="empty">Aucune donnée</div>'}</div></div>
+    ${data.byHour && data.byHour.length ? `<div class="tcard" style="margin-bottom:16px">
+      <h3 style="margin:0 0 4px">Aujourd'hui, heure par heure</h3>
+      <div class="em" style="margin-bottom:12px">Heure locale. Utile pour lire l'effet d'une publicité lancée dans la journée.</div>
+      <div style="display:flex;align-items:flex-end;gap:3px;height:110px">
+        ${(() => { const mx = Math.max(1, ...data.byHour.map((h) => h.visiteurs));
+          return Array.from({ length: 24 }, (_, i) => { const k = String(i).padStart(2, '0');
+            const r = data.byHour.find((x) => x.h === k) || { visiteurs: 0, vues: 0 };
+            return `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px">
+              <div title="${k}h : ${r.visiteurs} visiteurs, ${r.vues} vues" style="width:76%;min-height:2px;height:${Math.round(r.visiteurs / mx * 84)}px;background:${r.visiteurs ? 'linear-gradient(180deg,var(--gold),#7A1F33)' : 'var(--navy-2)'};border-radius:3px 3px 0 0"></div>
+              <span class="em" style="font-size:9px">${i % 3 === 0 ? k : ''}</span></div>`; }).join(''); })()}
+      </div></div>` : ''}
+    <div class="tcard" style="margin-bottom:16px">
+      <h3 style="margin:0 0 4px">Conversions par source</h3>
+      <div class="em" style="margin-bottom:12px">Chaque visiteur est rattaché à la source par laquelle il est arrivé, même s'il s'inscrit plusieurs pages plus loin.
+        Conversion = inscription au Challenge, candidature artiste, fan pré-inscrit, formulaire de contact ou clic vers un store.</div>
+      ${data.bySource && data.bySource.length ? `<table class="tbl"><thead><tr><th>Source</th><th style="text-align:right">Visiteurs</th><th style="text-align:right">Conversions</th><th style="text-align:right">Taux</th></tr></thead><tbody>
+        ${data.bySource.map((r) => `<tr><td>${esc(r.source)}</td><td style="text-align:right">${r.visiteurs}</td>
+          <td style="text-align:right;color:var(--gold)">${r.conversions}</td>
+          <td style="text-align:right;${r.taux >= 2 ? 'color:var(--gold);font-weight:700' : 'color:var(--muted)'}">${r.taux} %</td></tr>`).join('')}
+      </tbody></table>` : '<div class="empty">Aucune donnée</div>'}
+    </div>
     <div class="tcard" style="margin-bottom:16px"><h3 style="margin:0 0 4px">Tunnel du Live Challenge</h3>
       <div class="em" style="margin-bottom:12px">En visiteurs distincts, sur la période.</div>
       ${data.funnel.map((f) => `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${esc(f.etape)}</span><b style="color:var(--gold)">${f.n}</b></div>

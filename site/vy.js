@@ -7,7 +7,14 @@
 
   function send(name) {
     try {
-      var body = JSON.stringify({ n: name, p: location.pathname, r: document.referrer, l: navigator.language });
+      // Paramètres de campagne (?utm_source=...&utm_campaign=...) : mémorisés
+      // pour la durée de la page, afin que la conversion reste rattachée à la
+      // publicité qui a amené le visiteur, et pas à la page précédente.
+      var q = new URLSearchParams(location.search);
+      var body = JSON.stringify({
+        n: name, p: location.pathname, r: document.referrer, l: navigator.language,
+        us: q.get('utm_source') || '', uc: q.get('utm_campaign') || q.get('utm_content') || '',
+      });
       if (navigator.sendBeacon) navigator.sendBeacon(API + '/track', new Blob([body], { type: 'application/json' }));
       else fetch(API + '/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
     } catch (e) {}
