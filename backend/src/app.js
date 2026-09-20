@@ -23,7 +23,11 @@ const app = express();
 // Derrière le reverse-proxy (Nginx/Hostinger) : nécessaire pour que le
 // rate-limit voie la vraie IP client (X-Forwarded-For) et pas celle du proxy.
 app.set('trust proxy', 1);
-app.use(helmet()); // en-têtes de sécurité HTTP (XSS, sniffing, frame, etc.)
+// En-têtes de sécurité HTTP. Une seule valeur par défaut est inadaptée ici :
+// Cross-Origin-Resource-Policy vaut « same-origin », or cette API est faite
+// pour être appelée depuis un AUTRE domaine (vybzzz.online et l'application).
+// Le navigateur bloquait alors les réponses avec ERR_BLOCKED_BY_RESPONSE.
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors());
 
 // Webhooks Mux/Stripe : montés AVANT express.json() car la vérification de

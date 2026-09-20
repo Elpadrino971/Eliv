@@ -7,16 +7,25 @@
 
   function send(name) {
     try {
-      // Paramètres de campagne (?utm_source=...&utm_campaign=...) : mémorisés
-      // pour la durée de la page, afin que la conversion reste rattachée à la
-      // publicité qui a amené le visiteur, et pas à la page précédente.
+      // Paramètres de campagne (?utm_source=...&utm_campaign=...) : transmis
+      // pour que la conversion reste rattachée à la publicité qui a amené le
+      // visiteur, et pas à la page précédente.
       var q = new URLSearchParams(location.search);
       var body = JSON.stringify({
         n: name, p: location.pathname, r: document.referrer, l: navigator.language,
         us: q.get('utm_source') || '', uc: q.get('utm_campaign') || q.get('utm_content') || '',
       });
-      if (navigator.sendBeacon) navigator.sendBeacon(API + '/track', new Blob([body], { type: 'application/json' }));
-      else fetch(API + '/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+      // fetch + keepalive, et NON sendBeacon : un beacon part toujours en mode
+      // « credentials: include », et le navigateur refuse alors une réponse dont
+      // l'origine autorisée est le joker « * ». Résultat : la requête partait
+      // mais était rejetée, sans la moindre erreur visible. keepalive survit de
+      // la même façon à la fermeture de la page.
+      fetch(API + '/track', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: body, keepalive: true, credentials: 'omit', mode: 'cors',
+      }).catch(function () {
+        if (navigator.sendBeacon) navigator.sendBeacon(API + '/track', new Blob([body], { type: 'text/plain' }));
+      });
     } catch (e) {}
   }
   window.vyTrack = send;

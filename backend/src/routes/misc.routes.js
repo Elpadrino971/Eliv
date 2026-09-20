@@ -319,10 +319,15 @@ router.get('/get-abusive-words', (req, res) => {
 // POST /api/track — mesure d'audience, sans cookie ni donnée personnelle.
 // Réponse 204 immédiate : la page du visiteur n'attend jamais après nous.
 const analytics = require('../services/analytics');
+// text/plain accepté pour le repli sendBeacon (voir site/vy.js).
+router.use('/track', express.text({ type: 'text/plain', limit: '8kb' }));
 router.post('/track', (req, res) => {
   res.status(204).end();
   try {
-    const b = req.body || {};
+    // Le repli sendBeacon envoie du text/plain : express.json() ne le parse
+    // pas, on récupère alors le corps brut.
+    let b = req.body || {};
+    if (typeof b === 'string') { try { b = JSON.parse(b); } catch (_) { b = {}; } }
     analytics.track({
       name: String(b.n || 'pageview'),
       path: b.p, ref: b.r, lang: b.l, utmSource: b.us, utmCampaign: b.uc,
