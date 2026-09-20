@@ -161,3 +161,20 @@ curl -s -o /dev/null -w "%{http_code}\n" https://vybzzz.online/confidentialite.h
 
 Sans ce changement, le site reste fonctionnel : les anciennes pages redirigent d'elles-mêmes
 vers l'accueil, mais une adresse inexistante affichera encore l'accueil au lieu de la 404.
+
+---
+
+## 5) Après toute modification d'un .css ou .js du site
+
+nginx garde ces fichiers 7 jours dans le navigateur des visiteurs. Sans
+empreinte de version, une correction mise en ligne n'arrive pas chez ceux qui
+sont déjà venus : ils gardent l'ancienne version pendant une semaine.
+
+```bash
+python3 scripts/stamp-assets.py    # avant de commiter
+```
+
+Le script réécrit les références en `data.js?v=896194eb`, l'empreinte étant
+calculée sur le contenu du fichier. Contenu modifié, adresse modifiée, le
+navigateur télécharge immédiatement. Contenu inchangé, adresse inchangée, le
+cache continue de servir.
