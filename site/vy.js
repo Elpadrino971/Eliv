@@ -30,9 +30,12 @@
   }
   window.vyTrack = send;
 
-  // Vue de page, une fois la page affichée pour ne rien ralentir.
-  if (document.readyState === 'complete') send('pageview');
-  else addEventListener('load', function () { send('pageview'); }, { once: true });
+  // Vue de page envoyée IMMÉDIATEMENT. Attendre l'événement « load » faisait
+  // perdre toute mesure sur les pages qui redirigent (page de téléchargement :
+  // elle part vers le store avant la fin du chargement) et sur les visiteurs
+  // qui quittent vite. Le script étant en « defer », rien n'est ralenti, et
+  // « keepalive » garantit l'envoi même si la page part aussitôt après.
+  send('pageview');
 
   // Actions clés : un clic suffit, on ne piste aucun mouvement.
   addEventListener('click', function (e) {

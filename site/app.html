@@ -39,7 +39,7 @@ body{min-height:100vh;display:flex;flex-direction:column}
     <div class="stores" id="stores"></div>
     <div class="dl__note" id="dlNote"></div>
     <div class="dl__wa" id="dlWa"></div>
-    <div class="qr" id="qr"><img alt="QR code vers cette page" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=https%3A%2F%2Fvybzzz.online%2Fapp.html"></div>
+    <div class="qr" id="qr"><img alt="QR code vers cette page" loading="lazy" decoding="async" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=https%3A%2F%2Fvybzzz.online%2Fapp.html"></div>
     <p class="dl__note"><a href="index.html" style="color:var(--gold)">← Retour au site</a></p>
   </div>
 </main>
@@ -57,12 +57,22 @@ body{min-height:100vh;display:flex;flex-direction:column}
   var ios=btn(L.appStore,apple,'App Store','iPhone & iPad',isIOS), and=btn(L.playStore,play,'Google Play','Android',isAndroid);
   s.innerHTML=isIOS?ios+and:and+ios;
   // Un clic = le bon store, directement, si son lien existe.
-  if(isIOS&&L.appStore){ note.textContent='Ouverture de l\'App Store…'; setTimeout(function(){location.href=L.appStore},600); }
-  else if(isAndroid&&L.playStore){ note.textContent='Ouverture de Google Play…'; setTimeout(function(){location.href=L.playStore},600); }
+  // Mesure AVANT la redirection : sans ça une campagne pointant vers cette
+  // page n'apparaîtrait nulle part. 900 ms laissent le temps à vy.js (chargé
+  // en defer) de s'exécuter et d'envoyer la vue.
+  function go(url,label){
+    note.textContent=label;
+    // vy.js est chargé en defer : il s'exécute après ce script inline.
+    // On laisse 300 ms pour qu'il ait défini vyTrack avant de l'appeler.
+    setTimeout(function(){ try{ window.vyTrack && window.vyTrack('store_click'); }catch(e){} }, 300);
+    setTimeout(function(){ location.href=url; }, 900);
+  }
+  if(isIOS&&L.appStore){ go(L.appStore, 'Ouverture de l\'App Store…'); }
+  else if(isAndroid&&L.playStore){ go(L.playStore, 'Ouverture de Google Play…'); }
   else if(isIOS&&!L.appStore){ note.textContent='La version iPhone arrive sur l\'App Store dans quelques jours. Laisse ton e-mail sur la page Challenge pour être prévenu.'; }
   if(L.whatsapp) document.getElementById('dlWa').innerHTML='<a class="btn btn--outline" href="'+L.whatsapp+'" target="_blank" rel="noopener"><span>💬 Rejoindre le groupe WhatsApp</span></a>';
 })();
 </script>
-<script src="vy.js?v=b0017a3c" defer></script>
+<script src="vy.js?v=d7c3196c" defer></script>
 </body>
 </html>
