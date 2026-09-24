@@ -121,12 +121,21 @@ class _OtpScreenState extends State<OtpScreen> {
                 children: List.generate(6, (i) {
                   return MyPinInputField(
                     controller: pins[i],
+                    autofocus: i == 0,
                     maxLength: i == 0 ? 6 : 1,
                     onChanged: (value) {
                       if (i == 0 && value.length > 1) {
                         handlePaste(value);
                       } else if (value.length == 1) {
-                        FocusScope.of(context).nextFocus();
+                        if (i == pins.length - 1) {
+                          FocusScope.of(context).unfocus();
+                        } else {
+                          FocusScope.of(context).nextFocus();
+                        }
+                      } else if (value.isEmpty && i > 0) {
+                        // Retour arrière : on remonte à la case précédente,
+                        // sinon l'utilisateur reste bloqué sur une case vide.
+                        FocusScope.of(context).previousFocus();
                       }
                     },
                   );
@@ -161,8 +170,11 @@ class _OtpScreenState extends State<OtpScreen> {
                     ),
               GestureDetector(
                 onTap: () async {
+                  // widget.email est TOUJOURS renseigné ; userModel pouvait
+                  // être vide et on envoyait alors une adresse vide au serveur,
+                  // qui répondait « aucun compte pour cet e-mail ».
                   await authController.forgetPassword(
-                    email: userModel.value.user?.email ?? "",
+                    email: widget.email,
                     froResent: true,
                   );
                   startTimer();

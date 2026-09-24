@@ -181,7 +181,9 @@ class AuthController extends GetxController {
     response.bodySetter = {'email': email};
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
-        userModel.value = userModelFromJson(value);
+        // /forget ne renvoie PAS d'utilisateur, seulement un message. Le parser
+        // comme un profil écrasait userModel avec un objet vide, ce qui cassait
+        // les écrans suivants (et le renvoi de code lui-même).
         update();
         Get.back();
         froResent
