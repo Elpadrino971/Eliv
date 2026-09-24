@@ -32,6 +32,7 @@ const Map<String, Map<String, String>> commonTranslations = {
     'login_retry': 'Try again',
     'login_no_account_q': "Don't have an account?",
     'login_join_now': 'Join now',
+    'login_first_time': "First time here? Create your account in under a minute.",
   },
   'fr': {
     'common_success': 'Succès',
@@ -64,6 +65,7 @@ const Map<String, Map<String, String>> commonTranslations = {
     'login_retry': 'Réessayer',
     'login_no_account_q': 'Pas encore de compte ?',
     'login_join_now': 'Rejoindre',
+    'login_first_time': 'Première fois ici ? Crée ton compte en moins d\'une minute.',
   },
   'es': {
     'common_success': 'Éxito',

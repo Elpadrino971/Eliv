@@ -251,6 +251,36 @@ class _LoginScreenState extends State<LoginScreen> {
                           imageColor: midnightPrimary,
                           labelColor: midnightPrimary,
                         ),
+
+                        height(0.015),
+
+                        // Création de compte placée ICI, sous la connexion.
+                        // Tout en bas de l'écran, sous les boutons Google et
+                        // Apple, elle passait inaperçue : des gens tentaient de
+                        // se connecter avec un compte qui n'existait pas.
+                        MyButton(
+                          label: 'auth_create_account'.tr,
+                          onTap: () => Get.to(() => CreateAcount(
+                                initialEmail: emailController.text.trim(),
+                              )),
+                          buttonColor: Colors.transparent,
+                          borderColor: goldPrimary,
+                          labelColor: goldPrimary,
+                        ),
+
+                        height(0.008),
+                        Center(
+                          child: Text(
+                            'login_first_time'.tr,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: textMuted,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+
                         height(0.02),
 
                         Row(
@@ -407,37 +437,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ],
                               ),
-                        height(0.03),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'login_no_account_q'.tr,
-                              style: TextStyle(
-                                color: Color(0xffA1A1A1),
-                                fontWeight: FontWeight.w400,
-                                fontSize: 14,
-                              ),
-                            ),
-                            width(0.02),
-
-                            GestureDetector(
-                              onTap: () {
-                                Get.to(() => CreateAcount());
-                              },
-                              child: Text(
-                                'login_join_now'.tr,
-                                style: TextStyle(
-                                  color: Get.isDarkMode
-                                      ? goldPrimary
-                                      : mainThemeColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),
