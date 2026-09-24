@@ -12,7 +12,8 @@ import 'package:artist/BottomBar/screens/profile/following_artists.dart';
 import 'package:artist/BottomBar/screens/profile/my_list_screen.dart';
 import 'package:artist/BottomBar/screens/profile/history.dart';
 import 'package:artist/BottomBar/screens/profile/user_wallet.dart';
-import 'package:artist/BottomBar/screens/profile/all_subscription_screen.dart';
+// Ecran d'achat d'abonnement : conserve pour reactivation future.
+// import 'package:artist/BottomBar/screens/profile/all_subscription_screen.dart';
 import 'package:artist/BottomBar/screens/profile/manage_subscription_screen.dart';
 import 'package:artist/BottomBar/screens/profile/idea_box_screen.dart';
 import 'package:artist/BottomBar/screens/profile/contant_page.dart';
@@ -110,12 +111,8 @@ class _SettingsState extends State<Settings> {
       'subTitle': 'prof_wallet_sub'.tr,
       'onTap': () => Get.to(() => const UserWallet()),
     },
-    {
-      'icon': Icons.workspace_premium_outlined,
-      'title': 'prof_purchase_sub'.tr,
-      'subTitle': 'prof_become_artist_sub'.tr,
-      'onTap': () => Get.to(() => const AllSubscriptionScreen()),
-    },
+    // Achat d'abonnement artiste : entree retiree du menu (l'ecran reste dans
+    // le depot, reactivable). « Gerer mon abonnement » reste accessible.
     {
       'icon': Icons.card_membership_outlined,
       'title': 'prof_manage_sub'.tr,

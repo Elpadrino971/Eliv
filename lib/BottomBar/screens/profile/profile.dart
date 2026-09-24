@@ -3,7 +3,8 @@ import 'dart:convert';
 
 import 'package:artist/BottomBar/screens/homeScreen/notification_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
-import 'package:artist/BottomBar/screens/profile/all_subscription_screen.dart';
+// Ecran d'achat d'abonnement : conserve pour reactivation future.
+// import 'package:artist/BottomBar/screens/profile/all_subscription_screen.dart';
 import 'package:artist/BottomBar/screens/profile/artist_onboarding_screen.dart';
 import 'package:artist/BottomBar/screens/profile/contant_page.dart';
 import 'package:artist/BottomBar/screens/profile/following_artists.dart';
@@ -134,15 +135,10 @@ class _ProfileState extends State<Profile> {
         'subTitle': 'prof_wallet_sub'.tr,
         'onTap': () => Get.to(() => const UserWallet()),
       },
-      // Achat d'abonnement artiste : in-app via Apple IAP (produits vybzz_XX_1m
-      // approuvés sur l'App Store, conforme 3.1.1). Le paiement web/Stripe
-      // reste proposé côté site et masqué dans l'app iOS (anti-steering).
-      {
-        'icon': Icons.workspace_premium_outlined,
-        'title': 'prof_purchase_sub'.tr,
-        'subTitle': 'prof_become_artist_sub'.tr,
-        'onTap': () => Get.to(() => const AllSubscriptionScreen()),
-      },
+      // Achat d'abonnement artiste : ecran retire du menu. L'ecran
+      // AllSubscriptionScreen reste dans le depot et peut etre reactive en
+      // remettant cette entree. « Gerer mon abonnement » ci-dessous reste
+      // accessible (restauration d'achat, exigence App Store 3.1.1).
       {
         'icon': Icons.card_membership_outlined,
         'title': 'prof_manage_sub'.tr,
