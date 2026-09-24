@@ -1435,7 +1435,24 @@ async function pageAudience() {
     ? `<table class="tbl">${rows.map((r) => `<tr><td>${extra ? extra(r) : ''}${esc(String(r[key] ?? '—'))}</td><td style="text-align:right;color:var(--gold)">${r[val]}</td></tr>`).join('')}</table>`
     : '<div class="empty">Aucune donnée</div>';
   const maxF = Math.max(1, ...data.funnel.map((f) => f.n));
-  view().innerHTML = `<h1 class="page-title">Audience du site</h1>
+  let mail = null;
+  try { mail = (await api('GET', '/email-health')).data; } catch (e) { /* non bloquant */ }
+  const alerte = mail && (mail.bacASable || (mail.dernieres24h && mail.dernieres24h.echecs > 0) || !mail.configure)
+    ? `<div class="tcard" style="border-color:#7A1F33;background:rgba(122,31,51,.18);margin-bottom:16px">
+        <h3 style="margin:0 0 6px;color:#ffb3b3">⚠️ Les codes de vérification n'arrivent pas</h3>
+        <div class="em" style="line-height:1.6">
+          ${!mail.configure ? "Aucune clé d'envoi d'e-mail n'est configurée : les comptes reçoivent le code de démonstration 1234.<br>" : ''}
+          ${mail.bacASable ? `Expéditeur actuel : <b>${esc(mail.expediteur)}</b>. C'est l'adresse bac à sable de Resend :
+             elle n'autorise l'envoi qu'à l'adresse du propriétaire du compte Resend. <b>Tous les autres inscrits ne reçoivent rien.</b>
+             Corriger : vérifier le domaine vybzzz.online dans Resend, puis définir
+             <code>EMAIL_FROM="VybzzZ &lt;no-reply@vybzzz.online&gt;"</code> dans /opt/vybzzz/.vybzzz.env et relancer le conteneur.<br>` : ''}
+          ${mail.dernieres24h ? `Dernières 24 h : ${mail.dernieres24h.total || 0} tentative(s), <b>${mail.dernieres24h.echecs || 0} échec(s)</b>.` : ''}
+        </div>
+        ${(mail.journal || []).filter((l) => !l.ok).length ? `<table class="tbl" style="margin-top:12px;font-size:12px"><thead><tr><th>Destinataire</th><th>Erreur</th><th>Quand</th></tr></thead><tbody>
+          ${(mail.journal || []).filter((l) => !l.ok).slice(0, 6).map((l) => `<tr><td>${esc(l.recipient)}</td><td style="color:#ffb3b3">${esc(l.error)}</td><td class="em">${esc(l.created_at)}</td></tr>`).join('')}
+        </tbody></table>` : ''}
+      </div>` : '';
+  view().innerHTML = `<h1 class="page-title">Audience du site</h1>${alerte}
     <div class="em" style="margin-bottom:12px">Sans cookie, sans donnée personnelle : aucun bandeau de consentement n'est nécessaire.
       ${[[1, "Aujourd'hui"], [7, '7 jours'], [30, '30 jours'], [90, '90 jours']].map(([d, l]) => `<a href="#audience?days=${d}" style="margin-left:10px;${d === days ? 'color:var(--gold);font-weight:700' : ''}">${l}</a>`).join('')}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px">

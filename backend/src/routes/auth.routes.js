@@ -212,6 +212,48 @@ router.post('/verify', (req, res) => {
   return authResponse(res, fresh, 'Verified.');
 });
 
+// GET /api/verify-link — validation d'un compte en un clic depuis l'e-mail.
+// Raison d'être : la saisie des six cases est défaillante sur Android (toutes
+// les cases demandaient le focus, le clavier atterrissait sur la dernière).
+// Ce lien permet de valider sans passer par l'application, sans attendre une
+// mise à jour sur les stores.
+router.get('/verify-link', (req, res) => {
+  const email = String(req.query.e || '').trim().toLowerCase();
+  const code = String(req.query.c || '').trim();
+  const page = (titre, message, ok) => `<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>VybzzZ — ${titre}</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0A1226;color:#F4EFE3;
+font-family:system-ui,-apple-system,sans-serif;text-align:center;padding:28px;line-height:1.6}
+.c{max-width:420px}.i{font-size:54px;margin-bottom:10px}h1{font-size:1.5rem;margin:0 0 10px}
+p{color:#B9C0D0;margin:0 0 24px}a{display:inline-block;background:#E6C76A;color:#0A1226;text-decoration:none;
+font-weight:700;padding:14px 26px;border-radius:12px}</style></head>
+<body><div class="c"><div class="i">${ok ? '✅' : '⚠️'}</div><h1>${titre}</h1><p>${message}</p>
+<a href="https://vybzzz.online/app">Ouvrir l'application VybzzZ</a></div></body></html>`;
+
+  const user = email ? db.prepare('SELECT * FROM users WHERE email = ?').get(email) : null;
+  if (!user) {
+    return res.status(404).type('html').send(page('Lien invalide',
+      "Aucun compte ne correspond à ce lien. Vérifie que tu utilises bien le dernier e-mail reçu.", false));
+  }
+  if (user.is_verified) {
+    return res.type('html').send(page('Compte déjà validé',
+      'Ton compte est actif. Tu peux te connecter dans l\'application.', true));
+  }
+  if (!code || String(code) !== String(user.otp_code)) {
+    return res.status(422).type('html').send(page('Code incorrect',
+      "Ce lien ne correspond plus au dernier code envoyé. Demande un nouveau code dans l'application.", false));
+  }
+  if (otpExpired(user)) {
+    return res.status(422).type('html').send(page('Lien expiré',
+      'Ce lien a expiré au bout de 15 minutes. Demande un nouveau code dans l\'application.', false));
+  }
+  // Code consommé : le lien ne peut pas servir deux fois.
+  db.prepare("UPDATE users SET is_verified = 1, otp_code = NULL, otp_expires_at = NULL, updated_at = datetime('now') WHERE id = ?").run(user.id);
+  try { challenge.onVerifiedUser(db.prepare('SELECT * FROM users WHERE id = ?').get(user.id)); } catch (_) {}
+  return res.type('html').send(page('Compte validé',
+    'C\'est bon, ton compte VybzzZ est actif. Retourne dans l\'application et connecte-toi.', true));
+});
+
 // POST /api/forget  (envoi d'un code de reset)
 router.post('/forget', (req, res) => {
   const email = (req.body?.email || '').toLowerCase();

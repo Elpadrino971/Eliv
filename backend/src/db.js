@@ -143,6 +143,16 @@ function init() {
       value TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS email_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      recipient TEXT,
+      kind TEXT,
+      ok INTEGER DEFAULT 0,
+      error TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_email_log_date ON email_log (created_at);
+
     CREATE TABLE IF NOT EXISTS analytics_events (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       day TEXT,

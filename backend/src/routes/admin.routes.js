@@ -1056,6 +1056,21 @@ const SPLASH_ANIMATION_STYLES = [
   'none',
 ];
 
+// ─── Diagnostic des e-mails (codes de vérification) ─────────────────────────
+const emailSvc = require('../services/email');
+router.get('/email-health', requireAdmin, (req, res) => {
+  return res.json({
+    status: 'success',
+    data: {
+      configure: emailSvc.isConfigured(),
+      expediteur: emailSvc.EMAIL_FROM,
+      bacASable: emailSvc.usingSandboxSender(),
+      dernieres24h: emailSvc.counts(24),
+      journal: emailSvc.recentLog(25),
+    },
+  });
+});
+
 // ─── Audience du site (mesure maison, sans cookie) ──────────────────────────
 const analyticsSvc = require('../services/analytics');
 router.get('/analytics', requireAdmin, (req, res) => {
