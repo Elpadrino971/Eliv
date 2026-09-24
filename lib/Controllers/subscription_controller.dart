@@ -66,11 +66,34 @@ class SubscriptionController extends GetxController {
         // y compris juste après un débit Apple réussi.
         Get.back();
         String message = 'common_error'.tr;
+        bool pending = false;
         try {
           final data = jsonDecode(value.split("error ").last);
-          if (data is Map && data['message'] != null) message = data['message'].toString();
+          if (data is Map) {
+            // Le serveur répond 202 { status: 'pending' } quand l'achat n'est
+            // pas encore confirmé par le store : rien n'a été activé, mais ce
+            // n'est pas une erreur. On ne dit plus « Abonnement activé » et on
+            // ne dit pas non plus « Erreur » — on dit la vérité : c'est en
+            // cours, le webhook ouvrira l'accès tout seul.
+            pending = data['status'] == 'pending' || data['activated'] == false;
+            if (data['message'] != null) message = data['message'].toString();
+          }
         } catch (_) {}
-        myWarningDialog(title: 'common_error'.tr, subtitle: message);
+        if (pending) {
+          mySuccessDialog(
+            title: 'sub_pending_title'.tr,
+            subtitle: message,
+            ontap: () {
+              if (fromArtist) {
+                Get.offAll(() => ArtistBottomBar());
+              } else {
+                Get.offAll(() => MyBottomBar(index: 4));
+              }
+            },
+          );
+        } else {
+          myWarningDialog(title: 'common_error'.tr, subtitle: message);
+        }
       }
     }).catchError((e) {
       // Une coupure réseau produisait exactement le même gel.
