@@ -524,9 +524,28 @@ router.post('/subscription/buy', requireAuth, async (req, res) => {
     .get(subscriptionsId);
   if (!sub) return fail(res, 'Abonnement introuvable.', 404);
 
-  const returnState = () => {
+  // Réponse « activé » : l'abonnement est bien actif côté serveur.
+  const returnActivated = () => {
     const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
-    return res.json({ status: 'success', data: serializeUser(fresh, { full: true }) });
+    return res.json({
+      status: 'success',
+      activated: true,
+      data: serializeUser(fresh, { full: true }),
+    });
+  };
+
+  // Réponse « en attente » : rien n'a été activé. On renvoie 202 (et non 200)
+  // pour que l'app ne puisse PAS l'interpréter comme un achat réussi — elle
+  // annonçait « Abonnement activé » alors que le serveur n'avait rien fait.
+  // Le webhook RevenueCat activera le compte dès que le store confirmera.
+  const returnPending = (message) => {
+    const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    return res.status(202).json({
+      status: 'pending',
+      activated: false,
+      message,
+      data: serializeUser(fresh, { full: true }),
+    });
   };
 
   // On n'active QUE si RevenueCat confirme l'achat (sinon self-grant gratuit).
@@ -541,13 +560,22 @@ router.post('/subscription/buy', requireAuth, async (req, res) => {
       );
     } catch (e) {
       console.error('[subscription/buy] RevenueCat verify:', e.message);
-      return returnState();
+      return returnPending(
+        "Nous n'avons pas pu vérifier ton achat auprès du store à l'instant. " +
+          "Si le paiement est passé, ton accès s'activera automatiquement d'ici " +
+          'quelques minutes. Aucun second paiement ne te sera demandé.'
+      );
     }
   } else if (process.env.NODE_ENV !== 'production') {
     allowActivate = true; // dev/test sans clé RevenueCat
   }
 
-  if (!allowActivate) return returnState();
+  if (!allowActivate) {
+    return returnPending(
+      "Ton achat n'est pas encore confirmé par le store. Ton accès s'activera " +
+        'automatiquement dès la confirmation, sans nouvelle manipulation.'
+    );
+  }
 
   const existing = db.prepare(
     'SELECT id FROM user_subscriptions WHERE user_id = ? AND subscriptions_id = ?'
@@ -559,7 +587,7 @@ router.post('/subscription/buy', requireAuth, async (req, res) => {
       "INSERT INTO user_subscriptions (user_id, subscriptions_id, status) VALUES (?, ?, 'active')"
     ).run(req.user.id, subscriptionsId);
   }
-  return returnState();
+  return returnActivated();
 });
 
 // POST /api/subscription/checkout — paiement carte (Stripe Checkout), chemin
