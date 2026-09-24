@@ -210,11 +210,19 @@ class _ProfileState extends State<Profile> {
                 // Bascule Fan/Artiste : visible seulement si le compte est déjà
                 // artiste (sinon "Devenir artiste" plus bas reste le point
                 // d'entrée pour lancer l'abonnement + l'onboarding).
-                if (userModel.value.user?.isArtist == true)
-                  GestureDetector(
+                // Obx : sans lui, le bouton n'apparaissait qu'après avoir
+                // quitté puis rouvert l'écran, même une fois le statut
+                // artiste obtenu.
+                if (true)
+                  Obx(() => userModel.value.user?.isArtist != true
+                      ? const SizedBox.shrink()
+                      : GestureDetector(
                     onTap: () {
+                      // Retour sur le Profil fan (index 4) et non sur le plein
+                      // écran live (index 2), qui n'a pas de barre de
+                      // navigation : l'aller-retour est ainsi symétrique.
                       if (widget.fromArtist) {
-                        Get.offAll(() => MyBottomBar(index: 2));
+                        Get.offAll(() => MyBottomBar(index: 4));
                       } else {
                         Get.offAll(() => ArtistBottomBar());
                       }
@@ -257,7 +265,7 @@ class _ProfileState extends State<Profile> {
                         ],
                       ),
                     ),
-                  ),
+                  )),
 
                 GestureDetector(
                   onTap: () async {

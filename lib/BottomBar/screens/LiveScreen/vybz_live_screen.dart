@@ -85,9 +85,10 @@ class _VybzLiveScreenState extends State<VybzLiveScreen> {
             left: 0,
             right: 0,
             child: Obx(() {
-              if (_page == 0 && !eventController.showVideoControls.value) {
-                return const SizedBox.shrink();
-              }
+              // Les onglets restent TOUJOURS visibles : l'application s'ouvre
+              // sur cet écran, et les masquer laissait l'utilisateur sans
+              // aucun repère ni moyen d'en sortir.
+              eventController.showVideoControls.value; // dépendance Obx conservée
               return Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
@@ -532,7 +533,10 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                               ),
                             ),
                           ),
-                        if (controller.showVideoControls.value)
+                        // La croix de sortie est TOUJOURS affichée : elle
+                        // n'apparaissait qu'après avoir tapé la vidéo au
+                        // hasard, ce qui rendait l'écran sans issue visible.
+                        if (true)
                           Positioned(
                             top: MediaQuery.of(context).padding.top + 10,
                             left: 12,

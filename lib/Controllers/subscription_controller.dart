@@ -61,10 +61,21 @@ class SubscriptionController extends GetxController {
           },
         );
       } else {
-        final data = jsonDecode(value.split("error ").last);
-
-        myWarningDialog(title: 'common_error'.tr, subtitle: data['message']);
+        // Le voile de chargement n'est PAS refermable au doigt : sans ce
+        // Get.back(), une erreur serveur figeait l'application pour de bon,
+        // y compris juste après un débit Apple réussi.
+        Get.back();
+        String message = 'common_error'.tr;
+        try {
+          final data = jsonDecode(value.split("error ").last);
+          if (data is Map && data['message'] != null) message = data['message'].toString();
+        } catch (_) {}
+        myWarningDialog(title: 'common_error'.tr, subtitle: message);
       }
+    }).catchError((e) {
+      // Une coupure réseau produisait exactement le même gel.
+      Get.back();
+      myWarningDialog(title: 'common_error'.tr, subtitle: 'sub_network_error'.tr);
     });
   }
 

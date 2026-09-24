@@ -109,6 +109,7 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
     );
     if (ok) {
       await subscriptionController.buySubscription(
+        fromArtist: widget.fromArtist,
         subscriptionId: sub.id.toString(),
       );
     } else {
@@ -134,6 +135,7 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
       );
       if (ok) {
         await subscriptionController.buySubscription(
+          fromArtist: widget.fromArtist,
           subscriptionId: sub.id.toString(),
         );
       } else {
@@ -157,6 +159,7 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
     );
     if (ok) {
       await subscriptionController.buySubscription(
+        fromArtist: widget.fromArtist,
         subscriptionId: sub.id.toString(),
       );
     } else {
@@ -170,7 +173,7 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
 
   Future fetchOffers({required String id, required String title}) async {
     if (Platform.isAndroid) {
-      await subscriptionController.buySubscription(subscriptionId: id);
+      await subscriptionController.buySubscription(fromArtist: widget.fromArtist,subscriptionId: id);
       return;
     }
     final offerings = await subscriptionController.fetchOffers();
@@ -258,6 +261,7 @@ class _AllSubscriptionScreenState extends State<AllSubscriptionScreen> {
                             .purchasePackage(filteredPackages[index]);
                         value
                             ? await subscriptionController.buySubscription(
+                                fromArtist: widget.fromArtist,
                                 subscriptionId: id,
                               )
                             : myWarningDialog(

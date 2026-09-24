@@ -7,6 +7,7 @@ import 'package:artist/BottomBar/screens/LiveScreen/artist_clips_grid.dart';
 import 'package:artist/travis_scott/about_screen.dart';
 import 'package:artist/travis_scott/events_screen.dart';
 import 'package:artist/widgets/image_widget.dart';
+import 'package:artist/services/moderation_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -67,6 +68,75 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
   void _openAbout() {
     Get.to(() => AboutScreen(artist: widget.artist ?? User()));
+  }
+
+  /// Menu « … » : à propos, signaler, bloquer.
+  /// Le signalement et le blocage sont exigés par la règle 1.2 de l'App Store
+  /// pour toute application qui affiche du contenu publié par des utilisateurs.
+  void _openMenu() {
+    final a = widget.artist;
+    final id = a?.id;
+    final name = a?.artistName ?? a?.fullName ?? 'cet artiste';
+    final isMe = id != null && id == userModel.value.user?.id;
+    Get.bottomSheet(
+      SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
+          decoration: const BoxDecoration(
+            color: midnightSecondary,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.info_outline_rounded, color: goldPrimary),
+                title: Text('about_title'.tr, style: const TextStyle(color: ivory, fontWeight: FontWeight.w600)),
+                onTap: () {
+                  Get.back();
+                  _openAbout();
+                },
+              ),
+              if (!isMe && id != null)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.flag_outlined, color: goldPrimary),
+                  title: Text('mod_report'.tr, style: const TextStyle(color: ivory, fontWeight: FontWeight.w600)),
+                  onTap: () {
+                    Get.back();
+                    ModerationService.showActions(context, userId: id, name: name);
+                  },
+                ),
+              if (!isMe && id != null)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.block_rounded, color: Color(0xffE2584A)),
+                  title: Text('mod_block'.tr, style: const TextStyle(color: Color(0xffE2584A), fontWeight: FontWeight.w600)),
+                  onTap: () {
+                    Get.back();
+                    ModerationService.showActions(context, userId: id, name: name);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
   }
 
   Future<void> _toggleFollow() async {
@@ -169,7 +239,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                     const Spacer(),
                     _circleBtn(Icons.share_outlined, _shareArtist),
                     const SizedBox(width: 8),
-                    _circleBtn(Icons.more_horiz_rounded, _openAbout),
+                    _circleBtn(Icons.more_horiz_rounded, _openMenu),
                   ],
                 ),
               ),

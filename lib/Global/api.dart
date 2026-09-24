@@ -167,6 +167,11 @@ class APIs {
   // Boîte à idées
   static const String submitIdeaAPI = '$baseAPI/ideas';
 
+  // Modération : exigence App Store 1.2 (contenu publié par les utilisateurs).
+  static const String blockUserAPI = '$baseAPI/block-user';
+  static const String unblockUserAPI = '$baseAPI/unblock-user';
+  static const String blockedUsersAPI = '$baseAPI/blocked-users';
+
   // Like d'un concert
   static String likeEventAPI(String id) => '$baseAPI/event/$id/like';
 }

@@ -28,14 +28,21 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Get.isDarkMode ? whiteColor : blackColor,
-            size: 20,
-          ),
-          onPressed: () => Get.back(),
-        ),
+        // Cet écran sert AUSSI d'onglet de la barre du bas du mode artiste.
+        // Dans ce cas Get.back() ne revenait pas au Studio : il dépilait la
+        // route qui porte toute la barre, et renvoyait en mode fan ou sur une
+        // route vide. La flèche n'apparaît donc qu'en page empilée.
+        automaticallyImplyLeading: false,
+        leading: !Navigator.of(context).canPop()
+            ? null
+            : IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Get.isDarkMode ? whiteColor : blackColor,
+                  size: 20,
+                ),
+                onPressed: () => Get.back(),
+              ),
         title: Row(
           children: [
             Get.isDarkMode

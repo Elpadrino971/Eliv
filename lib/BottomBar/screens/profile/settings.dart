@@ -19,6 +19,7 @@ import 'package:artist/BottomBar/screens/profile/contant_page.dart';
 import 'package:artist/BottomBar/screens/profile/Support/all_support_chats.dart';
 import 'package:artist/widgets/my_appBar.dart';
 import 'package:artist/widgets/my_container.dart';
+import 'package:artist/BottomBar/screens/profile/blocked_accounts_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -120,6 +121,14 @@ class _SettingsState extends State<Settings> {
       'title': 'prof_manage_sub'.tr,
       'subTitle': 'prof_manage_sub_sub'.tr,
       'onTap': () => Get.to(() => const ManageSubscriptionScreen()),
+    },
+    {
+      // Exigence App Store 1.2 : le blocage doit pouvoir être annulé par
+      // l'utilisateur lui-même, sans passer par le support.
+      'icon': Icons.block_rounded,
+      'title': 'mod_blocked_title'.tr,
+      'subTitle': 'mod_blocked_sub'.tr,
+      'onTap': () => Get.to(() => const BlockedAccountsScreen()),
     },
     {
       'icon': Icons.lightbulb_outline_rounded,
