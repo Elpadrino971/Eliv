@@ -7,7 +7,7 @@ Branche : `release/app-all`. Ne jamais builder l'app depuis `feat/vibe-crm`.
 
 ## 1. Ce que cette version apporte
 
-Dix correctifs depuis la dernière soumission :
+Seize correctifs depuis la dernière soumission :
 
 - Compilation Android réparée (conflit de cible Java/Kotlin entre greffons).
 - Connexion Google sans Firebase Auth, avec la raison d'échec affichée.
@@ -19,6 +19,17 @@ Dix correctifs depuis la dernière soumission :
 - Saisie du code de vérification réparée sur Android.
 - Bouton « Créer un compte » remonté sous « Se connecter ».
 - Manifeste de confidentialité iOS ajouté.
+- Achat d'abonnement : l'application ne se fige plus (le voile de chargement
+  était impossible à refermer, y compris juste après un débit Apple réussi).
+- Croix de sortie et onglets toujours visibles sur l'écran Live.
+- Bouton de bascule fan / artiste rendu réactif : il affiche le mode réel.
+- Flèche de retour masquée quand il n'y a rien derrière (écran Événements).
+- Blocage et signalement d'un compte, avec la liste des comptes bloqués et
+  le déblocage depuis les réglages (exigence App Store 1.2).
+- Écran d'achat d'abonnement retiré du menu ; « Gérer mon abonnement », et
+  donc la restauration d'achat exigée par la règle 3.1.1, reste accessible.
+- L'application n'annonce plus un abonnement activé quand le store n'a rien
+  confirmé : elle affiche « achat en cours de confirmation ».
 
 ---
 
@@ -79,12 +90,14 @@ Apple exige quatre garde-fous. État actuel :
 |---|---|
 | Filtrage automatique du contenu choquant | Sightengine sur images, vidéos, textes, + mots interdits |
 | Signalement d'un contenu | `POST /api/report-event` vers `content_reports`, visible dans l'admin |
-| **Blocage d'un compte abusif** | Routes serveur prêtes, **boutons à poser dans l'app** |
+| **Blocage d'un compte abusif** | Fait : menu « … » sur un profil (Signaler / Bloquer) + liste des comptes bloqués dans les réglages |
 | Contact public | `contact@vybzzz.online`, affiché sur le site |
 
-Routes de blocage disponibles (toutes authentifiées) :
-`POST /api/block-user`, `POST /api/unblock-user`, `GET /api/blocked-users`.
-Un compte bloqué disparaît du feed et du chat des lives.
+Routes de blocage (toutes authentifiées) : `POST /api/block-user`,
+`POST /api/unblock-user`, `GET /api/blocked-users`. Un compte bloqué
+disparaît du feed et du chat des lives. Côté app : menu « … » sur la fiche
+d'un artiste (Signaler avec six motifs / Bloquer), et Réglages →
+« Comptes bloqués » pour débloquer soi-même, sans passer par le support.
 
 Autres points Apple déjà couverts : suppression de compte depuis l'app
 (règle 5.1.1v), aucun SDK de suivi publicitaire donc aucune fenêtre ATT requise.
@@ -124,3 +137,8 @@ Transporter ou Xcode → TestFlight, puis soumission.
 - Acheter des Arena Points en bac à sable, envoyer un cadeau.
 - Regarder un live, écrire dans le chat.
 - Supprimer son compte, puis vérifier qu'on ne peut plus se connecter.
+- Bloquer un compte depuis le menu « … » : il disparaît du feed et du chat.
+- Le débloquer depuis Réglages → « Comptes bloqués » : il réapparaît.
+- Basculer fan → artiste → fan : le libellé du bouton doit suivre le mode réel.
+- Vérifier qu'aucune entrée « Acheter un abonnement » ne reste dans le Profil
+  ni dans les Réglages, et que « Gérer mon abonnement » s'ouvre bien.
