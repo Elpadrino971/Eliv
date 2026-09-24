@@ -75,9 +75,16 @@ router.get('/:eventId/messages', optionalAuth, (req, res) => {
   if (!req.user && !keyOk(req)) return res.status(401).json({ status: 'error', message: 'Connexion ou clé API requise.' });
   const since = Number(req.query.since) || 0;
   const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 50));
+  // Les messages d'un compte bloqué ne s'affichent plus pour celui qui l'a bloqué.
+  let blocked = [];
+  if (req.user?.id) {
+    try { blocked = db.prepare('SELECT blocked_id FROM user_blocks WHERE blocker_id = ?').all(req.user.id).map((r) => r.blocked_id); } catch (_) {}
+  }
   const rows = db.prepare(
-    'SELECT id, user_id, name, text, created_at FROM live_messages WHERE event_id = ? AND id > ? ORDER BY id DESC LIMIT ?'
-  ).all(req.params.eventId, since, limit).reverse();
+    `SELECT id, user_id, name, text, created_at FROM live_messages
+      WHERE event_id = ? AND id > ?${blocked.length ? ` AND (user_id IS NULL OR user_id NOT IN (${blocked.map(() => '?').join(',')}))` : ''}
+      ORDER BY id DESC LIMIT ?`
+  ).all(req.params.eventId, since, ...blocked, limit).reverse();
   return res.json({ status: 'success', data: rows });
 });
 

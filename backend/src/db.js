@@ -487,6 +487,15 @@ function init() {
   // persistait RIEN (réponse "success" à vide) : impossible de traiter un
   // signalement. Ici on garde une vraie file consultable/actionnable.
   db.exec(`
+    CREATE TABLE IF NOT EXISTS user_blocks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      blocker_id INTEGER NOT NULL,
+      blocked_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(blocker_id, blocked_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_user_blocks ON user_blocks (blocker_id);
+
     CREATE TABLE IF NOT EXISTS content_reports (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       reporter_id INTEGER,

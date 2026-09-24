@@ -316,6 +316,51 @@ router.get('/get-abusive-words', (req, res) => {
   return ok(res, db.prepare('SELECT * FROM abusive_words').all());
 });
 
+// ─── Blocage d'utilisateur ────────────────────────────────────────────────
+// Exigence App Store 1.2 (contenu publié par les utilisateurs) : pouvoir
+// bloquer un compte abusif. Un compte bloqué disparaît du feed et du chat de
+// celui qui l'a bloqué ; le blocage est unilatéral et réversible.
+router.post('/block-user', requireAuth, (req, res) => {
+  const target = parseInt(req.body?.user_id ?? req.body?.blocked_id, 10);
+  if (!target || target === req.user.id) return fail(res, 'Utilisateur invalide.', 422);
+  const exists = db.prepare('SELECT id FROM users WHERE id = ?').get(target);
+  if (!exists) return fail(res, 'Utilisateur introuvable.', 404);
+  db.prepare('INSERT OR IGNORE INTO user_blocks (blocker_id, blocked_id) VALUES (?, ?)')
+    .run(req.user.id, target);
+  return res.json({ status: 'success', message: 'Compte bloqué. Tu ne verras plus son contenu.' });
+});
+
+router.post('/unblock-user', requireAuth, (req, res) => {
+  const target = parseInt(req.body?.user_id ?? req.body?.blocked_id, 10);
+  if (!target) return fail(res, 'Utilisateur invalide.', 422);
+  db.prepare('DELETE FROM user_blocks WHERE blocker_id = ? AND blocked_id = ?').run(req.user.id, target);
+  return res.json({ status: 'success', message: 'Compte débloqué.' });
+});
+
+// GET /api/blocked-users — la liste, pour pouvoir débloquer depuis les réglages.
+router.get('/blocked-users', requireAuth, (req, res) => {
+  const rows = db.prepare(
+    `SELECT u.id, u.full_name, u.artist_name, u.profile_image, b.created_at
+       FROM user_blocks b JOIN users u ON u.id = b.blocked_id
+      WHERE b.blocker_id = ? ORDER BY b.id DESC`
+  ).all(req.user.id);
+  // list(res, key, rows) : la clé est un paramètre, ne pas l'oublier.
+  return list(res, 'data', rows.map((r) => ({
+    id: r.id,
+    name: r.artist_name || r.full_name || 'Utilisateur',
+    profile_image: profileUrl(r.profile_image),
+    blocked_at: r.created_at,
+  })));
+});
+
+/** Identifiants bloqués par un utilisateur (vide s'il n'est pas connecté). */
+function blockedIdsFor(userId) {
+  if (!userId) return [];
+  try {
+    return db.prepare('SELECT blocked_id FROM user_blocks WHERE blocker_id = ?').all(userId).map((r) => r.blocked_id);
+  } catch (_) { return []; }
+}
+
 // POST /api/track — mesure d'audience, sans cookie ni donnée personnelle.
 // Réponse 204 immédiate : la page du visiteur n'attend jamais après nous.
 const analytics = require('../services/analytics');
@@ -552,11 +597,14 @@ router.post('/subscription/checkout', requireAuth, (req, res) => {
 // ─── Feed Clips ("Pour toi" / "Clips") — contenu curaté depuis l'admin,
 // indépendant des concerts. Voir /api/admin/feed-clips pour la gestion. ───
 const feedMuxHls = (id) => (id ? `https://stream.mux.com/${id}.m3u8` : null);
-router.get('/feed-clips', (req, res) => {
+router.get('/feed-clips', optionalAuth, (req, res) => {
   const feed = req.query.feed === 'clips' ? 'clips' : 'for_you';
+  // Le contenu d'un compte bloqué ne doit plus apparaître pour celui qui l'a bloqué.
+  const blocked = blockedIdsFor(req.user?.id);
   const rowsRaw = db
-    .prepare('SELECT * FROM feed_clips WHERE feed = ? AND active = 1')
-    .all(feed);
+    .prepare(`SELECT * FROM feed_clips WHERE feed = ? AND active = 1${
+      blocked.length ? ` AND (user_id IS NULL OR user_id NOT IN (${blocked.map(() => '?').join(',')}))` : ''}`)
+    .all(feed, ...blocked);
 
   // Ordre aléatoire à CHAQUE appel (effet "toujours du neuf"), mais pondéré :
   //  - fraîcheur : les clips < 72 h remontent (le feed ne paraît pas figé) ;
