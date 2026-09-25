@@ -115,7 +115,7 @@ class _AddAcountState extends State<AddAcount> {
                       ),
                     ),
                     MyTextField(
-                      hintText: 'Chase Bank',
+                      hintText: 'hint_bank_name'.tr,
                       controller: nameController,
                     ),
                     Text(

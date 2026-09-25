@@ -144,7 +144,7 @@ class _SupportScreenState extends State<SupportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: MyAppbar(
-        title: 'Create Support',
+        title: 'support_create_title'.tr,
         actions: [
           IconButton(
             onPressed: () {

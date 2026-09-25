@@ -374,7 +374,7 @@ class EventController extends GetxController {
 
         update();
         mySuccessDialog(
-          subtitle: 'Ticket booked successfully',
+          subtitle: 'msg_ticket_booked'.tr,
           ontap: () {
             Get.back();
             Get.back();

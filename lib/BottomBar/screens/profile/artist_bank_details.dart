@@ -239,7 +239,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                       ),
 
                       MyTextField(
-                        hintText: 'Enter your address',
+                        hintText: 'hint_address'.tr,
                         controller: addressController,
                         validation: (value) {
                           if (value == null || value.isEmpty) {

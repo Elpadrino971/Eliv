@@ -251,7 +251,7 @@ class _StartStreamState extends State<StartStream> {
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text('Annuler', style: TextStyle(color: greyColor)),
+            child: Text('common_cancel'.tr, style: TextStyle(color: greyColor)),
           ),
           TextButton(
             onPressed: () async {

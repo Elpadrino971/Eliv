@@ -80,7 +80,7 @@ class ArtistController extends GetxController {
           if (value.split(' ').first != 'error') {
             update();
             mySuccessDialog(
-              subtitle: 'Event created successfully',
+              subtitle: 'msg_event_created'.tr,
               ontap: () {
                 Get.close(3);
               },

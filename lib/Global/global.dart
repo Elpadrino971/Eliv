@@ -99,7 +99,7 @@ Future mySuccessDialog({
       return Dialog(
         insetPadding: EdgeInsets.symmetric(horizontal: 15),
         child: SuccessDialog(
-          title: title ?? 'Success',
+          title: title ?? 'common_success'.tr,
           subtitle: subtitle,
           btnTitle: btnTitle,
           image: image,
@@ -142,7 +142,7 @@ Future myWarningDialog({
       return Dialog(
         insetPadding: EdgeInsets.symmetric(horizontal: 15),
         child: WarningDialog(
-          title: title ?? 'Warning',
+          title: title ?? 'common_warning'.tr,
           subtitle: subtitle,
           btnTitle: btnTitle,
           secondButtonTitle: secondBtnTitle,

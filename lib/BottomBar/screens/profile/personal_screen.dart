@@ -146,7 +146,7 @@ class _PersonalScreenState extends State<PersonalScreen> {
                     ),
 
                     MyTextField(
-                      hintText: 'Alex Harrison',
+                      hintText: 'hint_full_name'.tr,
                       controller: nameController,
                     ),
 

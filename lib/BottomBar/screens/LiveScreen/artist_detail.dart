@@ -343,7 +343,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       icon: saved
                           ? Icons.playlist_add_check_rounded
                           : Icons.playlist_add_rounded,
-                      label: saved ? 'Dans ma liste' : 'Ma liste',
+                      label: saved ? 'common_in_my_list'.tr : 'common_my_list'.tr,
                       onTap: () => eventController.toggleSaveArtist(
                         artistId: '${widget.artist?.id ?? 1}',
                       ),

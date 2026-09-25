@@ -83,11 +83,9 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
                       upcomingEvents.isEmpty
                           ? EmptyState(
                               icon: Icons.confirmation_number_outlined,
-                              title: 'No upcoming tickets yet',
-                              subtitle:
-                                  'Your next concert pass will appear here. '
-                                  'Discover live shows and grab your seat.',
-                              actionLabel: 'Explore Concerts',
+                              title: 'empty_no_tickets_t'.tr,
+                              subtitle: 'empty_no_tickets_s'.tr,
+                              actionLabel: 'empty_explore_concerts'.tr,
                               onAction: () => Get.offAll(
                                 () => const MyBottomBar(index: 1),
                               ),
@@ -113,12 +111,10 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
 
                       /// Past Events
                       pastEvents.isEmpty
-                          ? const EmptyState(
+                          ? EmptyState(
                               icon: Icons.history_rounded,
-                              title: 'No past events',
-                              subtitle:
-                                  'Concerts you\'ve attended will be kept here '
-                                  'so you can relive every moment.',
+                              title: 'empty_no_past_t'.tr,
+                              subtitle: 'empty_no_past_s'.tr,
                             )
                           : ListView.separated(
                               separatorBuilder: (context, index) {

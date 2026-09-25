@@ -422,7 +422,7 @@ class _SpalashScreenState extends State<SpalashScreen>
                           children: const [
                             _Pillar(
                               icon: Icons.explore_outlined,
-                              label: 'DISCOVER',
+                              label: 'common_discover'.tr,
                             ),
                             _PillarDivider(),
                             _Pillar(

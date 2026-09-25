@@ -71,7 +71,7 @@ class _CreateAcountState extends State<CreateAcount> {
                   child: Column(
                     children: [
                       MyTextField(
-                        hintText: 'John Doe',
+                        hintText: 'hint_full_name'.tr,
                         controller: nameController,
                         keyboardType: TextInputType.text,
                         validation: (value) {

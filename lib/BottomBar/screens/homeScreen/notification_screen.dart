@@ -14,10 +14,10 @@ class NotificationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: MyAppbar(title: 'home_alerts'.tr),
-      body: const EmptyState(
+      body: EmptyState(
         icon: Icons.notifications_none_rounded,
-        title: 'No notifications yet',
-        subtitle: 'Likes, new followers and ticket updates will show up here.',
+        title: 'empty_no_alerts_t'.tr,
+        subtitle: 'empty_no_alerts_s'.tr,
       ),
     );
   }

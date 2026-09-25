@@ -518,7 +518,7 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
 
                 MyDropDown(
                   dropdownvalue: selectedPrice,
-                  hintText: 'Choisir un prix',
+                  hintText: 'hint_price'.tr,
                   items: _ticketTiers.map((t) => '$t €').toList(),
                   onChanged: (value) {
                     // On garde la valeur affichée ("49.99 €") pour qu'elle

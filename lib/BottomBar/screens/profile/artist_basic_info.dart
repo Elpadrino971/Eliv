@@ -119,7 +119,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                       ),
 
                       MyTextField(
-                        hintText: 'John Doe',
+                        hintText: 'hint_full_name'.tr,
                         controller: accountController,
                         validation: (v) {
                           if (v!.isEmpty) {
@@ -139,7 +139,7 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                       ),
 
                       MyTextField(
-                        hintText: 'Chase Bank',
+                        hintText: 'hint_bank_name'.tr,
                         controller: nameController,
                         validation: (v) {
                           if (v!.isEmpty) {

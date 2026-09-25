@@ -154,7 +154,7 @@ class AuthController extends GetxController {
         update();
         Get.back();
         mySuccessDialog(
-          subtitle: 'Otp Verified Successfully',
+          subtitle: 'msg_otp_verified'.tr,
           ontap: () async {
             if (fromForget) {
               Get.to(() => CreatePasswrod(fromForget: true, email: email));
@@ -212,7 +212,7 @@ class AuthController extends GetxController {
         userModel.value = userModelFromJson(value);
         update();
         mySuccessDialog(
-          subtitle: 'Password Reset Successfully',
+          subtitle: 'msg_password_reset'.tr,
           ontap: () {
             Get.offAll(() => LoginScreen());
           },
@@ -317,13 +317,13 @@ class AuthController extends GetxController {
             update();
             box.write('user', userModel.value.toJson());
             mySuccessDialog(
-              subtitle: 'Profile Updated Successfully',
+              subtitle: 'msg_profile_updated'.tr,
               ontap: () {
                 (fromEdit)
                     ? Get.close(2)
                     : (formArtist)
                     ? mySuccessDialog(
-                        subtitle: 'Profile Updated Successfully',
+                        subtitle: 'msg_profile_updated'.tr,
                         ontap: () {
                           Get.offAll(() => ArtistBottomBar());
                         },
@@ -381,7 +381,7 @@ class AuthController extends GetxController {
         box.write('user', userModel.value.toJson());
         update();
         mySuccessDialog(
-          subtitle: 'Package Purchased Successfully',
+          subtitle: 'msg_package_purchased'.tr,
           ontap: () {
             Get.close(2);
           },
@@ -450,7 +450,7 @@ class AuthController extends GetxController {
         banks.value = banksModelFromJson(value);
         update();
         mySuccessDialog(
-          subtitle: 'Bank Added Successfully',
+          subtitle: 'msg_bank_added'.tr,
           ontap: () {
             Get.close(3);
           },
@@ -485,7 +485,7 @@ class AuthController extends GetxController {
         banks.value = banksModelFromJson(value);
         update();
         mySuccessDialog(
-          subtitle: 'Bank account deleted successfully',
+          subtitle: 'msg_bank_deleted'.tr,
           ontap: () {
             Get.close(2); // close success dialog
           },
@@ -511,7 +511,7 @@ class AuthController extends GetxController {
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
         mySuccessDialog(
-          subtitle: 'Withdraw Request Sent Successfully',
+          subtitle: 'msg_withdraw_sent'.tr,
           ontap: () {
             Get.close(2);
           },
@@ -561,7 +561,7 @@ class AuthController extends GetxController {
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
         mySuccessDialog(
-          subtitle: 'Account Deleted Successfully',
+          subtitle: 'msg_account_deleted'.tr,
           ontap: () {
             Get.offAll(() => LoginScreen());
           },

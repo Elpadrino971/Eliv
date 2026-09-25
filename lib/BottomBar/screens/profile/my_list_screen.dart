@@ -27,7 +27,7 @@ class _MyListScreenState extends State<MyListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Ma liste'),
+      appBar: MyAppbar(title: 'common_my_list'.tr),
       body: Obx(() {
         if (eventController.myListLoading.value) {
           return const Center(child: CircularProgressIndicator());

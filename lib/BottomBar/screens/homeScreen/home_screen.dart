@@ -432,11 +432,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
                 final events = merged.values.toList();
                 if (events.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.event_note_rounded,
-                    title: 'No concerts scheduled',
-                    subtitle:
-                        'Upcoming concerts will line up here on a timeline.',
+                    title: 'empty_no_concerts_t'.tr,
+                    subtitle: 'empty_no_concerts_s'.tr,
                   );
                 }
                 return ConcertsTimelineView(

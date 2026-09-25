@@ -89,7 +89,7 @@ class _SettingsState extends State<Settings> {
   List<Map> get vybzzzAccountList => [
     {
       'icon': Icons.playlist_add_check_rounded,
-      'title': 'Ma liste',
+      'title': 'common_my_list'.tr,
       'subTitle': 'Les artistes que tu as enregistrés',
       'onTap': () => Get.to(() => const MyListScreen()),
     },
