@@ -62,6 +62,10 @@ app.use(
     '/api/reset-password',
     '/api/update-password',
     '/api/verify',
+    // Validation en un clic depuis l'e-mail. Le limiteur ne couvrait que des
+    // routes POST : ce GET acceptait un nombre illimite de tentatives sur un
+    // code a six chiffres, donc devinable a la force brute.
+    '/api/verify-link',
     '/api/admin/login',
     '/api/challenge/register',
     '/api/challenge/join',
