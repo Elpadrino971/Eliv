@@ -207,12 +207,30 @@ class SubscriptionController extends GetxController {
     }
   }
 
+  /// Vrai quand le DERNIER achat tenté a été annulé par l'utilisateur lui-même
+  /// (il a fermé la feuille de paiement du store). Sans cette distinction, les
+  /// écrans affichaient « Achat incomplet » à quelqu'un qui avait simplement
+  /// changé d'avis : un message d'échec pour un geste volontaire.
+  bool lastPurchaseCancelled = false;
+
+  /// RevenueCat renvoie une PlatformException dont le code correspond à
+  /// PurchasesErrorCode.purchaseCancelledError quand la feuille de paiement
+  /// est fermée par l'utilisateur.
+  bool _isCancellation(Object e) {
+    if (e is PlatformException) {
+      return PurchasesErrorHelper.getErrorCode(e) ==
+          PurchasesErrorCode.purchaseCancelledError;
+    }
+    return false;
+  }
+
   Future<bool> purchasePackage(Package package) async {
+    lastPurchaseCancelled = false;
     try {
       await Purchases.purchase(PurchaseParams.package(package));
-      // await Purchases.purchasePackage(package);
       return true;
     } catch (e) {
+      lastPurchaseCancelled = _isCancellation(e);
       return false;
     }
   }
@@ -225,6 +243,7 @@ class SubscriptionController extends GetxController {
   /// encore configuré) ou si l'achat échoue/est annulé.
   Future<bool> purchaseByProductId(String productId) async {
     if (productId.isEmpty) return false;
+    lastPurchaseCancelled = false;
     try {
       // 1. Si le produit est dans un offering (ex. abonnements artistes),
       //    on l'achète via son package. ISOLÉ dans son propre try/catch : si
@@ -259,6 +278,7 @@ class SubscriptionController extends GetxController {
       myPrint('purchaseByProductId: produit "$productId" introuvable (App Store)');
       return false;
     } catch (e) {
+      lastPurchaseCancelled = _isCancellation(e);
       myPrint('purchaseByProductId: $e');
       return false;
     }
@@ -276,6 +296,7 @@ class SubscriptionController extends GetxController {
   /// propagé sur l'App Store) ou si l'achat échoue/est annulé.
   Future<bool> purchaseSubscriptionByProductId(String productId) async {
     if (productId.isEmpty) return false;
+    lastPurchaseCancelled = false;
     try {
       final products = await Purchases.getProducts(
         [productId],
@@ -290,6 +311,7 @@ class SubscriptionController extends GetxController {
       );
       return false;
     } catch (e) {
+      lastPurchaseCancelled = _isCancellation(e);
       myPrint('purchaseSubscriptionByProductId: $e');
       return false;
     }

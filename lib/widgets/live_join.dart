@@ -141,7 +141,12 @@ Future<void> showLiveJoinSheet(User artist) async {
         final paid = await sub.purchaseByProductId('ticket_${p.floor()}');
         Get.back();
         if (!paid) {
-          myWarningDialog(subtitle: 'Paiement non finalisé.');
+          myWarningDialog(
+            title: sub.lastPurchaseCancelled ? 'common_info'.tr : null,
+            subtitle: sub.lastPurchaseCancelled
+                ? 'pay_cancelled'.tr
+                : 'pay_not_completed'.tr,
+          );
           return;
         }
       }

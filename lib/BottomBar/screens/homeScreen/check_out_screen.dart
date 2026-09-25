@@ -250,11 +250,19 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                               await sub.purchaseByProductId(_ticketProductId);
                           if (!paid) {
                             Get.back(); // ferme le loader
-                            myWarningDialog(
-                              subtitle: 'checkout_payment_incomplete'.trParams({
-                                'product': _ticketProductId,
-                              }),
-                            );
+                            // Fermer la feuille de paiement est un choix, pas
+                            // une panne : on ne crie pas à l'échec pour ça.
+                            if (sub.lastPurchaseCancelled) {
+                              myWarningDialog(
+                                title: 'common_info'.tr,
+                                subtitle: 'pay_cancelled'.tr,
+                              );
+                            } else {
+                              myWarningDialog(
+                                subtitle: 'checkout_payment_incomplete'
+                                    .trParams({'product': _ticketProductId}),
+                              );
+                            }
                             return;
                           }
                           // 2. Paiement validé -> enregistre l'accès au concert.

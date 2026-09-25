@@ -214,6 +214,11 @@ class _UserWalletState extends State<UserWallet> {
                               mySuccessDialog(
                                 subtitle: 'wallet_topup_success'.tr,
                               );
+                            } else if (sub.lastPurchaseCancelled) {
+                              myWarningDialog(
+                                title: 'common_info'.tr,
+                                subtitle: 'pay_cancelled'.tr,
+                              );
                             } else {
                               myWarningDialog(
                                 subtitle: 'wallet_purchase_incomplete'.tr,
