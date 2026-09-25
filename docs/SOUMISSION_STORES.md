@@ -41,34 +41,54 @@ Dix-neuf correctifs depuis la dernière soumission :
 
 ## 2. À FAIRE AVANT DE BUILDER
 
-### 2.1 Connexion Google — BLOQUANT sur Android
+### 2.1 Connexion Google — état au 25 septembre 2026
 
-`android/app/google-services.json` contient `"oauth_client": []`. Aucune empreinte
-SHA-1 n'est enregistrée dans Firebase : **le bouton Google échoue pour tout le
-monde**, y compris depuis le Play Store.
+`android/app/google-services.json` contenait `"oauth_client": []` : aucune
+empreinte de signature déclarée, donc le bouton Google échouait pour tout le
+monde. **Une empreinte est maintenant enregistrée** pour `com.app.vybzz` :
 
-Trois empreintes à enregistrer dans Firebase (projet `vybzzz-app`, application
-Android `com.app.vybzz`, « Ajouter une empreinte ») :
-
-```bash
-# clé d'upload (mot de passe demandé — ne jamais le transmettre à qui que ce soit)
-keytool -list -v -keystore android/app/upload-keystore.jks | grep -E "Alias|SHA1"
-# clé de debug
-keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android | grep SHA1
+```
+E0:A3:66:FC:D9:CF:A8:0D:41:EF:ED:46:F5:CA:B9:2D:2A:6A:00:E6
 ```
 
-Troisième empreinte : Play Console → Configuration → Intégrité de l'application →
-« Certificat de clé de signature d'application » → SHA-1. Sans elle, la version
-distribuée par Google ne pourra pas se connecter, même si ton build local marche.
+**Reste à confirmer de quelle clé elle provient.** Play Console → Test et
+versions → Intégrité de l'application affiche deux certificats :
 
-Puis retélécharger `google-services.json` et remplacer le fichier. Vérifier :
+| Certificat | Rôle |
+|---|---|
+| Clé de signature d'application | Celui de Google. **C'est le sien qui répare la connexion pour les téléchargements Play Store.** |
+| Clé d'importation | Le tien, celui qui signe l'AAB avant envoi |
+
+Si l'empreinte ci-dessus correspond au **second** et pas au premier, la
+connexion Google reste cassée en production : ajouter alors celle du premier.
+
+Empreinte de debug, à ajouter aussi (sinon la connexion échoue quand on teste
+depuis Android Studio, ce qui fait croire à tort que le correctif ne marche
+pas) :
 
 ```bash
-python3 -c "import json;d=json.load(open('android/app/google-services.json'));print([len(c['oauth_client']) for c in d['client']])"
-# attendu : [1, 1] ou plus — surtout pas [0, 0]
+keytool -J-Duser.language=en -list -v -keystore ~/.android/debug.keystore \
+  -alias androiddebugkey -storepass android | grep -iE "SHA1:"
+```
+
+Ne rien ajouter sur l'application `com.vybzzz.app` : c'est un doublon au nom
+inversé, que rien n'utilise.
+
+Après chaque ajout, retélécharger `google-services.json` (attendre une minute :
+la propagation n'est pas instantanée) et vérifier :
+
+```bash
+python3 scripts/verifier-google-services.py android/app/google-services.json <SHA-1 attendues>
 ```
 
 Détail complet : `docs/GOOGLE_SIGNIN.md`.
+
+**Attention côté iOS.** Renseigner l'ID App Store dans Firebase a changé le
+client OAuth iOS (`…gkcfj2vg…` → `…c5us844q…`). Le schéma d'URL de
+`ios/Runner/Info.plist` a été réaligné (commit `1882bc1`), sinon la connexion
+Google partait sans jamais revenir dans l'application. Toute modification
+future dans la console Firebase impose de re-télécharger **les deux** fichiers
+de configuration, pas seulement celui d'Android.
 
 ### 2.2 Clé de signature Android — BLOQUANT
 
