@@ -102,7 +102,16 @@
 		<true/>
 	</dict>
 	<!-- URL scheme requis par Google Sign-In pour rediriger vers l'app après
-	     connexion (REVERSED_CLIENT_ID de GoogleService-Info.plist). -->
+	     connexion (REVERSED_CLIENT_ID de GoogleService-Info.plist). Il doit
+	     correspondre EXACTEMENT au client OAuth iOS declare dans Firebase :
+	     sinon le choix du compte Google s'ouvre, mais ne revient jamais dans
+	     l'application.
+
+	     Le client a change cote Firebase (…gkcfj2vg… -> …c5us844q…). L'ancien
+	     schema est conserve le temps de valider un build avec le nouveau :
+	     enregistrer deux schemas est sans effet de bord, et cela evite de
+	     casser la connexion si l'ancien client est encore en service. A
+	     retirer une fois la connexion Google verifiee sur un appareil iOS. -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -110,6 +119,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>com.googleusercontent.apps.284585255358-c5us844q11m010pa2l4suppl6j5qbevt</string>
 				<string>com.googleusercontent.apps.284585255358-gkcfj2vg7cte3dql3r8i7b1rdkrkghu9</string>
 			</array>
 		</dict>
