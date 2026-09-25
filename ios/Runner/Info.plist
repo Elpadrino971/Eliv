@@ -2,23 +2,28 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Textes d'autorisation. Apple exige qu'ils disent PRECISEMENT a quoi sert
+	     l'acces : les formulations generiques ("this app needs microphone
+	     access") sont un motif classique de rejet. Bilingues FR/EN, le public
+	     principal etant francophone et le relecteur anglophone. -->
+
 	<key>NSMicrophoneUsageDescription</key>
-	<string>This app needs microphone access for audio recording</string>
+	<string>VybzzZ utilise le micro pour diffuser ta voix quand tu es en live et pour parler dans le chat audio. — VybzzZ uses the microphone to broadcast your voice during a live show and to speak in audio chat.</string>
 
 	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera access for capturing photos/videos</string>
+	<string>VybzzZ utilise la camera pour te filmer pendant un live et pour prendre ta photo de profil. — VybzzZ uses the camera to film you during a live show and to take your profile picture.</string>
 
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>This app needs Bluetooth access for device connectivity</string>
+	<string>VybzzZ utilise le Bluetooth pour envoyer le son de tes lives vers tes ecouteurs ou ton enceinte. — VybzzZ uses Bluetooth to route live audio to your headphones or speaker.</string>
 
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>This app needs Bluetooth access for device connectivity</string>
+	<string>VybzzZ utilise le Bluetooth pour envoyer le son de tes lives vers tes ecouteurs ou ton enceinte. — VybzzZ uses Bluetooth to route live audio to your headphones or speaker.</string>
 
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>This app needs network access to connect to devices</string>
+	<string>VybzzZ utilise le reseau local pour garder ton live fluide quand tu diffuses en Wi-Fi. — VybzzZ uses the local network to keep your live stream smooth over Wi-Fi.</string>
 
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>App needs access to your photo library to save images and select photos for your profile.</string>
+	<string>VybzzZ ouvre ta photothèque pour que tu choisisses ta photo de profil, la couverture d'un concert ou un extrait a publier. — VybzzZ opens your photo library so you can pick your profile picture, a concert cover or a clip to publish.</string>
 
 	<key>UIBackgroundModes</key>
 	<array>

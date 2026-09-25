@@ -7,7 +7,7 @@ Branche : `release/app-all`. Ne jamais builder l'app depuis `feat/vibe-crm`.
 
 ## 1. Ce que cette version apporte
 
-Seize correctifs depuis la dernière soumission :
+Dix-neuf correctifs depuis la dernière soumission :
 
 - Compilation Android réparée (conflit de cible Java/Kotlin entre greffons).
 - Connexion Google sans Firebase Auth, avec la raison d'échec affichée.
@@ -30,6 +30,12 @@ Seize correctifs depuis la dernière soumission :
   donc la restauration d'achat exigée par la règle 3.1.1, reste accessible.
 - L'application n'annonce plus un abonnement activé quand le store n'a rien
   confirmé : elle affiche « achat en cours de confirmation ».
+- Bannière « Boutique de points » retirée : sur Android elle confirmait un
+  achat qui ne créditait aucun point.
+- Anglais codé en dur supprimé des écrans (les dialogues affichaient
+  « Success », « Warning » et « Continue » quelle que soit la langue).
+- Textes d'autorisation iOS réécrits, permissions Android bornées, et
+  trafic en clair désormais bloqué en production.
 
 ---
 
@@ -73,7 +79,17 @@ Vérification après `flutter build ipa` : le fichier doit être présent dans l
 bundle. Si Xcode ne le voit pas, l'ajouter à la main (glisser le fichier dans le
 groupe Runner, cocher la cible Runner).
 
-### 2.3 Fiche des stores
+### 2.3 Trafic réseau — à tester sur un appareil
+
+`android:usesCleartextTraffic="true"` autorisait tout le trafic en HTTP non
+chiffré, jetons de session compris. Remplacé par un fichier de configuration
+réseau qui chiffre tout, sauf les adresses de développement local.
+
+L'API, Mux et les images sont déjà en HTTPS. **Faire un live complet sur un
+appareil réel avant de soumettre** : si le module de diffusion utilisait une
+adresse en clair quelque part, c'est là que ça se verrait.
+
+### 2.4 Fiche des stores
 
 - **Politique de confidentialité** : `https://vybzzz.online/confidentialite.html`
 - **CGU** : `https://vybzzz.online/cgu.html`
@@ -142,3 +158,13 @@ Transporter ou Xcode → TestFlight, puis soumission.
 - Basculer fan → artiste → fan : le libellé du bouton doit suivre le mode réel.
 - Vérifier qu'aucune entrée « Acheter un abonnement » ne reste dans le Profil
   ni dans les Réglages, et que « Gérer mon abonnement » s'ouvre bien.
+- Vérifier qu'aucune bannière « Boutique de points » ne reste dans le
+  portefeuille, et recharger des points par les cartes du haut.
+- Lancer un live complet : image, son, chat, et son routé vers un casque
+  Bluetooth (valide la nouvelle configuration réseau).
+- Lire les demandes d'autorisation iOS : elles doivent nommer précisément
+  l'usage, pas dire « this app needs… ».
+- Écrire au support depuis l'app, puis vérifier que le ticket apparaît dans
+  l'admin (Support & contenu → Support) et que la réponse revient dans l'app.
+- Ouvrir l'historique du portefeuille : il ne doit plus être vide si des
+  cadeaux ou des billets existent.
