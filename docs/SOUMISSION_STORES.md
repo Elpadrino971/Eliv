@@ -102,6 +102,36 @@ Google partait sans jamais revenir dans l'application. Toute modification
 future dans la console Firebase impose de re-télécharger **les deux** fichiers
 de configuration, pas seulement celui d'Android.
 
+### 2.1 bis Alerte SDK RevenueCat — échéance 19 novembre 2026
+
+Play Console signale sur la version en production (1.0.7, code 8) :
+
+> `com.revenuecat.purchases:purchases:10.6.0` — *This version makes
+> unnecessary API calls. Please update to a more recent version (10.6.2 or
+> newer).*
+> À partir du 19 novembre 2026, plus aucune version incluant ce SDK ne pourra
+> être publiée, ni en production ni en test ouvert.
+
+Ce n'est pas bloquant aujourd'hui, et la soumission à venir devrait le régler
+d'elle-même : `pubspec.yaml` demande `purchases_flutter: ^10.9.0`, bien plus
+récent que ce qui avait été embarqué dans la 1.0.7.
+
+**Mais `pubspec.lock` est périmé** — il fige encore `purchases_flutter 10.1.1`.
+Il faut donc rafraîchir la résolution avant de builder, puis vérifier quelle
+version *native* est réellement embarquée :
+
+```bash
+flutter pub get
+grep -rh "com.revenuecat.purchases:purchases:" \
+  ~/.pub-cache/hosted/pub.dev/purchases_flutter-*/android/build.gradle
+```
+
+La version affichée doit être **≥ 10.6.2**. Si ce n'est pas le cas, monter
+`purchases_flutter` jusqu'à ce qu'elle le soit.
+
+Commiter `pubspec.lock` après le `flutter pub get` : c'est lui qui garantit
+que la machine qui builde embarque bien les versions attendues.
+
 ### 2.2 Clé de signature Android — BLOQUANT
 
 `android/key.properties` et `upload-keystore.jks` sont absents du dossier de
