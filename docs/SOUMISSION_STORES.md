@@ -70,7 +70,36 @@ python3 -c "import json;d=json.load(open('android/app/google-services.json'));pr
 
 Détail complet : `docs/GOOGLE_SIGNIN.md`.
 
-### 2.2 Manifeste de confidentialité iOS
+### 2.2 Clé de signature Android — BLOQUANT
+
+`android/key.properties` et `upload-keystore.jks` sont absents du dossier de
+travail. Sans eux, `flutter build appbundle --release` signe le bundle avec la
+clé de **debug** — silencieusement — et Play Console le refuse à l'import.
+
+Deux keystores existent ailleurs sur la machine :
+`~/Desktop/JUin 2026/apple-lock/android/app/upload-keystore.jks`
+`~/Downloads/Vybzzz/upload-keystore.jks`
+
+Identifier le bon : son SHA-1 doit correspondre au **certificat de clé
+d'importation** affiché dans Play Console > Intégrité de l'application. Le
+copier ensuite dans `android/app/upload-keystore.jks`, et recréer
+`android/key.properties` (fichier ignoré par git) :
+
+```properties
+storePassword=…
+keyPassword=…
+keyAlias=…
+storeFile=upload-keystore.jks
+```
+
+Si aucun des deux ne correspond : Play Console > Intégrité de l'application >
+« Demander la réinitialisation de la clé d'importation ». Google détient la
+vraie clé de signature, l'application n'est donc pas perdue — compter un à
+deux jours de délai.
+
+Garder une sauvegarde du keystore ailleurs que sur un seul disque.
+
+### 2.3 Manifeste de confidentialité iOS
 
 `ios/Runner/PrivacyInfo.xcprivacy` est créé et référencé dans le projet Xcode.
 Sans lui, App Store Connect renvoie l'avertissement ITMS-91053 puis refuse.
@@ -79,7 +108,7 @@ Vérification après `flutter build ipa` : le fichier doit être présent dans l
 bundle. Si Xcode ne le voit pas, l'ajouter à la main (glisser le fichier dans le
 groupe Runner, cocher la cible Runner).
 
-### 2.3 Trafic réseau — à tester sur un appareil
+### 2.4 Trafic réseau — à tester sur un appareil
 
 `android:usesCleartextTraffic="true"` autorisait tout le trafic en HTTP non
 chiffré, jetons de session compris. Remplacé par un fichier de configuration
@@ -89,7 +118,7 @@ L'API, Mux et les images sont déjà en HTTPS. **Faire un live complet sur un
 appareil réel avant de soumettre** : si le module de diffusion utilisait une
 adresse en clair quelque part, c'est là que ça se verrait.
 
-### 2.4 Fiche des stores
+### 2.5 Fiche des stores
 
 - **Politique de confidentialité** : `https://vybzzz.online/confidentialite.html`
 - **CGU** : `https://vybzzz.online/cgu.html`
