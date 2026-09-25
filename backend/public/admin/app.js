@@ -107,6 +107,7 @@ const NAV = [
     { id: 'reports', label: 'Rapports', ic: '📈' },
   ] },
   { group: 'Support & contenu', items: [
+    { id: 'support', label: 'Support (tickets app)', ic: '🎧' },
     { id: 'ideas', label: 'Boîte à idées', ic: '💡' },
     { id: 'leads', label: 'Contacts / Leads', ic: '📞' },
     { id: 'faqs', label: 'FAQ', ic: '❓' },
@@ -1294,6 +1295,57 @@ async function pageReports() {
     </div>`;
 }
 
+// Support — les tickets écrits depuis l'application. Avant, ces messages
+// étaient acceptés par l'API puis jetés : personne ne les voyait.
+async function pageSupport() {
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  const { data } = await api('GET', '/support');
+  if (!data.length) {
+    view().innerHTML = '<div class="tcard"><h3 style="color:var(--gold);margin-bottom:10px">🎧 Support</h3><div class="empty">Aucun ticket pour le moment.</div></div>';
+    return;
+  }
+  const bubble = (m) => `<div style="margin:8px 0;padding:10px 12px;border-radius:10px;max-width:80%;${m.role === 'admin'
+      ? 'background:var(--gold);color:var(--navy);margin-left:auto'
+      : 'background:var(--navy-2);border:1px solid var(--line)'}">
+      <div style="font-size:11px;opacity:.7;margin-bottom:4px">${m.role === 'admin' ? 'VybzzZ' : 'Utilisateur'} · ${fmtDate(m.created_at)}</div>
+      ${esc(m.value || '')}</div>`;
+
+  view().innerHTML = `<div class="tcard">
+    <h3 style="color:var(--gold);margin-bottom:4px">🎧 Support — tickets envoyés depuis l'application</h3>
+    <div class="empty" style="text-align:left;padding:0 0 14px">${data.filter((t) => t.status === 'open').length} ticket(s) ouvert(s) sur ${data.length}.</div>
+    ${data.map((t) => `<details style="border:1px solid var(--line);border-radius:10px;margin-bottom:10px;padding:12px" ${t.status === 'open' ? 'open' : ''}>
+      <summary style="cursor:pointer;font-weight:600">
+        #${t.id} · ${esc(t.subject || 'Sans objet')} — ${esc(t.user_name || 'Utilisateur')} <span style="opacity:.6">${esc(t.user_email || '')}</span>
+        ${t.status === 'open' ? '<span style="color:var(--gold)"> · ouvert</span>' : ' · résolu'}
+      </summary>
+      <div style="margin-top:10px">${(t.messages || []).map(bubble).join('') || '<div class="empty">Aucun message.</div>'}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <input class="sup-txt" data-id="${t.id}" placeholder="Répondre à ${esc(t.user_name || 'cet utilisateur')}…"
+               style="flex:1;min-width:220px;background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:8px;padding:9px 11px">
+        <button class="btn sup-send" data-id="${t.id}">Envoyer</button>
+        <button class="btn sup-st" data-id="${t.id}" data-st="${t.status === 'open' ? 'resolved' : 'open'}">${t.status === 'open' ? 'Marquer résolu' : 'Rouvrir'}</button>
+      </div>
+    </details>`).join('')}
+  </div>`;
+
+  view().addEventListener('click', async (e) => {
+    const send = e.target.closest('.sup-send');
+    if (send) {
+      const box = view().querySelector(`.sup-txt[data-id="${send.dataset.id}"]`);
+      const value = (box?.value || '').trim();
+      if (!value) return toast('Écris une réponse.');
+      await api('POST', `/support/${send.dataset.id}/reply`, { value });
+      toast('Réponse envoyée'); pageSupport();
+      return;
+    }
+    const st = e.target.closest('.sup-st');
+    if (st) {
+      await api('POST', `/support/${st.dataset.id}/status`, { status: st.dataset.st });
+      toast('Statut mis à jour'); pageSupport();
+    }
+  });
+}
+
 // Boîte à idées
 async function pageIdeas() {
   view().innerHTML = '<div class="empty">Chargement…</div>';
@@ -2347,7 +2399,7 @@ const ROUTES = {
   dashboard: pageDashboard, lives: pageLives, users: pageUsers, geo: pageGeo, genres: pageGenres, 'user-genres': pageUserGenres,
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
-  reports: pageReports, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
+  reports: pageReports, support: pageSupport, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
   splash: pageSplash, legal: pageLegal, challenge: pageChallenge, merch: pageMerch, audience: pageAudience, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
 };
 

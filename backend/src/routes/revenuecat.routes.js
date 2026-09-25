@@ -124,6 +124,19 @@ router.post('/', (req, res) => {
           if (user) {
             const newBal = ((parseFloat(user.points) || 0) + (parseFloat(pack.points) || 0)).toFixed(2);
             db.prepare('UPDATE users SET points = ? WHERE id = ?').run(newBal, userId);
+            // Trace de la recharge : sans elle, l'historique du portefeuille
+            // n'avait aucune ligne de crédit à montrer.
+            db.prepare(
+              `INSERT INTO wallet_transactions
+                 (user_id, role, direction, type, title, description, amount, source, source_id)
+               VALUES (?, 'points', 'credit', 'topup', ?, ?, ?, 'revenuecat', ?)`
+            ).run(
+              userId,
+              'Recharge de points',
+              `Pack ${productId}`,
+              String(pack.points || '0'),
+              String(event.transaction_id || evId)
+            );
           }
         });
         credit();

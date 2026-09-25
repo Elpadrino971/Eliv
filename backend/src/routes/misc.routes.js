@@ -840,13 +840,110 @@ router.get('/packages/list', (req, res) => {
   }));
   return res.json({ status: 'success', count: list.length, list });
 });
-// Conservé pour compat : ne crédite PAS (le crédit passe par le webhook IAP).
+// Cet endpoint ne crédite AUCUN point : le crédit passe uniquement par le
+// webhook RevenueCat, après un vrai paiement validé par le store. Il renvoyait
+// pourtant 200 { status: 'success' }, et l'app affichait en conséquence une
+// confirmation verte d'achat réussi à des gens qui ne recevaient rien.
+//
+// Il répond maintenant 410 : les versions déjà publiées traitent tout code
+// autre que 200/201 comme un échec et affichent le message ci-dessous au lieu
+// de la fausse confirmation. La recharge conforme (achat intégré) reste
+// disponible sur les cartes en haut du portefeuille.
 router.post('/packages/buy', optionalAuth, (req, res) =>
-  res.json({ status: 'success', message: 'Le crédit se fait après validation du paiement.' })
+  res.status(410).json({
+    status: 'error',
+    message:
+      'Cette voie de recharge est fermée. Utilise les packs affichés en haut ' +
+      'de ton portefeuille : le paiement passe par le store et tes points ' +
+      'sont crédités automatiquement.',
+  })
 );
 
 // ─── Transactions / Wallet ───
-router.post('/get-transactions', optionalAuth, (req, res) => ok(res, []));
+// Renvoyait une liste vide en dur : l'historique du portefeuille n'a jamais
+// rien montré à personne. Il est maintenant reconstruit à partir des données
+// réelles, dans le format attendu par l'app déjà publiée (transactions_model) :
+//   role = 'points' -> mouvements de points  (recharges + cadeaux envoyés)
+//   role = 'price'  -> achats en argent      (billets de concert)
+// Les recharges viennent de wallet_transactions (écrit par le webhook IAP) ;
+// les cadeaux et les billets sont reconstitués depuis activities et tickets,
+// ce qui donne un historique complet sans attendre de nouveaux achats.
+router.post('/get-transactions', requireAuth, (req, res) => {
+  const userId = req.user.id;
+  const role = String(req.body?.role || 'points').toLowerCase() === 'price' ? 'price' : 'points';
+  const rows = [];
+
+  const ledger = db.prepare(
+    "SELECT * FROM wallet_transactions WHERE user_id = ? AND role = ? ORDER BY datetime(created_at) DESC LIMIT 200"
+  ).all(userId, role);
+  for (const t of ledger) {
+    rows.push({
+      id: t.id,
+      user_id: t.user_id,
+      role: t.role,
+      type: t.direction,
+      title: t.title || (t.direction === 'credit' ? 'Crédit' : 'Débit'),
+      description: t.description || null,
+      amount: Math.round(parseFloat(t.amount) || 0),
+      created_at: t.created_at,
+      updated_at: t.created_at,
+    });
+  }
+
+  if (role === 'points') {
+    // Cadeaux envoyés pendant les lives : déjà tracés dans `activities`.
+    const gifts = db.prepare(
+      "SELECT a.id, a.points, a.gift, a.description, a.created_at, e.name AS event_title" +
+      "  FROM activities a LEFT JOIN events e ON e.id = a.event_id" +
+      " WHERE a.user_id = ? AND a.type = 'gift' ORDER BY datetime(a.created_at) DESC LIMIT 200"
+    ).all(userId);
+    for (const g of gifts) {
+      rows.push({
+        id: 1000000 + g.id, // évite une collision d'id avec le registre
+        user_id: userId,
+        role: 'points',
+        type: 'debit',
+        title: g.description || 'Cadeau envoyé',
+        description: g.event_title ? `Live : ${g.event_title}` : null,
+        amount: Math.round(parseFloat(g.points) || 0),
+        created_at: g.created_at,
+        updated_at: g.created_at,
+      });
+    }
+  } else {
+    // Billets achetés.
+    const tickets = db.prepare(
+      "SELECT t.id, t.price_paid, t.receipt_number, t.created_at, e.name AS event_title" +
+      "  FROM tickets t LEFT JOIN events e ON e.id = t.event_id" +
+      " WHERE t.user_id = ? ORDER BY datetime(t.created_at) DESC LIMIT 200"
+    ).all(userId);
+    for (const t of tickets) {
+      rows.push({
+        id: 2000000 + t.id,
+        user_id: userId,
+        role: 'price',
+        type: 'debit',
+        title: t.event_title ? `Billet — ${t.event_title}` : 'Billet de concert',
+        description: t.receipt_number ? `Reçu ${t.receipt_number}` : null,
+        amount: Math.round(parseFloat(t.price_paid) || 0),
+        created_at: t.created_at,
+        updated_at: t.created_at,
+      });
+    }
+  }
+
+  rows.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+  const totalCredit = rows.filter((r) => r.type === 'credit').reduce((n, r) => n + r.amount, 0);
+  const totalDebit = rows.filter((r) => r.type === 'debit').reduce((n, r) => n + r.amount, 0);
+
+  return res.json({
+    status: 'success',
+    count: rows.length,
+    total_credit: totalCredit,
+    total_debit: totalDebit,
+    list: rows,
+  });
+});
 
 // ─── Artist statistics ─── (dashboard "Studio" — anciennement un stub qui
 // renvoyait toujours 0, peu importe les vraies données de l'artiste).
@@ -911,18 +1008,116 @@ router.post('/get-event-stats-by-user-id', optionalAuth, (req, res) => {
 });
 
 // ─── Support ───
+// Ces cinq routes étaient des coquilles vides : /support/create répondait
+// « Ticket created. » sans rien écrire, et /support/get-list renvoyait une
+// liste vide en dur. Un utilisateur écrivait au support, lisait une
+// confirmation, et son message n'existait nulle part. Elles persistent
+// maintenant réellement (tables support_tickets et support_messages).
 router.post('/support/get-subjects', (req, res) =>
-  ok(res, [{ id: 1, name: 'General' }, { id: 2, name: 'Payment' }, { id: 3, name: 'Technical' }])
+  ok(res, [
+    { id: 1, name: 'Question générale' },
+    { id: 2, name: 'Paiement' },
+    { id: 3, name: 'Problème technique' },
+    { id: 4, name: 'Signaler un contenu' },
+    { id: 5, name: 'Mon compte' },
+  ])
 );
-router.post('/support/get-list', optionalAuth, (req, res) => ok(res, []));
-router.post('/support/create', optionalAuth, (req, res) =>
-  res.json({ status: 'success', message: 'Ticket created.' })
-);
-router.post('/support/get-details', optionalAuth, (req, res) => ok(res, {}));
-router.post('/support/resolve', optionalAuth, (req, res) =>
-  res.json({ status: 'success', message: 'Resolved.' })
-);
-router.post('/support/store-meta', (req, res) => res.json({ status: 'success' }));
+
+function serializeTicket(t) {
+  const messages = db.prepare(
+    'SELECT * FROM support_messages WHERE support_ticket_id = ? ORDER BY id ASC'
+  ).all(t.id);
+  return {
+    id: t.id,
+    user_id: t.user_id,
+    subject: t.subject,
+    priority: t.priority,
+    status: t.status,
+    resolved_on: t.resolved_on,
+    rating: t.rating,
+    review: t.review,
+    created_at: t.created_at,
+    updated_at: t.updated_at,
+    meta_data: messages.map((m) => ({
+      id: m.id,
+      support_ticket_id: m.support_ticket_id,
+      user_id: m.user_id,
+      role: m.role,
+      value: m.value,
+      created_at: m.created_at,
+      updated_at: m.updated_at,
+    })),
+  };
+}
+
+function ticketsOf(userId) {
+  const rows = db.prepare(
+    'SELECT * FROM support_tickets WHERE user_id = ? ORDER BY id DESC'
+  ).all(userId);
+  return rows.map(serializeTicket);
+}
+
+router.post('/support/get-list', requireAuth, (req, res) => {
+  const list = ticketsOf(req.user.id);
+  return res.json({ status: 'success', count: list.length, list });
+});
+
+router.post('/support/create', requireAuth, (req, res) => {
+  const b = req.body || {};
+  const subject = String(b.subject || '').trim();
+  const description = String(b.description || b.message || '').trim();
+  if (!subject && !description) return fail(res, 'Décris ton problème avant d\'envoyer.', 422);
+
+  const info = db.prepare(
+    "INSERT INTO support_tickets (user_id, subject, priority, status) VALUES (?, ?, ?, 'open')"
+  ).run(req.user.id, subject || 'Question générale', String(b.priority || 'normal'));
+  if (description) {
+    db.prepare(
+      "INSERT INTO support_messages (support_ticket_id, user_id, role, value) VALUES (?, ?, 'user', ?)"
+    ).run(info.lastInsertRowid, req.user.id, description);
+  }
+  const list = ticketsOf(req.user.id);
+  return res.json({ status: 'success', message: 'Ticket créé.', count: list.length, list });
+});
+
+router.post('/support/get-details', requireAuth, (req, res) => {
+  const id = Number(req.body?.ticket_id || req.body?.id);
+  const t = db.prepare('SELECT * FROM support_tickets WHERE id = ? AND user_id = ?').get(id, req.user.id);
+  if (!t) return fail(res, 'Ticket introuvable.', 404);
+  return res.json({ status: 'success', data: serializeTicket(t) });
+});
+
+router.post('/support/resolve', requireAuth, (req, res) => {
+  const b = req.body || {};
+  const id = Number(b.ticket_id || b.id);
+  const t = db.prepare('SELECT * FROM support_tickets WHERE id = ? AND user_id = ?').get(id, req.user.id);
+  if (!t) return fail(res, 'Ticket introuvable.', 404);
+  db.prepare(
+    `UPDATE support_tickets
+        SET status = 'resolved', resolved_on = datetime('now'), rating = ?, review = ?,
+            updated_at = datetime('now')
+      WHERE id = ?`
+  ).run(b.rating != null ? String(b.rating) : t.rating, b.review != null ? String(b.review) : t.review, id);
+  const fresh = db.prepare('SELECT * FROM support_tickets WHERE id = ?').get(id);
+  return res.json({ status: 'success', data: serializeTicket(fresh) });
+});
+
+router.post('/support/store-meta', requireAuth, (req, res) => {
+  const b = req.body || {};
+  const id = Number(b.ticket_id || b.id);
+  const t = db.prepare('SELECT * FROM support_tickets WHERE id = ? AND user_id = ?').get(id, req.user.id);
+  if (!t) return fail(res, 'Ticket introuvable.', 404);
+  const value = String(b.value || '').trim();
+  if (!value) return fail(res, 'Message vide.', 422);
+  // Le rôle est imposé côté serveur : un utilisateur ne peut pas se faire
+  // passer pour le support en envoyant role=admin.
+  db.prepare(
+    "INSERT INTO support_messages (support_ticket_id, user_id, role, value) VALUES (?, ?, 'user', ?)"
+  ).run(id, req.user.id, value);
+  db.prepare("UPDATE support_tickets SET status = 'open', updated_at = datetime('now') WHERE id = ?").run(id);
+  const fresh = db.prepare('SELECT * FROM support_tickets WHERE id = ?').get(id);
+  return res.json({ status: 'success', data: serializeTicket(fresh) });
+});
 
 // ─── Bank / Withdraw ───
 // Ces 5 routes étaient des stubs : réponse "success" toujours renvoyée sans

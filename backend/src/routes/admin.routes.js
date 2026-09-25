@@ -624,6 +624,60 @@ router.get('/reports', requireAdmin, (req, res) => {
   return res.json({ status: 'success', data: { revenue, tickets_sold: ticketsSold, top_events: topEvents, by_genre: byGenre } });
 });
 
+// ─── Support (tickets envoyés depuis l'application) ───
+// Les messages de support étaient acceptés puis perdus : il n'existait aucun
+// endroit pour les lire. Cet écran est le destinataire.
+router.get('/support', requireAdmin, (req, res) => {
+  const tickets = db.prepare(
+    `SELECT t.*, u.full_name, u.email
+       FROM support_tickets t LEFT JOIN users u ON u.id = t.user_id
+      ORDER BY (t.status = 'open') DESC, datetime(t.updated_at) DESC
+      LIMIT 500`
+  ).all();
+  const data = tickets.map((t) => ({
+    id: t.id,
+    user_id: t.user_id,
+    user_name: t.full_name || null,
+    user_email: t.email || null,
+    subject: t.subject,
+    priority: t.priority,
+    status: t.status,
+    rating: t.rating,
+    review: t.review,
+    created_at: t.created_at,
+    updated_at: t.updated_at,
+    messages: db.prepare(
+      'SELECT id, role, value, created_at FROM support_messages WHERE support_ticket_id = ? ORDER BY id ASC'
+    ).all(t.id),
+  }));
+  return res.json({ status: 'success', data });
+});
+
+router.post('/support/:id/reply', requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  const t = db.prepare('SELECT id FROM support_tickets WHERE id = ?').get(id);
+  if (!t) return res.status(404).json({ status: 'error', message: 'Ticket introuvable.' });
+  const value = String(req.body?.value || '').trim();
+  if (!value) return res.status(422).json({ status: 'error', message: 'Réponse vide.' });
+  db.prepare(
+    "INSERT INTO support_messages (support_ticket_id, user_id, role, value) VALUES (?, NULL, 'admin', ?)"
+  ).run(id, value);
+  db.prepare("UPDATE support_tickets SET updated_at = datetime('now') WHERE id = ?").run(id);
+  return res.json({ status: 'success', message: 'Réponse envoyée.' });
+});
+
+router.post('/support/:id/status', requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  const status = req.body?.status === 'resolved' ? 'resolved' : 'open';
+  db.prepare(
+    `UPDATE support_tickets
+        SET status = ?, resolved_on = CASE WHEN ? = 'resolved' THEN datetime('now') ELSE NULL END,
+            updated_at = datetime('now')
+      WHERE id = ?`
+  ).run(status, status, id);
+  return res.json({ status: 'success', message: 'Statut mis à jour.' });
+});
+
 // ─── Contact Leads ───
 router.get('/contact-leads', requireAdmin, (req, res) => {
   return res.json({ status: 'success', data: db.prepare('SELECT * FROM contact_leads ORDER BY id DESC').all() });

@@ -496,6 +496,54 @@ function init() {
     );
     CREATE INDEX IF NOT EXISTS idx_user_blocks ON user_blocks (blocker_id);
 
+    -- Registre des mouvements de points du portefeuille. Jusqu'ici aucun
+    -- mouvement n'etait enregistre : le solde etait mis a jour directement et
+    -- l'historique renvoyait une liste vide en dur. Les depenses (cadeaux,
+    -- billets) restent reconstituables depuis la table activities et la table tickets ; les
+    -- recharges, elles, ne laissaient aucune trace -- d'ou cette table.
+    CREATE TABLE IF NOT EXISTS wallet_transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      role TEXT NOT NULL DEFAULT 'points',  -- points | price
+      direction TEXT NOT NULL,              -- credit | debit
+      type TEXT,                            -- topup | gift | ticket | subscription
+      title TEXT,
+      description TEXT,
+      amount TEXT NOT NULL DEFAULT '0',
+      source TEXT,                          -- revenuecat | stripe | app
+      source_id TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_wallet_tx_user ON wallet_transactions (user_id, created_at DESC);
+
+    -- Support. Les routes /support/* repondaient « Ticket created. » sans rien
+    -- ecrire : personne n'a jamais recu les messages envoyes depuis l'app, et
+    -- la liste des tickets restait vide cote utilisateur.
+    CREATE TABLE IF NOT EXISTS support_tickets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      subject TEXT,
+      priority TEXT DEFAULT 'normal',
+      status TEXT DEFAULT 'open',          -- open | resolved
+      resolved_on TEXT,
+      rating TEXT,
+      review TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_support_user ON support_tickets (user_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS support_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      support_ticket_id INTEGER NOT NULL,
+      user_id INTEGER,
+      role TEXT DEFAULT 'user',            -- user | admin
+      value TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_support_msg ON support_messages (support_ticket_id, id);
+
     CREATE TABLE IF NOT EXISTS content_reports (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       reporter_id INTEGER,
