@@ -571,7 +571,15 @@ function init() {
       currency TEXT,
       status TEXT DEFAULT 'scheduled',   -- scheduled | cancelled | postponed
       hidden INTEGER DEFAULT 0,          -- masquage manuel depuis l'admin
-      vybzzz_event_id INTEGER,           -- rapproche d'un concert VybzzZ -> halo dore
+      vybzzz_event_id INTEGER,           -- rapproche d'un concert VybzzZ, si diffusion
+      -- Validation manuelle. TANT QUE CE DRAPEAU EST A 0 : pas de halo dore,
+      -- et AUCUN prix n'est expose a l'application. Le tarif en presentiel
+      -- n'est jamais renvoye au public : VybzzZ ne vend pas ces billets, et
+      -- afficher le prix d'un guichet tiers n'aurait aucun sens.
+      vybzzz_approved INTEGER DEFAULT 0,
+      vybzzz_price TEXT,                 -- tarif VybzzZ, calcule puis modifiable
+      vybzzz_discount INTEGER,           -- remise appliquee, en % (tracabilite)
+      approved_at TEXT,
       last_seen_at TEXT,
       source_lastmod TEXT,
       created_at TEXT DEFAULT (datetime('now')),
@@ -751,6 +759,11 @@ function init() {
 
   // ─── Migrations : colonnes ajoutées après coup (ignorées si déjà présentes) ───
   for (const sql of [
+    // Agenda régional : validation manuelle avant tout affichage de prix ou de halo.
+    "ALTER TABLE external_events ADD COLUMN vybzzz_approved INTEGER DEFAULT 0",
+    "ALTER TABLE external_events ADD COLUMN vybzzz_price TEXT",
+    "ALTER TABLE external_events ADD COLUMN vybzzz_discount INTEGER",
+    "ALTER TABLE external_events ADD COLUMN approved_at TEXT",
     // Split commissions : snapshot du taux + part artiste au moment de la vente
     // du billet (grandfathering : un changement de palier ne re-tarife pas le passé).
     "ALTER TABLE tickets ADD COLUMN commission_rate INTEGER",

@@ -915,7 +915,7 @@ router.get('/agenda', (req, res) => {
   }
   const externes = db.prepare(
     `SELECT * FROM external_events
-      WHERE hidden = 0 AND vybzzz_event_id IS NULL AND status != 'cancelled'
+      WHERE hidden = 0 AND status != 'cancelled'
         AND start_date IS NOT NULL
         AND datetime(start_date) >= datetime('now', '-6 hours')
         AND datetime(start_date) <= datetime('now', ?)${filtre}
@@ -923,18 +923,26 @@ router.get('/agenda', (req, res) => {
   ).all(...params);
 
   for (const e of externes) {
+    // Deux regles, volontairement strictes :
+    //
+    // 1. Le tarif en presentiel n'est JAMAIS renvoye. VybzzZ ne vend pas ces
+    //    billets ; afficher le prix d'un guichet tiers induirait en erreur.
+    //    Il ne sert qu'a calculer un tarif VybzzZ, cote administration.
+    // 2. Halo dore et prix n'apparaissent qu'apres validation manuelle.
+    //    Sans validation, la date est simplement annoncee : ni halo, ni tarif.
+    const valide = e.vybzzz_approved === 1;
     items.push({
       kind: 'agenda',
-      is_vybzzz: false,
+      is_vybzzz: valide,
       id: `${e.source}-${e.source_id}`,
-      event_id: null,
+      event_id: e.vybzzz_event_id || null,
       title: e.title,
       artist: e.organizer || null,
       start_date: e.start_date,
       end_date: e.end_date,
       image: e.image,
-      price_from: e.price_from,
-      currency: e.currency || 'EUR',
+      price_from: valide ? e.vybzzz_price || null : null,
+      currency: valide && e.vybzzz_price ? 'EUR' : null,
       venue: e.venue,
       city: e.city,
       territory: e.territory,

@@ -108,6 +108,7 @@ const NAV = [
   ] },
   { group: 'Support & contenu', items: [
     { id: 'support', label: 'Support (tickets app)', ic: '🎧' },
+    { id: 'agenda', label: 'Agenda régional', ic: '🗓️' },
     { id: 'ideas', label: 'Boîte à idées', ic: '💡' },
     { id: 'leads', label: 'Contacts / Leads', ic: '📞' },
     { id: 'faqs', label: 'FAQ', ic: '❓' },
@@ -1295,6 +1296,89 @@ async function pageReports() {
     </div>`;
 }
 
+// Agenda régional — dates collectées sur des sources publiques (bizouk).
+// RIEN n'apparaît avec un halo doré ni avec un prix dans l'application tant
+// que ce n'est pas validé ici. Le tarif en présentiel n'est affiché que sur
+// cet écran, pour décider : il n'est jamais renvoyé au public, VybzzZ ne
+// vendant pas ces billets.
+async function pageAgenda() {
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  const { data } = await api('GET', '/agenda');
+  const valides = data.filter((e) => e.approved).length;
+  const terr = { GP: 'Guadeloupe', MQ: 'Martinique', GF: 'Guyane' };
+
+  const ligne = (e) => `<tr style="border-bottom:1px solid var(--line)${e.hidden ? ';opacity:.45' : ''}">
+    <td style="padding:9px 6px">
+      ${e.approved ? '<span title="Diffusé par VybzzZ" style="color:var(--gold)">★</span> ' : ''}
+      <a href="${esc(e.source_url)}" target="_blank" rel="noopener" style="color:var(--ivory)">${esc(e.title)}</a>
+      <div class="em">${esc(e.venue || '')}${e.city ? ' · ' + esc(e.city) : ''}</div>
+    </td>
+    <td style="padding:9px 6px;white-space:nowrap">${fmtDate(e.start_date)}</td>
+    <td style="padding:9px 6px">${esc(terr[e.territory] || e.territory || '—')}</td>
+    <td style="padding:9px 6px;white-space:nowrap;opacity:.65">${e.reference_price ? e.reference_price + ' €' : '—'}</td>
+    <td style="padding:9px 6px;white-space:nowrap">
+      ${e.approved
+        ? `<b style="color:var(--gold)">dès ${esc(e.vybzzz_price)} €</b>`
+        : `<input class="ag-price" data-id="${e.id}" placeholder="${e.suggested_price || ''}" size="4"
+             style="background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:6px;padding:5px">
+           <select class="ag-disc" data-id="${e.id}" style="background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:6px;padding:5px">
+             <option value="70">-70 %</option><option value="60">-60 %</option><option value="50">-50 %</option>
+           </select>`}
+    </td>
+    <td style="padding:9px 6px;white-space:nowrap">
+      ${e.approved
+        ? `<button class="btn ag-un" data-id="${e.id}">Retirer</button>`
+        : `<button class="btn ag-ok" data-id="${e.id}">Valider</button>`}
+      <button class="btn ag-hide" data-id="${e.id}" data-h="${e.hidden ? 'false' : 'true'}">${e.hidden ? 'Réafficher' : 'Masquer'}</button>
+    </td>
+  </tr>`;
+
+  view().innerHTML = `<div class="tcard">
+    <h3 style="color:var(--gold);margin-bottom:4px">🗓️ Agenda régional — Guadeloupe, Martinique, Guyane</h3>
+    <div class="empty" style="text-align:left;padding:0 0 12px">
+      ${data.length} date(s) collectée(s), dont <b style="color:var(--gold)">${valides} validée(s)</b>.
+      Une date non validée est annoncée dans l'application <b>sans halo doré et sans prix</b>.
+      Le tarif en présentiel ci-dessous ne sert qu'à décider : il n'est jamais affiché aux utilisateurs.
+      <button class="btn" id="ag-sync" style="margin-left:10px">Collecter maintenant</button>
+    </div>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="text-align:left;opacity:.6">
+        <th style="padding:6px">Date / lieu</th><th style="padding:6px">Quand</th><th style="padding:6px">Territoire</th>
+        <th style="padding:6px">Présentiel</th><th style="padding:6px">Prix VybzzZ</th><th style="padding:6px">Action</th>
+      </tr></thead>
+      <tbody>${data.map(ligne).join('') || '<tr><td colspan="6"><div class="empty">Aucune date collectée pour le moment.</div></td></tr>'}</tbody>
+    </table></div>
+  </div>`;
+
+  view().addEventListener('click', async (ev) => {
+    const sync = ev.target.closest('#ag-sync');
+    if (sync) {
+      sync.disabled = true; sync.textContent = 'Collecte en cours…';
+      const r = await api('POST', '/agenda/sync', {});
+      toast(`Collecte terminée : ${r.data?.inseres || 0} nouvelle(s), ${r.data?.mis_a_jour || 0} mise(s) à jour`);
+      pageAgenda(); return;
+    }
+    const ok = ev.target.closest('.ag-ok');
+    if (ok) {
+      const id = ok.dataset.id;
+      const price = view().querySelector(`.ag-price[data-id="${id}"]`)?.value.trim();
+      const discount = view().querySelector(`.ag-disc[data-id="${id}"]`)?.value;
+      try {
+        const r = await api('POST', `/agenda/${id}/approve`, { price: price || undefined, discount });
+        toast(r.message);
+      } catch (e) { toast(e.message || 'Échec'); }
+      pageAgenda(); return;
+    }
+    const un = ev.target.closest('.ag-un');
+    if (un) { await api('POST', `/agenda/${un.dataset.id}/unapprove`, {}); toast('Validation retirée'); pageAgenda(); return; }
+    const hide = ev.target.closest('.ag-hide');
+    if (hide) {
+      await api('POST', `/agenda/${hide.dataset.id}/hide`, { hidden: hide.dataset.h === 'true' });
+      toast('Mis à jour'); pageAgenda();
+    }
+  });
+}
+
 // Support — les tickets écrits depuis l'application. Avant, ces messages
 // étaient acceptés par l'API puis jetés : personne ne les voyait.
 async function pageSupport() {
@@ -2399,7 +2483,7 @@ const ROUTES = {
   dashboard: pageDashboard, lives: pageLives, users: pageUsers, geo: pageGeo, genres: pageGenres, 'user-genres': pageUserGenres,
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
-  reports: pageReports, support: pageSupport, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
+  reports: pageReports, support: pageSupport, agenda: pageAgenda, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
   splash: pageSplash, legal: pageLegal, challenge: pageChallenge, merch: pageMerch, audience: pageAudience, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
 };
 

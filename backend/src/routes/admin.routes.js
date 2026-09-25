@@ -4,6 +4,8 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { db } = require('../db');
+const agenda = require('../services/agenda_bizouk');
+const { runAgendaSync } = require('../jobs/agendaSync');
 const { platformCounters, payoutCountdown } = require('../helpers');
 const { hash, compare, SECRET, sha256 } = require('../auth');
 const crypto = require('crypto');
@@ -622,6 +624,98 @@ router.get('/reports', requireAdmin, (req, res) => {
      LEFT JOIN events e ON e.genre_id = g.id GROUP BY g.id ORDER BY events DESC`
   ).all();
   return res.json({ status: 'success', data: { revenue, tickets_sold: ticketsSold, top_events: topEvents, by_genre: byGenre } });
+});
+
+// ─── Agenda régional (concerts collectés sur des sources publiques) ───
+// Écran de validation : rien n'apparaît avec un halo doré ni avec un prix
+// dans l'application tant que ça n'a pas été validé ici. Le tarif en
+// présentiel n'est visible QUE sur cet écran, pour décider — il n'est jamais
+// renvoyé au public.
+router.get('/agenda', requireAdmin, (req, res) => {
+  const rows = db.prepare(
+    `SELECT * FROM external_events
+      WHERE datetime(start_date) >= datetime('now', '-30 days')
+      ORDER BY (vybzzz_approved = 1) DESC, datetime(start_date) ASC
+      LIMIT 500`
+  ).all();
+  const data = rows.map((e) => ({
+    id: e.id,
+    title: e.title,
+    start_date: e.start_date,
+    venue: e.venue,
+    city: e.city,
+    territory: e.territory,
+    organizer: e.organizer,
+    image: e.image,
+    source: e.source,
+    source_url: e.source_url,
+    status: e.status,
+    hidden: e.hidden === 1,
+    approved: e.vybzzz_approved === 1,
+    approved_at: e.approved_at,
+    reference_price: e.price_from,     // tarif en présentiel — écran admin seulement
+    vybzzz_price: e.vybzzz_price,
+    vybzzz_discount: e.vybzzz_discount,
+    // Tarif qui serait proposé à la remise par défaut, pour pré-remplir le champ.
+    suggested_price: agenda.tarifVybzzz(e.price_from, 70),
+  }));
+  return res.json({ status: 'success', count: data.length, data });
+});
+
+// Valide une date : halo doré + prix dans l'application.
+// Le prix peut être imposé (`price`), sinon il est calculé depuis le tarif en
+// présentiel avec la remise demandée (50 à 70 %, 70 par défaut).
+router.post('/agenda/:id/approve', requireAdmin, (req, res) => {
+  const row = db.prepare('SELECT * FROM external_events WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).json({ status: 'error', message: 'Date introuvable.' });
+
+  const remise = Math.min(Math.max(Number(req.body?.discount) || 70, 50), 70);
+  // Un prix saisi a la main est ramene sur la grille en « ,90 » : la
+  // tarification doit rester coherente quelle que soit la personne qui valide.
+  const impose = req.body?.price != null && String(req.body.price).trim() !== ''
+    ? agenda.arrondirGrille(req.body.price)
+    : null;
+  const prix = impose || agenda.tarifVybzzz(row.price_from, remise);
+
+  if (!prix) {
+    return res.status(422).json({
+      status: 'error',
+      message: "Aucun tarif de référence sur cette date : saisis un prix VybzzZ à la main.",
+    });
+  }
+  db.prepare(
+    `UPDATE external_events
+        SET vybzzz_approved = 1, vybzzz_price = ?, vybzzz_discount = ?,
+            vybzzz_event_id = ?, approved_at = datetime('now'), updated_at = datetime('now')
+      WHERE id = ?`
+  ).run(prix, impose ? null : remise, req.body?.vybzzz_event_id || row.vybzzz_event_id || null, row.id);
+  return res.json({ status: 'success', message: `Validé — affiché dès ${prix} €.`, price: prix });
+});
+
+// Retire la validation : la date reste annoncée, mais sans halo ni prix.
+router.post('/agenda/:id/unapprove', requireAdmin, (req, res) => {
+  db.prepare(
+    `UPDATE external_events
+        SET vybzzz_approved = 0, vybzzz_price = NULL, vybzzz_discount = NULL,
+            approved_at = NULL, updated_at = datetime('now')
+      WHERE id = ?`
+  ).run(req.params.id);
+  return res.json({ status: 'success', message: 'Validation retirée.' });
+});
+
+// Masque une date (contenu déplacé, doublon, erreur de la source).
+router.post('/agenda/:id/hide', requireAdmin, (req, res) => {
+  const hidden = req.body?.hidden === false ? 0 : 1;
+  db.prepare("UPDATE external_events SET hidden = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(hidden, req.params.id);
+  return res.json({ status: 'success', message: hidden ? 'Date masquée.' : 'Date réaffichée.' });
+});
+
+// Déclenche une collecte immédiate sans attendre le créneau du week-end.
+router.post('/agenda/sync', requireAdmin, async (req, res) => {
+  const stats = await runAgendaSync({ force: req.body?.force === true });
+  if (!stats) return res.status(502).json({ status: 'error', message: 'Source injoignable, réessaie plus tard.' });
+  return res.json({ status: 'success', message: 'Collecte terminée.', data: stats });
 });
 
 // ─── Support (tickets envoyés depuis l'application) ───

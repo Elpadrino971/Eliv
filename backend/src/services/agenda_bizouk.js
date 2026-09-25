@@ -252,8 +252,45 @@ async function sync(opts = {}) {
   return stats;
 }
 
+/**
+ * Tarif VybzzZ propose a partir du prix en presentiel.
+ *
+ * Regle : un live coute nettement moins cher qu'un billet sur place — la
+ * remise va de 50 a 70 %, 70 % par defaut.
+ *
+ * L'arrondi suit la grille tarifaire VybzzZ, en « ,90 » : on descend a l'euro
+ * inferieur puis on retire dix centimes. 51,75 € a -70 % donne 15,52 -> 14,90.
+ * Plancher a 0,90 € pour ne jamais tomber a zero ou en negatif.
+ *
+ * Renvoie null si la source n'annonce aucun prix : on ne devine pas un tarif.
+ *
+ * @param {string|number|null} prixPresentiel
+ * @param {number} remisePct  entre 50 et 70
+ * @returns {string|null}     ex. "14.90"
+ */
+function tarifVybzzz(prixPresentiel, remisePct = 70) {
+  const base = parseFloat(prixPresentiel);
+  if (!Number.isFinite(base) || base <= 0) return null;
+  const remise = Math.min(Math.max(Number(remisePct) || 70, 50), 70);
+  const brut = base * (1 - remise / 100);
+  const prix = Math.max(Math.floor(brut) - 0.1, 0.9);
+  return prix.toFixed(2);
+}
+
+/** Aligne un prix saisi a la main sur la meme grille en « ,90 ». */
+function arrondirGrille(valeur) {
+  const n = parseFloat(String(valeur).replace(',', '.'));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  // 15 -> 14,90 ; 14,90 reste 14,90 ; 14,5 -> 13,90
+  const dejaAlignee = Math.abs(n * 100 - Math.round(n * 100)) < 1e-6 && Math.round(n * 100) % 100 === 90;
+  if (dejaAlignee) return n.toFixed(2);
+  return Math.max(Math.floor(n) - 0.1, 0.9).toFixed(2);
+}
+
 module.exports = {
   SOURCE,
+  tarifVybzzz,
+  arrondirGrille,
   TERRITORIES,
   sync,
   // exportés pour les tests
