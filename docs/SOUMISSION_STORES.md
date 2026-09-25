@@ -1,6 +1,18 @@
 # VybzzZ — Soumission App Store et Google Play
 
-Version à soumettre : **1.1.2+15** (précédente en ligne : 1.1.1+14, du 7 septembre 2026).
+Version à soumettre : **1.1.2+15**.
+
+Versions actuellement en ligne — elles ne sont pas alignées :
+
+| Store | En production |
+|---|---|
+| Google Play | **1.0.7 (code 8)** — très en retard |
+| App Store | 1.1.1 (build 14) |
+
+Le code de version 15 est bien supérieur à 8, Play l'acceptera sans conflit.
+L'écart explique aussi l'alerte « Problèmes liés au SDK » du 20 août : elle
+porte sur la 1.0.7, construite avec des bibliothèques bien plus anciennes que
+celles du code actuel.
 Branche : `release/app-all`. Ne jamais builder l'app depuis `feat/vibe-crm`.
 
 ---
