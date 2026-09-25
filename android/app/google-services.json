@@ -39,10 +39,11 @@
               "client_type": 3
             },
             {
-              "client_id": "284585255358-gkcfj2vg7cte3dql3r8i7b1rdkrkghu9.apps.googleusercontent.com",
+              "client_id": "284585255358-c5us844q11m010pa2l4suppl6j5qbevt.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.app.vybzz"
+                "bundle_id": "com.app.vybzz",
+                "app_store_id": "6772495371"
               }
             }
           ]
@@ -75,10 +76,11 @@
               "client_type": 3
             },
             {
-              "client_id": "284585255358-gkcfj2vg7cte3dql3r8i7b1rdkrkghu9.apps.googleusercontent.com",
+              "client_id": "284585255358-c5us844q11m010pa2l4suppl6j5qbevt.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.app.vybzz"
+                "bundle_id": "com.app.vybzz",
+                "app_store_id": "6772495371"
               }
             }
           ]
