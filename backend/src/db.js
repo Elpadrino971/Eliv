@@ -544,6 +544,43 @@ function init() {
     );
     CREATE INDEX IF NOT EXISTS idx_support_msg ON support_messages (support_ticket_id, id);
 
+    -- Agenda regional : concerts et spectacles des Antilles-Guyane collectes
+    -- sur des sources publiques (bizouk.com pour l'instant), afin que la
+    -- timeline de l'application montre TOUT ce qui se passe et pas seulement
+    -- les dates VybzzZ. Les evenements diffuses par VybzzZ restent distingues
+    -- visuellement cote application.
+    --
+    -- On ne stocke que des faits : titre, date, lieu, territoire, et le lien
+    -- vers la fiche d'origine. Aucune description n'est recopiee, et la source
+    -- est citee et cliquable dans l'application.
+    CREATE TABLE IF NOT EXISTS external_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      source TEXT NOT NULL,              -- bizouk
+      source_id TEXT NOT NULL,           -- identifiant sur la source
+      source_url TEXT NOT NULL,
+      title TEXT NOT NULL,
+      start_date TEXT,                   -- ISO 8601
+      end_date TEXT,
+      venue TEXT,
+      city TEXT,
+      postal_code TEXT,
+      territory TEXT,                    -- GP | MQ | GF
+      organizer TEXT,
+      image TEXT,
+      price_from TEXT,
+      currency TEXT,
+      status TEXT DEFAULT 'scheduled',   -- scheduled | cancelled | postponed
+      hidden INTEGER DEFAULT 0,          -- masquage manuel depuis l'admin
+      vybzzz_event_id INTEGER,           -- rapproche d'un concert VybzzZ -> halo dore
+      last_seen_at TEXT,
+      source_lastmod TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(source, source_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_ext_events_date ON external_events (start_date);
+    CREATE INDEX IF NOT EXISTS idx_ext_events_terr ON external_events (territory, start_date);
+
     CREATE TABLE IF NOT EXISTS content_reports (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       reporter_id INTEGER,

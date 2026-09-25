@@ -859,6 +859,103 @@ router.post('/packages/buy', optionalAuth, (req, res) =>
   })
 );
 
+// ─── Agenda régional (concerts VybzzZ + agenda public Antilles-Guyane) ───
+// La timeline de l'application ne montrait que les dates VybzzZ, donc presque
+// rien. Elle affiche maintenant tout ce qui se passe en Guadeloupe, Martinique
+// et Guyane — les concerts diffusés par VybzzZ étant marqués `is_vybzzz` pour
+// que l'application les entoure d'un halo doré et leur pose un badge.
+//
+// Les dates collectées ailleurs citent leur source (`source`, `source_url`) :
+// l'application doit afficher le crédit et rendre le lien cliquable.
+router.get('/agenda', (req, res) => {
+  const territoire = String(req.query.territory || '').toUpperCase();
+  const jours = Math.min(Math.max(Number(req.query.days) || 180, 1), 400);
+  const limite = Math.min(Math.max(Number(req.query.limit) || 200, 1), 500);
+
+  // 1. Concerts VybzzZ à venir. Ils ne sont PAS filtrés par territoire : ce
+  //    sont des lives, ils se regardent depuis n'importe quelle île. Filtrer
+  //    sur la Guadeloupe ne doit pas faire disparaître un live martiniquais.
+  const vybzzz = db.prepare(
+    `SELECT e.id, e.name, e.cover_image, e.ticket_price, e.start_date_time, e.end_date_time,
+            u.artist_name, u.full_name
+       FROM events e LEFT JOIN users u ON u.id = e.artist_id
+      WHERE e.start_date_time IS NOT NULL
+        AND datetime(e.start_date_time) >= datetime('now', '-6 hours')
+        AND datetime(e.start_date_time) <= datetime('now', ?)
+        AND (e.is_private IS NULL OR e.is_private = 0)
+      ORDER BY datetime(e.start_date_time) ASC`
+  ).all(`+${jours} days`);
+
+  const items = vybzzz.map((e) => ({
+    kind: 'vybzzz',
+    is_vybzzz: true,
+    id: `vybzzz-${e.id}`,
+    event_id: e.id,
+    title: e.name,
+    artist: e.artist_name || e.full_name || null,
+    start_date: e.start_date_time,
+    end_date: e.end_date_time,
+    image: e.cover_image ? `${PUBLIC_BASE_URL}/events/covers/${e.cover_image}` : null,
+    price_from: e.ticket_price || null,
+    currency: 'EUR',
+    venue: null,
+    city: null,
+    territory: null,
+    source: null,
+    source_url: null,
+  }));
+
+  // 2. Agenda public, hors dates déjà rapprochées d'un concert VybzzZ (sinon
+  //    la même soirée apparaîtrait deux fois dans la timeline).
+  const params = [`+${jours} days`];
+  let filtre = '';
+  if (['GP', 'MQ', 'GF'].includes(territoire)) {
+    filtre = ' AND territory = ?';
+    params.push(territoire);
+  }
+  const externes = db.prepare(
+    `SELECT * FROM external_events
+      WHERE hidden = 0 AND vybzzz_event_id IS NULL AND status != 'cancelled'
+        AND start_date IS NOT NULL
+        AND datetime(start_date) >= datetime('now', '-6 hours')
+        AND datetime(start_date) <= datetime('now', ?)${filtre}
+      ORDER BY datetime(start_date) ASC`
+  ).all(...params);
+
+  for (const e of externes) {
+    items.push({
+      kind: 'agenda',
+      is_vybzzz: false,
+      id: `${e.source}-${e.source_id}`,
+      event_id: null,
+      title: e.title,
+      artist: e.organizer || null,
+      start_date: e.start_date,
+      end_date: e.end_date,
+      image: e.image,
+      price_from: e.price_from,
+      currency: e.currency || 'EUR',
+      venue: e.venue,
+      city: e.city,
+      territory: e.territory,
+      source: e.source,
+      source_url: e.source_url,
+    });
+  }
+
+  items.sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
+  const list = items.slice(0, limite);
+
+  return res.json({
+    status: 'success',
+    count: list.length,
+    vybzzz_count: list.filter((i) => i.is_vybzzz).length,
+    // Crédit à afficher dans l'application, à côté des dates collectées.
+    attribution: { bizouk: { name: 'Bizouk', url: 'https://www.bizouk.com' } },
+    list,
+  });
+});
+
 // ─── Transactions / Wallet ───
 // Renvoyait une liste vide en dur : l'historique du portefeuille n'a jamais
 // rien montré à personne. Il est maintenant reconstruit à partir des données
