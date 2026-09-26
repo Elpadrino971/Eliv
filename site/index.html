@@ -443,14 +443,15 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 .voyage__stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;isolation:isolate}
 .voyage__layer{position:absolute;inset:0;overflow:hidden;visibility:hidden}
 .voyage__layer.is-on{visibility:visible}
-.voyage__layer img{position:absolute;inset:-5%;width:110%;height:110%;object-fit:cover;will-change:transform}
+.voyage__layer img{position:absolute;inset:-5%;width:110%;height:110%;max-width:none;max-height:none;object-fit:cover;will-change:transform}
 .voyage__layer[data-i="0"]{background:radial-gradient(ellipse at 30% 30%,#5a2230 0%,#1a0e1c 55%,#070C18 100%)}
 .voyage__layer[data-i="1"]{background:radial-gradient(ellipse at 50% 40%,#3a1c2a 0%,#120c1a 60%,#070C18 100%)}
 .voyage__layer[data-i="2"]{background:radial-gradient(ellipse at 45% 55%,#3b2a10 0%,#0d0d14 60%,#050810 100%)}
 .voyage__layer[data-i="3"]{background:radial-gradient(ellipse at 70% 40%,#3a2614 0%,#140f14 60%,#070C18 100%)}
 .voyage__layer[data-i="4"]{background:radial-gradient(ellipse at 50% 35%,#4a1c24 0%,#140b16 60%,#070C18 100%)}
 .voyage__shade{position:absolute;inset:0;z-index:6;pointer-events:none;
-  background:linear-gradient(180deg,rgba(7,12,24,.55) 0%,rgba(7,12,24,0) 24%,rgba(7,12,24,0) 46%,rgba(7,12,24,.92) 100%)}
+  background:linear-gradient(90deg,rgba(7,12,24,.72) 0%,rgba(7,12,24,.38) 34%,rgba(7,12,24,0) 58%),
+             linear-gradient(180deg,rgba(7,12,24,.55) 0%,rgba(7,12,24,0) 24%,rgba(7,12,24,0) 46%,rgba(7,12,24,.92) 100%)}
 .voyage__ring{position:absolute;left:0;top:0;z-index:7;pointer-events:none;border:1px solid rgba(230,199,106,.6);
   box-shadow:0 24px 70px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.06)}
 .voyage__portal{position:absolute;left:0;top:0;z-index:8;border:0;background:transparent;cursor:pointer;padding:0}
