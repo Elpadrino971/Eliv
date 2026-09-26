@@ -187,6 +187,7 @@ window.I18N_HOME = {
   "t188": "Live video, sound and chat: you're in the front row, right from your screen.",
   "t189": "One live, open from any country. From the Caribbean to Paris, the stage has no borders.",
   "t190": "On your couch, in your room or on the move: grab your seat and join the live.",
-  "t191": "Tickets, gifts, reactions: every move counts, and the artist keeps the biggest share."
+  "t191": "Tickets, gifts, reactions: every move counts, and the artist keeps the biggest share.",
+  "t192": "Enter"
  }
 };
