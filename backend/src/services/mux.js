@@ -109,11 +109,11 @@ const LIVE_INGEST_URL_RTMP = 'rtmp://global-live.mux.com:5222/app';
 
 /**
  * Live Stream Mux (mode "Concert PRO" : régie -> encodeur -> Mux Live).
- * IMPORTANT : Mux ne recopie PAS le passthrough racine du live stream sur
- * l'asset de replay. Le passthrough de l'asset provient EXCLUSIVEMENT de
- * `new_asset_settings.passthrough`. Sans lui, le webhook `video.asset.ready`
- * reçoit un passthrough null et ne rattache jamais le replay à l'event
- * (le concert s'enregistre mais le replay n'apparaît jamais).
+ * Le `passthrough` se passe UNIQUEMENT à la racine : Mux le recopie lui-même
+ * sur l'asset de replay. Le mettre aussi dans `new_asset_settings` est
+ * désormais refusé par Mux (400 invalid_parameters) et bloque la création
+ * du flux. Filet de sécurité côté webhook `video.asset.ready` : l'asset est
+ * aussi rattaché via `live_stream_id` -> events.mux_live_stream_id.
  */
 function createLiveStream({ passthrough } = {}) {
   const pt = passthrough ? JSON.stringify(passthrough) : undefined;
@@ -122,10 +122,9 @@ function createLiveStream({ passthrough } = {}) {
     body: {
       playback_policy: ['public'],
       reconnect_window: 60,
-      passthrough: pt, // identifie le LIVE stream (webhooks live_stream.*)
+      passthrough: pt, // live stream + asset de replay (recopié par Mux)
       new_asset_settings: {
         playback_policy: ['public'],
-        passthrough: pt, // identifie l'ASSET de replay (webhook asset.ready)
       },
     },
   }).then((data) => ({
