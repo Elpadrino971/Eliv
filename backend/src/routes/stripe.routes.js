@@ -23,7 +23,7 @@ if (!process.env.STRIPE_WEBHOOK_SECRET) {
   console.error('⚠️⚠️ ' + msg + ' (toléré en dev uniquement)');
 }
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   const sig = req.headers['stripe-signature'];
   const raw = req.body; // Buffer (express.raw)
@@ -46,7 +46,17 @@ router.post('/', (req, res) => {
   try {
     const obj = event.data.object;
 
-    if (event.type === 'checkout.session.completed') {
+    if (event.type === 'checkout.session.completed' && obj.metadata?.kind === 'ticket') {
+      // Billet de concert acheté sur le site (voir services/web_tickets.js).
+      // En cas d'échec on répond 500 : Stripe rejouera l'événement, et
+      // l'attribution est idempotente, donc aucun risque de double place.
+      try {
+        await require('../services/web_tickets').handlePaid(obj);
+      } catch (e) {
+        console.error('[stripe webhook] billet non attribué, Stripe rejouera :', e.message);
+        return res.status(500).json({ received: false });
+      }
+    } else if (event.type === 'checkout.session.completed') {
       const userId = Number(obj.client_reference_id || obj.metadata?.user_id);
       const subscriptionsId = Number(obj.metadata?.subscriptions_id);
       if (userId && subscriptionsId) {

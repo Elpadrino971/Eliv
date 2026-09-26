@@ -433,6 +433,24 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 .foot__bar{max-width:1240px;margin:56px auto 0;padding-top:24px;border-top:1px solid rgba(255,255,255,.08);
   display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;color:var(--muted);font-size:.8rem;letter-spacing:.06em}
 @media(max-width:820px){.foot__top{grid-template-columns:1fr 1fr}.foot__brand{grid-column:1/-1}}
+/* ─── Mise en avant d'un concert (DJ Wilson) — masquée automatiquement après le live ─── */
+.feat{max-width:1240px;margin:clamp(40px,7vw,90px) auto 0;padding:0 clamp(16px,4vw,46px)}
+.feat__card{display:grid;grid-template-columns:minmax(0,300px) 1fr;gap:clamp(22px,4vw,48px);align-items:center;padding:clamp(18px,3vw,30px);
+  border-radius:24px;border:1px solid rgba(230,199,106,.4);
+  background:radial-gradient(70% 90% at 90% 0%,rgba(230,199,106,.18),transparent 60%),linear-gradient(150deg,#0e1a36,#070C18)}
+.feat__card img{width:100%;height:auto;border-radius:16px;box-shadow:0 26px 60px -24px rgba(0,0,0,.8)}
+.feat__live{display:inline-flex;align-items:center;gap:8px;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.feat__live i{width:8px;height:8px;border-radius:50%;background:#ff4d5e;box-shadow:0 0 12px #ff4d5e}
+.feat h2{font-family:var(--serif);font-weight:800;font-size:clamp(2rem,4.6vw,3.4rem);line-height:1;margin:12px 0 8px}
+.feat h2 em{font-style:italic;font-weight:600;color:var(--gold)}
+.feat p{color:var(--muted);line-height:1.6;max-width:56ch}
+.feat__times{display:flex;flex-wrap:wrap;gap:6px 18px;margin:14px 0 20px;font-size:.9rem}
+.feat__times b{color:var(--ivory)}
+.feat__ctas{display:flex;flex-wrap:wrap;gap:12px}
+.feat__ctas span{padding:14px 22px;border-radius:99px;font-weight:700;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase}
+.feat__ctas .gold{background:var(--gold);color:#0A1226}
+.feat__ctas .ghost{border:1px solid rgba(230,199,106,.5);color:var(--gold)}
+@media(max-width:720px){.feat__card{grid-template-columns:1fr}.feat__card img{max-width:320px;margin:0 auto}}
 /* ─── Voyage : 5 images, zoom infini au défilement (sous le menu) ───
    Chaque image est plein écran ; la suivante apparaît dans une fenêtre
    arrondie au centre (le « portail »), calée sur l'écran et non sur la
@@ -533,6 +551,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
     <select class="langsel langsel--menu" id="langSelMenu" aria-label="Langue"></select>
     <span class="menu__brand">Vybzz<span class="dot">Z</span></span>
     <nav class="menu__main">
+      <a href="dj-wilson.html" class="menu__hot">DJ Wilson · Live <small>3 → 4 oct · 100 places à gagner</small></a>
       <a href="challenge.html" class="menu__hot" data-t="t9">Live Challenge <small>20 sept → 24 oct · 1er prix iPhone Pro</small></a>
       <a href="feed.html" data-t="t10">Feed & Clips</a>
       <a href="store.html" data-t="t11">Boutique</a>
@@ -610,6 +629,21 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
     <div class="scroll-hint" id="scrollHint">Défile</div>
   </div>
 </section>
+
+<!-- Mise en avant : DJ Wilson, live du 3 au 4 octobre 2026 (masquée après le live, voir script) -->
+<section class="feat" id="feat-djwilson" data-until="2026-10-04T08:00:00Z" aria-label="Concert à la une : DJ Wilson">
+  <a class="feat__card" href="dj-wilson.html">
+    <img src="assets/events/dj-wilson.webp" alt="Affiche DJ Wilson Anniversaire, en direct sur VybzzZ" width="1122" height="1402" loading="lazy" decoding="async">
+    <div>
+      <span class="feat__live"><i></i><span data-t="t193">En direct sur VybzzZ</span></span>
+      <h2>DJ WILSON<br><em data-t="t194">Anniversaire</em></h2>
+      <p data-t="t195">Avec Jocelyne Labylle, Dominique Lorté et Jean-Michel Jean-Louis. 100 places à gagner à la roue de la fortune.</p>
+      <div class="feat__times"><span data-t="t196"><b>Sam. 3 oct · 23h50</b> Antilles · Montréal</span><span data-t="t197"><b>Dim. 4 oct · 5h50</b> Paris</span></div>
+      <div class="feat__ctas"><span class="gold" data-t="t198">Tente de gagner ta place</span><span class="ghost" data-t="t199">Accès dès 4,99 €</span></div>
+    </div>
+  </a>
+</section>
+<script>(function(){var f=document.getElementById('feat-djwilson');if(f&&Date.now()>Date.parse(f.dataset.until))f.remove();})();</script>
 
 <!-- VOYAGE : l'expérience VybzzZ en 5 images, zoom infini au défilement ou au clic -->
 <section class="voyage" id="voyage" aria-label="L'expérience VybzzZ en 5 étapes">
@@ -933,7 +967,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
   </div>
 </footer>
 
-<script src="i18n-home.js?v=97cdc148"></script>
+<script src="i18n-home.js?v=ad022fab"></script>
 <script src="vendor/hls.min.js?v=1ae7f59c"></script>
 <script>window.Hls||document.write('<script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16"><\/script>');</script>
 <script>

@@ -626,6 +626,25 @@ router.get('/reports', requireAdmin, (req, res) => {
   return res.json({ status: 'success', data: { revenue, tickets_sold: ticketsSold, top_events: topEvents, by_genre: byGenre } });
 });
 
+// ─── Campagnes de concert : roue de la fortune + billetterie du site ───
+router.get('/campaign/:slug', requireAdmin, (req, res) => {
+  const v = require('../services/wheel').adminView(req.params.slug);
+  if (!v) return res.status(404).json({ status: 'error', message: 'Campagne introuvable.' });
+  return res.json({ status: 'success', data: v });
+});
+// Relie la campagne au concert créé dans l'app : ouvre la billetterie du site
+// et transforme en billets les places déjà gagnées et confirmées.
+router.post('/campaign/:slug/event', requireAdmin, (req, res) => {
+  const wheel = require('../services/wheel');
+  if (!wheel.campaign(req.params.slug)) return res.status(404).json({ status: 'error', message: 'Campagne introuvable.' });
+  const eventId = Number(req.body?.event_id);
+  const ev = db.prepare('SELECT id, name, ticket_price FROM events WHERE id = ?').get(eventId);
+  if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  wheel.linkEvent(req.params.slug, ev.id);
+  const n = wheel.grantAllClaimed(req.params.slug);
+  return res.json({ status: 'success', message: `Relié à « ${ev.name} » (${ev.ticket_price} €). ${n} place(s) gagnée(s) attribuée(s).` });
+});
+
 // ─── Agenda régional (concerts collectés sur des sources publiques) ───
 // Écran de validation : rien n'apparaît avec un halo doré ni avec un prix
 // dans l'application tant que ça n'a pas été validé ici. Le tarif en

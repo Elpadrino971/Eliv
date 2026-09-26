@@ -45,6 +45,31 @@ function createSubscriptionCheckout({ priceId, userId, subscriptionsId, customer
   });
 }
 
+/**
+ * Session Checkout pour UN billet de concert, payé sur le site. Le montant
+ * vient du concert en base (jamais du navigateur). metadata.kind = 'ticket'
+ * permet au webhook de distinguer ce paiement d'un abonnement.
+ */
+function createTicketCheckout({ eventId, eventName, amountCents, email, campaign, successUrl, cancelUrl }) {
+  return client().checkout.sessions.create({
+    mode: 'payment',
+    line_items: [{
+      quantity: 1,
+      price_data: {
+        currency: 'eur',
+        unit_amount: amountCents,
+        product_data: { name: `Accès live · ${eventName}`, description: 'Place pour le concert en direct sur VybzzZ' },
+      },
+    }],
+    customer_email: email,
+    metadata: { kind: 'ticket', event_id: String(eventId), email, campaign: campaign || '' },
+    payment_intent_data: { metadata: { kind: 'ticket', event_id: String(eventId), email } },
+    locale: 'fr',
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+  });
+}
+
 function constructWebhookEvent(rawBody, signatureHeader, secret) {
   return client().webhooks.constructEvent(rawBody, signatureHeader, secret);
 }
@@ -56,6 +81,7 @@ function retrieveSubscription(subscriptionId) {
 module.exports = {
   isConfigured,
   createSubscriptionCheckout,
+  createTicketCheckout,
   constructWebhookEvent,
   retrieveSubscription,
 };

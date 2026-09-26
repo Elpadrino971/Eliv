@@ -10,6 +10,12 @@ const moderation = require('../services/moderation');
 const emailService = require('../services/email');
 const socialAuth = require('../services/social_auth');
 const challenge = require('../services/challenge');
+const eventAccess = require('../services/event_access');
+// Places gagnées à la roue ou achetées sur le site avant la création du
+// compte : elles deviennent de vrais billets dès que l'e-mail est vérifié.
+function placesEnAttente(user) {
+  try { eventAccess.attachPendingForUser(user); } catch (e) { console.error('[places] rattachement :', e.message); }
+}
 
 const OTP_TTL_MINUTES = 15;
 
@@ -193,6 +199,7 @@ router.post('/social-login', async (req, res) => {
       );
     user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
     challenge.onVerifiedUser(user); // compte social = e-mail vérifié par le fournisseur
+    placesEnAttente(user);
   } else if (isApple && verified?.sub && !user.apple_sub) {
     db.prepare('UPDATE users SET apple_sub = ? WHERE id = ?').run(verified.sub, user.id);
   }
@@ -209,6 +216,7 @@ router.post('/verify', (req, res) => {
   db.prepare('UPDATE users SET is_verified = 1, updated_at = datetime(\'now\') WHERE id = ?').run(user.id);
   const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
   challenge.onVerifiedUser(fresh); // Live Challenge : qualifie une pré-inscription via lien d'artiste
+  placesEnAttente(fresh);
   return authResponse(res, fresh, 'Verified.');
 });
 
@@ -250,6 +258,7 @@ font-weight:700;padding:14px 26px;border-radius:12px}</style></head>
   // Code consommé : le lien ne peut pas servir deux fois.
   db.prepare("UPDATE users SET is_verified = 1, otp_code = NULL, otp_expires_at = NULL, updated_at = datetime('now') WHERE id = ?").run(user.id);
   try { challenge.onVerifiedUser(db.prepare('SELECT * FROM users WHERE id = ?').get(user.id)); } catch (_) {}
+  placesEnAttente(user);
   return res.type('html').send(page('Compte validé',
     'C\'est bon, ton compte VybzzZ est actif. Retourne dans l\'application et connecte-toi.', true));
 });

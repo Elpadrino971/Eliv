@@ -69,6 +69,10 @@ app.use(
     '/api/admin/login',
     '/api/challenge/register',
     '/api/challenge/join',
+    // Roue de la fortune et billetterie web : un tirage par e-mail côté serveur,
+    // mais on freine aussi les rafales automatisées.
+    '/api/wheel',
+    '/api/tickets/web-checkout',
   ],
   authLimiter,
 );
@@ -261,6 +265,7 @@ app.use('/api/track', rateLimit({
 app.use('/api', authRoutes);
 app.use('/api', eventRoutes);
 app.use('/api', miscRoutes);
+app.use('/api', require('./routes/campaign.routes'));
 
 // Webhook RevenueCat : pas de signature HMAC (juste un header Authorization
 // fixe), donc pas besoin de corps brut -> monté normalement après express.json().

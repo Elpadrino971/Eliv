@@ -109,6 +109,7 @@ const NAV = [
   { group: 'Support & contenu', items: [
     { id: 'support', label: 'Support (tickets app)', ic: '🎧' },
     { id: 'agenda', label: 'Agenda régional', ic: '🗓️' },
+    { id: 'campaign', label: 'Roue & billetterie', ic: '🎡' },
     { id: 'ideas', label: 'Boîte à idées', ic: '💡' },
     { id: 'leads', label: 'Contacts / Leads', ic: '📞' },
     { id: 'faqs', label: 'FAQ', ic: '❓' },
@@ -1294,6 +1295,45 @@ async function pageReports() {
       <div class="tcard"><h3 style="color:var(--gold);margin-bottom:10px">Top concerts (ventes)</h3>${(data.top_events || []).map((e) => `<div class="kv"><span>${esc(e.name)}</span><span>${e.sales}</span></div>`).join('') || '<div class="empty">—</div>'}</div>
       <div class="tcard"><h3 style="color:var(--gold);margin-bottom:10px">Concerts par genre</h3>${(data.by_genre || []).map((g) => `<div class="kv"><span>${esc(g.name)}</span><span>${g.events}</span></div>`).join('') || '<div class="empty">—</div>'}</div>
     </div>`;
+}
+
+// Roue & billetterie — campagne DJ Wilson (et suivantes).
+// Relier le concert créé dans l'app ouvre la billetterie par carte du site et
+// transforme en billets les places déjà gagnées et confirmées.
+async function pageCampaign() {
+  const slug = 'dj-wilson';
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  const [{ data: c }, { data: events }] = await Promise.all([api('GET', '/campaign/' + slug), api('GET', '/events')]);
+  const count = (st) => (c.counts.find((x) => x.status === st) || {}).n || 0;
+  const paid = c.orders.filter((o) => o.status === 'paid');
+  const revenue = paid.reduce((t, o) => t + (parseFloat(o.amount) || 0), 0);
+  const opts = (events || []).map((e) => `<option value="${e.id}" ${e.id === c.event_id ? 'selected' : ''}>#${e.id} · ${esc(e.name)} · ${esc(String(e.ticket_price))} €</option>`).join('');
+  const kv = (k, v) => `<div class="kv"><span>${k}</span><span>${v}</span></div>`;
+  view().innerHTML = `<div class="tcard">
+    <h3 style="color:var(--gold);margin-bottom:10px">🎡 ${esc(c.title)}</h3>
+    ${kv('Concert relié', c.event_id ? '#' + c.event_id + ' — billetterie ' + (c.ticketing_open ? 'ouverte' : 'fermée') : '<b style="color:#ff8a8a">aucun : billetterie fermée</b>')}
+    ${kv('Roue', c.wheel_open ? 'ouverte' : 'fermée')}
+    ${kv('Places restantes', c.remaining + ' / ' + c.places)}
+    ${kv('Tirages perdus', count('lost'))}
+    ${kv('Gagnés, en attente de confirmation', count('reserved'))}
+    ${kv('Gagnés et confirmés', count('claimed') + count('granted'))}
+    ${kv('Réservations expirées (remises en jeu)', count('expired'))}
+    ${kv('Billets vendus sur le site', paid.length + ' · ' + revenue.toFixed(2) + ' €')}
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <select id="cp-ev" style="flex:1;min-width:260px;background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:8px;padding:9px">
+        <option value="">— Choisir le concert créé dans l'app —</option>${opts}</select>
+      <button class="btn" id="cp-link">Relier et ouvrir la billetterie</button>
+    </div>
+  </div>
+  <div class="tcard" style="margin-top:14px"><h3 style="color:var(--gold);margin-bottom:10px">Gagnants</h3>
+    ${c.winners.length ? c.winners.map((w) => kv(esc(w.email), esc(w.status) + ' · ' + fmtDate(w.created_at))).join('') : '<div class="empty">Aucun gagnant pour le moment.</div>'}</div>
+  <div class="tcard" style="margin-top:14px"><h3 style="color:var(--gold);margin-bottom:10px">Ventes sur le site</h3>
+    ${c.orders.length ? c.orders.map((o) => kv(esc(o.email), esc(o.amount) + ' € · ' + (o.status === 'paid' ? 'payé' : 'abandonné / en cours') + ' · ' + fmtDate(o.created_at))).join('') : '<div class="empty">Aucune vente.</div>'}</div>`;
+  $('cp-link').onclick = async () => {
+    const id = $('cp-ev').value; if (!id) return toast('Choisis le concert.');
+    try { const r = await api('POST', '/campaign/' + slug + '/event', { event_id: id }); toast(r.message); } catch (e) { toast(e.message || 'Échec'); }
+    pageCampaign();
+  };
 }
 
 // Agenda régional — dates collectées sur des sources publiques (bizouk).
@@ -2483,7 +2523,7 @@ const ROUTES = {
   dashboard: pageDashboard, lives: pageLives, users: pageUsers, geo: pageGeo, genres: pageGenres, 'user-genres': pageUserGenres,
   events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
-  reports: pageReports, support: pageSupport, agenda: pageAgenda, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
+  reports: pageReports, support: pageSupport, agenda: pageAgenda, campaign: pageCampaign, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
   splash: pageSplash, legal: pageLegal, challenge: pageChallenge, merch: pageMerch, audience: pageAudience, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
 };
 

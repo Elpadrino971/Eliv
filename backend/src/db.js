@@ -589,6 +589,56 @@ function init() {
     CREATE INDEX IF NOT EXISTS idx_ext_events_date ON external_events (start_date);
     CREATE INDEX IF NOT EXISTS idx_ext_events_terr ON external_events (territory, start_date);
 
+    -- Places attribuées à un e-mail qui n'a pas encore de compte VybzzZ (gain
+    -- à la roue, achat sur le site). Elles deviennent de vrais billets dès que
+    -- le compte est créé et vérifié avec ce même e-mail.
+    CREATE TABLE IF NOT EXISTS pending_tickets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL,
+      event_id INTEGER NOT NULL,
+      price_paid TEXT DEFAULT '0',
+      store_fee_rate REAL,
+      source TEXT NOT NULL,             -- wheel | stripe
+      ref TEXT NOT NULL,                -- id du tirage ou de la session Stripe
+      ticket_id INTEGER,                -- rempli une fois le billet créé
+      created_at TEXT DEFAULT (datetime('now')),
+      granted_at TEXT,
+      UNIQUE(source, ref)
+    );
+    CREATE INDEX IF NOT EXISTS idx_pending_tickets_email ON pending_tickets (email, granted_at);
+
+    -- Roue de la fortune : un tirage par e-mail et par campagne, décidé côté
+    -- serveur. Une place gagnée est réservée 24 h ; sans confirmation de
+    -- l'e-mail, elle retourne dans le jeu.
+    CREATE TABLE IF NOT EXISTS wheel_spins (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      campaign TEXT NOT NULL,
+      email TEXT NOT NULL,
+      ip_hash TEXT,
+      result TEXT NOT NULL,             -- win | lose
+      status TEXT NOT NULL,             -- lost | reserved | claimed | granted | expired
+      token TEXT UNIQUE,
+      created_at TEXT DEFAULT (datetime('now')),
+      claimed_at TEXT,
+      granted_at TEXT,
+      UNIQUE(campaign, email)
+    );
+    CREATE INDEX IF NOT EXISTS idx_wheel_campaign ON wheel_spins (campaign, result, status);
+
+    -- Billetterie du site (Stripe) : une ligne par session de paiement.
+    CREATE TABLE IF NOT EXISTS web_ticket_orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_id INTEGER NOT NULL,
+      email TEXT NOT NULL,
+      amount TEXT NOT NULL,
+      currency TEXT DEFAULT 'eur',
+      stripe_session_id TEXT UNIQUE,
+      status TEXT DEFAULT 'pending',    -- pending | paid
+      campaign TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      paid_at TEXT
+    );
+
     CREATE TABLE IF NOT EXISTS content_reports (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       reporter_id INTEGER,

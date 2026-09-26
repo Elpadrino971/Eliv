@@ -188,6 +188,13 @@ window.I18N_HOME = {
   "t189": "One live, open from any country. From the Caribbean to Paris, the stage has no borders.",
   "t190": "On your couch, in your room or on the move: grab your seat and join the live.",
   "t191": "Tickets, gifts, reactions: every move counts, and the artist keeps the biggest share.",
-  "t192": "Enter"
+  "t192": "Enter",
+  "t193": "Live on VybzzZ",
+  "t194": "Birthday",
+  "t195": "With Jocelyne Labylle, Dominique Lorté and Jean-Michel Jean-Louis. 100 seats to win on the wheel of fortune.",
+  "t196": "<b>Sat. Oct 3 · 11:50 pm</b> Caribbean · Montreal",
+  "t197": "<b>Sun. Oct 4 · 5:50 am</b> Paris",
+  "t198": "Try to win your seat",
+  "t199": "Access from €4.99"
  }
 };

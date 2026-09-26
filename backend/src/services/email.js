@@ -118,4 +118,4 @@ async function sendOtpEmail(to, code) {
   });
 }
 
-module.exports = { isConfigured, generateOtp, sendOtpEmail, recentLog, counts, usingSandboxSender, EMAIL_FROM };
+module.exports = { isConfigured, sendEmail, generateOtp, sendOtpEmail, recentLog, counts, usingSandboxSender, EMAIL_FROM };
