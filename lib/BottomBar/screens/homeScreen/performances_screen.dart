@@ -180,7 +180,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                     width(0.02),
 
                                     Text(
-                                      '${event.ticketPrice ?? '0.0'} €',
+                                      priceLabel(event.ticketPrice),
                                       style: TextStyle(
                                         color: ivory,
                                         fontSize: 16,

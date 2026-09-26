@@ -251,7 +251,9 @@ class _ConcertCard extends StatelessWidget {
                       border: Border.all(color: vybzzzGoldBorder),
                     ),
                     child: Text(
-                      'From $price €',
+                      (double.tryParse(price) ?? 0) <= 0
+                          ? 'common_free'.tr
+                          : 'From $price €',
                       style: const TextStyle(
                         color: whiteColor,
                         fontSize: 13,

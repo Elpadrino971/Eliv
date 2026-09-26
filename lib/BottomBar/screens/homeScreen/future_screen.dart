@@ -489,7 +489,7 @@ class _FutureScreenState extends State<FutureScreen> {
                 style: const TextStyle(color: textMuted, fontSize: 12),
               ),
               Text(
-                '${event.ticketPrice} €',
+                priceLabel(event.ticketPrice),
                 style: const TextStyle(
                   color: ivory,
                   fontSize: 22,

@@ -332,3 +332,11 @@ String calculateEventDuration(DateTime start, DateTime end) {
 Future myShare({required String message}) async {
   await SharePlus.instance.share(ShareParams(text: message));
 }
+
+/// Prix d'un concert tel qu'affiché aux fans : « Gratuit » quand le billet
+/// vaut 0 (ou n'est pas renseigné), sinon « 4.99 € ».
+String priceLabel(String? ticketPrice) {
+  final p = double.tryParse(ticketPrice ?? '') ?? 0;
+  if (p <= 0) return 'common_free'.tr;
+  return '$ticketPrice €';
+}

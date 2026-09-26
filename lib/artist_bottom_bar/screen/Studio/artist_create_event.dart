@@ -519,7 +519,12 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                 MyDropDown(
                   dropdownvalue: selectedPrice,
                   hintText: 'hint_price'.tr,
-                  items: _ticketTiers.map((t) => '$t €').toList(),
+                  // « Gratuit » en tête : concert à 0 €, aucun achat store,
+                  // le fan rejoint directement (voir check_out_screen).
+                  items: [
+                    'common_free'.tr,
+                    ..._ticketTiers.map((t) => '$t €'),
+                  ],
                   onChanged: (value) {
                     // On garde la valeur affichée ("49.99 €") pour qu'elle
                     // corresponde à un item du dropdown ; le " €" est retiré
@@ -720,8 +725,9 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                           startTimeController.text,
                         ),
                         endDateTime: endIso,
-                        ticketPrice:
-                            (selectedPrice ?? '0').replaceAll(' €', ''),
+                        ticketPrice: selectedPrice == 'common_free'.tr
+                            ? '0'
+                            : (selectedPrice ?? '0').replaceAll(' €', ''),
                         genreId: selectedGenreId?.toString() ?? '',
                         hasLiveChat: liveValue ? '1' : '0',
                         replayEnabled: replayEnabled ? '1' : '0',

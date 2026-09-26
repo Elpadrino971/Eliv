@@ -6,6 +6,7 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:artist/Global/global.dart';
 import 'package:get/get.dart';
 
 class LiveEventsCards extends StatelessWidget {
@@ -56,7 +57,7 @@ class LiveEventsCards extends StatelessWidget {
                         _viewerCount(),
                         const SizedBox(width: 10),
                         Text(
-                          '${event.ticketPrice} €',
+                          priceLabel(event.ticketPrice),
                           style: const TextStyle(
                             color: ivory,
                             fontWeight: FontWeight.w700,

@@ -6,6 +6,7 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:artist/Global/global.dart';
 import 'package:get/get.dart';
 
 import 'dart:async';
@@ -91,7 +92,7 @@ class _NextPerformanceCardState extends State<NextPerformanceCard> {
                       _countdownBadge(),
                       const Spacer(),
                       Text(
-                        '${widget.event.ticketPrice} €',
+                        priceLabel(widget.event.ticketPrice),
                         style: const TextStyle(
                           color: ivory,
                           fontWeight: FontWeight.w700,

@@ -276,7 +276,7 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                           ),
                                           height(0.01),
                                           Text(
-                                            '${event.ticketPrice ?? 10} €',
+                                            priceLabel(event.ticketPrice),
                                             style: TextStyle(
                                               color: Get.isDarkMode
                                                   ? whiteColor
