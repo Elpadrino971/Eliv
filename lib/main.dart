@@ -9,6 +9,7 @@ import 'package:artist/services/push_notification.dart';
 import 'package:artist/spalash_screen.dart';
 import 'package:artist/widgets/mini_player.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -49,6 +50,29 @@ Future<void> main() async {
     await PushNotificationSystem().setup();
   } catch (e) {
     debugPrint('⚠️ Push setup échouée (app continue): $e');
+  }
+
+  // Hors version store (debug/profile) : un écran qui plante affiche le
+  // message d'erreur au lieu de la page grise muette, et l'erreur est écrite
+  // dans le terminal même sans débogueur attaché (utile en Wi-Fi).
+  if (!kReleaseMode) {
+    FlutterError.onError = (details) {
+      FlutterError.presentError(details);
+      // ignore: avoid_print
+      print('VYBZZZ_ERROR ${details.exceptionAsString()}\n${details.stack}');
+    };
+    ErrorWidget.builder = (details) => Material(
+          color: const Color(0xFF7A0000),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                '${details.exceptionAsString()}\n\n${details.stack}',
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
+          ),
+        );
   }
 
   runApp(const MyApp());
