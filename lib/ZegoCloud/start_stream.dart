@@ -9,7 +9,6 @@ import 'package:artist/Models/event_model.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_chat_preview.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_side_actions.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_top_bar.dart';
-import 'package:artist/ZegoCloud/zego_cloud_keys.dart';
 import 'package:artist/ZegoCloud/zego_controller.dart';
 import 'package:artist/ZegoCloud/zego_gifts.dart';
 import 'package:flutter/material.dart';
@@ -294,7 +293,7 @@ class _StartStreamState extends State<StartStream> {
         children: [
           // ── Zego Live Streaming Background ──────────────────────────
           ZegoUIKitPrebuiltLiveStreaming(
-            appID: ZegoCloudKeys.appId,
+            appID: zegoController.zegoAppId.value,
             token: zegoToken,
             userID: zegoController.userId,
             userName: zegoController.userName,

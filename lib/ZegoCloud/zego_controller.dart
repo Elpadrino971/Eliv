@@ -4,6 +4,7 @@ import 'package:artist/Global/api.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/user_model.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_chat_preview.dart';
+import 'package:artist/ZegoCloud/zego_cloud_keys.dart';
 import 'package:artist/services/api_services.dart';
 import 'package:get/get.dart';
 import 'package:zego_uikit_prebuilt_live_streaming/zego_uikit_prebuilt_live_streaming.dart';
@@ -20,6 +21,13 @@ class ZegoController extends GetxController {
   // Token de connexion Zego (généré côté serveur, remplace l'appSign en
   // dur). null tant qu'il n'a pas été récupéré : voir fetchZegoToken().
   final Rx<String?> zegoToken = Rx<String?>(null);
+
+  // AppID du projet Zego, fourni par le serveur avec le token (il doit
+  // correspondre au ServerSecret qui a signé ce token). Changer de compte ou de
+  // projet Zego ne demande alors qu'une mise à jour du serveur, pas une
+  // nouvelle version de l'app. Valeur compilée = secours si le serveur ne
+  // l'envoie pas.
+  final RxInt zegoAppId = ZegoCloudKeys.appId.obs;
 
   // Cible RTMP Mux pour l'enregistrement du replay (rtmps://.../app/<clé>),
   // récupérée via startRecording(). null si le replay est désactivé, Mux non
@@ -53,6 +61,11 @@ class ZegoController extends GetxController {
       if (token == null) {
         myPrint('fetchZegoToken: pas de token dans la réponse -> $res');
         return false;
+      }
+      final serverAppId =
+          int.tryParse('${jsonDecode(res)['data']?['app_id'] ?? ''}');
+      if (serverAppId != null && serverAppId > 0) {
+        zegoAppId.value = serverAppId; // avant le token : l'écran s'ouvre dessus
       }
       zegoToken.value = token;
       return true;
