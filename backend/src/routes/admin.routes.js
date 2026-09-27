@@ -913,6 +913,9 @@ router.get('/users-list', requireAdmin, (req, res) => {
 // ─── Édition Utilisateur ───
 router.put('/users/:id', requireAdmin, (req, res) => {
   const b = req.body || {};
+  if (b.password && String(b.password).length < 8) {
+    return res.status(422).json({ status: 'error', message: 'Mot de passe : 8 caractères minimum.' });
+  }
   // photo : sert d'avatar artiste (artist_profile) ET de photo profil (profile_image)
   const photo = saveUpload(req, ['photo', 'avatar', 'profile_picture', 'image'], 'profiles', 'profiles') || b.photo || b.artist_profile || null;
   db.prepare(
@@ -925,7 +928,12 @@ router.put('/users/:id', requireAdmin, (req, res) => {
     id: req.params.id, full_name: b.full_name || null, artist_name: b.artist_name || null, phone: b.phone_number || null,
     address: b.address || null, artist: truthy(b.is_artist) ? 1 : 0, photo,
   });
-  return res.json({ status: 'success', message: 'Utilisateur modifié.' });
+  // Réinitialisation du mot de passe par l'admin (compte oublié, compte de
+  // démonstration pour la revue App Store / Google Play).
+  if (b.password) {
+    db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash(String(b.password)), req.params.id);
+  }
+  return res.json({ status: 'success', message: b.password ? 'Utilisateur modifié, mot de passe changé.' : 'Utilisateur modifié.' });
 });
 
 // ─── User Genres : ajout / suppression ───

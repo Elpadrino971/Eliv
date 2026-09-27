@@ -471,8 +471,12 @@ function userEditForm(r) {
       { name: 'phone_number', label: 'Téléphone', value: r.phone_number },
       { name: 'address', label: 'Adresse', value: r.address },
       { name: 'is_artist', label: 'Artiste ?', type: 'checkbox', value: !!r.is_artist, hint: 'Compte artiste' },
+      { name: 'password', label: 'Nouveau mot de passe (vide = inchangé)', type: 'password' },
     ],
-    onSave: async (d) => { await api('PUT', '/users/' + r.id, d); toast('Utilisateur modifié'); route(); },
+    onSave: async (d) => {
+      if (!d.password) delete d.password;
+      await api('PUT', '/users/' + r.id, d); toast('Utilisateur modifié'); route();
+    },
   });
 }
 async function pageUsers() {
