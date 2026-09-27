@@ -434,7 +434,10 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
   display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;color:var(--muted);font-size:.8rem;letter-spacing:.06em}
 @media(max-width:820px){.foot__top{grid-template-columns:1fr 1fr}.foot__brand{grid-column:1/-1}}
 /* ─── Mise en avant d'un concert (DJ Wilson) — masquée automatiquement après le live ─── */
-.feat{max-width:1240px;margin:clamp(40px,7vw,90px) auto 0;padding:0 clamp(16px,4vw,46px)}
+/* Remonte sur la fin (vide) de la scène défilante pour coller au chapitre 3,
+   puis laisse de l'air avant le voyage. */
+.feat{position:relative;z-index:2;margin:-22vh 0 0;padding:0 clamp(16px,4vw,46px) clamp(56px,9vw,120px);background:linear-gradient(180deg,transparent 0,#070C18 38%,#070C18 100%)}
+.feat__card{max-width:1180px;margin:0 auto}
 .feat__card{display:grid;grid-template-columns:minmax(0,300px) 1fr;gap:clamp(22px,4vw,48px);align-items:center;padding:clamp(18px,3vw,30px);
   border-radius:24px;border:1px solid rgba(230,199,106,.4);
   background:radial-gradient(70% 90% at 90% 0%,rgba(230,199,106,.18),transparent 60%),linear-gradient(150deg,#0e1a36,#070C18)}
@@ -450,7 +453,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 .feat__ctas span{padding:14px 22px;border-radius:99px;font-weight:700;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase}
 .feat__ctas .gold{background:var(--gold);color:#0A1226}
 .feat__ctas .ghost{border:1px solid rgba(230,199,106,.5);color:var(--gold)}
-@media(max-width:720px){.feat__card{grid-template-columns:1fr}.feat__card img{max-width:320px;margin:0 auto}}
+@media(max-width:720px){.feat{margin-top:0;padding-top:18px}.feat__card{grid-template-columns:1fr}.feat__card img{max-width:320px;margin:0 auto}}
 /* ─── Voyage : 5 images, zoom infini au défilement (sous le menu) ───
    Chaque image est plein écran ; la suivante apparaît dans une fenêtre
    arrondie au centre (le « portail »), calée sur l'écran et non sur la
