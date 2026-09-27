@@ -419,18 +419,18 @@ class _SpalashScreenState extends State<SpalashScreen>
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: const [
+                          children: [
                             _Pillar(
                               icon: Icons.explore_outlined,
                               label: 'common_discover'.tr,
                             ),
-                            _PillarDivider(),
-                            _Pillar(
+                            const _PillarDivider(),
+                            const _Pillar(
                               icon: Icons.confirmation_number_outlined,
                               label: 'BOOK',
                             ),
-                            _PillarDivider(),
-                            _Pillar(icon: Icons.graphic_eq, label: 'LIVE'),
+                            const _PillarDivider(),
+                            const _Pillar(icon: Icons.graphic_eq, label: 'LIVE'),
                           ],
                         ),
                         const SizedBox(height: 26),
