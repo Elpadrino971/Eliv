@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:artist/Auth/login_screen.dart';
 import 'package:artist/Controllers/auth_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
@@ -8,6 +7,7 @@ import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_header.dart';
 import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
+import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:get/get.dart';
 
 class CompleteProfile extends StatefulWidget {
@@ -58,7 +58,9 @@ class _CompleteProfileState extends State<CompleteProfile> {
                       title: 'common_skip'.tr,
                       content: 'auth_skip_confirm'.tr,
                       onTap: () {
-                        Get.offAll(() => LoginScreen());
+                        // Passer = entrer dans l'app (le compte est déjà
+                        // actif), pas revenir à l'écran de connexion.
+                        Get.offAll(() => MyBottomBar(index: 2));
                       },
                     );
                     // myPrint(userModel);

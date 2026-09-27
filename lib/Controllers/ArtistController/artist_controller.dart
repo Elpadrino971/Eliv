@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/artist_data_model.dart';
@@ -97,6 +99,48 @@ class ArtistController extends GetxController {
             subtitle: "Connexion impossible. Réessaie.",
           );
         });
+  }
+
+  /// Live instantané : crée un concert gratuit qui commence maintenant (titre
+  /// seul, pas d'affiche ni de date à choisir) et renvoie l'event prêt à être
+  /// diffusé. null si la création a échoué (message déjà affiché).
+  Future<Event?> createQuickLive({required String title}) async {
+    myLoadingDialog();
+    final now = DateTime.now().toUtc();
+    final req = ApiResponse();
+    req.typeSetter = 'post';
+    req.urlSetter = APIs.eventsAPI;
+    req.bodySetter = {
+      'name': title,
+      'description': '',
+      // Une minute de marge : le bouton « Lancer » des listes vérifie que
+      // l'heure actuelle est dans le créneau du concert.
+      'start_date_time':
+          now.subtract(const Duration(minutes: 1)).toIso8601String(),
+      'end_date_time': now.add(const Duration(hours: 4)).toIso8601String(),
+      'ticket_price': '0',
+      'is_private': '0',
+      'has_live_chat': '1',
+      'replay_enabled': '1',
+      'replay_duration_days': '60',
+    };
+    try {
+      final value = await req.hitMultipartAPI('');
+      Get.back(); // ferme le loader
+      if (value is String && value.split(' ').first != 'error') {
+        final data = jsonDecode(value)['data'];
+        if (data is Map<String, dynamic>) return Event.fromJson(data);
+        myWarningDialog(subtitle: 'quick_live_failed'.tr);
+        return null;
+      }
+      parseError(value, doBack: false);
+      return null;
+    } catch (e) {
+      myPrint('createQuickLive: exception -> $e');
+      Get.back();
+      myWarningDialog(subtitle: 'quick_live_failed'.tr);
+      return null;
+    }
   }
 
   Future<void> getArtistData({required String artistId}) async {

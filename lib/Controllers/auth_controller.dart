@@ -7,6 +7,7 @@ import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Auth/login_failed_sheet.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/api.dart';
+import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/banks_model.dart';
 import 'package:artist/Models/follow_model.dart';
 import 'package:artist/Models/genre_model.dart';
@@ -19,6 +20,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/artist_bottom_bar/artist_bottom_bar.dart';
 import 'package:artist/services/api_services.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -129,10 +131,28 @@ class AuthController extends GetxController {
     };
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
+        // Inscription en une étape : le serveur renvoie déjà un compte actif
+        // et son jeton. On entre directement dans l'app, sans écran de code
+        // ni formulaire de profil. La confirmation de l'e-mail reste possible
+        // via le lien reçu (elle rattache les places gagnées ou achetées sur
+        // le site), mais elle ne bloque plus l'entrée.
         userModel.value = userModelFromJson(value);
+        box.write('user', userModel.value.toJson());
+        final id = userModel.value.user?.id;
+        if (id != null) unawaited(SubscriptionController.syncIdentity(id));
         update();
         Get.back();
-        Get.off(() => OtpScreen(email: email));
+        Get.offAll(() => MyBottomBar(index: 2));
+        Get.snackbar(
+          'signup_welcome_title'.tr,
+          'signup_welcome_msg'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: cardDeep,
+          colorText: ivory,
+          margin: const EdgeInsets.all(14),
+          borderRadius: 14,
+          duration: const Duration(seconds: 5),
+        );
       } else {
         parseError(value, doBack: true);
       }

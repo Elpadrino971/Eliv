@@ -4,6 +4,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/artist_bottom_bar/screen/Studio/artist_create_event.dart';
 import 'package:artist/artist_bottom_bar/screen/Studio/artist_events_screen.dart';
 import 'package:artist/artist_bottom_bar/screen/Studio/artist_withdraw.dart';
+import 'package:artist/artist_bottom_bar/screen/Studio/quick_live.dart';
 import 'package:artist/artist_bottom_bar/screen/Studio/revenue_screen.dart';
 import 'package:artist/widgets/widget.dart';
 import 'package:flutter/material.dart';
@@ -101,7 +102,35 @@ class _StudioScreenState extends State<StudioScreen> {
                   ],
                 ),
 
-                height(0.01),
+                height(0.015),
+                // Live instantané : titre + un bouton, sans formulaire.
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: openQuickLive,
+                    icon: const Icon(
+                      Icons.fiber_manual_record,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    label: Text(
+                      'quick_live_btn'.tr,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE0245E),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+                height(0.015),
                 GetBuilder<ArtistController>(
                   builder: (controller) {
                     final event = controller.artistData.value.data;
