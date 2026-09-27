@@ -11,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:artist/Global/app_date.dart';
-import 'dart:async';
 
 class ArtistEventsScreen extends StatefulWidget {
   const ArtistEventsScreen({super.key});
@@ -319,32 +318,25 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                         child: MyButton(
                                           label: 'ev_go_live'.tr,
                                           onTap: () async {
-                                            final now = DateTime.now();
-                                            if (event.startDateTime != null &&
-                                                event.endDateTime != null) {
-                                              if (now.isAfter(
-                                                    event.startDateTime!,
-                                                  ) &&
-                                                  now.isBefore(
-                                                    event.endDateTime!,
-                                                  )) {
-                                                await Get.to(
-                                                  () =>
-                                                      StartStream(event: event),
-                                                );
-                                                await completeEvent(event);
-                                              } else {
-                                                _showStreamTimeDialog(
-                                                  event: event,
-                                                );
-                                              }
-                                            } else {
-                                              // Fallback if dates are missing
-                                              await Get.to(
-                                                () => StartStream(event: event),
+                                            // L'artiste lance quand il veut,
+                                            // même avant l'heure annoncée :
+                                            // plus de fenêtre de compte à
+                                            // rebours qui bloquait le départ.
+                                            // Seul un concert déjà terminé
+                                            // est refusé.
+                                            final end = event.endDateTime;
+                                            if (end != null &&
+                                                DateTime.now().isAfter(end)) {
+                                              myWarningDialog(
+                                                subtitle:
+                                                    'ev_already_ended'.tr,
                                               );
-                                              await completeEvent(event);
+                                              return;
                                             }
+                                            await Get.to(
+                                              () => StartStream(event: event),
+                                            );
+                                            await completeEvent(event);
                                           },
 
                                           image: 'assets/play_icon.png',
@@ -386,124 +378,5 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
         status: 'completed',
       );
     }
-  }
-
-  void _showStreamTimeDialog({required Event event}) {
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        child: StreamTimerDialog(event: event),
-      ),
-    );
-  }
-}
-
-class StreamTimerDialog extends StatefulWidget {
-  final Event event;
-  const StreamTimerDialog({super.key, required this.event});
-
-  @override
-  State<StreamTimerDialog> createState() => _StreamTimerDialogState();
-}
-
-class _StreamTimerDialogState extends State<StreamTimerDialog> {
-  late Timer _timer;
-  late Duration _remaining;
-  bool _hasStarted = false;
-  bool _hasEnded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _calculateRemaining();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          _calculateRemaining();
-        });
-      }
-    });
-  }
-
-  void _calculateRemaining() {
-    final now = DateTime.now();
-    if (now.isBefore(widget.event.startDateTime!)) {
-      _remaining = widget.event.startDateTime!.difference(now);
-      _hasStarted = false;
-      _hasEnded = false;
-    } else if (now.isAfter(widget.event.endDateTime!)) {
-      _hasStarted = true;
-      _hasEnded = true;
-    } else {
-      _hasStarted = true;
-      _hasEnded = false;
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
-    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-    return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            _hasEnded ? Icons.event_available : Icons.timer,
-            size: 60,
-            color: _hasEnded ? greyColor : mainThemeColor,
-          ),
-          height(0.02),
-          Text(
-            _hasEnded
-                ? 'live_finished'.tr
-                : _hasStarted
-                ? 'live_is_live'.tr
-                : 'live_starting_soon'.tr,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          height(0.01),
-          Text(
-            _hasEnded
-                ? 'ev_already_ended'.tr
-                : _hasStarted
-                ? 'art_stream_can_start'.tr
-                : 'art_stream_scheduled'.trParams({
-                    'date': AppDate.format(
-                      widget.event.startDateTime,
-                      'dd MMM, hh:mm a',
-                    ),
-                  }),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: greyColor),
-          ),
-          if (!_hasStarted && !_hasEnded) ...[
-            height(0.02),
-            Text(
-              _formatDuration(_remaining),
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Get.isDarkMode ? whiteColor : blackColor,
-              ),
-            ),
-          ],
-          height(0.03),
-          MyButton(label: 'art_close'.tr, onTap: () => Get.back()),
-        ],
-      ),
-    );
   }
 }

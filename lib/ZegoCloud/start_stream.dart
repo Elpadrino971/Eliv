@@ -299,6 +299,10 @@ class _StartStreamState extends State<StartStream> {
             userName: zegoController.userName,
             liveID: currentEvent.id.toString(),
             config: ZegoUIKitPrebuiltLiveStreamingConfig.host()
+              // Pas de page d'aperçu Zego (« Start ») avant le direct : le
+              // live démarre dès l'ouverture de l'écran. Caméra et micro se
+              // règlent depuis la barre du bas pendant le live.
+              ..preview.showPreviewForHost = false
               ..audioVideoViewConfig.useVideoViewAspectFill = true
               ..inRoomMessage.visible = false
               // ── Co-host "sur scène" (les fans lèvent la main -> l'artiste
