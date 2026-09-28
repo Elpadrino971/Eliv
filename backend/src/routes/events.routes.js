@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
 const dbPayments = require('../db_payments'); // migrations paiements (lot 2D)
-const { serializeEvent, serializeUser, ok, fail, genReceipt, resolveArtistCommission, splitAmount, isGeoBlocked } = require('../helpers');
+const { serializeEvent, serializeUser, profileUrl, ok, fail, genReceipt, resolveArtistCommission, splitAmount, isGeoBlocked } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
 const moderation = require('../services/moderation');
@@ -323,20 +323,18 @@ router.post('/event-comment', optionalAuth, async (req, res) => {
     `INSERT INTO activities (user_id, event_id, type, description)
      VALUES (?, ?, 'comment', ?)`
   ).run(userId, b.event_id, b.comment || '');
-  const activity = db
-    .prepare('SELECT * FROM activities WHERE event_id = ? ORDER BY id DESC LIMIT 50')
-    .all(b.event_id)
-    .map(serializeActivity);
-  return res.json({ status: 'success', activity });
+  invalidateActivities(b.event_id);
+  return res.json({ status: 'success', activity: loadActivities(b.event_id, 50) });
 });
 
 // POST /api/event-logs  (body: { event_id }) -> { status, activity: [...] }
+// Chemin le plus chaud d'un live (polling de tous les spectateurs) : requête
+// unique + cache 2 s (voir cachedActivities).
 router.post('/event-logs', (req, res) => {
-  const activity = db
-    .prepare('SELECT * FROM activities WHERE event_id = ? ORDER BY id DESC LIMIT 100')
-    .all(req.body?.event_id)
-    .map(serializeActivity);
-  return res.json({ status: 'success', activity });
+  const eventId = Number(req.body?.event_id);
+  if (!Number.isFinite(eventId) || eventId <= 0) return res.json({ status: 'success', activity: [] });
+  res.set('Cache-Control', 'private, max-age=2');
+  return res.json({ status: 'success', activity: cachedActivities(eventId) });
 });
 
 // POST /api/events/update/:id  (body: { status })
@@ -492,11 +490,8 @@ router.post('/event-gift', optionalAuth, (req, res) => {
     badges.refresh(b.event_id); // 💸 Meilleur Tippeur / 👑 Top Supporter (règles + marge)
   } catch (_) { /* jamais bloquant */ }
 
-  const activity = db
-    .prepare('SELECT * FROM activities WHERE event_id = ? ORDER BY id DESC LIMIT 50')
-    .all(b.event_id)
-    .map(serializeActivity);
-  return res.json({ status: 'success', activity });
+  invalidateActivities(b.event_id);
+  return res.json({ status: 'success', activity: loadActivities(b.event_id, 50) });
 });
 
 // ─── Follow ───
@@ -524,6 +519,23 @@ router.get('/followers/:id', (req, res) => {
   return ok(res, rows.map((u) => serializeUser(u)));
 });
 
+// ─── Activités d'un live (chat, cadeaux, billets) ───
+// Avant : 100 lignes puis un serializeUser COMPLET par ligne (4 requêtes SQL
+// chacune : genres, abonnements, live en cours, …) -> ~400 requêtes par appel,
+// pour un écran qui ne montre que nom + photo + badge artiste, et que 500
+// spectateurs rafraîchissent en boucle. Désormais : UNE requête avec JOIN
+// users, un user_info allégé (mêmes noms de champs que User.fromJson côté
+// Flutter ; les champs absents sont simplement null côté app) et un cache
+// mémoire de 2 s par concert.
+const ACTIVITY_SELECT = `
+  SELECT a.id, a.user_id, a.event_id, a.type, a.description, a.points, a.gift, a.created_at, a.updated_at,
+         u.role AS u_role, u.full_name AS u_full_name, u.artist_name AS u_artist_name,
+         u.profile_image AS u_profile_image, u.is_verified AS u_is_verified,
+         u.is_featured AS u_is_featured, u.is_artist AS u_is_artist
+    FROM activities a LEFT JOIN users u ON u.id = a.user_id
+   WHERE a.event_id = ?
+   ORDER BY a.id DESC LIMIT ?`;
+
 function serializeActivity(row) {
   return {
     id: row.id,
@@ -533,12 +545,48 @@ function serializeActivity(row) {
     description: row.description,
     points: row.points,
     gift: row.gift,
+    // user_info allégé : ce que les écrans live affichent (nom, photo,
+    // artiste / vérifié). Pas d'e-mail ni de wallet (données privées).
     user_info: row.user_id
-      ? serializeUser(db.prepare('SELECT * FROM users WHERE id = ?').get(row.user_id))
+      ? {
+          id: row.user_id,
+          role: row.u_role ?? null,
+          full_name: row.u_full_name ?? null,
+          artist_name: row.u_artist_name ?? null,
+          profile_image: profileUrl(row.u_profile_image),
+          is_verified: row.u_is_verified ?? null,
+          is_featured: !!row.u_is_featured,
+          is_artist: !!row.u_is_artist,
+        }
       : null,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
+}
+
+function loadActivities(eventId, limit) {
+  return db.prepare(ACTIVITY_SELECT).all(eventId, limit).map(serializeActivity);
+}
+
+// Cache mémoire par concert (2 s) pour /event-logs : 500 spectateurs qui
+// interrogent toutes les secondes = 1 requête SQL toutes les 2 s au lieu de
+// 500. Invalidé dès qu'une activité est ajoutée (commentaire, cadeau).
+const EVENT_LOGS_TTL_MS = 2000;
+const eventLogsCache = new Map(); // event_id -> { at, activity }
+function cachedActivities(eventId) {
+  const key = String(eventId);
+  const hit = eventLogsCache.get(key);
+  const now = Date.now();
+  if (hit && now - hit.at < EVENT_LOGS_TTL_MS) return hit.activity;
+  const activity = loadActivities(eventId, 100);
+  eventLogsCache.set(key, { at: now, activity });
+  if (eventLogsCache.size > 500) {
+    for (const [k, v] of eventLogsCache) if (now - v.at >= EVENT_LOGS_TTL_MS) eventLogsCache.delete(k);
+  }
+  return activity;
+}
+function invalidateActivities(eventId) {
+  eventLogsCache.delete(String(eventId));
 }
 
 module.exports = router;
