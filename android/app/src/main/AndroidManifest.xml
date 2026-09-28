@@ -21,7 +21,10 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    
+    <!-- Android 13+ : sans cette permission, la demande de notifications
+         n'apparaît jamais et aucune notification push n'est affichée. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:label="VybzzZ"
         android:name="${applicationName}"
