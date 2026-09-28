@@ -164,7 +164,7 @@ Future<void> myLoadingDialog({String? title, bool showLoader = false}) async {
     barrierDismissible: showLoader,
     context: Get.context!,
     builder: (context) {
-      return LoadingDialog(message: title ?? "Loading");
+      return LoadingDialog(message: title ?? 'common_loading'.tr);
     },
   );
 }
@@ -247,14 +247,17 @@ Future<dynamic> myAlertDialog({
         content: Text(content, style: TextStyle(color: textMuted)),
         actions: [
           TextButton(
-            child: Text('No', style: TextStyle(color: greyColor)),
+            child: Text('common_no'.tr, style: TextStyle(color: greyColor)),
             onPressed: () {
               Get.back();
             },
           ),
           TextButton(
             onPressed: onTap,
-            child: Text('Yes', style: TextStyle(color: mainThemeColor)),
+            child: Text(
+              'common_yes'.tr,
+              style: TextStyle(color: mainThemeColor),
+            ),
           ),
         ],
       );
@@ -264,6 +267,11 @@ Future<dynamic> myAlertDialog({
 
 /// Parse Error
 
+// Un seul dialogue « Connexion impossible » à la fois : au démarrage,
+// plusieurs appels échouent en même temps hors ligne, et chacun affichait
+// son propre dialogue par-dessus les autres.
+bool _networkDialogOpen = false;
+
 dynamic parseError(
   String value, {
   bool doBack = false,
@@ -272,7 +280,8 @@ dynamic parseError(
   if (doBack) {
     Get.back();
   }
-  String message = 'Something went wrong';
+  String message = 'common_something_wrong'.tr;
+  String? code;
   try {
     final data = value.split('error ').last;
     final error = jsonDecode(data);
@@ -280,6 +289,9 @@ dynamic parseError(
     // Message principal renvoye par l'API
     if (error is Map && error['message'] != null) {
       message = error['message'].toString();
+    }
+    if (error is Map && error['code'] != null) {
+      code = error['code'].toString();
     }
 
     // Erreurs de validation detaillees (style Laravel : {"errors": {"champ": ["..."]}})
@@ -302,7 +314,16 @@ dynamic parseError(
     if (raw.isNotEmpty && raw.length < 200) message = raw;
   }
 
-  if (showDialog) myWarningDialog(subtitle: message);
+  if (!showDialog) return;
+  if (code == 'network') {
+    if (_networkDialogOpen) return;
+    _networkDialogOpen = true;
+    myWarningDialog(subtitle: message).whenComplete(() {
+      _networkDialogOpen = false;
+    });
+    return;
+  }
+  myWarningDialog(subtitle: message);
 }
 
 /// Calculate total watch time from a list of events

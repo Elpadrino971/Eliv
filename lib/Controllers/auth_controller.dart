@@ -43,8 +43,9 @@ class AuthController extends GetxController {
     try {
       value = await response.hitAPI();
     } catch (_) {
-      // Pas de réseau / serveur injoignable : on ferme le loader et on
-      // l'explique doucement, au lieu de laisser le loader tourner.
+      // Filet de sécurité : hitAPI ne lève plus d'exception (une coupure
+      // réseau renvoie `error {"code":"network",…}`, traité plus bas via
+      // _errorCode), mais on garde ce chemin au cas où.
       Get.back();
       await showLoginFailedSheet(code: 'network', email: email);
       return;
