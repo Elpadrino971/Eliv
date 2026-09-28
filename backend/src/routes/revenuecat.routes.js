@@ -65,6 +65,84 @@ function resolveUserIdByEmail(event) {
   return row ? row.id : null;
 }
 
+function isRefundEvent(event) {
+  const type = String(event.type || '').toUpperCase();
+  if (type === 'REFUND') return true; // défensif : n'existe pas chez RevenueCat aujourd'hui
+  return type === 'CANCELLATION' && String(event.cancel_reason || '').toUpperCase() === 'CUSTOMER_SUPPORT';
+}
+
+// Remboursement d'un billet (ticket_<n>) ou d'un pack de points. Dédupliqué
+// par rc_processed_events (clé « refund:<event.id> »).
+//  - billet : retrouvé par l'identifiant de transaction (tickets.rc_transaction_id
+//    = store_transaction_id ou id RevenueCat), sinon par (user, palier de prix)
+//    quand il n'y a qu'un seul billet candidat -> status 'refunded', part
+//    artiste reprise, ledger négatif (event_access.refundTicket).
+//  - points : solde débité du pack, jamais sous 0, trace dans wallet_transactions.
+function handleRefund(event, userId, productId, pack) {
+  const access = require('../services/event_access');
+  const evId = `refund:${event.id || `${event.app_user_id}:${event.transaction_id || productId}:${event.event_timestamp_ms || ''}`}`;
+  if (db.prepare('SELECT 1 FROM rc_processed_events WHERE event_id = ?').get(evId)) return;
+  const mark = () => db.prepare('INSERT OR IGNORE INTO rc_processed_events (event_id) VALUES (?)').run(evId);
+
+  if (/^ticket_\d+$/.test(productId)) {
+    const txIds = [event.transaction_id, event.original_transaction_id].filter(Boolean).map(String);
+    let ticket = txIds.length
+      ? db.prepare(
+          `SELECT * FROM tickets WHERE rc_transaction_id IN (${txIds.map(() => '?').join(',')}) AND COALESCE(status, 'active') <> 'refunded'`
+        ).get(...txIds)
+      : null;
+    if (!ticket && userId) {
+      // Repli : billets store (rc_transaction_id renseigné) de ce user au même
+      // palier de prix. Un seul candidat -> on le prend ; sinon action manuelle.
+      const tier = Number(productId.slice('ticket_'.length));
+      const cands = db.prepare(
+        `SELECT * FROM tickets WHERE user_id = ? AND rc_transaction_id IS NOT NULL AND rc_transaction_id NOT LIKE '%:%'
+            AND COALESCE(status, 'active') <> 'refunded' AND CAST(price_paid AS REAL) >= ? AND CAST(price_paid AS REAL) < ?
+          ORDER BY id DESC`
+      ).all(userId, tier, tier + 1);
+      if (cands.length === 1) ticket = cands[0];
+      else if (cands.length > 1) console.warn(`[revenuecat webhook] remboursement ${productId} user=${userId} : ${cands.length} billets candidats, choisir à la main`);
+    }
+    if (!ticket) {
+      console.warn(`[revenuecat webhook] REMBOURSEMENT BILLET NON ATTRIBUÉ user=${userId || '?'} product=${productId} tx=${event.transaction_id || '?'} -> retirer le billet à la main`);
+      return;
+    }
+    const r = access.refundTicket(ticket.id, { reason: `remboursement store (RevenueCat, tx ${event.transaction_id || '?'})` });
+    mark();
+    console.log(`[revenuecat webhook] billet #${ticket.id} -> ${r.status} (user ${ticket.user_id})`);
+    return;
+  }
+
+  if (pack) {
+    if (!userId) {
+      console.warn(`[revenuecat webhook] REMBOURSEMENT DE POINTS NON ATTRIBUÉ pack=${productId} tx=${event.transaction_id || '?'} -> débit manuel requis`);
+      return;
+    }
+    db.transaction(() => {
+      mark();
+      const user = db.prepare('SELECT points FROM users WHERE id = ?').get(userId);
+      if (!user) return;
+      const balance = parseFloat(user.points) || 0;
+      const packPts = parseFloat(pack.points) || 0;
+      const debit = Math.min(balance, packPts); // jamais négatif : le reste a déjà été dépensé
+      db.prepare('UPDATE users SET points = ? WHERE id = ?').run((balance - debit).toFixed(2), userId);
+      db.prepare(
+        `INSERT INTO wallet_transactions
+           (user_id, role, direction, type, title, description, amount, source, source_id)
+         VALUES (?, 'points', 'debit', 'refund', ?, ?, ?, 'revenuecat', ?)`
+      ).run(userId, 'Remboursement de points', `Pack ${productId} remboursé par le store`, String(debit), String(event.transaction_id || evId));
+      if (debit < packPts) {
+        console.warn(`[revenuecat webhook] remboursement pack ${productId} user=${userId} : ${packPts} pts remboursés mais ${balance} au solde -> ${debit} repris, ${packPts - debit} déjà dépensés`);
+      }
+      console.log(`[revenuecat webhook] -${debit} points -> user ${userId} (remboursement pack ${productId})`);
+    })();
+    return;
+  }
+
+  // Abonnement remboursé : EXPIRATION suivra (RevenueCat) ; rien à faire ici.
+  console.log(`[revenuecat webhook] remboursement ${productId} (user ${userId || '?'}) : ni billet ni pack, ignoré`);
+}
+
 // Sans REVENUECAT_WEBHOOK_AUTH, n'importe qui peut POSTer ce endpoint avec un
 // faux event INITIAL_PURCHASE et s'auto-créditer des points/un abonnement
 // gratuitement -> vérifier au démarrage que le secret est bien configuré.
@@ -89,7 +167,13 @@ router.post('/', (req, res) => {
   }
 
   const event = req.body?.event || {};
-  console.log(`[revenuecat webhook] ${event.type}`);
+  console.log(`[revenuecat webhook] ${event.type}${event.environment ? ` (${event.environment})` : ''}`);
+
+  // Achats sandbox (TestFlight, testeurs Play) : aucun argent encaissé -> en
+  // production on accuse réception sans rien créditer (points, abonnement).
+  if (process.env.NODE_ENV === 'production' && String(event.environment || '').toUpperCase() === 'SANDBOX') {
+    return res.json({ received: true, ignored: 'sandbox' });
+  }
 
   try {
     // 1) ID numérique (app_user_id / original / alias) ; 2) sinon, repli par
@@ -102,6 +186,16 @@ router.post('/', (req, res) => {
     const pack = productId
       ? db.prepare('SELECT id, points FROM packages WHERE revenuecat_product_id = ?').get(productId)
       : null;
+
+    // ── Remboursement par le store (Apple / Google) ──
+    // RevenueCat n'émet pas d'évènement « REFUND » : un remboursement arrive
+    // en CANCELLATION avec cancel_reason = CUSTOMER_SUPPORT (« customer
+    // cancelled through Apple/Google support and received a refund »), pour
+    // un abonnement comme pour un consommable (billet, pack de points).
+    if (productId && isRefundEvent(event)) {
+      handleRefund(event, userId, productId, pack);
+      return res.json({ received: true });
+    }
     if (pack && PURCHASE_EVENTS.has(event.type)) {
       // Achat de points reconnu mais impossible à rattacher à un utilisateur
       // (identité anonyme) : on le LOG explicitement pour crédit manuel plutôt

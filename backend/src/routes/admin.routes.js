@@ -15,6 +15,7 @@ const anthropic = require('../services/anthropic');
 const apporteurBonus = require('../services/apporteur_bonus');
 const statements = require('../services/statements');
 const geo = require('../services/geo');
+const eventAccess = require('../services/event_access');
 const truthy = (v) => v === true || v === 1 || v === '1' || v === 'true' || v === 'on';
 const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
 
@@ -424,13 +425,26 @@ function computeGeoBlockUntil(startIso, hoursRaw) {
   return new Date(base + hours * 60 * 60 * 1000).toISOString();
 }
 
+// Prix (grille fermée = produits store) + date de début (ISO UTC « Z ») d'un
+// concert créé/édité depuis l'admin. Renvoie { error } ou { price, startUtc }.
+function validateEventInput(b) {
+  const price = eventAccess.normalizeTicketPrice(b.ticket_price);
+  if (!price.ok) return { error: price.error };
+  const tzOffset = Number(b.tz_offset_minutes) || 0;
+  const startUtc = localToUtcIso(b.start_date_time, tzOffset);
+  const start = eventAccess.normalizeIsoUtc(startUtc, 'Date/heure de début');
+  if (!start.ok) return { error: start.error };
+  return { price: price.value, startUtc: start.value, tzOffset };
+}
+
 router.post('/events', requireAdmin, (req, res) => {
   const b = req.body || {};
   const cover = saveUpload(req, ['cover', 'cover_image', 'image'], 'covers', 'events/covers') || b.cover_image || null;
   if (!b.name) return res.status(422).json({ status: 'error', message: 'Le nom est requis.' });
-  const tzOffset = Number(b.tz_offset_minutes) || 0;
+  const v = validateEventInput(b);
+  if (v.error) return res.status(422).json({ status: 'error', message: v.error });
+  const { tzOffset, startUtc } = v;
   const { replayEnabled, replayDays } = parseReplay(b);
-  const startUtc = localToUtcIso(b.start_date_time, tzOffset);
   db.prepare(
     `INSERT INTO events (artist_id, name, cover_image, ticket_price, start_date_time, tz_offset_minutes, genre_id,
         description, status, mux_playback_id, mux_live_playback_id, video_reel, is_banner,
@@ -439,7 +453,7 @@ router.post('/events', requireAdmin, (req, res) => {
         @replayEnabled, @replayDays, @geoMode, @geoCountries, @geoBlockUntil)`
   ).run({
     artist_id: b.artist_id || null, name: b.name, cover,
-    price: b.ticket_price || '0', start: startUtc, tzOffset, genre: b.genre_id || null,
+    price: v.price, start: startUtc, tzOffset, genre: b.genre_id || null,
     desc: b.description || null, status: b.status || 'published',
     mux: b.mux_playback_id || null, muxLive: b.status === 'live' ? (b.mux_playback_id || null) : null,
     reel: muxHls(b.mux_playback_id), banner: b.is_banner ? 1 : 0,
@@ -453,9 +467,10 @@ router.post('/events', requireAdmin, (req, res) => {
 router.put('/events/:id', requireAdmin, (req, res) => {
   const b = req.body || {};
   const cover = saveUpload(req, ['cover', 'cover_image', 'image'], 'covers', 'events/covers') || b.cover_image || null;
-  const tzOffset = Number(b.tz_offset_minutes) || 0;
+  const v = validateEventInput(b);
+  if (v.error) return res.status(422).json({ status: 'error', message: v.error });
+  const { tzOffset, startUtc } = v;
   const { replayEnabled, replayDays } = parseReplay(b);
-  const startUtc = localToUtcIso(b.start_date_time, tzOffset);
   db.prepare(
     `UPDATE events SET artist_id = @artist_id, name = @name, cover_image = @cover,
         ticket_price = @price, start_date_time = @start, tz_offset_minutes = @tzOffset, genre_id = @genre, description = @desc,
@@ -466,7 +481,7 @@ router.put('/events/:id', requireAdmin, (req, res) => {
      WHERE id = @id`
   ).run({
     id: req.params.id, artist_id: b.artist_id || null, name: b.name, cover,
-    price: b.ticket_price || '0', start: startUtc, tzOffset, genre: b.genre_id || null,
+    price: v.price, start: startUtc, tzOffset, genre: b.genre_id || null,
     desc: b.description || null, status: b.status || 'published',
     mux: b.mux_playback_id || null, muxLive: b.status === 'live' ? (b.mux_playback_id || null) : null,
     reel: muxHls(b.mux_playback_id), banner: b.is_banner ? 1 : 0,
@@ -643,6 +658,35 @@ router.post('/campaign/:slug/event', requireAdmin, (req, res) => {
   wheel.linkEvent(req.params.slug, ev.id);
   const n = wheel.grantAllClaimed(req.params.slug);
   return res.json({ status: 'success', message: `Relié à « ${ev.name} » (${ev.ticket_price} €). ${n} place(s) gagnée(s) attribuée(s).` });
+});
+
+// ─── Places en attente (roue / billetterie du site) ───
+// Une place n'est attribuée automatiquement qu'à un compte dont l'e-mail est
+// VÉRIFIÉ. Ici l'admin voit celles qui attendent encore et peut en attribuer
+// une à la main à un compte (personne inscrite avec une autre adresse, OTP
+// jamais reçu…). GET /admin/pending-tickets · POST /admin/pending-tickets/:id/assign {user_id}
+router.get('/pending-tickets', requireAdmin, (req, res) => {
+  const access = require('../services/event_access');
+  return res.json({ status: 'success', data: access.listPending({ limit: 500 }) });
+});
+router.post('/pending-tickets/:id/assign', requireAdmin, (req, res) => {
+  const access = require('../services/event_access');
+  const userId = Number(req.body?.user_id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return res.status(422).json({ status: 'error', message: 'user_id requis.' });
+  }
+  try {
+    const r = access.assignPendingToUser(req.params.id, userId);
+    if (r.error) return res.status(r.code || 422).json({ status: 'error', message: r.error });
+    return res.json({
+      status: 'success',
+      message: r.already ? `Le compte #${r.userId} avait déjà ce billet (#${r.ticketId}).` : `Place attribuée au compte #${r.userId} (billet #${r.ticketId}).`,
+      data: { ticket_id: r.ticketId, user_id: r.userId, already: !!r.already },
+    });
+  } catch (e) {
+    console.error('[admin pending-tickets] attribution :', e.message);
+    return res.status(500).json({ status: 'error', message: 'Attribution impossible.' });
+  }
 });
 
 // ─── Agenda régional (concerts collectés sur des sources publiques) ───

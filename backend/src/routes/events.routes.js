@@ -3,7 +3,8 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
-const { serializeEvent, serializeUser, ok, fail, genReceipt, resolveArtistCommission, splitAmount, isGeoBlocked } = require('../helpers');
+const dbPayments = require('../db_payments'); // migrations paiements (lot 2D)
+const { serializeEvent, serializeUser, profileUrl, ok, fail, genReceipt, resolveArtistCommission, splitAmount, isGeoBlocked } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
 const moderation = require('../services/moderation');
@@ -12,6 +13,12 @@ const apporteurBonus = require('../services/apporteur_bonus');
 const revenuecat = require('../services/revenuecat');
 const livebus = require('../services/livebus');
 const badges = require('../services/badges');
+const eventAccess = require('../services/event_access');
+const geo = require('../services/geo');
+
+// Délai avant le 2e essai de vérification RevenueCat dans /buy-ticket
+// (latence de synchro du reçu). Surchargeable pour les tests.
+const RC_RETRY_DELAY_MS = Number(process.env.RC_RETRY_DELAY_MS) || 1500;
 
 // Nom affichable d'un utilisateur pour les écrans live (jamais l'e-mail).
 function liveName(userId) {
@@ -84,7 +91,18 @@ router.get('/event/:id', optionalAuth, (req, res) => {
 // par le client, pour qu'un user ne puisse pas créer un event au nom d'un autre.
 router.post('/events', requireAuth, async (req, res) => {
   const b = req.body || {};
+  // Seul un compte ARTISTE crée des concerts (un fan pouvait en créer et
+  // encaisser des billets/tips sur son wallet).
+  if (Number(req.user.is_artist) !== 1) return fail(res, 'Réservé aux artistes.', 403);
   if (!b.name) return fail(res, 'Le nom est requis.', 422, { name: ['Le nom est requis.'] });
+
+  // Prix : grille fermée (produit store ticket_<n>) ; dates : ISO UTC « Z ».
+  const price = eventAccess.normalizeTicketPrice(b.ticket_price);
+  if (!price.ok) return fail(res, price.error, 422, { ticket_price: [price.error] });
+  const startAt = eventAccess.normalizeIsoUtc(b.start_date_time, 'start_date_time');
+  if (!startAt.ok) return fail(res, startAt.error, 422, { start_date_time: [startAt.error] });
+  const endAt = eventAccess.normalizeIsoUtc(b.end_date_time, 'end_date_time');
+  if (!endAt.ok) return fail(res, endAt.error, 422, { end_date_time: [endAt.error] });
 
   // Modération texte du titre + description avant création (bloque le grave).
   const textVerdict = await moderation.reviewText(
@@ -111,7 +129,7 @@ router.post('/events', requireAuth, async (req, res) => {
         genre_id, description, video_reel, is_private, has_live_chat, replay_enabled, replay_duration_days, status)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'published')`
   ).run(
-    req.user.id, b.name, cover, b.ticket_price || '0', b.start_date_time || null, b.end_date_time || null,
+    req.user.id, b.name, cover, price.value, startAt.value, endAt.value,
     b.genre_id || null, b.description || null, videoReel,
     (b.is_private === '1' || b.is_private === true) ? 1 : 0,
     b.has_live_chat === '0' ? 0 : 1,
@@ -148,16 +166,18 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
   if (!event) return fail(res, 'Event not found.', 404);
 
   // Géo-blocage : certains concerts sont restreints par secteur (pour ne pas
-  // cannibaliser l'événement physique). Le pays vient de l'app (country_code)
-  // ou d'un en-tête reverse-proxy. Pays inconnu -> non bloqué (soft).
-  const country = (b.country_code || req.headers['cf-ipcountry'] || req.headers['x-country'] || '').toString();
+  // cannibaliser l'événement physique). Le pays vient de l'IP côté serveur
+  // (services/geo.js, base locale) — plus du body ni d'un en-tête, que le
+  // client pouvait forger. Pays inconnu (IP locale, base absente) -> non
+  // bloqué (soft). `country_code` envoyé par l'app est ignoré.
+  const country = (geo.fromIp(req.ip) || {}).code || '';
   if (isGeoBlocked(event, country)) {
     return fail(res, "Ce concert n'est pas disponible en ligne dans ta région — rejoins l'événement sur place !", 451);
   }
 
-  // Déjà acheté -> idempotent.
+  // Déjà acheté -> idempotent (un billet remboursé ne compte plus).
   const already = db
-    .prepare('SELECT * FROM tickets WHERE event_id = ? AND user_id = ?')
+    .prepare("SELECT * FROM tickets WHERE event_id = ? AND user_id = ? AND COALESCE(status, 'active') <> 'refunded'")
     .get(b.event_id, userId);
   if (already) {
     return ok(res, serializeEvent(event, { currentUserId: userId }));
@@ -172,23 +192,43 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
     // RevenueCat. On dérive le même id et on confirme l'achat côté serveur.
     const productId = `ticket_${Math.floor(gross)}`;
     if (revenuecat.isConfigured()) {
-      let purchases = [];
-      try {
-        purchases = await revenuecat.nonSubscriptionPurchases(userId, productId);
-      } catch (e) {
-        console.error('[buy-ticket] RevenueCat verify:', e.message);
-        return fail(res, 'Vérification du paiement indisponible, réessaie.', 503);
-      }
-      // Un achat non encore consommé par un billet.
-      const fresh = purchases.find((p) => {
-        const tid = String(p.id || p.store_transaction_id || p.purchase_date || '');
-        if (!tid) return false;
-        return !db.prepare('SELECT 1 FROM tickets WHERE rc_transaction_id = ?').get(tid);
+      // Un achat non encore consommé par un billet. En production, les achats
+      // sandbox sont déjà écartés par le service (voir services/revenuecat.js).
+      // Identifiant du reçu : on préfère store_transaction_id (c'est celui que
+      // le webhook RevenueCat renvoie en transaction_id lors d'un remboursement)
+      // ; repli sur l'id interne RevenueCat. Les deux formes sont testées pour
+      // l'anti-rejeu (billets créés avant ce choix).
+      const txIds = (p) => [p.store_transaction_id, p.id, p.purchase_date].filter(Boolean).map(String);
+      const findFresh = (purchases) => purchases.find((p) => {
+        const ids = txIds(p);
+        if (!ids.length) return false;
+        return !db.prepare(`SELECT 1 FROM tickets WHERE rc_transaction_id IN (${ids.map(() => '?').join(',')})`).get(...ids);
       });
+      let fresh = null;
+      // L'app appelle /buy-ticket juste après le retour du store : le reçu met
+      // parfois 1-2 s à apparaître côté RevenueCat -> un 2e essai après 1,5 s
+      // avant de renvoyer un 402 (sinon « achat introuvable » alors que la
+      // personne vient de payer).
+      for (let attempt = 0; attempt < 2 && !fresh; attempt++) {
+        if (attempt > 0) await new Promise((r) => setTimeout(r, RC_RETRY_DELAY_MS));
+        try {
+          fresh = findFresh(await revenuecat.nonSubscriptionPurchases(userId, productId)) || null;
+        } catch (e) {
+          console.error(`[buy-ticket] RevenueCat verify (user=${userId} product=${productId}):`, e.message);
+          const msg = e.code === 'RC_TIMEOUT'
+            ? 'Vérification du paiement trop lente (RevenueCat ne répond pas), réessaie dans un instant.'
+            : 'Vérification du paiement indisponible, réessaie.';
+          return fail(res, msg, 503);
+        }
+      }
       if (!fresh) {
+        // Trace explicite pour le support : la personne a peut-être payé
+        // (reçu non encore synchronisé, ou achat rattaché à un autre
+        // app_user_id) -> attribution manuelle possible depuis l'admin.
+        console.warn(`[buy-ticket] ACHAT BILLET NON ATTRIBUÉ user=${userId} product=${productId} event=${event.id}`);
         return fail(res, 'Aucun achat valide trouvé pour ce billet.', 402);
       }
-      rcTransactionId = String(fresh.id || fresh.store_transaction_id || fresh.purchase_date);
+      rcTransactionId = txIds(fresh)[0];
     } else if (process.env.NODE_ENV === 'production') {
       // En prod, on refuse plutôt que de créditer sans preuve de paiement.
       return fail(res, 'Paiement non vérifiable (configuration serveur).', 503);
@@ -253,13 +293,15 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
 });
 
 // POST /api/user-event-history  (body: { user_id })  -> { status, list: [...] }
-router.post('/user-event-history', optionalAuth, (req, res) => {
-  const userId = req.user?.id || req.body?.user_id;
+// L'identité vient UNIQUEMENT du JWT : avec user_id du body, n'importe qui
+// pouvait lister les billets (et donc les concerts) d'un autre compte.
+router.post('/user-event-history', requireAuth, (req, res) => {
+  const userId = req.user.id;
   const rows = db
     .prepare(
       `SELECT DISTINCT e.* FROM events e
        JOIN tickets t ON t.event_id = e.id
-       WHERE t.user_id = ?
+       WHERE t.user_id = ? AND COALESCE(t.status, 'active') <> 'refunded'
        ORDER BY datetime(e.start_date_time) ASC`
     )
     .all(userId);
@@ -286,20 +328,18 @@ router.post('/event-comment', optionalAuth, async (req, res) => {
     `INSERT INTO activities (user_id, event_id, type, description)
      VALUES (?, ?, 'comment', ?)`
   ).run(userId, b.event_id, b.comment || '');
-  const activity = db
-    .prepare('SELECT * FROM activities WHERE event_id = ? ORDER BY id DESC LIMIT 50')
-    .all(b.event_id)
-    .map(serializeActivity);
-  return res.json({ status: 'success', activity });
+  invalidateActivities(b.event_id);
+  return res.json({ status: 'success', activity: loadActivities(b.event_id, 50) });
 });
 
 // POST /api/event-logs  (body: { event_id }) -> { status, activity: [...] }
+// Chemin le plus chaud d'un live (polling de tous les spectateurs) : requête
+// unique + cache 2 s (voir cachedActivities).
 router.post('/event-logs', (req, res) => {
-  const activity = db
-    .prepare('SELECT * FROM activities WHERE event_id = ? ORDER BY id DESC LIMIT 100')
-    .all(req.body?.event_id)
-    .map(serializeActivity);
-  return res.json({ status: 'success', activity });
+  const eventId = Number(req.body?.event_id);
+  if (!Number.isFinite(eventId) || eventId <= 0) return res.json({ status: 'success', activity: [] });
+  res.set('Cache-Control', 'private, max-age=2');
+  return res.json({ status: 'success', activity: cachedActivities(eventId) });
 });
 
 // POST /api/events/update/:id  (body: { status })
@@ -417,14 +457,23 @@ router.post('/event-gift', optionalAuth, (req, res) => {
 
   // Split commission (cadeau en POINTS) : l'artiste reçoit sa part, le reste va
   // à la plateforme (tracé dans platform_earnings). Taux depuis son abonnement.
+  //
+  // UNITÉS (ne pas confondre) :
+  //  - `cost`, `artistShare`, `platformShare` et la ligne platform_earnings
+  //    source='gift' sont en POINTS (100 pts = 1 €) — statements.js,
+  //    /artist/dashboard-stats et /artist/revenue-transactions divisent par 100.
+  //  - `users.wallet` est en EUROS (c'est ce que débitent les retraits et ce
+  //    que créditent les billets) -> on convertit AVANT de créditer. Avant ce
+  //    correctif, les points étaient ajoutés tels quels au wallet (×100).
   const rate = resolveArtistCommission(event?.artist_id);
   const { artistShare, platformShare } = splitAmount(cost, rate);
+  const artistShareEur = artistShare / 100;
   const send = db.transaction(() => {
     if (cost > 0) {
       db.prepare('UPDATE users SET points = ? WHERE id = ?').run((balance - cost).toFixed(2), userId);
       if (event?.artist_id) {
         const artist = db.prepare('SELECT wallet FROM users WHERE id = ?').get(event.artist_id);
-        const artistWallet = (parseFloat(artist?.wallet) || 0) + artistShare;
+        const artistWallet = (parseFloat(artist?.wallet) || 0) + artistShareEur;
         db.prepare('UPDATE users SET wallet = ? WHERE id = ?').run(artistWallet.toFixed(2), event.artist_id);
         db.prepare(
           `INSERT INTO platform_earnings (artist_id, source, source_id, gross, artist_share, platform_share, commission_rate)
@@ -446,11 +495,8 @@ router.post('/event-gift', optionalAuth, (req, res) => {
     badges.refresh(b.event_id); // 💸 Meilleur Tippeur / 👑 Top Supporter (règles + marge)
   } catch (_) { /* jamais bloquant */ }
 
-  const activity = db
-    .prepare('SELECT * FROM activities WHERE event_id = ? ORDER BY id DESC LIMIT 50')
-    .all(b.event_id)
-    .map(serializeActivity);
-  return res.json({ status: 'success', activity });
+  invalidateActivities(b.event_id);
+  return res.json({ status: 'success', activity: loadActivities(b.event_id, 50) });
 });
 
 // ─── Follow ───
@@ -478,6 +524,23 @@ router.get('/followers/:id', (req, res) => {
   return ok(res, rows.map((u) => serializeUser(u)));
 });
 
+// ─── Activités d'un live (chat, cadeaux, billets) ───
+// Avant : 100 lignes puis un serializeUser COMPLET par ligne (4 requêtes SQL
+// chacune : genres, abonnements, live en cours, …) -> ~400 requêtes par appel,
+// pour un écran qui ne montre que nom + photo + badge artiste, et que 500
+// spectateurs rafraîchissent en boucle. Désormais : UNE requête avec JOIN
+// users, un user_info allégé (mêmes noms de champs que User.fromJson côté
+// Flutter ; les champs absents sont simplement null côté app) et un cache
+// mémoire de 2 s par concert.
+const ACTIVITY_SELECT = `
+  SELECT a.id, a.user_id, a.event_id, a.type, a.description, a.points, a.gift, a.created_at, a.updated_at,
+         u.role AS u_role, u.full_name AS u_full_name, u.artist_name AS u_artist_name,
+         u.profile_image AS u_profile_image, u.is_verified AS u_is_verified,
+         u.is_featured AS u_is_featured, u.is_artist AS u_is_artist
+    FROM activities a LEFT JOIN users u ON u.id = a.user_id
+   WHERE a.event_id = ?
+   ORDER BY a.id DESC LIMIT ?`;
+
 function serializeActivity(row) {
   return {
     id: row.id,
@@ -487,12 +550,48 @@ function serializeActivity(row) {
     description: row.description,
     points: row.points,
     gift: row.gift,
+    // user_info allégé : ce que les écrans live affichent (nom, photo,
+    // artiste / vérifié). Pas d'e-mail ni de wallet (données privées).
     user_info: row.user_id
-      ? serializeUser(db.prepare('SELECT * FROM users WHERE id = ?').get(row.user_id))
+      ? {
+          id: row.user_id,
+          role: row.u_role ?? null,
+          full_name: row.u_full_name ?? null,
+          artist_name: row.u_artist_name ?? null,
+          profile_image: profileUrl(row.u_profile_image),
+          is_verified: row.u_is_verified ?? null,
+          is_featured: !!row.u_is_featured,
+          is_artist: !!row.u_is_artist,
+        }
       : null,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
+}
+
+function loadActivities(eventId, limit) {
+  return db.prepare(ACTIVITY_SELECT).all(eventId, limit).map(serializeActivity);
+}
+
+// Cache mémoire par concert (2 s) pour /event-logs : 500 spectateurs qui
+// interrogent toutes les secondes = 1 requête SQL toutes les 2 s au lieu de
+// 500. Invalidé dès qu'une activité est ajoutée (commentaire, cadeau).
+const EVENT_LOGS_TTL_MS = 2000;
+const eventLogsCache = new Map(); // event_id -> { at, activity }
+function cachedActivities(eventId) {
+  const key = String(eventId);
+  const hit = eventLogsCache.get(key);
+  const now = Date.now();
+  if (hit && now - hit.at < EVENT_LOGS_TTL_MS) return hit.activity;
+  const activity = loadActivities(eventId, 100);
+  eventLogsCache.set(key, { at: now, activity });
+  if (eventLogsCache.size > 500) {
+    for (const [k, v] of eventLogsCache) if (now - v.at >= EVENT_LOGS_TTL_MS) eventLogsCache.delete(k);
+  }
+  return activity;
+}
+function invalidateActivities(eventId) {
+  eventLogsCache.delete(String(eventId));
 }
 
 module.exports = router;
