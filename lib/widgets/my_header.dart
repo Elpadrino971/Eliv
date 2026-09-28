@@ -56,7 +56,7 @@ class _MyHeaderState extends State<MyHeader> {
                 Get.to(() => LoginScreen());
               },
               child: Text(
-                'Skip',
+                'common_skip'.tr,
                 style: TextStyle(
                   color: textMuted,
                   fontWeight: FontWeight.w600,

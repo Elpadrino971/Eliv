@@ -168,7 +168,7 @@ class _StudioScreenState extends State<StudioScreen> {
                         ArtistGridCard(
                           img: 'assets/studio_icon3.png',
                           title: 'rev_revenue'.tr,
-                          count: '\$${event.totalRevenue ?? '0'}',
+                          count: '${event.totalRevenue ?? '0'} €',
                           onTap: () {
                             Get.to(() => RevenueScreen());
                           },
@@ -176,7 +176,7 @@ class _StudioScreenState extends State<StudioScreen> {
                         ArtistGridCard(
                           img: 'assets/studio_icon4.png',
                           title: 'rev_balance'.tr,
-                          count: '\$${event.currentWallet ?? '0'}',
+                          count: '${event.currentWallet ?? '0'} €',
                           onTap: () {
                             Get.to(() => RevenueScreen());
                           },

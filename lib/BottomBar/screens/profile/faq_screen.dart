@@ -29,7 +29,7 @@ class _FaqScreenState extends State<FaqScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Frequently Asked Questions'),
+      appBar: MyAppbar(title: 'faq_title'.tr),
       body: GetBuilder<SettingController>(
         builder: (controller) {
           final faqList = controller.management.value.list;
