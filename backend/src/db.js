@@ -910,6 +910,9 @@ function init() {
     // toujours '1234' pour tout le monde, sans expiration. Un vrai code
     // aléatoire doit expirer -> horodatage de validité.
     "ALTER TABLE users ADD COLUMN otp_expires_at TEXT",
+    // Compteur d'échecs de saisie du code : au 5e échec le code est invalidé
+    // (un code à 6 chiffres se devine sinon en < 1 M d'essais).
+    "ALTER TABLE users ADD COLUMN otp_attempts INTEGER DEFAULT 0",
     // Comptes "staff" (rôle role='staff') : accès admin RESTREINT à certains
     // modules seulement (CSV d'ids de modules, ex 'vibe'). Le super-admin
     // (role='admin') garde l'accès total. Vide/NULL = aucun accès.

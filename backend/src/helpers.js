@@ -259,6 +259,24 @@ function fail(res, message, code = 422, errors = null) {
   return res.status(code).json(body);
 }
 
+// Enveloppe un handler async : une promesse rejetée part dans le middleware
+// d'erreur d'Express au lieu de rester « unhandled » (et de faire tomber le
+// process ou de laisser la requête sans réponse).
+function asyncHandler(fn) {
+  return function wrapped(req, res, next) {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+}
+
+// E-mail masqué pour les journaux : `a***@domaine.tld`. On ne logge jamais
+// une adresse en clair (RGPD + les logs partent parfois hors du serveur).
+function maskEmail(email) {
+  const e = String(email || '').trim();
+  const at = e.indexOf('@');
+  if (at < 1) return e ? '***' : '';
+  return `${e[0]}***@${e.slice(at + 1)}`;
+}
+
 function genReceipt() {
   const n = Math.floor(1000 + Math.random() * 9000);
   const m = Math.floor(1000 + Math.random() * 9000);
@@ -370,4 +388,6 @@ module.exports = {
   platformCounters,
   payoutCountdown,
   isGeoBlocked,
+  asyncHandler,
+  maskEmail,
 };

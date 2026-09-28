@@ -10,6 +10,7 @@
  * que le domaine d'envoi est en cours de vérification côté Resend.
  */
 
+const crypto = require('crypto');
 const { db } = require('../db');
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
@@ -44,6 +45,8 @@ async function sendEmail({ to, subject, html, kind }) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ from: EMAIL_FROM, to: [to], subject, html }),
+    // Resend qui ne répond pas ne doit pas bloquer une inscription indéfiniment.
+    signal: AbortSignal.timeout(8000),
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -73,8 +76,11 @@ function usingSandboxSender() {
   return /resend\.dev/i.test(EMAIL_FROM);
 }
 
+// Code à 6 chiffres tiré du générateur cryptographique (Math.random est
+// prévisible : un attaquant observant quelques codes peut en déduire les
+// suivants).
 function generateOtp() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(crypto.randomInt(100000, 1000000));
 }
 
 const SITE = process.env.SITE_BASE_URL || 'https://vybzzz.online';
