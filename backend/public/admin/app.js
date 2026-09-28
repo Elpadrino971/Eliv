@@ -1307,8 +1307,22 @@ async function pageReports() {
 async function pageCampaign() {
   const slug = 'dj-wilson';
   view().innerHTML = '<div class="empty">Chargement…</div>';
-  const [{ data: c }, { data: events }] = await Promise.all([api('GET', '/campaign/' + slug), api('GET', '/events')]);
+  const [{ data: c }, { data: events }, { data: pending }] = await Promise.all([
+    api('GET', '/campaign/' + slug), api('GET', '/events'),
+    api('GET', '/pending-tickets').catch(() => ({ data: [] })),
+  ]);
   const count = (st) => (c.counts.find((x) => x.status === st) || {}).n || 0;
+  const waiting = (pending || []).filter((p) => p.status === 'pending');
+  const granted = (pending || []).filter((p) => p.status !== 'pending');
+  const SRC = { wheel: 'roue', stripe: 'site (carte)' };
+  const pendingRow = (p) => `<tr>
+      <td>#${p.id}</td><td>${esc(p.email)}</td><td>${esc(p.event_name || ('#' + p.event_id))}</td>
+      <td>${esc(SRC[p.source] || p.source)}${p.price_paid && p.price_paid !== '0' ? ' · ' + esc(p.price_paid) + ' €' : ''}</td>
+      <td>${p.account ? '#' + p.account.id + (p.account.is_verified ? ' (vérifié)' : ' <b style="color:#ff8a8a">(non vérifié)</b>') : '<span style="color:#8B94A8">aucun</span>'}</td>
+      <td>${fmtDate(p.created_at)}</td>
+      <td style="white-space:nowrap"><input id="pt-uid-${p.id}" type="number" min="1" placeholder="id" value="${p.account ? p.account.id : ''}" style="width:72px;background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:8px;padding:6px">
+        <button class="btn" data-assign="${p.id}">Attribuer à l'utilisateur #id</button></td>
+    </tr>`;
   const paid = c.orders.filter((o) => o.status === 'paid');
   const revenue = paid.reduce((t, o) => t + (parseFloat(o.amount) || 0), 0);
   const opts = (events || []).map((e) => `<option value="${e.id}" ${e.id === c.event_id ? 'selected' : ''}>#${e.id} · ${esc(e.name)} · ${esc(String(e.ticket_price))} €</option>`).join('');
@@ -1332,12 +1346,29 @@ async function pageCampaign() {
   <div class="tcard" style="margin-top:14px"><h3 style="color:var(--gold);margin-bottom:10px">Gagnants</h3>
     ${c.winners.length ? c.winners.map((w) => kv(esc(w.email), esc(w.status) + ' · ' + fmtDate(w.created_at))).join('') : '<div class="empty">Aucun gagnant pour le moment.</div>'}</div>
   <div class="tcard" style="margin-top:14px"><h3 style="color:var(--gold);margin-bottom:10px">Ventes sur le site</h3>
-    ${c.orders.length ? c.orders.map((o) => kv(esc(o.email), esc(o.amount) + ' € · ' + (o.status === 'paid' ? 'payé' : 'abandonné / en cours') + ' · ' + fmtDate(o.created_at))).join('') : '<div class="empty">Aucune vente.</div>'}</div>`;
+    ${c.orders.length ? c.orders.map((o) => kv(esc(o.email), esc(o.amount) + ' € · ' + (o.status === 'paid' ? 'payé' : o.status === 'refunded' ? 'remboursé' : 'abandonné / en cours') + ' · ' + fmtDate(o.created_at))).join('') : '<div class="empty">Aucune vente.</div>'}</div>
+  <div class="tcard" style="margin-top:14px"><h3 style="color:var(--gold);margin-bottom:6px">Places en attente</h3>
+    <p style="color:#8B94A8;font-size:13px;margin:0 0 10px">Une place (roue ou site) n'est ajoutée automatiquement qu'à un compte dont l'e-mail est <b>vérifié</b>. Si la personne n'y arrive pas, attribue-la ici à son compte (id utilisateur).</p>
+    ${waiting.length ? `<div style="overflow:auto"><table class="tbl"><thead><tr><th>#</th><th>E-mail</th><th>Concert</th><th>Origine</th><th>Compte trouvé</th><th>Depuis</th><th></th></tr></thead>
+      <tbody>${waiting.map(pendingRow).join('')}</tbody></table></div>` : '<div class="empty">Aucune place en attente.</div>'}
+    ${granted.length ? `<details style="margin-top:10px"><summary style="cursor:pointer;color:#8B94A8">${granted.length} place(s) déjà attribuée(s)</summary>
+      ${granted.slice(0, 200).map((p) => kv(esc(p.email), 'billet #' + p.ticket_id + ' · ' + esc(SRC[p.source] || p.source) + ' · ' + fmtDate(p.granted_at))).join('')}</details>` : ''}
+  </div>`;
   $('cp-link').onclick = async () => {
     const id = $('cp-ev').value; if (!id) return toast('Choisis le concert.');
     try { const r = await api('POST', '/campaign/' + slug + '/event', { event_id: id }); toast(r.message); } catch (e) { toast(e.message || 'Échec'); }
     pageCampaign();
   };
+  view().querySelectorAll('[data-assign]').forEach((btn) => {
+    btn.onclick = async () => {
+      const pid = btn.getAttribute('data-assign');
+      const uid = ($('pt-uid-' + pid).value || '').trim();
+      if (!uid) return toast("Indique l'id de l'utilisateur.");
+      if (!confirm(`Attribuer la place #${pid} au compte #${uid} ?`)) return;
+      try { const r = await api('POST', '/pending-tickets/' + pid + '/assign', { user_id: Number(uid) }); toast(r.message); } catch (e) { toast(e.message || 'Échec'); }
+      pageCampaign();
+    };
+  });
 }
 
 // Agenda régional — dates collectées sur des sources publiques (bizouk).

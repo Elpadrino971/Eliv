@@ -645,6 +645,35 @@ router.post('/campaign/:slug/event', requireAdmin, (req, res) => {
   return res.json({ status: 'success', message: `Relié à « ${ev.name} » (${ev.ticket_price} €). ${n} place(s) gagnée(s) attribuée(s).` });
 });
 
+// ─── Places en attente (roue / billetterie du site) ───
+// Une place n'est attribuée automatiquement qu'à un compte dont l'e-mail est
+// VÉRIFIÉ. Ici l'admin voit celles qui attendent encore et peut en attribuer
+// une à la main à un compte (personne inscrite avec une autre adresse, OTP
+// jamais reçu…). GET /admin/pending-tickets · POST /admin/pending-tickets/:id/assign {user_id}
+router.get('/pending-tickets', requireAdmin, (req, res) => {
+  const access = require('../services/event_access');
+  return res.json({ status: 'success', data: access.listPending({ limit: 500 }) });
+});
+router.post('/pending-tickets/:id/assign', requireAdmin, (req, res) => {
+  const access = require('../services/event_access');
+  const userId = Number(req.body?.user_id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return res.status(422).json({ status: 'error', message: 'user_id requis.' });
+  }
+  try {
+    const r = access.assignPendingToUser(req.params.id, userId);
+    if (r.error) return res.status(r.code || 422).json({ status: 'error', message: r.error });
+    return res.json({
+      status: 'success',
+      message: r.already ? `Le compte #${r.userId} avait déjà ce billet (#${r.ticketId}).` : `Place attribuée au compte #${r.userId} (billet #${r.ticketId}).`,
+      data: { ticket_id: r.ticketId, user_id: r.userId, already: !!r.already },
+    });
+  } catch (e) {
+    console.error('[admin pending-tickets] attribution :', e.message);
+    return res.status(500).json({ status: 'error', message: 'Attribution impossible.' });
+  }
+});
+
 // ─── Agenda régional (concerts collectés sur des sources publiques) ───
 // Écran de validation : rien n'apparaît avec un halo doré ni avec un prix
 // dans l'application tant que ça n'a pas été validé ici. Le tarif en
