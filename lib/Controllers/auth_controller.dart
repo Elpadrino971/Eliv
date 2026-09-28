@@ -279,6 +279,34 @@ class AuthController extends GetxController {
     });
   }
 
+  /// Changement de mot de passe depuis « Mot de passe et sécurité »
+  /// (utilisateur connecté). Le backend (/update-password) attend
+  /// `old_password` + `password`.
+  Future<void> updatePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    myLoadingDialog();
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.updatePasswordAPI;
+    response.bodySetter = {
+      'old_password': oldPassword,
+      'password': newPassword,
+    };
+    final value = await response.hitAPI();
+    if (value.split(' ').first != 'error') {
+      Get.back(); // ferme le loader
+      mySuccessDialog(
+        subtitle: 'sec_pwd_changed'.tr,
+        ontap: () {
+          Get.close(2); // dialogue + écran sécurité
+        },
+      );
+    } else {
+      parseError(value, doBack: true);
+    }
+  }
+
   Future<void> getGenres() async {
     response.typeSetter = 'get';
     response.urlSetter = APIs.getGenresAPI;
