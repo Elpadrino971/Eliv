@@ -14,7 +14,6 @@ import 'package:artist/Models/genre_model.dart';
 import 'package:artist/Models/packages_model.dart';
 import 'package:artist/Models/transactions_model.dart';
 import 'package:artist/Models/user_model.dart';
-import 'package:artist/Auth/complete_profile.dart';
 import 'package:artist/Auth/create_passwrod.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/artist_bottom_bar/artist_bottom_bar.dart';
@@ -138,11 +137,37 @@ class AuthController extends GetxController {
         // via le lien reçu (elle rattache les places gagnées ou achetées sur
         // le site), mais elle ne bloque plus l'entrée.
         userModel.value = userModelFromJson(value);
+        update();
+        Get.back(); // ferme le loader
+
+        // Exception : une place (roue ou billet acheté sur le site) attend
+        // cet e-mail -> le serveur renvoie `requires_verification: true`.
+        // Le compte reste en mémoire seulement (rien en stockage) tant que
+        // le code reçu n'est pas confirmé ; verifyOtp() finit l'entrée.
+        bool requiresVerification = false;
+        try {
+          final decoded = jsonDecode(value);
+          requiresVerification =
+              decoded is Map && decoded['requires_verification'] == true;
+        } catch (_) {}
+        if (requiresVerification) {
+          Get.off(() => OtpScreen(email: email));
+          Get.snackbar(
+            'signup_verify_place_title'.tr,
+            'signup_verify_place'.tr,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: cardDeep,
+            colorText: ivory,
+            margin: const EdgeInsets.all(14),
+            borderRadius: 14,
+            duration: const Duration(seconds: 6),
+          );
+          return;
+        }
+
         box.write('user', userModel.value.toJson());
         final id = userModel.value.user?.id;
         if (id != null) unawaited(SubscriptionController.syncIdentity(id));
-        update();
-        Get.back();
         Get.offAll(() => MyBottomBar(index: 2));
         Get.snackbar(
           'signup_welcome_title'.tr,
@@ -182,12 +207,15 @@ class AuthController extends GetxController {
                 () => CreatePasswrod(fromForget: true, email: email, otp: otp),
               );
             } else {
+              // Inscription confirmée (places rattachées côté serveur) :
+              // on mémorise la session et on entre directement sur le
+              // Live + Feed, comme après une inscription sans place.
               box.write('user', userModel.value.toJson());
               final id = userModel.value.user?.id;
               if (id != null) {
                 unawaited(SubscriptionController.syncIdentity(id));
               }
-              Get.to(() => CompleteProfile());
+              Get.offAll(() => MyBottomBar(index: 2));
             }
           },
         );
