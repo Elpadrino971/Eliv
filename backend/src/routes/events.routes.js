@@ -194,10 +194,15 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
     if (revenuecat.isConfigured()) {
       // Un achat non encore consommé par un billet. En production, les achats
       // sandbox sont déjà écartés par le service (voir services/revenuecat.js).
+      // Identifiant du reçu : on préfère store_transaction_id (c'est celui que
+      // le webhook RevenueCat renvoie en transaction_id lors d'un remboursement)
+      // ; repli sur l'id interne RevenueCat. Les deux formes sont testées pour
+      // l'anti-rejeu (billets créés avant ce choix).
+      const txIds = (p) => [p.store_transaction_id, p.id, p.purchase_date].filter(Boolean).map(String);
       const findFresh = (purchases) => purchases.find((p) => {
-        const tid = String(p.id || p.store_transaction_id || p.purchase_date || '');
-        if (!tid) return false;
-        return !db.prepare('SELECT 1 FROM tickets WHERE rc_transaction_id = ?').get(tid);
+        const ids = txIds(p);
+        if (!ids.length) return false;
+        return !db.prepare(`SELECT 1 FROM tickets WHERE rc_transaction_id IN (${ids.map(() => '?').join(',')})`).get(...ids);
       });
       let fresh = null;
       // L'app appelle /buy-ticket juste après le retour du store : le reçu met
@@ -223,7 +228,7 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
         console.warn(`[buy-ticket] ACHAT BILLET NON ATTRIBUÉ user=${userId} product=${productId} event=${event.id}`);
         return fail(res, 'Aucun achat valide trouvé pour ce billet.', 402);
       }
-      rcTransactionId = String(fresh.id || fresh.store_transaction_id || fresh.purchase_date);
+      rcTransactionId = txIds(fresh)[0];
     } else if (process.env.NODE_ENV === 'production') {
       // En prod, on refuse plutôt que de créditer sans preuve de paiement.
       return fail(res, 'Paiement non vérifiable (configuration serveur).', 503);
