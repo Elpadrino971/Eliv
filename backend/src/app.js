@@ -78,39 +78,61 @@ app.use(
 );
 
 const fs = require('fs');
-const uploadsDir = path.join(__dirname, '..', 'uploads');
+const uploads = require('./uploads');
+const uploadsDir = uploads.UPLOADS_TMP_DIR;
 fs.mkdirSync(uploadsDir, { recursive: true }); // dossier temp multer (créé au démarrage)
 // Limites d'upload : 200 Mo/fichier et 12 fichiers max (les grosses vidéos de
 // concert passent par l'upload direct Mux, pas par ce serveur). Filtre de type :
-// on n'accepte que des médias (image/vidéo/audio) — bloque scripts/exécutables.
-const ALLOWED_UPLOAD = /^(image|video|audio)\//;
-// Extensions média connues : filet de sécurité quand le MIME est générique.
-// Flutter (http.MultipartFile.fromPath) n'envoie PAS de Content-Type -> le
-// fichier arrive en 'application/octet-stream' et l'ancien filtre le rejetait
-// (photo de profil "Type de fichier non supporté"). On accepte alors sur
-// l'extension. Les scripts/exécutables restent bloqués (ni MIME média ni ext).
-const ALLOWED_UPLOAD_EXT = /\.(jpe?g|png|gif|webp|heic|heif|bmp|tiff?|mp4|mov|m4v|webm|mkv|avi|mp3|m4a|aac|wav|ogg|flac)$/i;
+// liste blanche de médias (jpg/png/webp/gif, mp4/mov/m4v/webm, mp3/m4a/aac)
+// sur le MIME déclaré OU l'extension (Flutter envoie application/octet-stream).
+// Le contenu réel est ensuite vérifié par sa signature dans uploads.js, et
+// l'extension stockée en découle — jamais du nom envoyé par le client.
 const upload = multer({
   dest: uploadsDir,
   limits: { fileSize: 200 * 1024 * 1024, files: 12 },
   fileFilter: (req, file, cb) => {
-    const mime = file.mimetype || '';
-    const name = file.originalname || '';
-    if (ALLOWED_UPLOAD.test(mime) || ALLOWED_UPLOAD_EXT.test(name)) {
-      return cb(null, true);
-    }
+    if (uploads.clientTypeAllowed(file)) return cb(null, true);
     cb(new Error('UNSUPPORTED_FILE_TYPE'));
   },
 });
-app.use(upload.any()); // accepte n'importe quel champ fichier (profile_picture, images[], …)
+// multer n'est monté QUE sur les routes qui consomment des fichiers (avant :
+// upload.any() global -> n'importe quelle requête multipart écrivait sur le
+// disque, sans jamais être nettoyée). cleanupUnconsumed supprime en fin de
+// requête ce que la route n'a pas déplacé dans storage/.
+app.use(
+  [
+    '/api/update-profile',   // photo de profil / photo artiste
+    '/api/events',           // création d'un concert (cover + teaser)
+    '/api/feed-clips/submit', // clip UGC
+    '/api/admin',            // covers, artistes, cadeaux, clips, merch, splash
+  ],
+  upload.any(),
+  uploads.cleanupUnconsumed,
+);
+// Autres routes appelées en multipart SANS fichier attendu : on lit les champs
+// texte (sinon le body serait vide) mais tout fichier joint est refusé (415)
+// sans jamais toucher le disque.
+const fieldsOnly = multer({ limits: { fields: 200, fieldSize: 1024 * 1024 } }).none();
+app.use((req, res, next) => {
+  if (req.files !== undefined || !req.is('multipart/form-data')) return next();
+  fieldsOnly(req, res, (err) => {
+    if (err && err.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(415).json({ status: 'error', message: 'Cette route n’accepte pas de fichier.' });
+    }
+    next(err);
+  });
+});
 
-// Fichiers statiques (covers, profils, vidéos, gifts) — mêmes chemins que l'API live
-app.use('/profiles', express.static(path.join(__dirname, '..', 'storage', 'profiles')));
-app.use('/events/covers', express.static(path.join(__dirname, '..', 'storage', 'covers')));
-app.use('/events/videos', express.static(path.join(__dirname, '..', 'storage', 'videos')));
-app.use('/giftImages', express.static(path.join(__dirname, '..', 'storage', 'gifts')));
-app.use('/splash', express.static(path.join(__dirname, '..', 'storage', 'splash')));
-app.use('/merch-images', express.static(path.join(__dirname, '..', 'storage', 'merch')));
+// Fichiers statiques (covers, profils, vidéos, gifts) — mêmes chemins que l'API
+// live. Tout fichier hors médias connus part en pièce jointe (jamais rendu
+// comme une page depuis notre origine).
+const storageDir = (sub) => path.join(__dirname, '..', 'storage', sub);
+app.use('/profiles', express.static(storageDir('profiles'), uploads.staticOptions()));
+app.use('/events/covers', express.static(storageDir('covers'), uploads.staticOptions()));
+app.use('/events/videos', express.static(storageDir('videos'), uploads.staticOptions()));
+app.use('/giftImages', express.static(storageDir('gifts'), uploads.staticOptions()));
+app.use('/splash', express.static(storageDir('splash'), uploads.staticOptions()));
+app.use('/merch-images', express.static(storageDir('merch'), uploads.staticOptions()));
 
 // Santé
 app.get('/', (req, res) => res.json({ status: 'success', service: 'vybzzz-backend', version: '1.0.0' }));
