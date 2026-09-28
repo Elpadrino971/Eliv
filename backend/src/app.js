@@ -44,14 +44,34 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // ── Rate limiting anti-brute-force ────────────────────────────────────────
 // Protège les endpoints d'authentification (login, inscription, OTP, reset)
-// contre les tentatives massives de mots de passe / d'énumération. 20 requêtes
-// par IP toutes les 15 min : large pour un usage normal, bloque un bot.
+// contre les tentatives massives de mots de passe / d'énumération.
+//
+// Clé COMPOSITE ip + e-mail : des dizaines de fans partagent la même IP
+// publique sur mobile (CGNAT aux Antilles, wifi d'une salle…) ; un compteur
+// par IP seule les bloquait tous ensemble le soir d'un concert. Chaque compte
+// a donc son propre budget (10 / 15 min), et un plafond large par IP seule
+// (300 / 15 min) arrête quand même un bot qui ferait varier l'e-mail.
+const WINDOW_15_MIN = 15 * 60 * 1000;
+const LIMIT_MESSAGE = { status: 'error', message: 'Trop de tentatives, réessaie dans quelques minutes.' };
+const ipOf = (req) => String(req.ip || (req.socket && req.socket.remoteAddress) || 'unknown');
+const emailOf = (req) => String((req.body && req.body.email) || (req.query && req.query.e) || '').trim().toLowerCase();
+const ipAndEmailKey = (req) => `${ipOf(req)}|${emailOf(req)}`;
+
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
+  windowMs: WINDOW_15_MIN,
+  max: 10,
+  keyGenerator: ipAndEmailKey,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { status: 'error', message: 'Trop de tentatives, réessaie dans quelques minutes.' },
+  message: LIMIT_MESSAGE,
+});
+const authIpCeiling = rateLimit({
+  windowMs: WINDOW_15_MIN,
+  max: 300,
+  keyGenerator: ipOf,
+  standardHeaders: false,
+  legacyHeaders: false,
+  message: LIMIT_MESSAGE,
 });
 app.use(
   [
@@ -66,16 +86,23 @@ app.use(
     // routes POST : ce GET acceptait un nombre illimite de tentatives sur un
     // code a six chiffres, donc devinable a la force brute.
     '/api/verify-link',
-    '/api/admin/login',
     '/api/challenge/register',
     '/api/challenge/join',
-    // Roue de la fortune et billetterie web : un tirage par e-mail côté serveur,
-    // mais on freine aussi les rafales automatisées.
-    '/api/wheel',
-    '/api/tickets/web-checkout',
   ],
+  authIpCeiling,
   authLimiter,
 );
+// Console admin : peu d'utilisateurs légitimes, cible de choix -> strict par IP.
+app.use('/api/admin/login', rateLimit({
+  windowMs: WINDOW_15_MIN, max: 10, keyGenerator: ipOf,
+  standardHeaders: true, legacyHeaders: false, message: LIMIT_MESSAGE,
+}));
+// Roue de la fortune et billetterie web : un tirage par e-mail côté serveur,
+// mais on freine aussi les rafales automatisées (20 / 15 min par IP).
+app.use(['/api/wheel/:slug/spin', '/api/tickets/web-checkout'], rateLimit({
+  windowMs: WINDOW_15_MIN, max: 20, keyGenerator: ipOf,
+  standardHeaders: true, legacyHeaders: false, message: LIMIT_MESSAGE,
+}));
 
 const fs = require('fs');
 const uploads = require('./uploads');
