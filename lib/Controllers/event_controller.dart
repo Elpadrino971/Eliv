@@ -355,8 +355,40 @@ class EventController extends GetxController {
     });
   }
 
-  Future<Event?> buyTicket({required String eventId}) async {
-    Event? event;
+  /// Clé GetStorage : id du concert dont l'achat store (Apple / Google) a été
+  /// lancé mais dont le billet n'a pas (encore) été attaché par /buy-ticket.
+  /// Écrite AVANT `Purchases.purchase`, effacée quand /buy-ticket réussit.
+  /// Permet le bouton « J'ai déjà payé · récupérer mon billet ».
+  static const String pendingTicketKey = 'pending_ticket_event';
+
+  /// Dernière réponse d'erreur brute de /buy-ticket (format `error {...}`),
+  /// à passer à [parseError] par l'appelant s'il veut l'afficher.
+  String? lastBuyTicketError;
+
+  /// Id du concert en attente de billet (voir [pendingTicketKey]), ou null.
+  static int? pendingTicketEventId() {
+    final raw = box.read(pendingTicketKey);
+    if (raw is int) return raw;
+    return int.tryParse('${raw ?? ''}');
+  }
+
+  /// Faux pour les refus DÉFINITIFS du serveur (géo-blocage 451, concert
+  /// introuvable 404, action non autorisée 403) : inutile de réessayer. Tout
+  /// le reste (coupure réseau / timeout, 503 « vérification indisponible »,
+  /// 402 « aucun achat valide » = reçu pas encore visible chez RevenueCat,
+  /// 409 course concurrente) mérite un nouvel essai.
+  bool _isRetryableTicketError(String value) {
+    final msg = value.toLowerCase();
+    if (msg.contains('région') || msg.contains('region')) return false;
+    if (msg.contains('not found') || msg.contains('introuvable')) return false;
+    if (msg.contains('non autoris')) return false;
+    return true;
+  }
+
+  /// Un appel /buy-ticket, SANS effet UI. Renvoie le concert mis à jour ou
+  /// null (l'erreur brute est dans [lastBuyTicketError]). Ne lance jamais.
+  Future<Event?> _postBuyTicket(String eventId) async {
+    lastBuyTicketError = null;
     response.typeSetter = 'post';
     response.urlSetter = APIs.buyTicketAPI;
     // Pays de l'APPAREIL (pas la langue) : sert au géo-blocage des concerts
@@ -368,23 +400,79 @@ class EventController extends GetxController {
       "user_id": "${userModel.value.user?.id ?? 1}",
       "country_code": countryCode,
     };
-    await response.hitAPI().then((value) {
+    try {
+      final value = await response.hitAPI();
       if (value.split(' ').first != 'error') {
-        event = Event.fromJson(jsonDecode(value)['data']);
-
-        update();
-        mySuccessDialog(
-          subtitle: 'msg_ticket_booked'.tr,
-          ontap: () {
-            Get.back();
-            Get.back();
-            Get.back(result: event);
-          },
-        );
-      } else {
-        parseError(value, doBack: true);
+        final data = jsonDecode(value)['data'];
+        if (data is Map<String, dynamic>) {
+          final event = Event.fromJson(data);
+          if ('${box.read(pendingTicketKey) ?? ''}' == eventId) {
+            await box.remove(pendingTicketKey);
+          }
+          update();
+          return event;
+        }
+        lastBuyTicketError =
+            'error ${jsonEncode({'message': 'common_error'.tr})}';
+        return null;
       }
-    });
+      lastBuyTicketError = value;
+      return null;
+    } catch (e) {
+      myPrint('buyTicket: exception -> $e');
+      lastBuyTicketError =
+          'error ${jsonEncode({'message': 'common_error'.tr})}';
+      return null;
+    }
+  }
+
+  /// Enregistre l'accès au concert. Avec [retry], jusqu'à 3 nouveaux essais
+  /// espacés de 2 s, 5 s puis 10 s quand l'échec est temporaire (réseau,
+  /// 503, 402 « aucun achat valide » le temps que RevenueCat voie le reçu).
+  /// À utiliser APRÈS un achat store validé : le paiement est encaissé, il
+  /// faut absolument attacher le billet. Aucun effet UI.
+  Future<Event?> buyTicketWithRetry(String eventId, {bool retry = true}) async {
+    Event? event = await _postBuyTicket(eventId);
+    if (!retry) return event;
+    const delays = [2, 5, 10];
+    for (final seconds in delays) {
+      if (event != null) break;
+      final err = lastBuyTicketError;
+      if (err != null && !_isRetryableTicketError(err)) break;
+      await Future.delayed(Duration(seconds: seconds));
+      event = await _postBuyTicket(eventId);
+    }
+    return event;
+  }
+
+  /// Version « avec dialogues » : succès -> dialogue puis 3 Get.back (dialogue,
+  /// loader, écran de paiement) ; échec -> ferme le loader et affiche l'erreur.
+  /// Suppose qu'un loader ([myLoadingDialog]) est ouvert. Ne lance jamais.
+  Future<Event?> buyTicket({required String eventId, bool retry = false}) async {
+    Event? event;
+    try {
+      event = await buyTicketWithRetry(eventId, retry: retry);
+    } catch (e) {
+      myPrint('buyTicket: exception -> $e');
+      event = null;
+    }
+    if (event != null) {
+      final result = event;
+      mySuccessDialog(
+        subtitle: 'msg_ticket_booked'.tr,
+        ontap: () {
+          Get.back();
+          Get.back();
+          Get.back(result: result);
+        },
+      );
+    } else {
+      parseError(
+        lastBuyTicketError ??
+            'error ${jsonEncode({'message': 'common_error'.tr})}',
+        doBack: true,
+      );
+    }
     return event;
   }
 
@@ -406,26 +494,10 @@ class EventController extends GetxController {
   /// Enregistre l'accès au concert (billet) SANS effet de bord UI (ni dialog
   /// ni pop d'écrans, contrairement à [buyTicket]). Utilisé par le bandeau
   /// "Rejoindre le live" pour enchaîner directement sur la salle de live.
-  Future<Event?> registerTicketAndGet(String eventId) async {
-    Event? event;
-    response.typeSetter = 'post';
-    response.urlSetter = APIs.buyTicketAPI;
-    final countryCode = Get.deviceLocale?.countryCode ?? '';
-    response.bodySetter = {
-      "event_id": eventId,
-      "user_id": "${userModel.value.user?.id ?? 1}",
-      "country_code": countryCode,
-    };
-    await response.hitAPI().then((value) {
-      if (value.split(' ').first != 'error') {
-        event = Event.fromJson(jsonDecode(value)['data']);
-        update();
-      } else {
-        parseError(value);
-      }
-    });
-    return event;
-  }
+  /// [retry] : nouveaux essais (2 s / 5 s / 10 s) après un achat store payé.
+  /// En cas d'échec, l'erreur brute est dans [lastBuyTicketError].
+  Future<Event?> registerTicketAndGet(String eventId, {bool retry = false}) =>
+      buyTicketWithRetry(eventId, retry: retry);
 
   Future<void> getUserJoinedEvents() async {
     response.typeSetter = 'post';
