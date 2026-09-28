@@ -14,6 +14,10 @@ const revenuecat = require('../services/revenuecat');
 const livebus = require('../services/livebus');
 const badges = require('../services/badges');
 
+// Délai avant le 2e essai de vérification RevenueCat dans /buy-ticket
+// (latence de synchro du reçu). Surchargeable pour les tests.
+const RC_RETRY_DELAY_MS = Number(process.env.RC_RETRY_DELAY_MS) || 1500;
+
 // Nom affichable d'un utilisateur pour les écrans live (jamais l'e-mail).
 function liveName(userId) {
   const u = db.prepare('SELECT full_name, artist_name FROM users WHERE id = ?').get(userId);
@@ -173,20 +177,35 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
     // RevenueCat. On dérive le même id et on confirme l'achat côté serveur.
     const productId = `ticket_${Math.floor(gross)}`;
     if (revenuecat.isConfigured()) {
-      let purchases = [];
-      try {
-        purchases = await revenuecat.nonSubscriptionPurchases(userId, productId);
-      } catch (e) {
-        console.error('[buy-ticket] RevenueCat verify:', e.message);
-        return fail(res, 'Vérification du paiement indisponible, réessaie.', 503);
-      }
-      // Un achat non encore consommé par un billet.
-      const fresh = purchases.find((p) => {
+      // Un achat non encore consommé par un billet. En production, les achats
+      // sandbox sont déjà écartés par le service (voir services/revenuecat.js).
+      const findFresh = (purchases) => purchases.find((p) => {
         const tid = String(p.id || p.store_transaction_id || p.purchase_date || '');
         if (!tid) return false;
         return !db.prepare('SELECT 1 FROM tickets WHERE rc_transaction_id = ?').get(tid);
       });
+      let fresh = null;
+      // L'app appelle /buy-ticket juste après le retour du store : le reçu met
+      // parfois 1-2 s à apparaître côté RevenueCat -> un 2e essai après 1,5 s
+      // avant de renvoyer un 402 (sinon « achat introuvable » alors que la
+      // personne vient de payer).
+      for (let attempt = 0; attempt < 2 && !fresh; attempt++) {
+        if (attempt > 0) await new Promise((r) => setTimeout(r, RC_RETRY_DELAY_MS));
+        try {
+          fresh = findFresh(await revenuecat.nonSubscriptionPurchases(userId, productId)) || null;
+        } catch (e) {
+          console.error(`[buy-ticket] RevenueCat verify (user=${userId} product=${productId}):`, e.message);
+          const msg = e.code === 'RC_TIMEOUT'
+            ? 'Vérification du paiement trop lente (RevenueCat ne répond pas), réessaie dans un instant.'
+            : 'Vérification du paiement indisponible, réessaie.';
+          return fail(res, msg, 503);
+        }
+      }
       if (!fresh) {
+        // Trace explicite pour le support : la personne a peut-être payé
+        // (reçu non encore synchronisé, ou achat rattaché à un autre
+        // app_user_id) -> attribution manuelle possible depuis l'admin.
+        console.warn(`[buy-ticket] ACHAT BILLET NON ATTRIBUÉ user=${userId} product=${productId} event=${event.id}`);
         return fail(res, 'Aucun achat valide trouvé pour ce billet.', 402);
       }
       rcTransactionId = String(fresh.id || fresh.store_transaction_id || fresh.purchase_date);

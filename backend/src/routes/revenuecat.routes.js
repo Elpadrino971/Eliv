@@ -89,7 +89,13 @@ router.post('/', (req, res) => {
   }
 
   const event = req.body?.event || {};
-  console.log(`[revenuecat webhook] ${event.type}`);
+  console.log(`[revenuecat webhook] ${event.type}${event.environment ? ` (${event.environment})` : ''}`);
+
+  // Achats sandbox (TestFlight, testeurs Play) : aucun argent encaissé -> en
+  // production on accuse réception sans rien créditer (points, abonnement).
+  if (process.env.NODE_ENV === 'production' && String(event.environment || '').toUpperCase() === 'SANDBOX') {
+    return res.json({ received: true, ignored: 'sandbox' });
+  }
 
   try {
     // 1) ID numérique (app_user_id / original / alias) ; 2) sinon, repli par
