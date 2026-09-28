@@ -28,10 +28,13 @@ const PASSWORD_MIN_LENGTH = 8;
 // n'importe quel compte (admin compris). En production on REFUSE de démarrer
 // (même logique que les secrets de webhook Stripe/Mux) ; le mode démo reste
 // disponible en développement.
+// Pas de refus de démarrage (un déploiement le soir d'un concert ne doit pas
+// tomber pour une variable manquante) : avertissement bruyant, et les routes
+// OTP ci-dessous répondent 503 tant que l'e-mail n'est pas configuré.
 if (IS_PROD && !emailService.isConfigured()) {
-  throw new Error(
-    '[auth] RESEND_API_KEY absent : sans service e-mail, le code OTP serait « 1234 » ' +
-    'pour tous les comptes. Démarrage refusé en production.'
+  console.error(
+    '[auth] ⚠️⚠️  RESEND_API_KEY absent : inscription par e-mail, codes de vérification et ' +
+    'mot de passe oublié sont DÉSACTIVÉS (503) tant que le service e-mail n’est pas configuré.'
   );
 }
 if (IS_PROD && emailService.usingSandboxSender()) {
@@ -139,7 +142,9 @@ function genReferralCode(name) {
 }
 
 // POST /api/sign-up
-router.post('/sign-up', requireEmailService, (req, res) => {
+// Pas de garde e-mail ici : l'inscription doit toujours marcher (le compte
+// est actif d'emblée) ; seul l'envoi du code dépend du service e-mail.
+router.post('/sign-up', (req, res) => {
   const b = req.body || {};
   const email = (b.email || '').trim().toLowerCase();
   if (!email) return fail(res, 'Validation error', 422, { email: ['The email field is required.'] });
@@ -194,6 +199,7 @@ router.post('/sign-up', requireEmailService, (req, res) => {
       .catch((e) => console.error(`[email] OTP sign-up (${maskEmail(email)}) :`, e.message));
     return authResponse(res, user, 'Account created. Check your email for the verification code.', extra);
   }
+  if (IS_PROD) return authResponse(res, user, 'Account created.', extra);
   return authResponse(res, user, 'Account created. Verify with OTP 1234 (demo).', extra);
 });
 

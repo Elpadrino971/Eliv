@@ -915,6 +915,9 @@ router.post('/profile', requireAdmin, (req, res) => {
   const b = req.body || {};
   if (b.full_name) db.prepare('UPDATE users SET full_name = ? WHERE id = ?').run(b.full_name, req.admin.id);
   if (b.password) {
+    if (String(b.password).length < 12) {
+      return res.status(422).json({ status: 'error', message: 'Mot de passe admin : 12 caractères minimum.' });
+    }
     db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash(b.password), req.admin.id);
   }
   return res.json({ status: 'success', message: 'Profil mis à jour.' });

@@ -166,12 +166,13 @@ function serializeEvent(row, { currentUserId = null } = {}) {
 
   const ticketRows = currentUserId
     ? db
-        .prepare('SELECT * FROM tickets WHERE event_id = ? AND user_id = ?')
+        // Un billet remboursé (Stripe/App Store) ne donne plus accès.
+        .prepare("SELECT * FROM tickets WHERE event_id = ? AND user_id = ? AND COALESCE(status, 'active') <> 'refunded'")
         .all(row.id, currentUserId)
     : [];
 
   const buyerIds = db
-    .prepare('SELECT DISTINCT user_id FROM tickets WHERE event_id = ?')
+    .prepare("SELECT DISTINCT user_id FROM tickets WHERE event_id = ? AND COALESCE(status, 'active') <> 'refunded'")
     .all(row.id)
     .map((r) => r.user_id);
 
