@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
+const dbPayments = require('../db_payments'); // migrations paiements (lot 2D)
 const { serializeEvent, serializeUser, ok, fail, genReceipt, resolveArtistCommission, splitAmount, isGeoBlocked } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
@@ -417,14 +418,23 @@ router.post('/event-gift', optionalAuth, (req, res) => {
 
   // Split commission (cadeau en POINTS) : l'artiste reçoit sa part, le reste va
   // à la plateforme (tracé dans platform_earnings). Taux depuis son abonnement.
+  //
+  // UNITÉS (ne pas confondre) :
+  //  - `cost`, `artistShare`, `platformShare` et la ligne platform_earnings
+  //    source='gift' sont en POINTS (100 pts = 1 €) — statements.js,
+  //    /artist/dashboard-stats et /artist/revenue-transactions divisent par 100.
+  //  - `users.wallet` est en EUROS (c'est ce que débitent les retraits et ce
+  //    que créditent les billets) -> on convertit AVANT de créditer. Avant ce
+  //    correctif, les points étaient ajoutés tels quels au wallet (×100).
   const rate = resolveArtistCommission(event?.artist_id);
   const { artistShare, platformShare } = splitAmount(cost, rate);
+  const artistShareEur = artistShare / 100;
   const send = db.transaction(() => {
     if (cost > 0) {
       db.prepare('UPDATE users SET points = ? WHERE id = ?').run((balance - cost).toFixed(2), userId);
       if (event?.artist_id) {
         const artist = db.prepare('SELECT wallet FROM users WHERE id = ?').get(event.artist_id);
-        const artistWallet = (parseFloat(artist?.wallet) || 0) + artistShare;
+        const artistWallet = (parseFloat(artist?.wallet) || 0) + artistShareEur;
         db.prepare('UPDATE users SET wallet = ? WHERE id = ?').run(artistWallet.toFixed(2), event.artist_id);
         db.prepare(
           `INSERT INTO platform_earnings (artist_id, source, source_id, gross, artist_share, platform_share, commission_rate)
