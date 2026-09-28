@@ -28,6 +28,116 @@ const FOR_YOU = [
   'p6m5rIaZQGsSX51YijSB1GZo449uMpudt00JladxxQ6Y',
 ];
 
+// ── Mots interdits (modération du chat des lives / commentaires) ──
+// Liste FR + EN par catégories. Le filtre côté app fait une correspondance
+// de MOT ENTIER (les expressions à espaces sont en sous-chaîne).
+const ABUSIVE_WORDS = [
+  // Insultes FR
+  'con', 'conard', 'connard', 'connasse', 'conne', 'salope', 'salaud', 'pute',
+  'putain', 'enculé', 'encule', 'enculer', 'batard', 'bâtard', 'ducon', 'abruti',
+  'débile', 'crétin', 'ordure', 'raclure', 'pétasse', 'pouffiasse', 'grognasse',
+  'trouduc', 'couillon', 'bouffon', 'nique', 'niquer', 'niqué', 'fdp', 'ntm', 'tg',
+  'ta gueule', 'ferme ta gueule', 'va te faire foutre', 'fils de pute',
+  // Insultes EN
+  'fuck', 'fucking', 'fucker', 'motherfucker', 'shit', 'bitch', 'asshole',
+  'bastard', 'dick', 'cunt', 'slut', 'whore', 'douche', 'wanker', 'prick',
+  // Haine / discrimination (racisme, homophobie, validisme) — à bloquer
+  'pd', 'pédé', 'pede', 'tapette', 'tarlouze', 'gouine', 'bougnoule', 'négro',
+  'negro', 'nègre', 'bamboula', 'youpin', 'bicot', 'mongol', 'attardé',
+  'sale arabe', 'sale juif', 'sale noir', 'sale blanc', 'sale pédé',
+  'nigger', 'nigga', 'faggot', 'fag', 'retard', 'retarded', 'tranny',
+  'chink', 'spic', 'kike', 'dyke', 'coon',
+  // Sexuel / illégal
+  'viol', 'violer', 'pédophile', 'pedophile', 'pédo', 'pedo', 'zoophile', 'rape',
+  'child porn',
+  // Menaces / automutilation
+  'crève', 'creve', 'crever', 'tue-toi', 'va mourir', 'je vais te tuer',
+  'suicide-toi', 'kill yourself', 'kys',
+  // Spam / arnaque
+  'arnaque', 'scam', 'spam', 'free money', 'argent facile', 'argent gratuit',
+  'crypto gratuit', 'bitcoin gratuit', 'giveaway', 'clique ici', 'cliquez ici',
+  'pump and dump',
+];
+
+/**
+ * Données de RÉFÉRENCE (sans aucun compte ni concert fictif) : genres, cadeaux,
+ * réglages, mots interdits, paliers d'abonnement, FAQ, pages CMS. Communes au
+ * seed de démo et au seed de production. Renvoie les ids des genres.
+ */
+function seedReference() {
+  const genres = ['Afrobeat', 'Pop', 'Hip-Hop', 'R&B', 'Dancehall', 'Electro'];
+  const insGenre = db.prepare('INSERT INTO genres (name) VALUES (?)');
+  const genreIds = genres.map((g) => insGenre.run(g).lastInsertRowid);
+
+  const insGift = db.prepare('INSERT INTO gifts (name, image, price, points) VALUES (?, ?, ?, ?)');
+  [
+    ['Rose', 'rose.png', '1', '10'],
+    ['Coeur', 'coeur.png', '2', '20'],
+    ['Étoile', 'etoile.png', '5', '50'],
+    ['Diamant', 'diamant.png', '10', '100'],
+    ['Couronne', 'couronne.png', '20', '200'],
+    ['Château', 'chateau.png', '50', '500'],
+  ].forEach((g) => insGift.run(...g));
+
+  const insSetting = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+  insSetting.run('teaser_duration', '60');
+  insSetting.run('currency', 'EUR');
+  insSetting.run('min_withdraw', '50');
+  insSetting.run('referral_rate', '10');
+  insSetting.run('referral_monthly_cap', '10');
+
+  const insWord = db.prepare('INSERT INTO abusive_words (word) VALUES (?)');
+  ABUSIVE_WORDS.forEach((w) => insWord.run(w));
+
+  // Paliers artistes (les packs de points sont posés par db.js à l'init).
+  const insSub = db.prepare('INSERT INTO subscriptions (name, tier, price, period) VALUES (?, ?, ?, ?)');
+  [
+    ['Founder 79', 'founder', '79', 'year'],
+    ['Starter', 'starter', '9.99', 'month'],
+    ['Growth', 'growth', '29.99', 'month'],
+    ['Elite', 'elite', '99.99', 'month'],
+  ].forEach((sub) => insSub.run(...sub));
+
+  const insFaq = db.prepare('INSERT INTO faqs (question, answer) VALUES (?, ?)');
+  [
+    ['Comment acheter un billet ?', 'Ouvre un concert puis appuie sur "Acheter un billet".'],
+    ['Comment caster un concert ?', 'Depuis le lecteur, appuie sur l\'icône AirPlay en haut à droite.'],
+    ['Comment devenir artiste ?', 'Va dans Profil → Devenir artiste et complète l\'onboarding.'],
+  ].forEach((f) => insFaq.run(...f));
+
+  const insCms = db.prepare('INSERT OR REPLACE INTO cms_pages (slug, title, content) VALUES (?, ?, ?)');
+  insCms.run('terms', 'Conditions générales', 'Contenu des CGU VYBZZZ…');
+  insCms.run('privacy', 'Politique de confidentialité', 'Contenu de la politique de confidentialité…');
+  insCms.run('about', 'À propos', 'VYBZZZ — Live begins here.');
+
+  return genreIds;
+}
+
+const ADMIN_EMAIL = (process.env.ADMIN_INITIAL_EMAIL || 'admin@vybzzz.com').trim().toLowerCase();
+const ADMIN_PASSWORD_MIN = 12;
+
+/**
+ * Seed de PRODUCTION : données de référence + le seul compte admin, dont le
+ * mot de passe vient de ADMIN_INITIAL_PASSWORD (>= 12 caractères). Aucun
+ * compte fictif, aucun concert de démo. Lève une erreur claire sinon.
+ */
+function runProduction() {
+  init();
+  const pw = process.env.ADMIN_INITIAL_PASSWORD || '';
+  if (pw.length < ADMIN_PASSWORD_MIN) {
+    throw new Error(
+      '[seed] base vide en production : définir ADMIN_INITIAL_PASSWORD (>= ' + ADMIN_PASSWORD_MIN +
+      ' caractères) pour créer le compte admin (' + ADMIN_EMAIL + '). Aucun compte de démo n\'est créé en production.'
+    );
+  }
+  seedReference();
+  db.prepare(
+    `INSERT INTO users (email, password, full_name, role, is_artist, is_verified, registration_type, referral_code)
+     VALUES (?, ?, 'Admin VybzzZ', 'admin', 0, 1, 'email', 'ADMIN001')`
+  ).run(ADMIN_EMAIL, hash(pw));
+  console.log('[seed] production : données de référence + compte admin ' + ADMIN_EMAIL + ' (mot de passe : ADMIN_INITIAL_PASSWORD).');
+}
+
 function hls(id) {
   return id ? `https://stream.mux.com/${id}.m3u8` : null;
 }
@@ -56,13 +166,14 @@ function reset() {
 }
 
 function run() {
+  if (process.env.NODE_ENV === 'production' && !process.argv.includes('--force-demo')) {
+    throw new Error('[seed] le seed de démo (comptes fictifs, mots de passe connus) est refusé en production. Utiliser runProduction() / ADMIN_INITIAL_PASSWORD.');
+  }
   init();
   if (process.argv.includes('--reset')) reset();
 
-  // ── Genres ──
-  const genres = ['Afrobeat', 'Pop', 'Hip-Hop', 'R&B', 'Dancehall', 'Electro'];
-  const insGenre = db.prepare('INSERT INTO genres (name) VALUES (?)');
-  const genreIds = genres.map((g) => insGenre.run(g).lastInsertRowid);
+  // ── Genres, cadeaux, réglages, mots interdits, paliers, FAQ, CMS ──
+  const genreIds = seedReference();
 
   // ── Utilisateur de démo (pour se connecter) ──
   const insUser = db.prepare(
@@ -185,55 +296,7 @@ function run() {
   );
   FOR_YOU.forEach((id, i) => insFeedClip.run(`Découverte ${i + 1}`, id, i));
 
-  // ── Gifts ──
-  const insGift = db.prepare('INSERT INTO gifts (name, image, price, points) VALUES (?, ?, ?, ?)');
-  [
-    ['Rose', 'rose.png', '1', '10'],
-    ['Coeur', 'coeur.png', '2', '20'],
-    ['Étoile', 'etoile.png', '5', '50'],
-    ['Diamant', 'diamant.png', '10', '100'],
-    ['Couronne', 'couronne.png', '20', '200'],
-    ['Château', 'chateau.png', '50', '500'],
-  ].forEach((g) => insGift.run(...g));
-
-  // ── Settings ──
   const insSetting = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
-  insSetting.run('teaser_duration', '60');
-  insSetting.run('currency', 'EUR');
-  insSetting.run('min_withdraw', '50');
-
-  // ── Mots interdits (modération du chat des lives / commentaires) ──
-  // Liste FR + EN par catégories. Le filtre côté app fait une correspondance
-  // de MOT ENTIER (les expressions à espaces sont en sous-chaîne).
-  const ABUSIVE_WORDS = [
-    // Insultes FR
-    'con', 'conard', 'connard', 'connasse', 'conne', 'salope', 'salaud', 'pute',
-    'putain', 'enculé', 'encule', 'enculer', 'batard', 'bâtard', 'ducon', 'abruti',
-    'débile', 'crétin', 'ordure', 'raclure', 'pétasse', 'pouffiasse', 'grognasse',
-    'trouduc', 'couillon', 'bouffon', 'nique', 'niquer', 'niqué', 'fdp', 'ntm', 'tg',
-    'ta gueule', 'ferme ta gueule', 'va te faire foutre', 'fils de pute',
-    // Insultes EN
-    'fuck', 'fucking', 'fucker', 'motherfucker', 'shit', 'bitch', 'asshole',
-    'bastard', 'dick', 'cunt', 'slut', 'whore', 'douche', 'wanker', 'prick',
-    // Haine / discrimination (racisme, homophobie, validisme) — à bloquer
-    'pd', 'pédé', 'pede', 'tapette', 'tarlouze', 'gouine', 'bougnoule', 'négro',
-    'negro', 'nègre', 'bamboula', 'youpin', 'bicot', 'mongol', 'attardé',
-    'sale arabe', 'sale juif', 'sale noir', 'sale blanc', 'sale pédé',
-    'nigger', 'nigga', 'faggot', 'fag', 'retard', 'retarded', 'tranny',
-    'chink', 'spic', 'kike', 'dyke', 'coon',
-    // Sexuel / illégal
-    'viol', 'violer', 'pédophile', 'pedophile', 'pédo', 'pedo', 'zoophile', 'rape',
-    'child porn',
-    // Menaces / automutilation
-    'crève', 'creve', 'crever', 'tue-toi', 'va mourir', 'je vais te tuer',
-    'suicide-toi', 'kill yourself', 'kys',
-    // Spam / arnaque
-    'arnaque', 'scam', 'spam', 'free money', 'argent facile', 'argent gratuit',
-    'crypto gratuit', 'bitcoin gratuit', 'giveaway', 'clique ici', 'cliquez ici',
-    'pump and dump',
-  ];
-  const insWord = db.prepare('INSERT INTO abusive_words (word) VALUES (?)');
-  ABUSIVE_WORDS.forEach((w) => insWord.run(w));
 
   // ── User Genres (associations user ↔ genre) ──
   const allUserIds = db.prepare("SELECT id FROM users WHERE role != 'admin'").all().map((r) => r.id);
@@ -254,15 +317,6 @@ function run() {
     ['VIP', '2400', '19.99', 'vybzz_points_2400'],
     ['Légende', '6500', '49.99', 'vybzz_points_6500'],
   ].forEach((p) => insPkg.run(...p));
-
-  // ── Subscriptions (paliers artistes) ──
-  const insSub = db.prepare('INSERT INTO subscriptions (name, tier, price, period) VALUES (?, ?, ?, ?)');
-  [
-    ['Founder 79', 'founder', '79', 'year'],
-    ['Starter', 'starter', '9.99', 'month'],
-    ['Growth', 'growth', '29.99', 'month'],
-    ['Elite', 'elite', '99.99', 'month'],
-  ].forEach((s) => insSub.run(...s));
 
   // ── Reviews ──
   const insReview = db.prepare('INSERT INTO reviews (user_id, event_id, rating, comment) VALUES (?, ?, ?, ?)');
@@ -287,23 +341,7 @@ function run() {
     ['John Smith', 'john@example.com', '+33600000002', 'Partenariat possible ?'],
   ].forEach((l) => insLead.run(...l));
 
-  // ── FAQ ──
-  const insFaq = db.prepare('INSERT INTO faqs (question, answer) VALUES (?, ?)');
-  [
-    ['Comment acheter un billet ?', 'Ouvre un concert puis appuie sur "Acheter un billet".'],
-    ['Comment caster un concert ?', 'Depuis le lecteur, appuie sur l\'icône AirPlay en haut à droite.'],
-    ['Comment devenir artiste ?', 'Va dans Profil → Devenir artiste et complète l\'onboarding.'],
-  ].forEach((f) => insFaq.run(...f));
-
-  // ── CMS ──
-  const insCms = db.prepare('INSERT OR REPLACE INTO cms_pages (slug, title, content) VALUES (?, ?, ?)');
-  insCms.run('terms', 'Conditions générales', 'Contenu des CGU VYBZZZ…');
-  insCms.run('privacy', 'Politique de confidentialité', 'Contenu de la politique de confidentialité…');
-  insCms.run('about', 'À propos', 'VYBZZZ — Live begins here.');
-
-  // ── Parrainage : règle 10% / 10 par mois + parrainages de démo ──
-  insSetting.run('referral_rate', '10');
-  insSetting.run('referral_monthly_cap', '10');
+  // ── Parrainages de démo ──
   const insRef = db.prepare(
     'INSERT INTO referrals (code, referrer_id, referee_id, status, reward) VALUES (?, ?, ?, ?, ?)'
   );
@@ -322,8 +360,10 @@ function run() {
     fanIds.push(insFan.run(`fan${i}@vybzzz.com`, hash('password'), `Fan ${i}`, `FAN${1000 + i}`, cities[i % cities.length]).lastInsertRowid);
   }
 
+  // OR IGNORE : tickets(event_id, user_id) est unique, un même fan tiré deux
+  // fois pour le même concert ne doit pas faire échouer le seed.
   const insTicket = db.prepare(
-    `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status, created_at)
+    `INSERT OR IGNORE INTO tickets (event_id, user_id, price_paid, receipt_number, status, created_at)
      VALUES (?, ?, ?, ?, 'active', ?)`
   );
   const dAgo = (d) => { const dt = new Date(); dt.setDate(dt.getDate() - d); return dt.toISOString().replace('T', ' ').slice(0, 19); };
@@ -357,4 +397,4 @@ if (require.main === module) {
   console.log('[seed] terminé.');
 }
 
-module.exports = { run, reset };
+module.exports = { run, runProduction, seedReference, reset, ADMIN_EMAIL };

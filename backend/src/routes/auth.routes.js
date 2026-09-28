@@ -3,7 +3,8 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
-const { serializeUser, fail } = require('../helpers');
+const crypto = require('crypto');
+const { serializeUser, fail, asyncHandler, maskEmail } = require('../helpers');
 const { hash, compare, sign, requireAuth, optionalAuth } = require('../auth');
 const { saveUpload } = require('../uploads');
 const moderation = require('../services/moderation');
@@ -17,32 +18,118 @@ function placesEnAttente(user) {
   try { eventAccess.attachPendingForUser(user); } catch (e) { console.error('[places] rattachement :', e.message); }
 }
 
+const IS_PROD = process.env.NODE_ENV === 'production';
 const OTP_TTL_MINUTES = 15;
+const OTP_MAX_ATTEMPTS = 5;
+const PASSWORD_MIN_LENGTH = 8;
 
-// Code démo tant qu'aucun service d'email n'est configuré (voir services/email.js).
-// Une fois RESEND_API_KEY défini, un vrai code aléatoire est généré et envoyé.
+// Sans service d'e-mail, le code de vérification retombait sur « 1234 » pour
+// tout le monde : /forget + /reset-password permettaient alors de prendre
+// n'importe quel compte (admin compris). En production on REFUSE de démarrer
+// (même logique que les secrets de webhook Stripe/Mux) ; le mode démo reste
+// disponible en développement.
+if (IS_PROD && !emailService.isConfigured()) {
+  throw new Error(
+    '[auth] RESEND_API_KEY absent : sans service e-mail, le code OTP serait « 1234 » ' +
+    'pour tous les comptes. Démarrage refusé en production.'
+  );
+}
+if (IS_PROD && emailService.usingSandboxSender()) {
+  console.warn('[auth] ⚠️  EMAIL_FROM est encore l’adresse bac à sable Resend : les codes n’arriveront qu’au propriétaire du compte Resend.');
+}
+
+// Ceinture-bretelles : si, malgré tout, l'e-mail n'est pas disponible en
+// production, les routes OTP répondent 503 plutôt que d'accepter un code démo.
+function requireEmailService(req, res, next) {
+  if (IS_PROD && !emailService.isConfigured()) {
+    return res.status(503).json({ status: 'error', message: 'Service e-mail indisponible.' });
+  }
+  next();
+}
+
+// Code démo « 1234 » uniquement hors production ET sans service d'e-mail.
 function newOtp() {
-  return emailService.isConfigured() ? emailService.generateOtp() : '1234';
+  if (IS_PROD || emailService.isConfigured()) return emailService.generateOtp();
+  return '1234';
 }
 
 function otpExpiryIso() {
   return new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000).toISOString();
 }
 
-// otp_expires_at est NULL pour les comptes créés avant ce fix (ou tant que
-// l'email n'est pas configuré) -> pas d'expiration forcée dans ce cas,
-// comportement démo inchangé.
+// Un code sans date d'expiration (ancien compte) est considéré expiré : on
+// redemande un code plutôt que d'accepter un secret potentiellement éternel.
 function otpExpired(user) {
-  if (!user.otp_expires_at) return false;
+  if (!user.otp_expires_at) return true;
   return new Date(user.otp_expires_at).getTime() < Date.now();
 }
 
-function authResponse(res, user, message = 'OK') {
+// Comparaison en temps constant (pas de fuite par le temps de réponse).
+function otpMatches(given, stored) {
+  if (!stored || given === undefined || given === null) return false;
+  const a = Buffer.from(String(given));
+  const b = Buffer.from(String(stored));
+  if (a.length !== b.length || a.length === 0) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
+// Pose un nouveau code : expiration TOUJOURS fixée, compteur d'échecs remis à 0.
+function storeOtp(userId, otp) {
+  db.prepare('UPDATE users SET otp_code = ?, otp_expires_at = ?, otp_attempts = 0 WHERE id = ?')
+    .run(otp, otpExpiryIso(), userId);
+}
+
+// Code consommé : il ne peut pas servir deux fois.
+function consumeOtp(userId) {
+  db.prepare('UPDATE users SET otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0 WHERE id = ?').run(userId);
+}
+
+// Échec de saisie : au OTP_MAX_ATTEMPTS-ième, le code est invalidé.
+function registerOtpFailure(user) {
+  const attempts = (Number(user.otp_attempts) || 0) + 1;
+  if (attempts >= OTP_MAX_ATTEMPTS) {
+    consumeOtp(user.id);
+    return true; // code invalidé
+  }
+  db.prepare('UPDATE users SET otp_attempts = ? WHERE id = ?').run(attempts, user.id);
+  return false;
+}
+
+// Vérifie un code pour un utilisateur : renvoie null si OK, sinon le message
+// d'erreur à renvoyer (et met à jour le compteur / l'invalidation).
+function checkOtp(user, given) {
+  if (!user.otp_code) return 'Aucun code en cours. Demande un nouveau code.';
+  if (otpExpired(user)) { consumeOtp(user.id); return 'OTP code expired. Request a new one.'; }
+  if (!otpMatches(given, user.otp_code)) {
+    const invalidated = registerOtpFailure(user);
+    return invalidated ? 'Trop de tentatives : code invalidé, demande un nouveau code.' : 'Invalid OTP code.';
+  }
+  return null;
+}
+
+function passwordError(pw) {
+  if (!pw) return 'The password field is required.';
+  if (String(pw).length < PASSWORD_MIN_LENGTH) return `Le mot de passe doit contenir au moins ${PASSWORD_MIN_LENGTH} caractères.`;
+  return null;
+}
+
+// Interface lot 2D : une place gagnée/achetée sur le site attend ce compte ?
+// (eventAccess.hasPendingForEmail si présent, sinon équivalent local.)
+function hasPendingForEmail(email) {
+  try {
+    if (typeof eventAccess.hasPendingForEmail === 'function') return !!eventAccess.hasPendingForEmail(email);
+    return !!db.prepare('SELECT 1 FROM pending_tickets WHERE email = ? AND granted_at IS NULL LIMIT 1')
+      .get(String(email || '').trim().toLowerCase());
+  } catch (_) { return false; }
+}
+
+function authResponse(res, user, message = 'OK', extra = {}) {
   return res.json({
     status: 'success',
     message,
     token: sign(user),
     data: serializeUser(user, { full: true }),
+    ...extra,
   });
 }
 
@@ -52,11 +139,12 @@ function genReferralCode(name) {
 }
 
 // POST /api/sign-up
-router.post('/sign-up', (req, res) => {
+router.post('/sign-up', requireEmailService, (req, res) => {
   const b = req.body || {};
   const email = (b.email || '').trim().toLowerCase();
   if (!email) return fail(res, 'Validation error', 422, { email: ['The email field is required.'] });
-  if (!b.password) return fail(res, 'Validation error', 422, { password: ['The password field is required.'] });
+  const pwErr = passwordError(b.password);
+  if (pwErr) return fail(res, pwErr, 422, { password: [pwErr] });
 
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
   if (existing) return fail(res, 'Validation error', 422, { email: ['The email has already been taken.'] });
@@ -80,7 +168,7 @@ router.post('/sign-up', (req, res) => {
       is_artist: isArtist ? 1 : 0,
       registration_type: b.registration_type || 'email',
       otp_code: otp,
-      otp_expires_at: emailService.isConfigured() ? otpExpiryIso() : null,
+      otp_expires_at: otpExpiryIso(),
       referral_code: genReferralCode(b.full_name || b.artist_name),
     });
 
@@ -98,11 +186,15 @@ router.post('/sign-up', (req, res) => {
   }
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
+  // Lot 2D : des places attendent cet e-mail -> l'app sait qu'il faut
+  // vérifier le compte pour les récupérer.
+  const extra = { requires_verification: hasPendingForEmail(email) };
   if (emailService.isConfigured()) {
-    emailService.sendOtpEmail(email, otp).catch((e) => console.error('[email] OTP sign-up:', e.message));
-    return authResponse(res, user, 'Account created. Check your email for the verification code.');
+    emailService.sendOtpEmail(email, otp)
+      .catch((e) => console.error(`[email] OTP sign-up (${maskEmail(email)}) :`, e.message));
+    return authResponse(res, user, 'Account created. Check your email for the verification code.', extra);
   }
-  return authResponse(res, user, 'Account created. Verify with OTP 1234 (demo).');
+  return authResponse(res, user, 'Account created. Verify with OTP 1234 (demo).', extra);
 });
 
 // POST /api/login
@@ -126,13 +218,15 @@ router.post('/login', (req, res) => {
       message: 'Mot de passe incorrect.',
     });
   }
+  // Compte vérifié : rattache les places en attente (roue / site) au passage.
+  if (user.is_verified) placesEnAttente(user);
   return authResponse(res, user, 'Logged in.');
 });
 
 // POST /api/social-login  (Google/Apple). SÉCURITÉ : on exige et on VÉRIFIE un
 // vrai jeton du fournisseur (id_token Google / identity_token Apple). Avant, un
 // simple email suffisait -> connexion en tant que n'importe qui (admin compris).
-router.post('/social-login', async (req, res) => {
+router.post('/social-login', asyncHandler(async (req, res) => {
   const b = req.body || {};
   const provider = String(b.provider || b.registration_type || '').toLowerCase();
   const isApple = provider.includes('apple') || (!!b.identity_token && !b.id_token);
@@ -200,20 +294,33 @@ router.post('/social-login', async (req, res) => {
     user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
     challenge.onVerifiedUser(user); // compte social = e-mail vérifié par le fournisseur
     placesEnAttente(user);
-  } else if (isApple && verified?.sub && !user.apple_sub) {
-    db.prepare('UPDATE users SET apple_sub = ? WHERE id = ?').run(verified.sub, user.id);
+  } else {
+    if (isApple && verified?.sub && !user.apple_sub) {
+      db.prepare('UPDATE users SET apple_sub = ? WHERE id = ?').run(verified.sub, user.id);
+    }
+    if (user.is_verified) placesEnAttente(user);
   }
   return authResponse(res, user, 'Logged in.');
-});
+}));
 
 // POST /api/verify  (OTP)
-router.post('/verify', (req, res) => {
+// Le compte est résolu par l'e-mail du body, ou par le token si l'appelant
+// est authentifié. Plus jamais par un `user_id` libre du body : il permettait
+// de viser le compte de quelqu'un d'autre.
+router.post('/verify', requireEmailService, optionalAuth, (req, res) => {
   const b = req.body || {};
-  const user = db.prepare('SELECT * FROM users WHERE email = ? OR id = ?').get((b.email || '').toLowerCase(), b.user_id || 0);
+  const email = String(b.email || '').trim().toLowerCase();
+  const user = req.user
+    ? req.user
+    : (email ? db.prepare('SELECT * FROM users WHERE email = ?').get(email) : null);
   if (!user) return fail(res, 'User not found.', 404);
-  if (String(b.otp_code || b.otp) !== String(user.otp_code)) return fail(res, 'Invalid OTP code.', 422);
-  if (otpExpired(user)) return fail(res, 'OTP code expired. Request a new one.', 422);
-  db.prepare('UPDATE users SET is_verified = 1, updated_at = datetime(\'now\') WHERE id = ?').run(user.id);
+  if (user.is_verified) {
+    consumeOtp(user.id);
+    return authResponse(res, user, 'Verified.');
+  }
+  const err = checkOtp(user, b.otp_code ?? b.otp);
+  if (err) return fail(res, err, 422);
+  db.prepare("UPDATE users SET is_verified = 1, otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0, updated_at = datetime('now') WHERE id = ?").run(user.id);
   const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
   challenge.onVerifiedUser(fresh); // Live Challenge : qualifie une pré-inscription via lien d'artiste
   placesEnAttente(fresh);
@@ -247,16 +354,17 @@ font-weight:700;padding:14px 26px;border-radius:12px}</style></head>
     return res.type('html').send(page('Compte déjà validé',
       'Ton compte est actif. Tu peux te connecter dans l\'application.', true));
   }
-  if (!code || String(code) !== String(user.otp_code)) {
-    return res.status(422).type('html').send(page('Code incorrect',
-      "Ce lien ne correspond plus au dernier code envoyé. Demande un nouveau code dans l'application.", false));
-  }
-  if (otpExpired(user)) {
+  if (user.otp_code && otpExpired(user)) {
+    consumeOtp(user.id);
     return res.status(422).type('html').send(page('Lien expiré',
       'Ce lien a expiré au bout de 15 minutes. Demande un nouveau code dans l\'application.', false));
   }
+  if (!code || checkOtp(user, code)) {
+    return res.status(422).type('html').send(page('Code incorrect',
+      "Ce lien ne correspond plus au dernier code envoyé. Demande un nouveau code dans l'application.", false));
+  }
   // Code consommé : le lien ne peut pas servir deux fois.
-  db.prepare("UPDATE users SET is_verified = 1, otp_code = NULL, otp_expires_at = NULL, updated_at = datetime('now') WHERE id = ?").run(user.id);
+  db.prepare("UPDATE users SET is_verified = 1, otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0, updated_at = datetime('now') WHERE id = ?").run(user.id);
   try { challenge.onVerifiedUser(db.prepare('SELECT * FROM users WHERE id = ?').get(user.id)); } catch (_) {}
   placesEnAttente(user);
   return res.type('html').send(page('Compte validé',
@@ -264,36 +372,36 @@ font-weight:700;padding:14px 26px;border-radius:12px}</style></head>
 });
 
 // POST /api/forget  (envoi d'un code de reset)
-router.post('/forget', (req, res) => {
-  const email = (req.body?.email || '').toLowerCase();
+router.post('/forget', requireEmailService, (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
   if (!user) return fail(res, 'No account for this email.', 404);
   const otp = newOtp();
-  db.prepare('UPDATE users SET otp_code = ?, otp_expires_at = ? WHERE id = ?').run(
-    otp,
-    emailService.isConfigured() ? otpExpiryIso() : null,
-    user.id
-  );
+  storeOtp(user.id, otp);
   if (emailService.isConfigured()) {
-    emailService.sendOtpEmail(email, otp).catch((e) => console.error('[email] OTP forget:', e.message));
+    emailService.sendOtpEmail(email, otp)
+      .catch((e) => console.error(`[email] OTP forget (${maskEmail(email)}) :`, e.message));
     return res.json({ status: 'success', message: 'Reset code sent to your email.' });
   }
   return res.json({ status: 'success', message: 'Reset code sent (demo: 1234).' });
 });
 
 // POST /api/reset-password
-router.post('/reset-password', (req, res) => {
+router.post('/reset-password', requireEmailService, (req, res) => {
   const b = req.body || {};
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get((b.email || '').toLowerCase());
+  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(String(b.email || '').trim().toLowerCase());
   if (!user) return fail(res, 'User not found.', 404);
   // otp_code était vérifié UNIQUEMENT s'il était fourni -> l'omettre du body
   // contournait totalement la vérification et permettait de changer le mot de
   // passe de N'IMPORTE QUEL compte (y compris admin) sans connaître son OTP.
-  if (!b.otp_code || String(b.otp_code) !== String(user.otp_code)) {
-    return fail(res, 'Invalid OTP.', 422);
-  }
-  if (otpExpired(user)) return fail(res, 'OTP code expired. Request a new one.', 422);
-  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash(b.password), user.id);
+  if (!b.otp_code) return fail(res, 'Invalid OTP.', 422);
+  const pwErr = passwordError(b.password);
+  if (pwErr) return fail(res, pwErr, 422, { password: [pwErr] });
+  const err = checkOtp(user, b.otp_code);
+  if (err) return fail(res, err, 422);
+  // Code consommé en même temps que le mot de passe change (une seule requête).
+  db.prepare('UPDATE users SET password = ?, otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0 WHERE id = ?')
+    .run(hash(b.password), user.id);
   return res.json({ status: 'success', message: 'Password updated.' });
 });
 
@@ -303,7 +411,10 @@ router.post('/update-password', requireAuth, (req, res) => {
   if (!compare(b.old_password || b.current_password, req.user.password)) {
     return fail(res, 'Current password is incorrect.', 422);
   }
-  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash(b.password || b.new_password), req.user.id);
+  const newPw = b.password || b.new_password;
+  const pwErr = passwordError(newPw);
+  if (pwErr) return fail(res, pwErr, 422, { password: [pwErr] });
+  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash(newPw), req.user.id);
   return res.json({ status: 'success', message: 'Password changed.' });
 });
 

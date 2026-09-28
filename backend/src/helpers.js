@@ -195,6 +195,29 @@ function serializeEvent(row, { currentUserId = null } = {}) {
     !replayEnabled ||
     (replayExpiresAt !== null && row.status !== 'live' && Date.now() > new Date(replayExpiresAt).getTime());
 
+  // ─── Accès aux flux payants ───
+  // Les URLs/IDs Mux (replay `stream.mux.com`, playback du live) donnaient
+  // accès au concert à quiconque lisait la fiche, billet ou pas. Sur un event
+  // payant, ils ne sont renvoyés qu'au détenteur d'un billet, à l'artiste ou
+  // à un admin. Le teaser (video_reel qui n'est PAS une URL Mux) reste
+  // public : il alimente le feed « Pour toi » et la bannière.
+  // stream_key / stream_url (clé d'ingest RTMP) ne sortent plus jamais.
+  const isPaid = (parseFloat(row.ticket_price) || 0) > 0;
+  const hasTicket = ticketRows.length > 0;
+  const isOwner = !!currentUserId && Number(currentUserId) === Number(row.artist_id);
+  let isAdmin = false;
+  if (currentUserId && !isOwner && !hasTicket && isPaid) {
+    const viewer = db.prepare('SELECT role FROM users WHERE id = ?').get(currentUserId);
+    isAdmin = !!viewer && viewer.role === 'admin';
+  }
+  const canWatch = !isPaid || hasTicket || isOwner || isAdmin;
+  const isMuxUrl = (u) => typeof u === 'string' && /(^|\/\/)stream\.mux\.com\//i.test(u);
+  const rawReel = replayExpired ? null : (row.video_reel || null);
+  const rawPlayback = replayExpired ? null : (row.mux_playback_id || null);
+  const rawLive = row.mux_live_playback_id || null;
+  const hasReplay = !!(rawPlayback || isMuxUrl(rawReel));
+  const videoReel = rawReel && isMuxUrl(rawReel) && !canWatch ? null : rawReel;
+
   return {
     id: row.id,
     artist_id: row.artist_id,
@@ -205,7 +228,7 @@ function serializeEvent(row, { currentUserId = null } = {}) {
     end_date_time: row.end_date_time,
     genre_id: row.genre_id,
     description: row.description,
-    video_reel: replayExpired ? null : row.video_reel,
+    video_reel: videoReel,
     is_private: row.is_private,
     has_live_chat: row.has_live_chat,
     capacity_limit: row.capacity_limit,
@@ -213,10 +236,10 @@ function serializeEvent(row, { currentUserId = null } = {}) {
     link: row.link,
     joined_users_count: buyerIds.length,
     likes_count: row.likes_count,
-    stream_key: row.stream_key,
-    stream_url: row.stream_url,
-    mux_playback_id: replayExpired ? null : row.mux_playback_id,
-    mux_live_playback_id: row.mux_live_playback_id,
+    mux_playback_id: canWatch ? rawPlayback : null,
+    mux_live_playback_id: canWatch ? rawLive : null,
+    has_replay: hasReplay,
+    has_ticket: hasTicket,
     replay_expires_at: replayExpiresAt,
     replay_expired: replayExpired,
     replay_enabled: replayEnabled,
@@ -257,6 +280,24 @@ function fail(res, message, code = 422, errors = null) {
   const body = { status: 'error', message };
   if (errors) body.errors = errors;
   return res.status(code).json(body);
+}
+
+// Enveloppe un handler async : une promesse rejetée part dans le middleware
+// d'erreur d'Express au lieu de rester « unhandled » (et de faire tomber le
+// process ou de laisser la requête sans réponse).
+function asyncHandler(fn) {
+  return function wrapped(req, res, next) {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+}
+
+// E-mail masqué pour les journaux : `a***@domaine.tld`. On ne logge jamais
+// une adresse en clair (RGPD + les logs partent parfois hors du serveur).
+function maskEmail(email) {
+  const e = String(email || '').trim();
+  const at = e.indexOf('@');
+  if (at < 1) return e ? '***' : '';
+  return `${e[0]}***@${e.slice(at + 1)}`;
 }
 
 function genReceipt() {
@@ -370,4 +411,6 @@ module.exports = {
   platformCounters,
   payoutCountdown,
   isGeoBlocked,
+  asyncHandler,
+  maskEmail,
 };

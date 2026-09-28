@@ -20,7 +20,8 @@ const jwt = require('jsonwebtoken');
 async function verifyGoogle(idToken) {
   if (!idToken) throw new Error('google: token manquant');
   const res = await fetch(
-    `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`
+    `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`,
+    { signal: AbortSignal.timeout(8000) }
   );
   if (!res.ok) throw new Error(`google: token invalide (${res.status})`);
   const d = await res.json();
@@ -42,7 +43,7 @@ let _appleKeys = null;
 let _appleKeysAt = 0;
 async function _getAppleKeys() {
   if (_appleKeys && Date.now() - _appleKeysAt < 3600_000) return _appleKeys;
-  const res = await fetch('https://appleid.apple.com/auth/keys');
+  const res = await fetch('https://appleid.apple.com/auth/keys', { signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error(`apple: JWKS indisponible (${res.status})`);
   const data = await res.json();
   _appleKeys = data.keys || [];

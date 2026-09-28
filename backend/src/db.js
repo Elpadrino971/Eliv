@@ -910,6 +910,9 @@ function init() {
     // toujours '1234' pour tout le monde, sans expiration. Un vrai code
     // aléatoire doit expirer -> horodatage de validité.
     "ALTER TABLE users ADD COLUMN otp_expires_at TEXT",
+    // Compteur d'échecs de saisie du code : au 5e échec le code est invalidé
+    // (un code à 6 chiffres se devine sinon en < 1 M d'essais).
+    "ALTER TABLE users ADD COLUMN otp_attempts INTEGER DEFAULT 0",
     // Comptes "staff" (rôle role='staff') : accès admin RESTREINT à certains
     // modules seulement (CSV d'ids de modules, ex 'vibe'). Le super-admin
     // (role='admin') garde l'accès total. Vide/NULL = aucun accès.
@@ -945,6 +948,43 @@ function init() {
   ]) {
     try { db.exec(sql); } catch (e) { /* colonne déjà présente */ }
   }
+
+  // ─── Likes de concert : un like par utilisateur (avant : compteur libre,
+  // incrémentable à l'infini sans compte). ───
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS event_likes (
+      event_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      PRIMARY KEY (event_id, user_id)
+    );
+  `);
+
+  // ─── Index (requêtes chaudes le soir d'un concert) ───
+  for (const sql of [
+    'CREATE INDEX IF NOT EXISTS idx_activities_event ON activities (event_id, id)',
+    'CREATE INDEX IF NOT EXISTS idx_follows_artist ON follows (artist_id)',
+    'CREATE INDEX IF NOT EXISTS idx_follows_user ON follows (follower_id)',
+    'CREATE INDEX IF NOT EXISTS idx_wheel_spins_ip ON wheel_spins (campaign, ip_hash)',
+    'CREATE INDEX IF NOT EXISTS idx_web_ticket_orders_event ON web_ticket_orders (event_id)',
+    'CREATE INDEX IF NOT EXISTS idx_pending_tickets_email_only ON pending_tickets (email)',
+    'CREATE INDEX IF NOT EXISTS idx_users_email ON users (email)',
+  ]) {
+    try { db.exec(sql); } catch (e) { console.warn('[db] index ignoré :', e.message); }
+  }
+  // tickets(event_id, user_id) : UNIQUE si aucune ligne en double (sinon
+  // index simple, et on le signale pour nettoyage manuel).
+  try {
+    const dup = db.prepare(
+      'SELECT event_id, user_id FROM tickets GROUP BY event_id, user_id HAVING COUNT(*) > 1 LIMIT 1'
+    ).get();
+    if (dup) {
+      console.warn(`[db] billets en double (event ${dup.event_id}, user ${dup.user_id}) : index tickets(event_id,user_id) NON unique.`);
+      db.exec('CREATE INDEX IF NOT EXISTS idx_tickets_event_user ON tickets (event_id, user_id)');
+    } else {
+      db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_tickets_event_user_uniq ON tickets (event_id, user_id)');
+    }
+  } catch (e) { console.warn('[db] index tickets ignoré :', e.message); }
 
   // Back-fill : un code unique pour tout apporteur qui n'en a pas encore.
   const genCode = (structure) => {

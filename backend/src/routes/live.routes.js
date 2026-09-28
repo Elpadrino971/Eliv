@@ -16,9 +16,11 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
 const { sha256, optionalAuth } = require('../auth');
+const { asyncHandler } = require('../helpers');
 const bus = require('../services/livebus');
 const zegoService = require('../services/zego');
 const badges = require('../services/badges');
+const moderation = require('../services/moderation');
 
 function keyOk(req) {
   const key = req.query.key || req.headers['x-api-key'];
@@ -52,23 +54,82 @@ router.post('/:eventId/emit', (req, res) => {
   return res.json({ status: 'success', delivered });
 });
 
+// ── Garde-fous du chat / des questions (fans) ───────────────────────────────
+// 1. Accès : billet pour ce concert, ou concert gratuit, ou l'artiste. Avant,
+//    n'importe quel compte pouvait écrire sur le mur d'un concert payant.
+// 2. Contenu : mots interdits (table abusive_words) puis modération
+//    Sightengine (fail-open si non configurée) ; 300 caractères max.
+// 3. Débit : 1 message / 2 s par utilisateur (mémoire, par process).
+const FAN_MSG_MAX_LEN = 300;
+const FAN_MSG_MIN_INTERVAL_MS = 2000;
+const lastFanMessageAt = new Map(); // user_id -> timestamp
+function fanCanWrite(user, eventId) {
+  const ev = db.prepare('SELECT id, artist_id, ticket_price FROM events WHERE id = ?').get(eventId);
+  if (!ev) return { ok: false, status: 404, message: 'Concert introuvable.' };
+  if (Number(ev.artist_id) === Number(user.id)) return { ok: true };
+  if ((parseFloat(ev.ticket_price) || 0) <= 0) return { ok: true };
+  const t = db.prepare('SELECT 1 FROM tickets WHERE event_id = ? AND user_id = ? LIMIT 1').get(eventId, user.id);
+  if (!t) return { ok: false, status: 403, message: 'Un billet est nécessaire pour participer à ce concert.' };
+  return { ok: true };
+}
+function fanRateLimited(userId) {
+  const now = Date.now();
+  const last = lastFanMessageAt.get(userId) || 0;
+  if (now - last < FAN_MSG_MIN_INTERVAL_MS) return true;
+  lastFanMessageAt.set(userId, now);
+  if (lastFanMessageAt.size > 20000) { // évite une croissance sans fin
+    for (const [k, v] of lastFanMessageAt) if (now - v > 60000) lastFanMessageAt.delete(k);
+  }
+  return false;
+}
+let abusiveCache = { at: 0, words: [] };
+function abusiveWords() {
+  if (Date.now() - abusiveCache.at > 60000) {
+    try { abusiveCache = { at: Date.now(), words: db.prepare('SELECT word FROM abusive_words').all().map((r) => String(r.word || '').toLowerCase()).filter(Boolean) }; }
+    catch (_) { abusiveCache.at = Date.now(); }
+  }
+  return abusiveCache.words;
+}
+function hasAbusiveWord(text) {
+  const lower = String(text).toLowerCase();
+  const tokens = new Set(lower.split(/[^\p{L}\p{N}]+/u).filter(Boolean));
+  for (const w of abusiveWords()) {
+    if (w.includes(' ')) { if (lower.includes(w)) return true; } // expression : sous-chaîne
+    else if (tokens.has(w)) return true;                         // mot entier
+  }
+  return false;
+}
+async function checkFanText(text, { targetType, targetId }) {
+  if (hasAbusiveWord(text)) return 'Message refusé : langage inapproprié.';
+  const decision = await moderation.reviewText(text, { targetType, targetId });
+  if (decision && decision.action === 'block') return 'Message refusé par la modération.';
+  return null;
+}
+
 // ── Chat live centralisé ─────────────────────────────────────────────────────
 // POST /api/live/:eventId/messages  { text, user? }
 //   - un fan (app)   : JWT Bearer -> nom pris sur son compte (jamais l'e-mail)
 //   - la régie       : clé API    -> nom libre (défaut « Régie »)
-router.post('/:eventId/messages', optionalAuth, (req, res) => {
+router.post('/:eventId/messages', optionalAuth, asyncHandler(async (req, res) => {
   const b = req.body || {};
-  const text = String(b.text || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+  const text = String(b.text || '').replace(/\s+/g, ' ').trim().slice(0, FAN_MSG_MAX_LEN);
   if (!text) return res.status(422).json({ status: 'error', message: 'Message vide.' });
   let userId = null, name = null;
-  if (req.user) { userId = req.user.id; name = req.user.artist_name || req.user.full_name || 'Un fan'; }
+  if (req.user) {
+    const access = fanCanWrite(req.user, req.params.eventId);
+    if (!access.ok) return res.status(access.status).json({ status: 'error', message: access.message });
+    if (fanRateLimited(req.user.id)) return res.status(429).json({ status: 'error', message: 'Doucement : un message toutes les 2 secondes.' });
+    const refused = await checkFanText(text, { targetType: 'live_message', targetId: req.params.eventId });
+    if (refused) return res.status(422).json({ status: 'error', message: refused });
+    userId = req.user.id; name = req.user.artist_name || req.user.full_name || 'Un fan';
+  }
   else if (keyOk(req)) { name = String(b.user || 'Régie').trim().slice(0, 60) || 'Régie'; }
   else return res.status(401).json({ status: 'error', message: 'Connexion ou clé API requise.' });
   const info = db.prepare('INSERT INTO live_messages (event_id, user_id, name, text) VALUES (?, ?, ?, ?)')
     .run(req.params.eventId, userId, name, text);
   bus.emit(req.params.eventId, { type: 'chat', id: info.lastInsertRowid, user: name, text });
   return res.json({ status: 'success', data: { id: info.lastInsertRowid, user: name, text } });
-});
+}));
 
 // GET /api/live/:eventId/messages?since=<id>&limit=50 -> historique (clé API ou JWT)
 router.get('/:eventId/messages', optionalAuth, (req, res) => {
@@ -122,17 +183,24 @@ router.get('/:eventId/questions', optionalAuth, (req, res) => {
 });
 
 // POST /api/live/:eventId/questions { text, user? }  (fan : JWT ; régie : clé API)
-router.post('/:eventId/questions', optionalAuth, (req, res) => {
+router.post('/:eventId/questions', optionalAuth, asyncHandler(async (req, res) => {
   const text = String((req.body || {}).text || '').replace(/\s+/g, ' ').trim().slice(0, 200);
   if (text.length < 3) return res.status(422).json({ status: 'error', message: 'Question trop courte.' });
   let userId = null, name = null;
-  if (req.user) { userId = req.user.id; name = req.user.artist_name || req.user.full_name || 'Un fan'; }
+  if (req.user) {
+    const access = fanCanWrite(req.user, req.params.eventId);
+    if (!access.ok) return res.status(access.status).json({ status: 'error', message: access.message });
+    if (fanRateLimited(req.user.id)) return res.status(429).json({ status: 'error', message: 'Doucement : un message toutes les 2 secondes.' });
+    const refused = await checkFanText(text, { targetType: 'live_question', targetId: req.params.eventId });
+    if (refused) return res.status(422).json({ status: 'error', message: refused });
+    userId = req.user.id; name = req.user.artist_name || req.user.full_name || 'Un fan';
+  }
   else if (keyOk(req)) { name = String((req.body || {}).user || 'Régie').trim().slice(0, 60) || 'Régie'; }
   else return res.status(401).json({ status: 'error', message: 'Connexion ou clé API requise.' });
   const info = db.prepare('INSERT INTO live_questions (event_id, user_id, name, text) VALUES (?, ?, ?, ?)').run(req.params.eventId, userId, name, text);
   broadcastQuestions(req.params.eventId);
   return res.json({ status: 'success', data: pubQ(db.prepare('SELECT * FROM live_questions WHERE id = ?').get(info.lastInsertRowid)) });
-});
+}));
 
 // POST /api/live/:eventId/questions/:id/like  (fan : JWT ; un seul like par personne)
 router.post('/:eventId/questions/:id/like', optionalAuth, (req, res) => {

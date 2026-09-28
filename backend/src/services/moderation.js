@@ -16,11 +16,13 @@
  * pire elle ne filtre pas, elle ne bloque jamais du contenu sain par accident.
  */
 
+const crypto = require('crypto');
 const { db } = require('../db');
 const sightengine = require('./sightengine');
 const { PUBLIC_BASE_URL } = require('../uploads');
 
 const CALLBACK_TOKEN = process.env.SIGHTENGINE_CALLBACK_TOKEN || '';
+const IS_PROD = process.env.NODE_ENV === 'production';
 // Couper automatiquement un live sur détection grave ? Désactivé par défaut :
 // un faux positif ne doit pas tuer un concert légitime. À activer une fois les
 // seuils calibrés (SIGHTENGINE_LIVE_AUTOSTOP=1).
@@ -126,9 +128,14 @@ function startLiveMonitor({ url, targetType = 'live', targetId }) {
     .catch((e) => console.error('[moderation] startLiveMonitor échec:', e.message));
 }
 
+// En production, un callback sans jeton configuré est REFUSÉ : sinon
+// n'importe qui pouvait « bloquer » un replay ou couper un live en postant un
+// faux résultat. Comparaison en temps constant.
 function verifyCallbackToken(token) {
-  if (!CALLBACK_TOKEN) return true; // pas de jeton configuré -> on accepte (avec warning au boot)
-  return token === CALLBACK_TOKEN;
+  if (!CALLBACK_TOKEN) return !IS_PROD; // dev : accepté (warning au boot) ; prod : refusé
+  const a = Buffer.from(String(token || ''));
+  const b = Buffer.from(CALLBACK_TOKEN);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
 /**
