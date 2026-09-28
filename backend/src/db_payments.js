@@ -39,6 +39,9 @@ function run() {
     "ALTER TABLE web_ticket_orders ADD COLUMN refunded_at TEXT",
     // Billets remboursés (Stripe ou store) : status = 'refunded'.
     "ALTER TABLE tickets ADD COLUMN refunded_at TEXT",
+    // Place remboursée AVANT d'avoir rejoint un compte : ne doit plus être
+    // rattachée ni proposée à l'attribution manuelle.
+    "ALTER TABLE pending_tickets ADD COLUMN refunded_at TEXT",
     "CREATE INDEX IF NOT EXISTS idx_web_ticket_orders_pi ON web_ticket_orders (payment_intent_id)",
     "CREATE INDEX IF NOT EXISTS idx_tickets_event_user ON tickets (event_id, user_id)",
     "CREATE INDEX IF NOT EXISTS idx_pending_tickets_ticket ON pending_tickets (ticket_id)",

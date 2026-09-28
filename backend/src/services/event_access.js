@@ -110,19 +110,92 @@ function findVerifiedUserByEmail(email) {
 }
 
 function hasAccess(email, eventId) {
+  dbPayments.run();
   const keys = emailKeys(email);
   const user = findUserByEmail(email);
   if (user && db.prepare("SELECT 1 FROM tickets WHERE event_id = ? AND user_id = ? AND COALESCE(status, 'active') <> 'refunded'").get(eventId, user.id)) return true;
-  return !!db.prepare(`SELECT 1 FROM pending_tickets WHERE email IN (${inKeys(keys)}) AND event_id = ?`).get(...keys, eventId);
+  // Place encore en attente (non remboursée), ou déjà devenue un billet actif.
+  return !!db.prepare(
+    `SELECT 1 FROM pending_tickets p LEFT JOIN tickets t ON t.id = p.ticket_id
+      WHERE p.email IN (${inKeys(keys)}) AND p.event_id = ? AND p.refunded_at IS NULL
+        AND (p.ticket_id IS NULL OR COALESCE(t.status, 'active') <> 'refunded')`
+  ).get(...keys, eventId);
 }
 
 /** Une place attend-elle encore un compte vérifié pour cet e-mail ? (lot 2C : /sign-up -> requires_verification) */
 function hasPendingForEmail(email) {
+  dbPayments.run();
   const keys = emailKeys(email);
   if (!keys[0]) return false;
   return !!db.prepare(
-    `SELECT 1 FROM pending_tickets WHERE email IN (${inKeys(keys)}) AND granted_at IS NULL AND ticket_id IS NULL`
+    `SELECT 1 FROM pending_tickets WHERE email IN (${inKeys(keys)}) AND granted_at IS NULL AND ticket_id IS NULL AND refunded_at IS NULL`
   ).get(...keys);
+}
+
+/**
+ * Remboursement d'un billet (Stripe ou store) : le billet passe 'refunded',
+ * la part artiste est reprise sur son wallet (jamais sous 0 : si elle a déjà
+ * été retirée, on le journalise pour traitement manuel), et le ledger reçoit
+ * une ligne NÉGATIVE miroir de la vente (mêmes source/source_id) — les
+ * relevés et le dashboard se compensent d'eux-mêmes. Idempotent.
+ * @returns {{status:'refunded'|'already'|'not_found', ticket?:object}}
+ */
+function refundTicket(ticketId, { reason = 'refund' } = {}) {
+  dbPayments.run();
+  return db.transaction(() => {
+    const t = db.prepare('SELECT * FROM tickets WHERE id = ?').get(Number(ticketId));
+    if (!t) return { status: 'not_found' };
+    if (t.status === 'refunded') return { status: 'already', ticket: t };
+    db.prepare("UPDATE tickets SET status = 'refunded', refunded_at = datetime('now'), updated_at = datetime('now') WHERE id = ?").run(t.id);
+    db.prepare("UPDATE pending_tickets SET refunded_at = datetime('now') WHERE ticket_id = ?").run(t.id);
+
+    const sale = db.prepare(
+      `SELECT * FROM platform_earnings WHERE source IN ('ticket', 'ticket_web') AND source_id = ?
+        ORDER BY id ASC LIMIT 1`
+    ).get(t.id);
+    if (sale) {
+      const alreadyReversed = db.prepare(
+        `SELECT 1 FROM platform_earnings WHERE source = ? AND source_id = ? AND CAST(gross AS REAL) < 0`
+      ).get(sale.source, t.id);
+      if (!alreadyReversed) {
+        const neg = (v) => (v == null ? null : (-(parseFloat(v) || 0)).toFixed(2));
+        db.prepare(
+          `INSERT INTO platform_earnings
+             (artist_id, source, source_id, gross, artist_share, platform_share, commission_rate, store_fee, net, apporteur_id, apporteur_amount)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).run(
+          sale.artist_id, sale.source, t.id, neg(sale.gross), neg(sale.artist_share), neg(sale.platform_share),
+          sale.commission_rate, neg(sale.store_fee), neg(sale.net), sale.apporteur_id, neg(sale.apporteur_amount),
+        );
+        const share = parseFloat(sale.artist_share) || 0;
+        if (share > 0 && sale.artist_id) {
+          const artist = db.prepare('SELECT wallet FROM users WHERE id = ?').get(sale.artist_id);
+          const wallet = parseFloat(artist?.wallet) || 0;
+          const next = Math.max(0, wallet - share);
+          db.prepare('UPDATE users SET wallet = ? WHERE id = ?').run(next.toFixed(2), sale.artist_id);
+          if (wallet - share < -0.005) {
+            console.warn(`[remboursement] wallet artiste #${sale.artist_id} insuffisant : ${share.toFixed(2)} € à reprendre, ${wallet.toFixed(2)} € disponibles (billet #${t.id}) -> à régulariser à la main`);
+          }
+        }
+        // Commission apporteur liée à cette vente : ligne miroir négative.
+        const comm = db.prepare(
+          "SELECT * FROM apporteur_commissions WHERE source_type = 'ticket' AND source_id = ? AND CAST(amount AS REAL) > 0 LIMIT 1"
+        ).get(t.id);
+        if (comm) {
+          apporteurLedger.recordApporteurCommission({
+            apporteurId: comm.apporteur_id, artistId: comm.artist_id, sourceType: 'ticket', sourceId: t.id,
+            breakdown: {
+              gross: neg(comm.gross), store: neg(comm.store), net: neg(comm.net),
+              artist: neg(comm.artist_share), platform: neg(comm.platform_share), apporteur: neg(comm.amount),
+            },
+            rate: comm.rate,
+          });
+        }
+      }
+    }
+    console.log(`[remboursement] billet #${t.id} (user #${t.user_id}, concert #${t.event_id}) remboursé : ${reason}`);
+    return { status: 'refunded', ticket: t };
+  })();
 }
 
 /** Crée le billet d'un compte existant (à appeler dans une transaction). */
@@ -240,7 +313,7 @@ function attachPendingForUser(user) {
   dbPayments.run();
   const keys = emailKeys(user.email);
   const rows = db.prepare(
-    `SELECT * FROM pending_tickets WHERE email IN (${inKeys(keys)}) AND ticket_id IS NULL`
+    `SELECT * FROM pending_tickets WHERE email IN (${inKeys(keys)}) AND ticket_id IS NULL AND refunded_at IS NULL`
   ).all(...keys);
   let n = 0;
   for (const p of rows) {
@@ -265,6 +338,7 @@ function assignPendingToUser(pendingId, userId) {
   const p = db.prepare('SELECT * FROM pending_tickets WHERE id = ?').get(Number(pendingId));
   if (!p) return { error: 'Place introuvable.', code: 404 };
   if (p.ticket_id) return { error: `Place déjà attribuée (billet #${p.ticket_id}).`, code: 409, ticketId: p.ticket_id };
+  if (p.refunded_at) return { error: 'Place remboursée : elle ne peut plus être attribuée.', code: 409 };
   const u = db.prepare('SELECT id, email, is_verified FROM users WHERE id = ?').get(Number(userId));
   if (!u) return { error: 'Utilisateur introuvable.', code: 404 };
   const r = grantPendingTo(p, u.id);
@@ -292,8 +366,9 @@ function listPending({ limit = 500 } = {}) {
       price_paid: p.price_paid,
       created_at: p.created_at,
       granted_at: p.granted_at,
+      refunded_at: p.refunded_at || null,
       ticket_id: p.ticket_id,
-      status: p.ticket_id ? 'granted' : 'pending',
+      status: p.refunded_at ? 'refunded' : p.ticket_id ? 'granted' : 'pending',
       account: u ? { id: u.id, is_verified: !!u.is_verified } : null,
     };
   });
@@ -302,5 +377,5 @@ function listPending({ limit = 500 } = {}) {
 module.exports = {
   normEmail, canonEmail, emailKeys, isDisposableEmail, maskEmail,
   findUserByEmail, findVerifiedUserByEmail, hasAccess, hasPendingForEmail,
-  grantByEmail, attachPendingForUser, assignPendingToUser, listPending, stripeFeeRate,
+  grantByEmail, attachPendingForUser, assignPendingToUser, listPending, refundTicket, stripeFeeRate,
 };

@@ -53,6 +53,9 @@ function createSubscriptionCheckout({ priceId, userId, subscriptionsId, customer
 function createTicketCheckout({ eventId, eventName, amountCents, email, campaign, successUrl, cancelUrl }) {
   return client().checkout.sessions.create({
     mode: 'payment',
+    // Carte uniquement : les moyens de paiement différés (virement, SEPA…)
+    // confirment des heures/jours plus tard — trop tard pour un live.
+    payment_method_types: ['card'],
     line_items: [{
       quantity: 1,
       price_data: {
@@ -78,10 +81,22 @@ function retrieveSubscription(subscriptionId) {
   return client().subscriptions.retrieve(subscriptionId);
 }
 
+/**
+ * Session Checkout à l'origine d'un PaymentIntent (repli pour un remboursement
+ * dont la commande n'a pas encore de payment_intent_id mémorisé : commandes
+ * payées avant le lot 2D). Renvoie null si introuvable.
+ */
+async function findSessionByPaymentIntent(paymentIntentId) {
+  if (!paymentIntentId) return null;
+  const r = await client().checkout.sessions.list({ payment_intent: paymentIntentId, limit: 1 });
+  return r && r.data && r.data[0] ? r.data[0] : null;
+}
+
 module.exports = {
   isConfigured,
   createSubscriptionCheckout,
   createTicketCheckout,
   constructWebhookEvent,
   retrieveSubscription,
+  findSessionByPaymentIntent,
 };
