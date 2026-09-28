@@ -499,21 +499,29 @@ class EventController extends GetxController {
     });
   }
 
+  /// Fil d'activité du live (commentaires, cadeaux, billets). Appelé en
+  /// BOUCLE (toutes les 15 s) par les écrans de live : une erreur ne doit
+  /// JAMAIS ouvrir de dialogue modal (avant, chaque coupure réseau affichait
+  /// une alerte par-dessus le live). Renvoie null en cas d'échec : l'appelant
+  /// garde alors le fil précédent.
   Future<List<Activity>?> getEventLogs({required String eventId}) async {
     List<Activity>? data;
     response.typeSetter = 'post';
     response.urlSetter = APIs.eventLogsAPI;
     response.bodySetter = {'event_id': eventId};
-    await response.hitAPI().then((value) {
+    try {
+      final value = await response.hitAPI();
       if (value.split(' ').first != 'error') {
-        data = (jsonDecode(value)['activity'] as List)
+        data = ((jsonDecode(value)['activity'] as List?) ?? [])
             .map((x) => Activity.fromJson(x))
             .toList();
         update();
       } else {
-        parseError(value);
+        myPrint('getEventLogs: $value');
       }
-    });
+    } catch (e) {
+      myPrint('getEventLogs: exception -> $e');
+    }
     return data;
   }
 

@@ -35,6 +35,7 @@ class _JoinStreamState extends State<JoinStream> {
   int? _promoPercent;
   int _promoRemaining = 0;
   Timer? _promoTimer;
+  Timer? _logTimer;
 
   Future myInitMethod() async {
     final zegoTokenOk = await zegoController.fetchZegoToken();
@@ -49,19 +50,28 @@ class _JoinStreamState extends State<JoinStream> {
     final data = await eventController.getEventLogs(
       eventId: widget.event.id.toString(),
     );
+    if (!mounted) return;
     currentEvent = currentEvent.copyWith(activities: data);
     setState(() {});
     await eventController.getGifts();
-    Timer.periodic(const Duration(seconds: 5), (timer) async {
-      if (mounted) {
-        final data = await eventController.getEventLogs(
-          eventId: widget.event.id.toString(),
-        );
-        currentEvent = currentEvent.copyWith(activities: data);
-        setState(() {});
-      } else {
+    if (!mounted) return;
+    // Rafraîchit le fil (commentaires / cadeaux). 15 s : suffisant, et évite
+    // de marteler l'API pendant un live. Le Timer est conservé et annulé dans
+    // dispose() (avant, il survivait à l'écran). getEventLogs n'ouvre plus de
+    // dialogue d'erreur ; en cas d'échec réseau, on garde le fil actuel.
+    _logTimer?.cancel();
+    _logTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
+      if (!mounted) {
         timer.cancel();
+        return;
       }
+      final data = await eventController.getEventLogs(
+        eventId: widget.event.id.toString(),
+      );
+      if (!mounted || data == null) return;
+      setState(() {
+        currentEvent = currentEvent.copyWith(activities: data);
+      });
     });
   }
 
@@ -85,6 +95,7 @@ class _JoinStreamState extends State<JoinStream> {
     commentController.dispose();
     _commandSubscription?.cancel();
     _promoTimer?.cancel();
+    _logTimer?.cancel();
     super.dispose();
   }
 
