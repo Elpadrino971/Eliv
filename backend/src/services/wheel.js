@@ -42,7 +42,10 @@ const CAMPAIGNS = {
   },
 };
 
-const IP_CAP = 15; // tirages max par IP et par campagne (box familiales, 4G partagée)
+// Tirages max par IP et par campagne. 5 couvre une famille derrière la même
+// box tout en coupant court aux rafales d'adresses depuis une seule
+// connexion (l'e-mail est déjà normalisé Gmail + domaines jetables refusés).
+const IP_CAP = Number(process.env.WHEEL_IP_CAP) || 5;
 
 function campaign(slug) {
   return CAMPAIGNS[slug] || null;
@@ -128,12 +131,22 @@ async function spin(slug, rawEmail, ipHash) {
   if (!c) return { error: 'Campagne introuvable.', code: 404 };
   if (!isOpen(c)) return { error: 'La roue est fermée : le live commence bientôt.', code: 410 };
 
-  const e = access.normEmail(rawEmail);
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) || e.length > 190) {
+  const typed = access.normEmail(rawEmail);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(typed) || typed.length > 190) {
     return { error: 'Adresse e-mail invalide.', code: 422 };
   }
+  if (access.isDisposableEmail(typed)) {
+    return { error: "Adresse e-mail jetable refusée : joue avec ton adresse habituelle, c'est là que ta place arrive.", code: 422 };
+  }
+  // Clé du tirage = adresse canonique (Gmail : points et +tag ignorés) : une
+  // seule boîte = un seul tirage. On cherche aussi l'ancienne forme (tirages
+  // enregistrés avant la normalisation).
+  const e = access.canonEmail(typed);
+  const keys = access.emailKeys(typed);
 
-  const prev = db.prepare('SELECT result, status FROM wheel_spins WHERE campaign = ? AND email = ?').get(c.slug, e);
+  const prev = db.prepare(
+    `SELECT result, status FROM wheel_spins WHERE campaign = ? AND email IN (${keys.map(() => '?').join(',')}) ORDER BY id ASC LIMIT 1`
+  ).get(c.slug, ...keys);
   if (prev) {
     return { already: true, result: prev.result, status: prev.status, remaining: remaining(c) };
   }
@@ -160,10 +173,11 @@ async function spin(slug, rawEmail, ipHash) {
   if (win) {
     const link = `${PUBLIC_BASE_URL}/api/wheel/claim?t=${token}`;
     try {
-      await email.sendEmail({ to: e, subject: `Tu as gagné ta place pour ${c.artist}`, html: winEmailHtml(c, link), kind: 'wheel' });
+      // Envoi à l'adresse telle que saisie (même boîte que la forme canonique).
+      await email.sendEmail({ to: typed, subject: `Tu as gagné ta place pour ${c.artist}`, html: winEmailHtml(c, link), kind: 'wheel' });
       mailed = true;
     } catch (err) {
-      console.error('[roue] e-mail de gain non envoyé :', err.message);
+      console.error(`[roue] e-mail de gain non envoyé (${access.maskEmail(typed)}) :`, err.message);
     }
   }
   return { result: win ? 'win' : 'lose', remaining: Math.max(0, left - (win ? 1 : 0)), mailed };

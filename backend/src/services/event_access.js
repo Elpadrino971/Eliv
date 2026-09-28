@@ -416,6 +416,42 @@ function listPending({ limit = 500 } = {}) {
   });
 }
 
+// ─── Migration de données (une fois) : canonise les e-mails Gmail déjà
+// enregistrés (tirages, places en attente) avant l'arrivée de canonEmail,
+// pour que « a.b.c@gmail.com » (ancienne ligne) bloque bien « abc@gmail.com ».
+// En cas de doublon (les deux formes existent), la ligne la plus ancienne
+// est conservée telle quelle et le cas est journalisé.
+const CANON_MIGRATION_KEY = 'migration:canon_emails_v1';
+function migrateCanonEmails() {
+  try {
+    if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'wheel_spins'").get()) return;
+    if (db.prepare('SELECT 1 FROM settings WHERE key = ?').get(CANON_MIGRATION_KEY)) return;
+    let n = 0;
+    db.transaction(() => {
+      for (const [table, scope] of [['wheel_spins', 'campaign'], ['pending_tickets', 'event_id']]) {
+        const rows = db.prepare(
+          `SELECT id, email, ${scope} AS scope FROM ${table} WHERE lower(email) LIKE '%@gmail.com' OR lower(email) LIKE '%@googlemail.com' OR email <> lower(email)`
+        ).all();
+        for (const r of rows) {
+          const c = canonEmail(r.email);
+          if (c === r.email) continue;
+          const clash = db.prepare(`SELECT id FROM ${table} WHERE email = ? AND ${scope} = ? AND id <> ?`).get(c, r.scope, r.id);
+          if (clash) { console.warn(`[places] ${table} #${r.id} (${maskEmail(r.email)}) : forme canonique déjà présente (#${clash.id}), ligne conservée`); continue; }
+          db.prepare(`UPDATE ${table} SET email = ? WHERE id = ?`).run(c, r.id);
+          n += 1;
+        }
+      }
+      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(CANON_MIGRATION_KEY, new Date().toISOString());
+    })();
+    if (n) console.log(`[places] ${n} e-mail(s) canonisé(s) (Gmail)`);
+  } catch (e) {
+    console.error('[places] migration e-mails canoniques :', e.message);
+  }
+}
+// Base neuve : les tables n'existent qu'après db.init() (appelé par app.js
+// dans le même tour synchrone) -> au tick suivant.
+process.nextTick(migrateCanonEmails);
+
 module.exports = {
   ALLOWED_TICKET_PRICES, normalizeTicketPrice, normalizeIsoUtc,
   normEmail, canonEmail, emailKeys, isDisposableEmail, maskEmail,
