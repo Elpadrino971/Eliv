@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:artist/Controllers/auth_controller.dart';
+import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
@@ -51,6 +55,19 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('⚠️ Push setup échouée (app continue): $e');
   }
+
+  // Contrôleurs globaux disponibles dès le PREMIER écran. Avant, seul
+  // l'Accueil enregistrait EventController : l'onglet Live (premier écran
+  // après le splash / la connexion) faisait Get.find<EventController>() sans
+  // qu'il existe -> exception -> page grise au lancement. `permanent` :
+  // jamais supprimés par GetX. Les Get.put() restants dans les écrans
+  // renvoient simplement ces instances.
+  final authController = Get.put(AuthController(), permanent: true);
+  Get.put(EventController(), permanent: true);
+  Get.put(SubscriptionController(), permanent: true);
+  // Textes légaux (CGU / confidentialité) demandés dès le démarrage, sans
+  // bloquer : ils sont ainsi prêts avant l'écran d'inscription.
+  unawaited(authController.getSettings());
 
   // Hors version store (debug/profile) : un écran qui plante affiche le
   // message d'erreur au lieu de la page grise muette, et l'erreur est écrite

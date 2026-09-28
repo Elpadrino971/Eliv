@@ -550,7 +550,9 @@ class AuthController extends GetxController {
         settings.value = jsonDecode(value)["data"] ?? {};
         update();
       } else {
-        parseError(value);
+        // Appelé dès le démarrage (main.dart), avant tout écran : pas de
+        // dialogue ici. La page CGU/confidentialité propose « Réessayer ».
+        parseError(value, showDialog: false);
       }
     });
   }

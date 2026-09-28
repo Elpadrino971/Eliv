@@ -74,6 +74,9 @@ class _SpalashScreenState extends State<SpalashScreen>
     super.initState();
     _introController.forward();
     unawaited(_loadSplashConfig());
+    // Le feed « Pour toi » (premier écran après le splash) se charge pendant
+    // l'animation, pour être prêt à l'arrivée sur l'onglet Live.
+    unawaited(preloadLiveFeed());
   }
 
   Future<void> _loadSplashConfig() async {
