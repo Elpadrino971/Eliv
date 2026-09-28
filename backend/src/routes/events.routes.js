@@ -13,6 +13,8 @@ const apporteurBonus = require('../services/apporteur_bonus');
 const revenuecat = require('../services/revenuecat');
 const livebus = require('../services/livebus');
 const badges = require('../services/badges');
+const eventAccess = require('../services/event_access');
+const geo = require('../services/geo');
 
 // Délai avant le 2e essai de vérification RevenueCat dans /buy-ticket
 // (latence de synchro du reçu). Surchargeable pour les tests.
@@ -89,7 +91,18 @@ router.get('/event/:id', optionalAuth, (req, res) => {
 // par le client, pour qu'un user ne puisse pas créer un event au nom d'un autre.
 router.post('/events', requireAuth, async (req, res) => {
   const b = req.body || {};
+  // Seul un compte ARTISTE crée des concerts (un fan pouvait en créer et
+  // encaisser des billets/tips sur son wallet).
+  if (Number(req.user.is_artist) !== 1) return fail(res, 'Réservé aux artistes.', 403);
   if (!b.name) return fail(res, 'Le nom est requis.', 422, { name: ['Le nom est requis.'] });
+
+  // Prix : grille fermée (produit store ticket_<n>) ; dates : ISO UTC « Z ».
+  const price = eventAccess.normalizeTicketPrice(b.ticket_price);
+  if (!price.ok) return fail(res, price.error, 422, { ticket_price: [price.error] });
+  const startAt = eventAccess.normalizeIsoUtc(b.start_date_time, 'start_date_time');
+  if (!startAt.ok) return fail(res, startAt.error, 422, { start_date_time: [startAt.error] });
+  const endAt = eventAccess.normalizeIsoUtc(b.end_date_time, 'end_date_time');
+  if (!endAt.ok) return fail(res, endAt.error, 422, { end_date_time: [endAt.error] });
 
   // Modération texte du titre + description avant création (bloque le grave).
   const textVerdict = await moderation.reviewText(
@@ -116,7 +129,7 @@ router.post('/events', requireAuth, async (req, res) => {
         genre_id, description, video_reel, is_private, has_live_chat, replay_enabled, replay_duration_days, status)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'published')`
   ).run(
-    req.user.id, b.name, cover, b.ticket_price || '0', b.start_date_time || null, b.end_date_time || null,
+    req.user.id, b.name, cover, price.value, startAt.value, endAt.value,
     b.genre_id || null, b.description || null, videoReel,
     (b.is_private === '1' || b.is_private === true) ? 1 : 0,
     b.has_live_chat === '0' ? 0 : 1,
@@ -153,16 +166,18 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
   if (!event) return fail(res, 'Event not found.', 404);
 
   // Géo-blocage : certains concerts sont restreints par secteur (pour ne pas
-  // cannibaliser l'événement physique). Le pays vient de l'app (country_code)
-  // ou d'un en-tête reverse-proxy. Pays inconnu -> non bloqué (soft).
-  const country = (b.country_code || req.headers['cf-ipcountry'] || req.headers['x-country'] || '').toString();
+  // cannibaliser l'événement physique). Le pays vient de l'IP côté serveur
+  // (services/geo.js, base locale) — plus du body ni d'un en-tête, que le
+  // client pouvait forger. Pays inconnu (IP locale, base absente) -> non
+  // bloqué (soft). `country_code` envoyé par l'app est ignoré.
+  const country = (geo.fromIp(req.ip) || {}).code || '';
   if (isGeoBlocked(event, country)) {
     return fail(res, "Ce concert n'est pas disponible en ligne dans ta région — rejoins l'événement sur place !", 451);
   }
 
-  // Déjà acheté -> idempotent.
+  // Déjà acheté -> idempotent (un billet remboursé ne compte plus).
   const already = db
-    .prepare('SELECT * FROM tickets WHERE event_id = ? AND user_id = ?')
+    .prepare("SELECT * FROM tickets WHERE event_id = ? AND user_id = ? AND COALESCE(status, 'active') <> 'refunded'")
     .get(b.event_id, userId);
   if (already) {
     return ok(res, serializeEvent(event, { currentUserId: userId }));
@@ -273,13 +288,15 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
 });
 
 // POST /api/user-event-history  (body: { user_id })  -> { status, list: [...] }
-router.post('/user-event-history', optionalAuth, (req, res) => {
-  const userId = req.user?.id || req.body?.user_id;
+// L'identité vient UNIQUEMENT du JWT : avec user_id du body, n'importe qui
+// pouvait lister les billets (et donc les concerts) d'un autre compte.
+router.post('/user-event-history', requireAuth, (req, res) => {
+  const userId = req.user.id;
   const rows = db
     .prepare(
       `SELECT DISTINCT e.* FROM events e
        JOIN tickets t ON t.event_id = e.id
-       WHERE t.user_id = ?
+       WHERE t.user_id = ? AND COALESCE(t.status, 'active') <> 'refunded'
        ORDER BY datetime(e.start_date_time) ASC`
     )
     .all(userId);

@@ -76,6 +76,48 @@ function isDisposableEmail(e) {
   return DISPOSABLE_DOMAINS.some((d) => domain === d || domain.endsWith(`.${d}`));
 }
 
+// ─── Prix des billets : grille fermée ───
+// Chaque palier correspond à un produit store `ticket_<partie entière>`
+// (4.99 -> ticket_4). Un prix hors grille = billet impossible à acheter dans
+// l'app (produit inexistant) ou vendu à un prix différent de l'IAP.
+const ALLOWED_TICKET_PRICES = [0, 2.99, 4.99, 6.99, 9.99, 14.99, 19.99, 29.99, 39.99, 49.99, 59.99, 79.99, 99.99];
+const PRICE_LIST_LABEL = ALLOWED_TICKET_PRICES.filter((p) => p > 0).map((p) => p.toFixed(2)).join(', ');
+
+/**
+ * Normalise un prix saisi ("4.99", "4,99 €", 4.99, "", "0", "Gratuit"…).
+ * @returns {{ok:true, value:string}|{ok:false, error:string}} value = '0' ou '4.99'
+ */
+function normalizeTicketPrice(raw) {
+  if (raw == null) return { ok: true, value: '0' };
+  let s = String(raw).trim().toLowerCase();
+  if (s === '' || s === 'gratuit' || s === 'free' || s === 'common_free') return { ok: true, value: '0' };
+  s = s.replace(/€|eur|\s/g, '').replace(',', '.');
+  const n = Number(s);
+  if (!Number.isFinite(n) || n < 0) {
+    return { ok: false, error: `Prix du billet invalide. Paliers acceptés : gratuit (0), ${PRICE_LIST_LABEL} €.` };
+  }
+  const hit = ALLOWED_TICKET_PRICES.find((p) => Math.abs(p - n) < 0.005);
+  if (hit == null) {
+    return { ok: false, error: `Prix ${n} € hors grille. Paliers acceptés : gratuit (0), ${PRICE_LIST_LABEL} €.` };
+  }
+  return { ok: true, value: hit === 0 ? '0' : hit.toFixed(2) };
+}
+
+/**
+ * Date/heure fournie par un client -> ISO UTC avec « Z ». Sans fuseau
+ * explicite, la valeur est lue comme UTC (c'est ce que l'app envoie, et ce
+ * que SQLite stocke via datetime('now')).
+ * @returns {{ok:true, value:string|null}|{ok:false, error:string}}
+ */
+function normalizeIsoUtc(raw, label = 'date') {
+  if (raw == null || String(raw).trim() === '') return { ok: true, value: null };
+  let s = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?(\.\d+)?$/.test(s)) s = `${s.replace(' ', 'T')}Z`;
+  const t = Date.parse(s);
+  if (!Number.isFinite(t)) return { ok: false, error: `${label} invalide (attendu : 2026-10-04T03:50:00Z).` };
+  return { ok: true, value: new Date(t).toISOString() };
+}
+
 // Journalisation : jamais l'adresse en clair (a***@domaine).
 function maskEmail(e) {
   const n = normEmail(e);
@@ -375,6 +417,7 @@ function listPending({ limit = 500 } = {}) {
 }
 
 module.exports = {
+  ALLOWED_TICKET_PRICES, normalizeTicketPrice, normalizeIsoUtc,
   normEmail, canonEmail, emailKeys, isDisposableEmail, maskEmail,
   findUserByEmail, findVerifiedUserByEmail, hasAccess, hasPendingForEmail,
   grantByEmail, attachPendingForUser, assignPendingToUser, listPending, refundTicket, stripeFeeRate,
