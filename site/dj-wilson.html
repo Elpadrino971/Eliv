@@ -30,9 +30,27 @@
 .dw{--pad:clamp(16px,4vw,46px)}
 .dw-hero{position:relative;padding:112px var(--pad) 56px;overflow:hidden;
   background:radial-gradient(80% 60% at 70% 0%,rgba(230,199,106,.18),transparent 60%),linear-gradient(180deg,#0A1226,#070C18)}
-.dw-hero__grid{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:.9fr 1.1fr;gap:48px;align-items:center}
-.dw-poster{position:relative;border-radius:22px;overflow:hidden;box-shadow:0 40px 90px -30px rgba(0,0,0,.8),0 0 0 1px rgba(230,199,106,.25)}
+.dw-hero__grid{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:.9fr 1.1fr;grid-template-areas:"poster intro" "poster more";gap:0 48px;align-items:center}
+.dw-poster{grid-area:poster;position:relative;display:block;border-radius:22px;overflow:hidden;box-shadow:0 40px 90px -30px rgba(0,0,0,.8),0 0 0 1px rgba(230,199,106,.25);transition:transform .3s var(--ease)}
+.dw-poster:hover{transform:translateY(-3px)}
 .dw-poster img{display:block;width:100%;height:auto}
+.dw-intro{grid-area:intro;align-self:end}
+.dw-more{grid-area:more;align-self:start;margin-top:26px}
+.dw-when{margin:14px 0 4px;color:var(--ivory,#F4EFE3);line-height:1.6}
+.dw-when b{color:var(--gold)}
+.dw-price{margin:0 0 18px;font-size:1.05rem}
+.dw-price b{color:var(--gold);font-family:"Sora",sans-serif;font-size:1.3rem}
+.dw-cad{display:inline-block;margin-left:6px;color:var(--muted);font-size:.8rem}
+.ticket__cad{margin-top:6px;color:var(--muted);font-size:.8rem}
+/* Rappel « Réserver » collé en bas (mobile) */
+/* #id : la règle body>* de styles.css (position:relative, z-index:2) doit être battue. */
+#dwSticky{display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:950;align-items:center;justify-content:space-between;gap:10px;padding:8px 8px 8px 16px;border-radius:16px;
+  background:rgba(10,18,38,.92);border:1px solid rgba(230,199,106,.5);backdrop-filter:blur(12px);box-shadow:0 12px 30px -10px rgba(0,0,0,.7);transition:transform .3s var(--ease),opacity .3s}
+.dw-sticky>span{font-size:.8rem;color:var(--muted);letter-spacing:.04em}
+.dw-sticky b span{color:inherit}
+.dw-sticky b{padding:12px 20px;border-radius:99px;background:linear-gradient(120deg,var(--gold-2),var(--gold));color:#0A1226;font-family:"Plus Jakarta Sans",sans-serif;font-size:.9rem;white-space:nowrap}
+.dw-sticky.is-hidden,.dw-sticky.is-off{opacity:0;pointer-events:none;transform:translateY(24px)}
+.dw-sticky[hidden]{display:none}
 .dw-hero .eyebrow{color:var(--gold)}
 .dw-hero h1{font-family:"Plus Jakarta Sans",sans-serif;font-weight:800;font-size:clamp(2.6rem,6.4vw,5rem);line-height:.95;margin:10px 0 6px;letter-spacing:.01em}
 .dw-hero h1 em{display:block;font-style:italic;font-family:Georgia,serif;font-weight:400;color:var(--gold);font-size:.6em;letter-spacing:.02em;margin-top:6px}
@@ -40,16 +58,16 @@
 .dw-guests b{color:var(--ivory,#F4EFE3)}
 .dw-live{display:inline-flex;align-items:center;gap:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.78rem;color:var(--gold)}
 .dw-live i{width:8px;height:8px;border-radius:50%;background:#ff4d5e;box-shadow:0 0 12px #ff4d5e}
-.dw-times{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:18px 0 8px;max-width:520px}
+.dw-times{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:18px 0 0;max-width:520px}
 .dw-times div{padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--panel-line)}
-.dw-times small{display:block;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.dw-times small{display:block;font-size:.76rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .dw-times b{font-family:"Sora",sans-serif;font-size:1.05rem;font-variant-numeric:tabular-nums}
-.dw-local{color:var(--muted);font-size:.86rem;margin:6px 0 18px}
+.dw-local{color:var(--muted);font-size:.86rem;margin:0 0 10px}
 .dw-local b{color:var(--gold)}
-.countdown{display:flex;gap:10px;margin:6px 0 24px;flex-wrap:wrap}
+.countdown{display:flex;gap:10px;margin:22px 0 0;flex-wrap:wrap}
 .countdown div{min-width:70px;padding:10px 8px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--panel-line);text-align:center}
 .countdown b{display:block;font-family:"Sora",sans-serif;font-size:1.5rem;color:var(--gold);font-variant-numeric:tabular-nums}
-.countdown small{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.countdown small{font-size:.76rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .dw-ctas{display:flex;gap:12px;flex-wrap:wrap}
 
 .dw-sec{padding:72px var(--pad);max-width:var(--maxw);margin:0 auto}
@@ -109,9 +127,14 @@
 .dw-foot{padding:10px var(--pad) 60px;max-width:var(--maxw);margin:0 auto;color:var(--muted);font-size:.82rem;line-height:1.7}
 .dw-foot a{color:var(--gold)}
 @media(max-width:900px){
-  .dw-hero__grid,.wheel-wrap,.ticket{grid-template-columns:1fr}
-  .dw-poster{max-width:420px;margin:0 auto}
+  .wheel-wrap,.ticket{grid-template-columns:1fr}
+  .dw-hero__grid{grid-template-columns:1fr;grid-template-areas:"intro" "poster" "more";gap:26px}
+  .dw-more{margin-top:0}
+  .dw-poster{width:100%;max-width:420px;margin:0 auto}
   .dw-hero{padding-top:96px}
+  .dw-ctas .btn{flex:1 1 auto;justify-content:center}
+  #dwSticky{display:flex}
+  .dw .footer{padding-bottom:96px}
 }
 @media(prefers-reduced-motion:reduce){.wheel svg{transition-duration:.01s}}
 </style>
@@ -123,12 +146,24 @@
 
 <section class="dw-hero">
   <div class="dw-hero__grid">
-    <div class="dw-poster">
+    <!-- Mobile (≤ 900 px) : titre, date, prix, CTA et compte à rebours passent
+         AVANT l'affiche (grid-template-areas) ; l'affiche est cliquable. -->
+    <a href="#billet" class="dw-poster" aria-label="Réserver mon accès live · 4,99 €">
       <img src="assets/events/dj-wilson-v2.webp" srcset="assets/events/dj-wilson-v2-560.webp 560w, assets/events/dj-wilson-v2.webp 1122w" sizes="(max-width:900px) min(100vw - 32px, 420px), 40vw" alt="Affiche : DJ Wilson Anniversaire, invités principaux Jocelyne Labylle, Dominique Lorté et Jean-Michel Jean-Louis, en direct sur VybzzZ dans la nuit du 3 au 4 octobre" width="1122" height="1408" fetchpriority="high">
-    </div>
-    <div>
+    </a>
+    <div class="dw-intro">
       <span class="dw-live"><i></i>En direct sur VybzzZ</span>
       <h1>DJ WILSON<em>Anniversaire</em></h1>
+      <p class="dw-when">Nuit du samedi 3 au dimanche 4 octobre · <b>23h50</b> Antilles · Montréal · <b>05h50</b> Paris</p>
+      <p class="dw-local" id="localTime"></p>
+      <p class="dw-price">Accès live dès <b class="js-price">4,99 €</b> <span class="dw-cad">≈ 7,50 $ CA · facturé en euros</span></p>
+      <div class="dw-ctas">
+        <a href="#roue" class="btn btn--gold btn--lg"><span>Tente de gagner ta place</span></a>
+        <a href="#billet" class="btn btn--outline btn--lg"><span>Réserver · <span class="js-price">4,99 €</span></span></a>
+      </div>
+      <div class="countdown" id="countdown" aria-live="polite"></div>
+    </div>
+    <div class="dw-more">
       <p class="dw-guests">Invités principaux : <b>Jocelyne Labylle</b>, <b>Dominique Lorté</b>, <b>Jean-Michel Jean-Louis</b>.<br>Regarde le live où que tu sois, partout dans le monde.</p>
       <div class="dw-times" aria-label="Horaires du live">
         <div><small>Guadeloupe · Martinique</small><b>Sam. 3 oct · 23h50</b></div>
@@ -136,15 +171,12 @@
         <div><small>Guyane</small><b>Dim. 4 oct · 00h50</b></div>
         <div><small>France métropolitaine</small><b>Dim. 4 oct · 05h50</b></div>
       </div>
-      <p class="dw-local" id="localTime"></p>
-      <div class="countdown" id="countdown" aria-live="polite"></div>
-      <div class="dw-ctas">
-        <a href="#roue" class="btn btn--gold btn--lg"><span>Tente de gagner ta place</span></a>
-        <a href="#billet" class="btn btn--outline"><span>Réserve ton accès · <span class="js-price">4,99 €</span></span></a>
-      </div>
     </div>
   </div>
 </section>
+<!-- Mobile : rappel « Réserver » collé en bas, masqué quand les CTA du hero,
+     la roue, la billetterie ou le pied de page sont à l'écran. -->
+<a href="#billet" class="dw-sticky" id="dwSticky"><span>DJ Wilson · en direct</span><b>Réserver · <span class="js-price">4,99 €</span></b></a>
 
 <section class="dw-sec" id="roue">
   <span class="eyebrow">Roue de la fortune</span>
@@ -178,6 +210,7 @@
   <div class="ticket" id="ticketCard">
     <div>
       <div class="ticket__price"><span class="js-price">4,99 €</span><small>la place</small></div>
+      <div class="ticket__cad">≈ 7,50 $ CA · facturé en euros</div>
       <ul>
         <li>Le live complet, en direct, depuis ton téléphone.</li>
         <li>Paiement par carte, sur iPhone comme sur Android.</li>
@@ -253,6 +286,19 @@
     el.innerHTML=[[dd,'jours'],[h,'heures'],[m,'min'],[sec,'s']].map(function(x){return '<div><b>'+String(x[0]).padStart(2,'0')+'</b><small>'+x[1]+'</small></div>';}).join('');
   }
   tick(); setInterval(tick,1000);
+
+  // ── Rappel « Réserver » collé en bas (mobile) : caché quand les CTA du hero,
+  //    la roue, la billetterie ou le pied de page sont visibles ──
+  (function(){
+    var bar=$('dwSticky'); if(!bar||!('IntersectionObserver' in window)) return;
+    var seen={};
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(en){ seen[en.target.id||en.target.className]=en.isIntersecting; });
+      var any=Object.keys(seen).some(function(k){ return seen[k]; });
+      bar.classList.toggle('is-hidden',any);
+    },{threshold:0});
+    ['.dw-ctas','#roue','#billet','#site-footer'].forEach(function(sel){ var el=document.querySelector(sel); if(el) io.observe(el); });
+  })();
 
   // ── Roue : 8 cases, 2 « place offerte » (1 chance sur 4, comme le tirage) ──
   var SEG=8, WIN=[0,4], svg=$('wheelSvg'), rot=0;
