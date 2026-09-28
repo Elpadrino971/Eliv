@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:artist/Auth/create_passwrod.dart';
 import 'package:artist/Controllers/auth_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
@@ -101,7 +102,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
               ),
               Text(
-                "We've sent a code to ${widget.email}",
+                'otp_sent_to'.trParams({'email': widget.email}),
                 style: TextStyle(
                   color: textMuted,
                   fontWeight: FontWeight.w400,
@@ -201,13 +202,30 @@ class _OtpScreenState extends State<OtpScreen> {
               MyButton(
                 label: 'auth_verify_code'.tr,
                 onTap: () async {
-                  if (formKey.currentState!.validate()) {
-                    await authController.verifyOtp(
-                      email: widget.email,
-                      otp: pins.map((e) => e.text).join(),
-                      fromForget: widget.fromForget,
-                    );
+                  if (!(formKey.currentState?.validate() ?? true)) return;
+                  final code = pins.map((e) => e.text).join().trim();
+                  if (code.isEmpty) {
+                    myWarningDialog(subtitle: 'otp_enter_code'.tr);
+                    return;
                   }
+                  if (widget.fromForget) {
+                    // Mot de passe oublié : PAS d'appel /verify ici (le code
+                    // y serait consommé puis perdu). Le code est transmis à
+                    // l'écran suivant et envoyé avec le nouveau mot de passe
+                    // à /reset-password.
+                    Get.to(
+                      () => CreatePasswrod(
+                        fromForget: true,
+                        email: widget.email,
+                        otp: code,
+                      ),
+                    );
+                    return;
+                  }
+                  await authController.verifyOtp(
+                    email: widget.email,
+                    otp: code,
+                  );
                 },
                 image: 'assets/arrow.png',
                 imageColor: midnightPrimary,

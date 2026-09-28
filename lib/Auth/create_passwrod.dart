@@ -8,9 +8,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class CreatePasswrod extends StatefulWidget {
-  const CreatePasswrod({super.key, this.fromForget = false, this.email});
+  const CreatePasswrod({
+    super.key,
+    this.fromForget = false,
+    this.email,
+    this.otp,
+  });
   final bool fromForget;
   final String? email;
+
+  /// Code reçu par e-mail (mot de passe oublié) : envoyé avec le nouveau
+  /// mot de passe à /reset-password.
+  final String? otp;
 
   @override
   State<CreatePasswrod> createState() => _CreatePasswrodState();
@@ -33,7 +42,7 @@ class _CreatePasswrodState extends State<CreatePasswrod> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'New Security ',
+              'pwd_new_title'.tr,
               style: TextStyle(
                 color: ivory,
                 fontWeight: FontWeight.bold,
@@ -43,7 +52,7 @@ class _CreatePasswrodState extends State<CreatePasswrod> {
             SizedBox(
               width: Get.width * 0.65,
               child: Text(
-                "Create a password that is unique and easy to remember.",
+                'pwd_new_sub'.tr,
                 style: TextStyle(
                   color: const Color.fromARGB(255, 212, 212, 212),
                   fontWeight: FontWeight.w400,
@@ -117,9 +126,19 @@ class _CreatePasswrodState extends State<CreatePasswrod> {
             MyButton(
               label: 'auth_update_password'.tr,
               onTap: () async {
+                final password = passwordController.text;
+                if (password.length < 8) {
+                  myWarningDialog(subtitle: 'val_password_min'.tr);
+                  return;
+                }
+                if (password != newPasswordController.text) {
+                  myWarningDialog(subtitle: 'sec_pwd_mismatch'.tr);
+                  return;
+                }
                 await authController.resetPassword(
-                  password: passwordController.text,
+                  password: password,
                   email: widget.email ?? '',
+                  otp: widget.otp ?? '',
                 );
               },
               image: 'assets/arrow.png',

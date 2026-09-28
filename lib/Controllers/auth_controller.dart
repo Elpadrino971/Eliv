@@ -177,7 +177,9 @@ class AuthController extends GetxController {
           subtitle: 'msg_otp_verified'.tr,
           ontap: () async {
             if (fromForget) {
-              Get.to(() => CreatePasswrod(fromForget: true, email: email));
+              Get.to(
+                () => CreatePasswrod(fromForget: true, email: email, otp: otp),
+              );
             } else {
               box.write('user', userModel.value.toJson());
               final id = userModel.value.user?.id;
@@ -215,22 +217,27 @@ class AuthController extends GetxController {
     });
   }
 
+  /// Mot de passe oublié : le code reçu par e-mail est envoyé AVEC le nouveau
+  /// mot de passe. Le backend (/reset-password) exige `otp_code` + `password`
+  /// — avant, l'app envoyait `new_password`/`confirm_password` sans le code,
+  /// donc toujours refusé.
   Future resetPassword({
     required String password,
     required String email,
+    required String otp,
   }) async {
     myLoadingDialog();
     response.typeSetter = 'post';
     response.urlSetter = APIs.resetPasswordAPI;
     response.bodySetter = {
-      'new_password': password,
-      "confirm_password": password,
       'email': email,
+      'otp_code': otp,
+      'password': password,
     };
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
-        userModel.value = userModelFromJson(value);
-        update();
+        // /reset-password ne renvoie qu'un message : rien à parser.
+        Get.back(); // ferme le loader avant le dialogue de succès
         mySuccessDialog(
           subtitle: 'msg_password_reset'.tr,
           ontap: () {

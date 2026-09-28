@@ -38,7 +38,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
             SizedBox(
               width: Get.width * 0.65,
               child: Text(
-                "Enter your email address and we'll send you a recovery link.",
+                'forgot_sub'.tr,
                 style: TextStyle(
                   color: const Color.fromARGB(255, 212, 212, 212),
                   fontWeight: FontWeight.w400,
