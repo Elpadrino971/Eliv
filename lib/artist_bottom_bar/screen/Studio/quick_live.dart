@@ -35,14 +35,22 @@ Future<void> openQuickLive() async {
 
   await Get.to(() => StartStream(event: event));
 
-  // Fin du live : le concert passe en « terminé » (comme depuis la liste).
+  // Fin du live. StartStream.dispose() appelle déjà /recording/stop, qui
+  // passe le concert en « terminé » côté serveur SEULEMENT s'il était
+  // réellement en direct (status = 'live'). On ne force plus 'completed' à
+  // l'aveugle : un live jamais lancé (token Zego refusé, retour arrière…)
+  // était sinon marqué terminé. Filet : si le serveur le voit encore 'live'
+  // (appel de stop perdu), on clôt nous-mêmes.
   final eventController = Get.isRegistered<EventController>()
       ? Get.find<EventController>()
       : Get.put(EventController());
-  await eventController.updateEventStatus(
-    eventId: event.id.toString(),
-    status: 'completed',
-  );
+  final fresh = await eventController.getEventById(event.id.toString());
+  if (fresh?.status == 'live') {
+    await eventController.updateEventStatus(
+      eventId: event.id.toString(),
+      status: 'completed',
+    );
+  }
   await artistController.getArtistEvents(artistId: '${user?.id ?? ''}');
 }
 
