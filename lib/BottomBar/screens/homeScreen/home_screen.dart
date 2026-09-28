@@ -319,10 +319,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       /// Upcoming Events
                       GetBuilder<EventController>(
                         builder: (controller) {
-                          final events = controller.upcomingEvents.value.data;
-                          if (events == null) {
+                          final allUpcoming =
+                              controller.upcomingEvents.value.data;
+                          if (allUpcoming == null) {
                             return const EventTileShimmer();
                           }
+                          // Concerts sans date écartés puis tri par date :
+                          // plus de `!` sur une date nulle dans le tri.
+                          final events = allUpcoming
+                              .where((e) => e.startDateTime != null)
+                              .toList()
+                            ..sort(
+                              (a, b) => a.startDateTime!.compareTo(
+                                b.startDateTime!,
+                              ),
+                            );
                           return Column(
                             children: [
                               SectionHeader(
@@ -361,11 +372,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 physics: NeverScrollableScrollPhysics(),
                                 padding: EdgeInsets.all(0),
                                 itemBuilder: (context, index) {
-                                  events.sort(
-                                    (a, b) => a.startDateTime!.compareTo(
-                                      b.startDateTime!,
-                                    ),
-                                  );
                                   final event = events[index];
                                   return UpcomingEventTile(event: event);
                                 },

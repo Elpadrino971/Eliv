@@ -158,11 +158,14 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         ),
                       ),
 
+                      // IBAN / numéro de compte : lettres + chiffres, saisi en
+                      // clair et en majuscules (un champ masqué au clavier
+                      // numérique rendait la saisie impossible).
                       MyTextField(
-                        hintText: '••••••••••',
+                        hintText: 'FR76 …',
                         controller: numberController,
-
-                        keyboardType: TextInputType.number,
+                        keyboardType: TextInputType.text,
+                        textCapitalization: TextCapitalization.characters,
                         validation: (v) {
                           if (v!.isEmpty) {
                             return 'val_bank_account'.tr;
@@ -180,11 +183,10 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                       ),
 
                       MyTextField(
-                        hintText: '••••••••••',
+                        hintText: 'BNPAFRPP',
                         controller: swiftController,
-                        isObscure: true,
-
-                        keyboardType: TextInputType.number,
+                        keyboardType: TextInputType.text,
+                        textCapitalization: TextCapitalization.characters,
                         validation: (v) {
                           if (v!.isEmpty) {
                             return 'val_bank_swift'.tr;
@@ -204,7 +206,6 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                       MyTextField(
                         hintText: '••••••••••',
                         controller: routingController,
-                        isObscure: true,
                         keyboardType: TextInputType.number,
                         validation: (v) {
                           if (v!.isEmpty) {

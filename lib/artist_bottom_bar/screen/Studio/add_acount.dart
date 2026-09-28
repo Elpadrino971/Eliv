@@ -126,11 +126,13 @@ class _AddAcountState extends State<AddAcount> {
                         color: Color(0xffF4EFE6),
                       ),
                     ),
+                    // IBAN / numéro de compte : lettres + chiffres, saisi en
+                    // clair et en majuscules.
                     MyTextField(
-                      hintText: '••••••••••',
+                      hintText: 'FR76 …',
                       controller: numberController,
-                      isObscure: true,
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.text,
+                      textCapitalization: TextCapitalization.characters,
                     ),
                     Text(
                       'bank_swift'.tr,
@@ -141,10 +143,10 @@ class _AddAcountState extends State<AddAcount> {
                       ),
                     ),
                     MyTextField(
-                      hintText: '••••••••••',
+                      hintText: 'BNPAFRPP',
                       controller: swiftController,
-                      isObscure: true,
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.text,
+                      textCapitalization: TextCapitalization.characters,
                     ),
                     Text(
                       'bank_routing'.tr,
@@ -157,7 +159,6 @@ class _AddAcountState extends State<AddAcount> {
                     MyTextField(
                       hintText: '••••••••••',
                       controller: routingController,
-                      isObscure: true,
                       keyboardType: TextInputType.number,
                     ),
                     height(0.02),
