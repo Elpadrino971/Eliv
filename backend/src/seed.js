@@ -360,8 +360,10 @@ function run() {
     fanIds.push(insFan.run(`fan${i}@vybzzz.com`, hash('password'), `Fan ${i}`, `FAN${1000 + i}`, cities[i % cities.length]).lastInsertRowid);
   }
 
+  // OR IGNORE : tickets(event_id, user_id) est unique, un même fan tiré deux
+  // fois pour le même concert ne doit pas faire échouer le seed.
   const insTicket = db.prepare(
-    `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status, created_at)
+    `INSERT OR IGNORE INTO tickets (event_id, user_id, price_paid, receipt_number, status, created_at)
      VALUES (?, ?, ?, ?, 'active', ?)`
   );
   const dAgo = (d) => { const dt = new Date(); dt.setDate(dt.getDate() - d); return dt.toISOString().replace('T', ' ').slice(0, 19); };
