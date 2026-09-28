@@ -82,7 +82,11 @@ function optionalAuth(req, res, next) {
   if (token) {
     try {
       const payload = jwt.verify(token, SECRET);
-      req.user = db.prepare('SELECT * FROM users WHERE id = ?').get(payload.id);
+      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(payload.id);
+      // Même règle que requireAuth : un compte suspendu/banni n'est pas
+      // reconnu (il restait « connecté » sur toutes les routes en optionalAuth :
+      // likes, commentaires, chat live…).
+      if (user && (!user.status || user.status === 'active')) req.user = user;
     } catch (_) {
       /* ignore */
     }

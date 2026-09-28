@@ -30,7 +30,7 @@ function artistStatement(artistId, month) {
   const r = monthRange(month);
   const t = db.prepare(
     `SELECT COUNT(*) n, COALESCE(SUM(CAST(gross AS REAL)),0) gross, COALESCE(SUM(CAST(artist_share AS REAL)),0) net
-     FROM platform_earnings WHERE artist_id = ? AND source = 'ticket' AND created_at >= ? AND created_at < ?`
+     FROM platform_earnings WHERE artist_id = ? AND source IN ('ticket', 'ticket_web') AND created_at >= ? AND created_at < ?`
   ).get(artistId, r.from, r.to);
   const g = db.prepare(
     `SELECT COUNT(*) n, COALESCE(SUM(CAST(gross AS REAL)),0) pts, COALESCE(SUM(CAST(artist_share AS REAL)),0) netpts

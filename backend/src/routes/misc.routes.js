@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
-const { ok, list, fail, serializeUser, profileUrl } = require('../helpers');
+const { ok, list, fail, serializeUser, profileUrl, asyncHandler } = require('../helpers');
 const { requireAuth, optionalAuth } = require('../auth');
 const { saveUpload, saveClipVideo, PUBLIC_BASE_URL } = require('../uploads');
 const mux = require('../services/mux');
@@ -23,16 +23,21 @@ router.get('/artist/statement', requireAuth, (req, res) => {
 // GET /api/artist/revenue-transactions — dernières entrées réelles du ledger
 // (billets + cadeaux) pour l'écran "Revenus" (remplace la liste factice
 // codée en dur "Ticket Sales +$1,240" / "Merch Drop" / "Bank Payout").
+// Billets : source 'ticket' (achat dans l'app) ET 'ticket_web' (achat sur le
+// site) ; source_id est l'id du BILLET (tickets.id), pas du concert -> le nom
+// du concert passe par tickets.event_id. Avant, ticket_web était traité
+// comme un tip (montant divisé par 100) et la jointure visait le mauvais id.
 router.get('/artist/revenue-transactions', requireAuth, (req, res) => {
   const rows = db.prepare(
     `SELECT pe.*, e.name AS event_name
      FROM platform_earnings pe
-     LEFT JOIN events e ON e.id = pe.source_id AND pe.source = 'ticket'
+     LEFT JOIN tickets t ON t.id = pe.source_id AND pe.source IN ('ticket', 'ticket_web')
+     LEFT JOIN events e ON e.id = t.event_id
      WHERE pe.artist_id = ?
      ORDER BY pe.id DESC LIMIT 20`
   ).all(req.user.id);
   const list = rows.map((r) => {
-    const isTicket = r.source === 'ticket';
+    const isTicket = ['ticket', 'ticket_web'].includes(r.source);
     const amount = isTicket
       ? parseFloat(r.artist_share)
       : parseFloat(r.artist_share) / 100; // cadeaux en points, 1€ = 100 pts
@@ -71,7 +76,7 @@ router.get('/artist/dashboard-stats', requireAuth, (req, res) => {
   const earningsBetween = (from, to) => {
     const row = db.prepare(
       `SELECT
-         COALESCE(SUM(CASE WHEN source = 'ticket' THEN CAST(artist_share AS REAL) ELSE 0 END), 0) AS eur,
+         COALESCE(SUM(CASE WHEN source IN ('ticket', 'ticket_web') THEN CAST(artist_share AS REAL) ELSE 0 END), 0) AS eur,
          COALESCE(SUM(CASE WHEN source = 'gift' THEN CAST(artist_share AS REAL) ELSE 0 END), 0) AS pts
        FROM platform_earnings WHERE artist_id = ? AND created_at >= ? AND created_at < ?`
     ).get(artistId, from, to);
@@ -79,7 +84,7 @@ router.get('/artist/dashboard-stats', requireAuth, (req, res) => {
   };
   const totalEarningsRow = db.prepare(
     `SELECT
-       COALESCE(SUM(CASE WHEN source = 'ticket' THEN CAST(artist_share AS REAL) ELSE 0 END), 0) AS eur,
+       COALESCE(SUM(CASE WHEN source IN ('ticket', 'ticket_web') THEN CAST(artist_share AS REAL) ELSE 0 END), 0) AS eur,
        COALESCE(SUM(CASE WHEN source = 'gift' THEN CAST(artist_share AS REAL) ELSE 0 END), 0) AS pts
      FROM platform_earnings WHERE artist_id = ?`
   ).get(artistId);
@@ -200,7 +205,7 @@ router.post('/live/zego-token', requireAuth, (req, res) => {
 // enregistre, et à la fin du live le webhook `video.asset.ready` crée l'asset
 // de replay (durée = replay_duration_days de l'event). Idempotent : si le flux
 // existe déjà pour cet event, on renvoie les mêmes infos sans recréer.
-router.post('/live/:eventId/recording/start', requireAuth, async (req, res) => {
+router.post('/live/:eventId/recording/start', requireAuth, asyncHandler(async (req, res) => {
   const event = db.prepare('SELECT * FROM events WHERE id = ?').get(req.params.eventId);
   if (!event) return fail(res, 'Event introuvable.', 404);
   if (event.artist_id !== req.user.id) return fail(res, 'Non autorisé.', 403);
@@ -243,7 +248,7 @@ router.post('/live/:eventId/recording/start', requireAuth, async (req, res) => {
     // On n'échoue pas le live pour autant : l'app continue sans replay.
     return res.json({ status: 'success', data: { recording: false, reason: 'mux_error' } });
   }
-});
+}));
 
 // POST /api/live/:eventId/recording/stop — signal de fin. Mux finalise
 // automatiquement l'enregistrement après l'arrêt du flux RTMP (fenêtre de
@@ -303,12 +308,29 @@ router.post('/ideas', optionalAuth, (req, res) => {
 });
 
 // POST /api/event/:id/like — like / unlike un concert (toggle via body { liked })
-router.post('/event/:id/like', optionalAuth, (req, res) => {
-  const liked = req.body?.liked === false ? false : true;
-  db.prepare('UPDATE events SET likes_count = MAX(0, COALESCE(likes_count,0) + ?) WHERE id = ?')
-    .run(liked ? 1 : -1, req.params.id);
-  const row = db.prepare('SELECT likes_count FROM events WHERE id = ?').get(req.params.id);
-  return res.json({ status: 'success', likes_count: row?.likes_count ?? 0 });
+// Connexion requise et UN like par utilisateur (table event_likes) : le
+// compteur n'est plus incrémentable à l'infini par n'importe qui. L'app
+// envoie liked en chaîne ('true'/'false').
+router.post('/event/:id/like', requireAuth, (req, res) => {
+  const eventId = parseInt(req.params.id, 10);
+  if (!eventId) return fail(res, 'Concert invalide.', 422);
+  const event = db.prepare('SELECT id, likes_count FROM events WHERE id = ?').get(eventId);
+  if (!event) return fail(res, 'Concert introuvable.', 404);
+  const raw = req.body?.liked;
+  const liked = !(raw === false || raw === 'false' || raw === 0 || raw === '0');
+  const apply = db.transaction(() => {
+    const changed = liked
+      ? db.prepare('INSERT OR IGNORE INTO event_likes (event_id, user_id) VALUES (?, ?)').run(eventId, req.user.id).changes > 0
+      : db.prepare('DELETE FROM event_likes WHERE event_id = ? AND user_id = ?').run(eventId, req.user.id).changes > 0;
+    // Le compteur affiché garde sa base historique (likes d'avant la table)
+    // et ne bouge que si l'état de CET utilisateur a réellement changé.
+    const cur = Number(event.likes_count) || 0;
+    const next = !changed ? cur : liked ? cur + 1 : Math.max(0, cur - 1);
+    db.prepare('UPDATE events SET likes_count = ? WHERE id = ?').run(next, eventId);
+    return next;
+  });
+  const likes = apply();
+  return res.json({ status: 'success', likes_count: likes, liked });
 });
 
 // GET /api/get-abusive-words -> { status, data: [...] }
@@ -517,7 +539,7 @@ router.get('/subscription/get', (req, res) => {
 // dans l'UI. Le webhook RevenueCat (routes/revenuecat.routes.js) reste la
 // source de vérité serveur-à-serveur — celui-ci ne fait que réconcilier tout
 // de suite, sans attendre la latence du webhook.
-router.post('/subscription/buy', requireAuth, async (req, res) => {
+router.post('/subscription/buy', requireAuth, asyncHandler(async (req, res) => {
   const subscriptionsId = Number(req.body?.subscriptions_id);
   const sub = db
     .prepare('SELECT id, revenuecat_product_id FROM subscriptions WHERE id = ? AND active = 1')
@@ -588,7 +610,7 @@ router.post('/subscription/buy', requireAuth, async (req, res) => {
     ).run(req.user.id, subscriptionsId);
   }
   return returnActivated();
-});
+}));
 
 // POST /api/subscription/checkout — paiement carte (Stripe Checkout), chemin
 // web "0% commission Apple". Renvoie l'URL à ouvrir dans le navigateur ; le
@@ -776,7 +798,7 @@ router.get('/my-list', requireAuth, (req, res) => {
 // un short pour "Pour toi" ou "Clips" ; reste invisible (active=0) tant que
 // l'admin ne l'a pas approuvé depuis "Clips (Feeds)" (contenu hors-scène
 // filtré manuellement, pas de modération automatique).
-router.post('/feed-clips/submit', requireAuth, async (req, res) => {
+router.post('/feed-clips/submit', requireAuth, asyncHandler(async (req, res) => {
   const b = req.body || {};
   const feed = b.feed === 'for_you' ? 'for_you' : 'clips';
   const uploaded = await saveClipVideo(req, ['video', 'file']);
@@ -792,7 +814,7 @@ router.post('/feed-clips/submit', requireAuth, async (req, res) => {
   // invisible (active=0) tant que l'admin ne l'a pas validé.
   moderation.moderateVideo({ url: uploaded.url, targetType: 'clip', targetId: info.lastInsertRowid });
   return res.json({ status: 'success', message: 'Envoyé ! Ton clip sera visible après validation.' });
-});
+}));
 
 // POST /api/feed-clips/submit-direct — variante Mux : le fichier est PUT
 // directement sur Mux (le serveur ne touche jamais la vidéo), utile pour de
@@ -1285,16 +1307,16 @@ router.post('/withdraw/add', requireAuth, (req, res) => {
 // Liste des artistes suivis par l'utilisateur. L'app fait un POST avec
 // {user_id} ; on accepte aussi GET. Shape attendu par FollowModel :
 // { data: { followers_count, following: [ {id, full_name, profile_image, email} ] } }.
+// Connexion requise, id pris sur le token : le `user_id` du body permettait
+// de lister les abonnements de n'importe qui.
 function followingHandler(req, res) {
-  const userId = req.user?.id || req.body?.user_id;
-  if (!userId) return ok(res, { followers_count: 0, following: [] });
   const rows = db
     .prepare('SELECT u.* FROM users u JOIN follows f ON f.artist_id = u.id WHERE f.follower_id = ?')
-    .all(userId);
+    .all(req.user.id);
   return ok(res, { followers_count: rows.length, following: rows.map((u) => serializeUser(u)) });
 }
-router.get('/following', optionalAuth, followingHandler);
-router.post('/following', optionalAuth, followingHandler);
+router.get('/following', requireAuth, followingHandler);
+router.post('/following', requireAuth, followingHandler);
 
 // ═══════════════════════════════════════════════════════════════════════
 // NOUVELLES FEATURES (docs/BACKEND_CHANGES.md) — ce qui manquait à Hammad
@@ -1309,12 +1331,12 @@ router.get('/event/:id/access', requireAuth, (req, res) => {
   if (ticket) {
     return res.json({ status: 'success', has_access: true, access_type: 'ticket', expires_at: null });
   }
-  const ghost = db
-    .prepare("SELECT * FROM ghost_passes WHERE event_id = ? AND user_id = ? AND datetime(expires_at) > datetime('now') ORDER BY datetime(expires_at) DESC")
-    .get(eventId, req.user.id);
-  if (ghost) {
-    return res.json({ status: 'success', has_access: true, access_type: 'ghost_pass', expires_at: ghost.expires_at });
+  // Concert gratuit ou artiste du concert : accès sans billet.
+  const event = db.prepare('SELECT artist_id, ticket_price FROM events WHERE id = ?').get(eventId);
+  if (event && ((parseFloat(event.ticket_price) || 0) <= 0 || Number(event.artist_id) === Number(req.user.id))) {
+    return res.json({ status: 'success', has_access: true, access_type: 'free', expires_at: null });
   }
+  // Les ghost passes ne comptent plus (voir /ghost-pass/grant : désactivé).
   return res.json({ status: 'success', has_access: false, access_type: 'none', expires_at: null });
 });
 
@@ -1349,36 +1371,16 @@ router.post('/referral/redeem', requireAuth, (req, res) => {
   return res.json({ status: 'success', message: 'Referral redeemed.', data: { reward } });
 });
 
-// ─── Ghost pass (accès VIP temporaire gamifié, NON comptabilisé en vente) ───
-// Ghost pass = aperçu VIP court et gamifié, PAS un accès payant. La durée est
-// bornée côté serveur (le client ne peut plus demander 999999 min pour bypasser
-// le paywall), et on ne délivre qu'UN pass actif par user/concert.
-const GHOST_PASS_MAX_MINUTES = 10;
-router.post('/ghost-pass/grant', requireAuth, (req, res) => {
-  const b = req.body || {};
-  if (!b.event_id) return fail(res, 'event_id requis.', 422);
-  const requested = parseInt(b.duration_minutes || GHOST_PASS_MAX_MINUTES, 10) || GHOST_PASS_MAX_MINUTES;
-  const minutes = Math.max(1, Math.min(GHOST_PASS_MAX_MINUTES, requested));
-  // Un seul pass actif à la fois par user/concert (anti re-grant en boucle).
-  const active = db
-    .prepare("SELECT id FROM ghost_passes WHERE user_id = ? AND event_id = ? AND datetime(expires_at) > datetime('now')")
-    .get(req.user.id, b.event_id);
-  if (active) {
-    return res.json({ status: 'success', message: 'Pass déjà actif.', data: { event_id: b.event_id } });
-  }
-  const expires = new Date(Date.now() + minutes * 60000).toISOString().replace('T', ' ').slice(0, 19);
-  db.prepare(
-    'INSERT INTO ghost_passes (user_id, event_id, duration_minutes, expires_at) VALUES (?, ?, ?, ?)'
-  ).run(req.user.id, b.event_id, minutes, expires);
-  return res.json({ status: 'success', data: { event_id: b.event_id, duration_minutes: minutes, expires_at: expires } });
+// ─── Ghost pass : DÉSACTIVÉ ───
+// Il donnait 10 min d'accès gratuit, renouvelables à volonté, à n'importe quel
+// concert payant (un client pouvait boucler grant -> regarder -> grant). Aucun
+// écran de l'app ne l'utilise. Les routes répondent 410 Gone ; la table
+// ghost_passes est conservée pour l'historique.
+const ghostPassGone = (req, res) => res.status(410).json({
+  status: 'error', message: 'Le ghost pass n’existe plus. Un billet est nécessaire pour ce concert.',
 });
-
-router.get('/ghost-pass/me', requireAuth, (req, res) => {
-  const rows = db
-    .prepare("SELECT * FROM ghost_passes WHERE user_id = ? AND datetime(expires_at) > datetime('now')")
-    .all(req.user.id);
-  return ok(res, rows);
-});
+router.post('/ghost-pass/grant', requireAuth, ghostPassGone);
+router.get('/ghost-pass/me', requireAuth, ghostPassGone);
 
 // ─── Event Pulse (analytics agrégées, anonymisées) ───
 router.post('/event/:id/signal', optionalAuth, (req, res) => {
