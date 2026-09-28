@@ -694,12 +694,15 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                       // friction retirée). Elles s'ajoutent quand l'artiste veut.
 
                       // Call API logic
+                      // firstOrNull : un genre non trouvé ne doit pas
+                      // planter la création (firstWhere sans orElse lançait).
                       final selectedGenreId = artistController
                           .genres
                           .value
                           .genre
-                          ?.firstWhere((e) => e.genre == selectedGenre)
-                          .id;
+                          ?.where((e) => e.genre == selectedGenre)
+                          .firstOrNull
+                          ?.id;
 
                       // Fin OPTIONNELLE : si vide -> début + 4h (fenêtre large
                       // => le bouton "Passer en direct" reste actif, et le
