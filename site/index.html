@@ -28,7 +28,10 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Polices : préchargées puis appliquées sans bloquer le rendu (media=print → all) -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <style>
 :root{
   --bg:#070C18; --ink:#0A1226; --ivory:#F4EFE3; --muted:#B9C0D0;
@@ -46,6 +49,14 @@ a{color:inherit;text-decoration:none}
 .eyebrow--line{display:inline-flex;align-items:center;gap:12px}
 .eyebrow--line::before{content:"";width:34px;height:1px;background:var(--gold);opacity:.7}
 
+/* ── Bandeau concert (DJ Wilson) sous la nav — retiré après data-until ── */
+#liveband{position:fixed;top:0;left:0;right:0;z-index:61;display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 14px;min-height:36px;
+  background:linear-gradient(90deg,#141a3a,#0A1226 35%,#0A1226 65%,#141a3a);border-bottom:1px solid rgba(230,199,106,.45);font-size:.82rem;color:var(--ivory)}
+#liveband .liveband__txt{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#liveband .liveband__txt b{color:var(--gold)}
+#liveband .liveband__cta{flex:none;padding:5px 12px;border-radius:99px;background:var(--gold);color:#0A1226;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+body.has-liveband .pillnav,body.has-liveband .menupill{top:54px}
+@media(max-width:900px){#liveband{font-size:.78rem;padding:7px 12px;justify-content:space-between}}
 /* ── NAV pilule flottante ── */
 .pillnav{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:60;
   display:flex;align-items:center;gap:6px;padding:8px 8px 8px 18px;
@@ -63,6 +74,9 @@ a{color:inherit;text-decoration:none}
   padding:12px 20px;border-radius:99px;background:rgba(12,18,38,.55);backdrop-filter:blur(16px);
   border:1px solid rgba(255,255,255,.14);font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ivory);cursor:pointer}
 .menupill .plus{font-size:1.1rem;line-height:1;color:var(--gold)}
+/* 7 liens dans la pilule : resserrés sous 1540 px pour ne pas toucher le bouton Menu */
+@media(max-width:1540px){.pillnav__links{gap:12px}.pillnav__links a{letter-spacing:.1em}}
+@media(max-width:1380px){.pillnav__links a[data-until]{display:none}} /* le concert reste dans le bandeau et le menu */
 @media(max-width:900px){.pillnav__links{display:none}.menupill{display:none}.pillnav__dl{display:none}.pillnav__burger{display:inline-flex}}
 .menupill{border:1px solid rgba(255,255,255,.14);font-family:inherit}
 .pillnav__dl{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-left:4px;padding:8px 6px;white-space:nowrap}
@@ -99,6 +113,7 @@ body.menu-open{overflow:hidden}
 
 /* Chapitre 1 : gros titre bas-gauche */
 .ch1{display:flex;flex-direction:column;justify-content:flex-end}
+body.has-liveband .ch1{padding-bottom:calc(clamp(80px,10vh,140px) - 30px)} /* la nav descend de 36 px avec le bandeau : on redonne de l’air en haut du chapitre 1 */
 .ch1 .eyebrow{margin-bottom:18px}
 .ch1 h1{font-family:var(--serif);font-weight:800;line-height:.98;letter-spacing:-.01em;
   font-size:clamp(3rem,9.5vw,8rem);text-shadow:0 4px 30px rgba(0,0,0,.5)}
@@ -533,12 +548,16 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 </head>
 <body>
 
+<!-- Bandeau concert : DJ Wilson, retiré automatiquement après le live (data-until) -->
+<a href="dj-wilson.html" id="liveband" data-until="2026-10-04T08:00:00Z" data-t="t200"><span class="liveband__txt">🔴 <b>DJ Wilson · Anniversaire</b> — samedi en direct · dès 4,99 € · 100 places à gagner</span><span class="liveband__cta">→ Réserver</span></a>
+
 <!-- NAV -->
 <nav class="pillnav">
   <span class="pillnav__brand">Vybzz<span class="dot">Z</span></span>
   <div class="pillnav__links">
     <a href="feed.html" data-t="t1">Feed</a><a href="store.html" data-t="t2">Boutique</a><a href="#roles" data-t="t3">Le deal</a>
     <a href="#academy" data-t="t4">Maîtrise la scène</a><a href="faq.html" data-t="t5">FAQ</a><a href="challenge.html" style="color:var(--gold)" data-t="t6">Challenge</a>
+    <a href="dj-wilson.html" style="color:var(--gold)" data-t="t201" data-until="2026-10-04T08:00:00Z">DJ Wilson · Live</a>
   </div>
   <select class="langsel" id="langSel" aria-label="Langue"></select>
   <a href="app.html" class="pillnav__dl" data-t="t7">L'appli</a>
@@ -554,7 +573,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
     <select class="langsel langsel--menu" id="langSelMenu" aria-label="Langue"></select>
     <span class="menu__brand">Vybzz<span class="dot">Z</span></span>
     <nav class="menu__main">
-      <a href="dj-wilson.html" class="menu__hot">DJ Wilson · Live <small>3 → 4 oct · 100 places à gagner</small></a>
+      <a href="dj-wilson.html" class="menu__hot" data-t="t202" data-until="2026-10-04T08:00:00Z">DJ Wilson · Live <small>3 → 4 oct · 100 places à gagner</small></a>
       <a href="challenge.html" class="menu__hot" data-t="t9">Live Challenge <small>20 sept → 24 oct · 1er prix iPhone Pro</small></a>
       <a href="feed.html" data-t="t10">Feed & Clips</a>
       <a href="store.html" data-t="t11">Boutique</a>
@@ -576,6 +595,15 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
     </div>
   </div>
 </div>
+<script>
+/* Éléments datés (data-until, ISO UTC) : retirés du DOM une fois la date passée.
+   Appelé ici pour le bandeau, la pill-nav et le menu, puis après le bloc DJ Wilson. */
+function vyUntil(){
+  document.querySelectorAll('[data-until]').forEach(function(el){ if(Date.now()>Date.parse(el.dataset.until)) el.remove(); });
+  document.body.classList.toggle('has-liveband',!!document.getElementById('liveband'));
+}
+vyUntil();
+</script>
 
 <!-- HERO SCROLLYTELLING -->
 <section class="scrollhero" id="scrollhero">
@@ -636,7 +664,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 <!-- Mise en avant : DJ Wilson, live du 3 au 4 octobre 2026 (masquée après le live, voir script) -->
 <section class="feat" id="feat-djwilson" data-until="2026-10-04T08:00:00Z" aria-label="Concert à la une : DJ Wilson">
   <a class="feat__card" href="dj-wilson.html">
-    <img src="assets/events/dj-wilson.webp" alt="Affiche DJ Wilson Anniversaire, en direct sur VybzzZ" width="1122" height="1408" loading="lazy" decoding="async">
+    <img src="assets/events/dj-wilson-v2.webp" srcset="assets/events/dj-wilson-v2-560.webp 560w, assets/events/dj-wilson-v2.webp 1122w" sizes="(max-width:720px) 320px, 300px" alt="Affiche DJ Wilson Anniversaire, en direct sur VybzzZ" width="1122" height="1408" loading="lazy" decoding="async">
     <div>
       <span class="feat__live"><i></i><span data-t="t193">En direct sur VybzzZ</span></span>
       <h2>DJ WILSON<br><em data-t="t194">Anniversaire</em></h2>
@@ -646,7 +674,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
     </div>
   </a>
 </section>
-<script>(function(){var f=document.getElementById('feat-djwilson');if(f&&Date.now()>Date.parse(f.dataset.until))f.remove();})();</script>
+<script>vyUntil();</script>
 
 <!-- VOYAGE : l'expérience VybzzZ en 5 images, zoom infini au défilement ou au clic -->
 <section class="voyage" id="voyage" aria-label="L'expérience VybzzZ en 5 étapes">
@@ -970,7 +998,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
   </div>
 </footer>
 
-<script src="i18n-home.js?v=ad022fab"></script>
+<script src="i18n-home.js?v=7e637524"></script>
 <script src="vendor/hls.min.js?v=1ae7f59c"></script>
 <script>window.Hls||document.write('<script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16"><\/script>');</script>
 <script>

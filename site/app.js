@@ -18,8 +18,12 @@
   ];
   // Langue : choix mémorisé, sinon langue du navigateur si disponible, sinon français.
   let LANG = (function () {
-    let st = null; try { st = localStorage.getItem("vyb_lang"); } catch (e) {}
     const codes = LANGS.map(l => l.code);
+    // Page monolingue (data-lang="fr" sur <body>) : on ne traduit ni le
+    // chrome ni l'attribut lang, quel que soit le navigateur ou le choix mémorisé.
+    const forced = (document.body.dataset.lang || "").slice(0, 2).toLowerCase();
+    if (forced && codes.includes(forced)) return forced;
+    let st = null; try { st = localStorage.getItem("vyb_lang"); } catch (e) {}
     if (st && codes.includes(st)) return st;
     const nav = (navigator.language || "fr").slice(0, 2).toLowerCase();
     return codes.includes(nav) ? nav : "fr";
@@ -53,6 +57,8 @@
   /* ---------- Chrome : header + footer injectés ---------- */
   // Même menu que la page d'accueil (index.html) : Feed, Boutique, Le deal, FAQ.
   const NAV = [
+    // Concert à la une : retiré automatiquement après la date (until, ISO UTC).
+    { href: "dj-wilson.html",        key: "nav_djwilson", id: "dj-wilson", until: "2026-10-04T08:00:00Z", hot: true },
     { href: "feed.html",             key: "nav_feed",   id: "feed" },
     { href: "store.html",            key: "nav_store",  id: "store" },
     { href: "index.html#roles",      key: "nav_deal",   id: "_deal" },
@@ -62,8 +68,8 @@
   ];
 
   function renderHeader() {
-    const links = NAV.map(n =>
-      `<a href="${n.href}" class="${n.id === page ? "active" : ""}" data-cursor="hover">${t(n.key)}</a>`
+    const links = NAV.filter(n => !n.until || Date.now() < Date.parse(n.until)).map(n =>
+      `<a href="${n.href}" class="${n.id === page ? "active" : ""}${n.hot ? " nav__hot" : ""}" data-cursor="hover">${t(n.key)}</a>`
     ).join("");
     return `
     <header class="nav" id="nav">
@@ -73,13 +79,13 @@
       </a>
       <nav class="nav__links" style="margin-left:auto">${links}</nav>
       <div class="nav__cta">
-        <select class="langsel" aria-label="Langue" onchange="try{localStorage.setItem('vyb_lang',this.value)}catch(e){};location.reload()">${LANGS.map(l => `<option value="${l.code}" ${l.code === LANG ? "selected" : ""}>${l.name}</option>`).join("")}</select>
+        ${document.body.dataset.lang ? "" : `<select class="langsel" aria-label="Langue" onchange="try{localStorage.setItem('vyb_lang',this.value)}catch(e){};location.reload()">${LANGS.map(l => `<option value="${l.code}" ${l.code === LANG ? "selected" : ""}>${l.name}</option>`).join("")}</select>`}
         <a href="app.html" class="btn btn--ghost nav__dl" data-cursor="hover">📲 ${t("nav_download")}</a>
         <a href="artist.html" class="btn btn--gold magnetic" data-cursor="hover"><span>${t("nav_apply")}</span></a>
       </div>
       <button class="nav__burger" id="burger" aria-label="Menu"><i></i><i></i><i></i></button>
     </header>
-    ${page === "c" || page === "challenge" || page === "artist" ? "" : `<a href="app.html" class="dlbar">📲 <span>${t("nav_download")} VybzzZ</span> <b>Ouvrir</b></a>`}`;
+    ${["c", "challenge", "artist", "dj-wilson"].includes(page) ? "" : `<a href="app.html" class="dlbar">📲 <span>${t("nav_download")} VybzzZ</span> <b>${t("dlbar_open")}</b></a>`}`;
   }
 
   function renderFooter() {
@@ -103,6 +109,22 @@
       </div>
     </footer>`;
   }
+
+  /* ---------- Pixels publicitaires : point d'extension ----------
+     Aucun script externe n'est chargé pour l'instant (pas d'identifiant Meta
+     ou Google disponible). Quand il le sera : charger fbevents.js ici, puis
+     remplacer le corps de chacun des quatre cas ci-dessous (fbq('track', …)).
+     Appelé par les pages : PageView (ici), spin / InitiateCheckout / Purchase
+     (dj-wilson.html). */
+  window.vyPixel = function (evt, data) {
+    switch (evt) {
+      case "PageView":         /* PIXEL_META_PLACEHOLDER */ break;
+      case "spin":             /* PIXEL_META_PLACEHOLDER */ break;
+      case "InitiateCheckout": /* PIXEL_META_PLACEHOLDER */ break;
+      case "Purchase":         /* PIXEL_META_PLACEHOLDER */ break;
+    }
+  };
+  window.vyPixel("PageView");
 
   const headerSlot = document.getElementById("site-header");
   const footerSlot = document.getElementById("site-footer");

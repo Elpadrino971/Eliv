@@ -195,6 +195,9 @@ window.I18N_HOME = {
   "t196": "<b>Sat. Oct 3 · 11:50 pm</b> Caribbean · Montreal",
   "t197": "<b>Sun. Oct 4 · 5:50 am</b> Paris",
   "t198": "Try to win your seat",
-  "t199": "Access from €4.99"
+  "t199": "Access from €4.99",
+  "t200": "<span class=\"liveband__txt\">🔴 <b>DJ Wilson · Birthday</b> — live Saturday · from €4.99 · 100 seats to win</span><span class=\"liveband__cta\">→ Book</span>",
+  "t201": "DJ Wilson · Live",
+  "t202": "DJ Wilson · Live <small>Oct 3 → 4 · 100 seats to win</small>"
  }
 };
