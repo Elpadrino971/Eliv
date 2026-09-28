@@ -8,6 +8,7 @@ import 'package:artist/Models/susbcription_model.dart';
 import 'package:artist/Models/user_model.dart';
 import 'package:artist/artist_bottom_bar/artist_bottom_bar.dart';
 import 'package:artist/services/api_services.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -188,7 +189,9 @@ class SubscriptionController extends GetxController {
   }
 
   static Future init() async {
-    await Purchases.setLogLevel(LogLevel.debug);
+    // Logs RevenueCat : verbeux en debug, sobres en release (pas de détails
+    // d'achat dans les journaux des appareils des utilisateurs).
+    await Purchases.setLogLevel(kReleaseMode ? LogLevel.warn : LogLevel.debug);
 
     if (Platform.isAndroid) {
       await Purchases.configure(PurchasesConfiguration(revenueCatGoogleApiKey));
@@ -241,7 +244,13 @@ class SubscriptionController extends GetxController {
   /// Le webhook RevenueCat notifie ensuite le backend (crédit points / ticket).
   /// Retourne false si le produit est introuvable dans les offerings (pas
   /// encore configuré) ou si l'achat échoue/est annulé.
-  Future<bool> purchaseByProductId(String productId) async {
+  /// [onBeforePurchase] est appelé juste AVANT la feuille de paiement du
+  /// store (donc jamais si le produit est introuvable) : sert à mémoriser
+  /// qu'un paiement est peut-être en cours (billet à rattacher).
+  Future<bool> purchaseByProductId(
+    String productId, {
+    void Function()? onBeforePurchase,
+  }) async {
     if (productId.isEmpty) return false;
     lastPurchaseCancelled = false;
     try {
@@ -256,6 +265,7 @@ class SubscriptionController extends GetxController {
         for (final offering in offerings.all.values) {
           for (final pack in offering.availablePackages) {
             if (pack.storeProduct.identifier == productId) {
+              onBeforePurchase?.call();
               await Purchases.purchase(PurchaseParams.package(pack));
               return true;
             }
@@ -272,6 +282,7 @@ class SubscriptionController extends GetxController {
         productCategory: ProductCategory.nonSubscription,
       );
       if (products.isNotEmpty) {
+        onBeforePurchase?.call();
         await Purchases.purchase(PurchaseParams.storeProduct(products.first));
         return true;
       }

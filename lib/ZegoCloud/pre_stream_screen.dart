@@ -35,6 +35,11 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
   Timer? _countdownTimer;
   Timer? _logTimer;
   String _formattedWaitTime = "00:00:00";
+  // Vrai dès que l'heure du concert est atteinte (ou dépassée à l'ouverture) :
+  // on retire simplement l'overlay du compte à rebours et on laisse le fan
+  // dans la salle Zego (audience) déjà connectée. Avant, on affichait un
+  // dialogue puis Get.back() x2 -> le fan était ÉJECTÉ pile au démarrage.
+  bool _started = false;
 
   Future myInitMethod() async {
     final zegoTokenOk = await zegoController.fetchZegoToken();
@@ -49,27 +54,43 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
     final data = await eventController.getEventLogs(
       eventId: widget.event.id.toString(),
     );
+    if (!mounted) return;
     currentEvent = currentEvent.copyWith(activities: data);
     setState(() {});
     await eventController.getGifts();
+    if (!mounted) return;
 
     _startCountdown();
 
-    _logTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
-      if (mounted) {
-        final data = await eventController.getEventLogs(
-          eventId: widget.event.id.toString(),
-        );
-        currentEvent = currentEvent.copyWith(activities: data);
-        setState(() {});
-      } else {
+    // Rafraîchit le fil (commentaires / cadeaux). 15 s : suffisant, et évite
+    // de marteler l'API pendant un live. getEventLogs n'ouvre plus de
+    // dialogue d'erreur ; en cas d'échec réseau, on garde le fil actuel.
+    _logTimer?.cancel();
+    _logTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
+      if (!mounted) {
         timer.cancel();
+        return;
       }
+      final data = await eventController.getEventLogs(
+        eventId: widget.event.id.toString(),
+      );
+      if (!mounted || data == null) return;
+      setState(() {
+        currentEvent = currentEvent.copyWith(activities: data);
+      });
     });
   }
 
   void _startCountdown() {
     _countdownTimer?.cancel();
+    final start = currentEvent.startDateTime;
+    if (start == null || !start.isAfter(DateTime.now())) {
+      // Déjà commencé : pas de compte à rebours du tout.
+      _started = true;
+      _formattedWaitTime = "00:00:00";
+      if (mounted) setState(() {});
+      return;
+    }
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -108,13 +129,13 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
   }
 
   void _onTimeUp() {
-    mySuccessDialog(
-      subtitle: 'live_event_started'.tr,
-      ontap: () {
-        Get.back(); // close dialog
-        Get.back(); // Leave pre-stream screen
-      },
-    );
+    // Heure H : le fan RESTE dans la salle (la vue Zego audience tourne déjà
+    // derrière l'overlay) ; on enlève juste le compte à rebours. Plus jamais
+    // de dialogue ni de Get.back() ici.
+    if (!mounted) return;
+    setState(() {
+      _started = true;
+    });
   }
 
   @override
@@ -124,6 +145,8 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
     // aller-retour réseau) : sinon build() s'exécute avec currentEvent
     // encore non initialisé -> LateInitializationError au premier rendu.
     currentEvent = widget.event;
+    final start = currentEvent.startDateTime;
+    _started = start == null || !start.isAfter(DateTime.now());
     myInitMethod();
 
     // Listen for in-room commands (likes, gifts, etc.)
@@ -226,7 +249,7 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
           IgnorePointer(child: HeartAnimationOverlay(key: _heartKey)),
 
           // ── Countdown Overlay (Obscures Streamer) ───────────────────
-          _buildCountdownOverlay(),
+          if (!_started) _buildCountdownOverlay(),
 
           // ── Custom Overlay UI ────────────────────────────────────────
           _buildOverlayUI(),

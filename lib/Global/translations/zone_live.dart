@@ -45,6 +45,22 @@ const Map<String, Map<String, String>> liveTranslations = {
     'disc_search_hint': 'Artists, events, or genres...',
     'disc_trending': 'Trending',
     'disc_featured_events': 'Featured Events',
+    'ticket_attach_failed':
+        "Your payment was recorded by Apple but the ticket could not be attached. Try again from the concert page, or write to support@vybzzz.online.",
+    'ticket_recover_button':
+        "I already paid · get my ticket",
+    'checkout_pay_amount':
+        "Pay @price",
+    'checkout_android_unavailable':
+        "Tickets for this concert are not yet available in the Android app.",
+    'checkout_secure_note_android':
+        "Secure payment via Google Play",
+    'replay_watch':
+        "Watch the replay",
+    'replay_soon':
+        "Replay coming soon",
+    'share_live_message':
+        "I'm watching @name live on VybzzZ 🎶 https://vybzzz.online",
   },
   'fr': {
     'live_tab_for_you': 'Pour toi',
@@ -94,6 +110,22 @@ const Map<String, Map<String, String>> liveTranslations = {
     'disc_search_hint': 'Artistes, événements ou genres...',
     'disc_trending': 'Tendances',
     'disc_featured_events': 'Événements en vedette',
+    'ticket_attach_failed':
+        "Ton paiement est enregistré par Apple mais le billet n'a pas pu être attaché. Réessaie depuis la fiche du concert, ou écris à support@vybzzz.online.",
+    'ticket_recover_button':
+        "J'ai déjà payé · récupérer mon billet",
+    'checkout_pay_amount':
+        "Payer @price",
+    'checkout_android_unavailable':
+        "Les billets pour ce concert ne sont pas encore disponibles dans l'app Android.",
+    'checkout_secure_note_android':
+        "Paiement sécurisé via Google Play",
+    'replay_watch':
+        "Voir le replay",
+    'replay_soon':
+        "Replay bientôt disponible",
+    'share_live_message':
+        "Je regarde @name en direct sur VybzzZ 🎶 https://vybzzz.online",
   },
   'es': {
     'live_tab_for_you': 'Para ti',
@@ -143,6 +175,22 @@ const Map<String, Map<String, String>> liveTranslations = {
     'disc_search_hint': 'Artistas, eventos o géneros...',
     'disc_trending': 'Tendencias',
     'disc_featured_events': 'Eventos destacados',
+    'ticket_attach_failed':
+        "Tu pago quedó registrado en Apple, pero no se pudo asociar la entrada. Vuelve a intentarlo desde la página del concierto o escribe a support@vybzzz.online.",
+    'ticket_recover_button':
+        "Ya pagué · recuperar mi entrada",
+    'checkout_pay_amount':
+        "Pagar @price",
+    'checkout_android_unavailable':
+        "Las entradas para este concierto aún no están disponibles en la app de Android.",
+    'checkout_secure_note_android':
+        "Pago seguro a través de Google Play",
+    'replay_watch':
+        "Ver la repetición",
+    'replay_soon':
+        "Repetición disponible pronto",
+    'share_live_message':
+        "Estoy viendo @name en directo en VybzzZ 🎶 https://vybzzz.online",
   },
   'it': {
     'live_tab_for_you': 'Per te',
@@ -192,6 +240,22 @@ const Map<String, Map<String, String>> liveTranslations = {
     'disc_search_hint': 'Artisti, eventi o generi...',
     'disc_trending': 'Di tendenza',
     'disc_featured_events': 'Eventi in evidenza',
+    'ticket_attach_failed':
+        "Il tuo pagamento è stato registrato da Apple ma il biglietto non è stato collegato. Riprova dalla pagina del concerto oppure scrivi a support@vybzzz.online.",
+    'ticket_recover_button':
+        "Ho già pagato · recupera il mio biglietto",
+    'checkout_pay_amount':
+        "Paga @price",
+    'checkout_android_unavailable':
+        "I biglietti per questo concerto non sono ancora disponibili nell'app Android.",
+    'checkout_secure_note_android':
+        "Pagamento sicuro tramite Google Play",
+    'replay_watch':
+        "Guarda il replay",
+    'replay_soon':
+        "Replay disponibile a breve",
+    'share_live_message':
+        "Sto guardando @name in diretta su VybzzZ 🎶 https://vybzzz.online",
   },
   'de': {
     'live_tab_for_you': 'Für dich',
@@ -241,6 +305,22 @@ const Map<String, Map<String, String>> liveTranslations = {
     'disc_search_hint': 'Künstler, Events oder Genres...',
     'disc_trending': 'Im Trend',
     'disc_featured_events': 'Empfohlene Events',
+    'ticket_attach_failed':
+        "Deine Zahlung wurde von Apple erfasst, aber das Ticket konnte nicht zugeordnet werden. Versuche es erneut über die Konzertseite oder schreibe an support@vybzzz.online.",
+    'ticket_recover_button':
+        "Ich habe schon bezahlt · Ticket abrufen",
+    'checkout_pay_amount':
+        "@price bezahlen",
+    'checkout_android_unavailable':
+        "Tickets für dieses Konzert sind in der Android-App noch nicht verfügbar.",
+    'checkout_secure_note_android':
+        "Sichere Zahlung über Google Play",
+    'replay_watch':
+        "Replay ansehen",
+    'replay_soon':
+        "Replay bald verfügbar",
+    'share_live_message':
+        "Ich schaue @name live auf VybzzZ 🎶 https://vybzzz.online",
   },
   'pt': {
     'live_tab_for_you': 'Para você',
@@ -290,6 +370,22 @@ const Map<String, Map<String, String>> liveTranslations = {
     'disc_search_hint': 'Artistas, eventos ou gêneros...',
     'disc_trending': 'Em alta',
     'disc_featured_events': 'Eventos em destaque',
+    'ticket_attach_failed':
+        "O teu pagamento foi registado pela Apple, mas não foi possível associar o ingresso. Tenta novamente na página do concerto ou escreve para support@vybzzz.online.",
+    'ticket_recover_button':
+        "Já paguei · recuperar o meu ingresso",
+    'checkout_pay_amount':
+        "Pagar @price",
+    'checkout_android_unavailable':
+        "Os ingressos para este concerto ainda não estão disponíveis no app Android.",
+    'checkout_secure_note_android':
+        "Pagamento seguro via Google Play",
+    'replay_watch':
+        "Ver o replay",
+    'replay_soon':
+        "Replay disponível em breve",
+    'share_live_message':
+        "Estou a ver @name ao vivo na VybzzZ 🎶 https://vybzzz.online",
   },
   'zh': {
     'live_tab_for_you': '为你推荐',
@@ -335,6 +431,22 @@ const Map<String, Map<String, String>> liveTranslations = {
     'disc_search_hint': '艺人、活动或类型...',
     'disc_trending': '热门',
     'disc_featured_events': '精选活动',
+    'ticket_attach_failed':
+        "Apple 已记录你的付款，但门票未能绑定。请从演唱会页面重试，或发邮件至 support@vybzzz.online。",
+    'ticket_recover_button':
+        "我已付款 · 找回我的门票",
+    'checkout_pay_amount':
+        "支付 @price",
+    'checkout_android_unavailable':
+        "本场演唱会的门票暂未在 Android 应用中提供。",
+    'checkout_secure_note_android':
+        "通过 Google Play 安全支付",
+    'replay_watch':
+        "观看回放",
+    'replay_soon':
+        "回放即将上线",
+    'share_live_message':
+        "我正在 VybzzZ 观看 @name 的直播 🎶 https://vybzzz.online",
   },
   'ko': {
     'live_tab_for_you': '추천',
@@ -380,6 +492,22 @@ const Map<String, Map<String, String>> liveTranslations = {
     'disc_search_hint': '아티스트, 이벤트 또는 장르...',
     'disc_trending': '인기',
     'disc_featured_events': '추천 이벤트',
+    'ticket_attach_failed':
+        "Apple에 결제가 기록되었지만 티켓을 연결하지 못했습니다. 콘서트 페이지에서 다시 시도하거나 support@vybzzz.online으로 문의해 주세요.",
+    'ticket_recover_button':
+        "이미 결제했어요 · 티켓 받기",
+    'checkout_pay_amount':
+        "@price 결제",
+    'checkout_android_unavailable':
+        "이 콘서트의 티켓은 아직 Android 앱에서 제공되지 않습니다.",
+    'checkout_secure_note_android':
+        "Google Play를 통한 안전한 결제",
+    'replay_watch':
+        "다시보기 보기",
+    'replay_soon':
+        "다시보기 곧 제공",
+    'share_live_message':
+        "VybzzZ에서 @name 라이브를 보고 있어요 🎶 https://vybzzz.online",
   },
   'ja': {
     'live_tab_for_you': 'おすすめ',
@@ -425,6 +553,22 @@ const Map<String, Map<String, String>> liveTranslations = {
     'disc_search_hint': 'アーティスト、イベント、ジャンル...',
     'disc_trending': 'トレンド',
     'disc_featured_events': '注目のイベント',
+    'ticket_attach_failed':
+        "Apple でお支払いは記録されましたが、チケットを紐付けできませんでした。コンサートページからもう一度お試しいただくか、support@vybzzz.online までご連絡ください。",
+    'ticket_recover_button':
+        "支払い済み · チケットを受け取る",
+    'checkout_pay_amount':
+        "@price を支払う",
+    'checkout_android_unavailable':
+        "このコンサートのチケットは Android アプリではまだ購入できません。",
+    'checkout_secure_note_android':
+        "Google Play による安全な決済",
+    'replay_watch':
+        "リプレイを見る",
+    'replay_soon':
+        "リプレイは近日公開",
+    'share_live_message':
+        "VybzzZ で @name のライブを見ています 🎶 https://vybzzz.online",
   },
   'ar': {
     'live_tab_for_you': 'لك',
@@ -470,6 +614,22 @@ const Map<String, Map<String, String>> liveTranslations = {
     'disc_search_hint': 'فنانون أو فعاليات أو أنواع...',
     'disc_trending': 'الرائج',
     'disc_featured_events': 'فعاليات مميزة',
+    'ticket_attach_failed':
+        "تم تسجيل دفعتك لدى Apple لكن تعذّر ربط التذكرة. أعد المحاولة من صفحة الحفل أو راسلنا على support@vybzzz.online.",
+    'ticket_recover_button':
+        "دفعت بالفعل · استرجاع تذكرتي",
+    'checkout_pay_amount':
+        "ادفع @price",
+    'checkout_android_unavailable':
+        "تذاكر هذا الحفل غير متوفرة بعد في تطبيق Android.",
+    'checkout_secure_note_android':
+        "دفع آمن عبر Google Play",
+    'replay_watch':
+        "مشاهدة الإعادة",
+    'replay_soon':
+        "الإعادة متاحة قريبًا",
+    'share_live_message':
+        "أشاهد @name مباشرة على VybzzZ 🎶 https://vybzzz.online",
   },
   'hi': {
     'live_tab_for_you': 'आपके लिए',
@@ -515,6 +675,22 @@ const Map<String, Map<String, String>> liveTranslations = {
     'disc_search_hint': 'कलाकार, इवेंट या शैलियाँ...',
     'disc_trending': 'ट्रेंडिंग',
     'disc_featured_events': 'विशेष इवेंट',
+    'ticket_attach_failed':
+        "आपका भुगतान Apple द्वारा दर्ज हो गया है, लेकिन टिकट जोड़ा नहीं जा सका। कॉन्सर्ट पेज से फिर से कोशिश करें, या support@vybzzz.online पर लिखें।",
+    'ticket_recover_button':
+        "मैंने भुगतान कर दिया है · मेरा टिकट पाएं",
+    'checkout_pay_amount':
+        "@price चुकाएं",
+    'checkout_android_unavailable':
+        "इस कॉन्सर्ट के टिकट अभी Android ऐप में उपलब्ध नहीं हैं।",
+    'checkout_secure_note_android':
+        "Google Play के ज़रिए सुरक्षित भुगतान",
+    'replay_watch':
+        "रीप्ले देखें",
+    'replay_soon':
+        "रीप्ले जल्द उपलब्ध",
+    'share_live_message':
+        "मैं VybzzZ पर @name को लाइव देख रहा/रही हूँ 🎶 https://vybzzz.online",
   },
   'ru': {
     'live_tab_for_you': 'Для вас',
@@ -564,5 +740,21 @@ const Map<String, Map<String, String>> liveTranslations = {
     'disc_search_hint': 'Артисты, события или жанры...',
     'disc_trending': 'В тренде',
     'disc_featured_events': 'Избранные события',
+    'ticket_attach_failed':
+        "Ваш платёж зафиксирован Apple, но билет не удалось привязать. Повторите попытку со страницы концерта или напишите на support@vybzzz.online.",
+    'ticket_recover_button':
+        "Я уже оплатил · получить билет",
+    'checkout_pay_amount':
+        "Оплатить @price",
+    'checkout_android_unavailable':
+        "Билеты на этот концерт пока недоступны в приложении для Android.",
+    'checkout_secure_note_android':
+        "Безопасная оплата через Google Play",
+    'replay_watch':
+        "Смотреть запись",
+    'replay_soon':
+        "Запись скоро будет доступна",
+    'share_live_message':
+        "Смотрю @name в прямом эфире на VybzzZ 🎶 https://vybzzz.online",
   },
 };

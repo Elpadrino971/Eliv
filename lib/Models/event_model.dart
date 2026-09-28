@@ -59,6 +59,9 @@ class Event {
   final int? likesCount;
   final String? streamKey;
   final String? streamUrl;
+  /// Playback id Mux du LIVE (mux_live_playback_id). Nullable : absent tant
+  /// que le backend n'a pas créé de flux Mux pour ce concert.
+  final String? muxLivePlaybackId;
   final DateTime? replayExpiresAt;
   final bool? replayExpired;
   final DateTime? createdAt;
@@ -89,6 +92,7 @@ class Event {
     this.likesCount,
     this.streamKey,
     this.streamUrl,
+    this.muxLivePlaybackId,
     this.replayExpiresAt,
     this.replayExpired,
     this.createdAt,
@@ -120,6 +124,7 @@ class Event {
     int? likesCount,
     String? streamKey,
     String? streamUrl,
+    String? muxLivePlaybackId,
     DateTime? replayExpiresAt,
     bool? replayExpired,
     DateTime? createdAt,
@@ -149,6 +154,7 @@ class Event {
     likesCount: likesCount ?? this.likesCount,
     streamKey: streamKey ?? this.streamKey,
     streamUrl: streamUrl ?? this.streamUrl,
+    muxLivePlaybackId: muxLivePlaybackId ?? this.muxLivePlaybackId,
     replayExpiresAt: replayExpiresAt ?? this.replayExpiresAt,
     replayExpired: replayExpired ?? this.replayExpired,
     createdAt: createdAt ?? this.createdAt,
@@ -184,6 +190,7 @@ class Event {
     likesCount: json["likes_count"],
     streamKey: json["stream_key"],
     streamUrl: json["stream_url"],
+    muxLivePlaybackId: json["mux_live_playback_id"]?.toString(),
     replayExpiresAt: json["replay_expires_at"] == null
         ? null
         : DateTime.parse(json["replay_expires_at"]),
@@ -233,6 +240,7 @@ class Event {
     "likes_count": likesCount,
     "stream_key": streamKey,
     "stream_url": streamUrl,
+    "mux_live_playback_id": muxLivePlaybackId,
     "replay_expires_at": replayExpiresAt?.toIso8601String(),
     "replay_expired": replayExpired,
     "created_at": createdAt?.toIso8601String(),

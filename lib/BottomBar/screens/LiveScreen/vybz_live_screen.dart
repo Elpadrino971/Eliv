@@ -187,6 +187,11 @@ class _ForYouFeedState extends State<_ForYouFeed> {
   @override
   void initState() {
     super.initState();
+    _initFirstReel();
+    _ensureContentLoaded();
+  }
+
+  void _initFirstReel() {
     final events = eventController.allEvents.value.data ?? [];
     final url = eventController.reelUrlFor(
       events.isNotEmpty ? events[0] : null,
@@ -194,6 +199,24 @@ class _ForYouFeedState extends State<_ForYouFeed> {
     if (url != null) {
       eventController.initVideoPlayer(url);
     }
+  }
+
+  /// « Pour toi » restait vide quand Home n'avait jamais été construit
+  /// (c'est Home qui charge les clips et les concerts à venir). On charge
+  /// ici ce qui manque — sans doubler si c'est déjà en mémoire.
+  Future<void> _ensureContentLoaded() async {
+    final hasClips = eventController.forYouClipUrls.isNotEmpty;
+    final hasEvents = (eventController.allEvents.value.data ?? []).isNotEmpty;
+    if (hasClips || hasEvents) return;
+    await eventController.loadFeedClips();
+    if ((eventController.allEvents.value.data ?? []).isEmpty) {
+      await eventController.getEventsByStatus(
+        status: EventStatus.published,
+        dateStatus: EventDateStatus.future,
+      );
+    }
+    if (!mounted) return;
+    if (eventController.currentController.value == null) _initFirstReel();
   }
 
   @override
@@ -391,8 +414,9 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                                   Spacer(),
                                   GestureDetector(
                                     onTap: () => myShare(
-                                      message:
-                                          '${event?.name?.capitalize ?? 'VybzzZ'} — ${APIs.mainIP}',
+                                      message: 'share_live_message'.trParams({
+                                        'name': event?.name?.capitalize ?? 'VybzzZ',
+                                      }),
                                     ),
                                     child: Container(
                                       width: 40,
@@ -660,6 +684,10 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
     return owns || price <= 0;
   }
 
+  /// Gate opaque : aperçu terminé ET toujours pas d'accès (après un achat,
+  /// la liste est rechargée -> widget.event porte le billet -> gate levée).
+  bool get _showGate => _gated && !_hasAccess;
+
   @override
   void initState() {
     super.initState();
@@ -692,7 +720,15 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
   }
 
   void _joinLive() => joinLive(widget.event);
-  void _openDetail() => Get.to(() => FutureScreen(event: widget.event));
+
+  /// Fiche du concert ; au retour (achat éventuel), on recharge la liste des
+  /// lives pour que la carte reflète le billet (avant, la liste n'était
+  /// chargée qu'une fois au premier affichage).
+  void _openDetail() {
+    Get.to(() => FutureScreen(event: widget.event))?.then((_) {
+      Get.find<EventController>().getEventsByStatus(status: EventStatus.live);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -844,9 +880,9 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
 
         // ── Overlay opaque (gate) quand l'aperçu est terminé
         IgnorePointer(
-          ignoring: !_gated,
+          ignoring: !_showGate,
           child: AnimatedOpacity(
-            opacity: _gated ? 1 : 0,
+            opacity: _showGate ? 1 : 0,
             duration: const Duration(milliseconds: 600),
             child: Container(
               color: midnightPrimary.withValues(alpha: 0.92),

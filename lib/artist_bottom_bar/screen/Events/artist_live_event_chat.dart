@@ -36,17 +36,22 @@ class _ArtistLiveEventChatState extends State<ArtistLiveEventChat>
       });
     }
     await eventController.getGifts();
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) async {
-      if (mounted) {
-        final data = await eventController.getEventLogs(
-          eventId: widget.event.id.toString(),
-        );
-        setState(() {
-          currentEvent = currentEvent.copyWith(activities: data);
-        });
-      } else {
+    if (!mounted) return;
+    // 15 s : suffisant pour le fil, et évite de marteler l'API pendant un
+    // live. getEventLogs n'ouvre plus de dialogue d'erreur.
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 15), (timer) async {
+      if (!mounted) {
         timer.cancel();
+        return;
       }
+      final data = await eventController.getEventLogs(
+        eventId: widget.event.id.toString(),
+      );
+      if (!mounted || data == null) return;
+      setState(() {
+        currentEvent = currentEvent.copyWith(activities: data);
+      });
     });
   }
 
