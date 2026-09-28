@@ -41,6 +41,8 @@ async function muxFetch(path, { method = 'GET', body } = {}) {
       'Content-Type': 'application/json',
     },
     body: body ? JSON.stringify(body) : undefined,
+    // Mux qui ne répond pas ne doit pas bloquer une requête utilisateur.
+    signal: AbortSignal.timeout(8000),
   });
   const text = await res.text();
   let json;
@@ -148,13 +150,16 @@ function deleteLiveStream(id) {
  * Header `Mux-Signature: t=<timestamp>,v1=<hmac hex>`
  * HMAC-SHA256( `${t}.${rawBody}` , MUX_WEBHOOK_SECRET )
  */
-function verifyWebhookSignature(rawBody, signatureHeader, secret) {
+const WEBHOOK_TOLERANCE_S = 5 * 60; // ±5 min : un webhook capturé ne se rejoue pas indéfiniment
+function verifyWebhookSignature(rawBody, signatureHeader, secret, { now = Date.now() } = {}) {
   if (!secret || !signatureHeader) return false;
   const parts = Object.fromEntries(
-    signatureHeader.split(',').map((p) => p.split('=').map((s) => s.trim()))
+    String(signatureHeader).split(',').map((p) => p.split('=').map((s) => s.trim()))
   );
   const { t, v1 } = parts;
   if (!t || !v1) return false;
+  const ts = Number(t);
+  if (!Number.isFinite(ts) || Math.abs(now / 1000 - ts) > WEBHOOK_TOLERANCE_S) return false;
   const payload = `${t}.${rawBody}`;
   const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
   try {
