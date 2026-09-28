@@ -65,4 +65,27 @@ async function saveClipVideo(req, fieldNames) {
   return url ? { url, firebasePath: null } : null;
 }
 
-module.exports = { saveUpload, saveClipVideo, PUBLIC_BASE_URL };
+// Dossier temporaire de multer. Un fichier reçu par une route qui ne le
+// consomme pas (ou une requête interrompue) y restait pour toujours ->
+// remplissage du disque. Purge au démarrage de tout ce qui a plus de 24 h.
+const UPLOADS_TMP_DIR = path.join(__dirname, '..', 'uploads');
+function purgeOrphanUploads(maxAgeMs = 24 * 60 * 60 * 1000) {
+  let removed = 0;
+  try {
+    if (!fs.existsSync(UPLOADS_TMP_DIR)) return 0;
+    const cutoff = Date.now() - maxAgeMs;
+    for (const name of fs.readdirSync(UPLOADS_TMP_DIR)) {
+      const p = path.join(UPLOADS_TMP_DIR, name);
+      try {
+        const st = fs.statSync(p);
+        if (st.isFile() && st.mtimeMs < cutoff) { fs.unlinkSync(p); removed += 1; }
+      } catch (_) { /* fichier disparu entre-temps */ }
+    }
+    if (removed) console.log(`[uploads] ${removed} fichier(s) temporaire(s) orphelin(s) purgé(s).`);
+  } catch (e) {
+    console.warn('[uploads] purge des orphelins impossible :', e.message);
+  }
+  return removed;
+}
+
+module.exports = { saveUpload, saveClipVideo, purgeOrphanUploads, PUBLIC_BASE_URL, UPLOADS_TMP_DIR };
