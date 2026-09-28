@@ -82,7 +82,8 @@ class AboutScreen extends StatelessWidget {
                       onTap: () => Get.to(
                         () => ContantPage(
                           title: 'prof_privacy'.tr,
-                          content: authController.settings['privacy_policy'],
+                          content: (authController.settings['privacy_policy'] ?? '').toString(),
+                          settingsKey: 'privacy_policy',
                         ),
                       ),
                       minTileHeight: 40,
@@ -105,8 +106,8 @@ class AboutScreen extends StatelessWidget {
                       onTap: () => Get.to(
                         () => ContantPage(
                           title: 'prof_terms'.tr,
-                          content:
-                              authController.settings['terms_and_conditions'],
+                          content: (authController.settings['terms_and_conditions'] ?? '').toString(),
+                          settingsKey: 'terms_and_conditions',
                         ),
                       ),
                       minTileHeight: 40,

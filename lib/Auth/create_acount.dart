@@ -168,9 +168,8 @@ class _CreateAcountState extends State<CreateAcount> {
                                       ..onTap = () => Get.to(
                                             () => ContantPage(
                                               title: 'prof_terms'.tr,
-                                              content: authController
-                                                  .settings[
-                                                      'terms_and_conditions'],
+                                              content: (authController.settings['terms_and_conditions'] ?? '').toString(),
+                                              settingsKey: 'terms_and_conditions',
                                             ),
                                           ),
                                   ),
@@ -185,8 +184,8 @@ class _CreateAcountState extends State<CreateAcount> {
                                       ..onTap = () => Get.to(
                                             () => ContantPage(
                                               title: 'prof_privacy'.tr,
-                                              content: authController
-                                                  .settings['privacy_policy'],
+                                              content: (authController.settings['privacy_policy'] ?? '').toString(),
+                                              settingsKey: 'privacy_policy',
                                             ),
                                           ),
                                   ),
