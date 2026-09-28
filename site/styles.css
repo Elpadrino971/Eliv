@@ -36,6 +36,13 @@ h1,h2,h3,h4{font-family:"Playfair Display",sans-serif;line-height:1.08;letter-sp
 @media (hover:none){.cursor,.cursor-dot{display:none}}
 .scroll-progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:9998;background:linear-gradient(90deg,var(--gold),var(--gold-2));box-shadow:0 0 14px var(--gold)}
 body>*:not(.grain):not(.aurora){position:relative;z-index:2}
+/* Le chrome injecté (nav fixe + barre « Télécharger l'appli ») doit rester
+   au-dessus des sections qui suivent, elles aussi en z-index:2. */
+body>#site-header{z-index:1000}
+/* Clavier : anneau de focus visible (or) partout, sans gêner la souris. */
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:4px}
+:focus:not(:focus-visible){outline:none}
+.nav__links a.nav__hot{color:var(--gold)}
 
 /* ===== buttons ===== */
 .btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:.5em;font-family:"Plus Jakarta Sans";font-weight:700;font-size:.92rem;padding:.8em 1.5em;border-radius:99px;cursor:pointer;border:1px solid transparent;transition:transform .3s var(--ease),box-shadow .3s,background .3s,color .3s,border-color .3s;white-space:nowrap}
@@ -408,11 +415,17 @@ body>*:not(.grain):not(.aurora){position:relative;z-index:2}
   .summary{position:static}
   .nav__search{display:none}
 }
-@media (max-width:820px){
+/* Sept liens dans la nav : on resserre sous 1240 px, burger sous 1000 px
+   (au lieu de 820 : avec le lien « DJ Wilson · Live » la ligne débordait). */
+.nav__links a{white-space:nowrap}
+@media (max-width:1240px){.nav__links{gap:16px;font-size:.86rem}.nav{gap:14px}.nav__cta .btn{padding:.7em 1.1em}.nav__dl{display:none}}
+@media (max-width:1000px){
   .nav__links,.nav__cta{display:none}
   .nav__burger{display:flex;margin-left:auto}
   .nav.open .nav__links{display:flex;position:absolute;top:100%;left:0;width:100%;flex-direction:column;gap:0;padding:8px 0;background:rgba(11,14,20,.97);backdrop-filter:blur(18px);border-bottom:1px solid var(--panel-line)}
-  .nav.open .nav__links a{padding:13px clamp(16px,4vw,46px)}
+  .nav.open .nav__links a{padding:13px clamp(16px,4vw,46px);font-size:.93rem}
+}
+@media (max-width:820px){
   .gift-panel__grid{grid-template-columns:repeat(3,1fr)}
 }
 @media (prefers-reduced-motion:reduce){
