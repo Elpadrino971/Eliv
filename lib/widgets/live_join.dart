@@ -1,6 +1,7 @@
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/live_router.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/Models/user_model.dart';
 import 'package:artist/ZegoCloud/pre_stream_screen.dart';
@@ -158,7 +159,14 @@ Future<void> showLiveJoinSheet(User artist) async {
     }
 
     Get.back(); // ferme le bandeau
-    Get.to(() => PreStreamScreen(event: event));
+    if (event.status == 'live') {
+      // Live déjà en cours : on entre DIRECTEMENT dans la salle Zego. Avant,
+      // on ouvrait PreStreamScreen dont le compte à rebours (déjà à zéro)
+      // fermait aussitôt l'écran -> le fan était éjecté du live.
+      joinLive(event);
+    } else {
+      Get.to(() => PreStreamScreen(event: event));
+    }
   }
 
   Get.bottomSheet(
