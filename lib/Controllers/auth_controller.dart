@@ -564,20 +564,36 @@ class AuthController extends GetxController {
     });
   }
 
-  // Déconnexion complète (déplacée depuis l'écran Profil vers ⚙ Réglages).
-  Future<void> logout() async {
-    myLoadingDialog();
+  /// Oublie la session locale : sujets push, session Google, identité
+  /// RevenueCat, stockage et modèle en mémoire. Chaque étape est isolée :
+  /// un échec réseau (désabonnement push) ne doit jamais empêcher la purge
+  /// du stockage. Partagé par la déconnexion et la suppression de compte.
+  Future<void> _clearLocalSession() async {
     try {
       final id = userModel.value.user?.id;
       await FirebaseMessaging.instance.unsubscribeFromTopic('00$id');
       await FirebaseMessaging.instance.unsubscribeFromTopic('users');
       await FirebaseMessaging.instance.unsubscribeFromTopic('artist');
+    } catch (_) {}
+    try {
       if (userModel.value.user?.registrationType == 'social') {
         await GoogleSignIn.instance.signOut();
       }
+    } catch (_) {}
+    try {
       await SubscriptionController.clearIdentity();
+    } catch (_) {}
+    try {
       await box.remove('user');
     } catch (_) {}
+    userModel.value = UserModel();
+    update();
+  }
+
+  // Déconnexion complète (déplacée depuis l'écran Profil vers ⚙ Réglages).
+  Future<void> logout() async {
+    myLoadingDialog();
+    await _clearLocalSession();
     await Future.delayed(const Duration(seconds: 1));
     Get.offAll(() => LoginScreen());
   }
@@ -587,17 +603,20 @@ class AuthController extends GetxController {
     response.typeSetter = 'post';
     response.urlSetter = APIs.deleteAccountAPI;
     response.bodySetter = {"id": "${userModel.value.user?.id ?? 1}"};
-    await response.hitAPI().then((value) {
-      if (value.split(' ').first != 'error') {
-        mySuccessDialog(
-          subtitle: 'msg_account_deleted'.tr,
-          ontap: () {
-            Get.offAll(() => LoginScreen());
-          },
-        );
-      } else {
-        parseError(value, doBack: true);
-      }
-    });
+    final value = await response.hitAPI();
+    if (value.split(' ').first != 'error') {
+      // Même purge qu'à la déconnexion : sans elle, l'app rouvrait sur le
+      // compte supprimé (encore en stockage) au prochain lancement.
+      await _clearLocalSession();
+      Get.back(); // ferme le loader
+      mySuccessDialog(
+        subtitle: 'msg_account_deleted'.tr,
+        ontap: () {
+          Get.offAll(() => LoginScreen());
+        },
+      );
+    } else {
+      parseError(value, doBack: true);
+    }
   }
 }
