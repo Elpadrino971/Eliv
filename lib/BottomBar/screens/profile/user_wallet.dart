@@ -36,7 +36,7 @@ class _UserWalletState extends State<UserWallet> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Get.isDarkMode ? darkmodeColor : whiteColor,
-      appBar: MyAppbar(title: 'Wallet'),
+      appBar: MyAppbar(title: 'wallet_title'.tr),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: myPadding,
@@ -116,17 +116,21 @@ class _UserWalletState extends State<UserWallet> {
                             ),
                           ],
                         ),
-                        height(0.01),
-                        MyButton(
-                          label: 'points_withdraw'.tr,
-                          onTap: () {
-                            Get.to(() => ArtistWithdraw());
-                          },
-                          buttonColor: whiteColor,
-                          labelColor: Get.isDarkMode
-                              ? goldPrimary
-                              : mainThemeColor,
-                        ),
+                        // Le retrait (virement bancaire) n'existe que pour
+                        // les artistes : un fan ne doit pas voir ce bouton.
+                        if (userModel.value.user?.isArtist == true) ...[
+                          height(0.01),
+                          MyButton(
+                            label: 'points_withdraw'.tr,
+                            onTap: () {
+                              Get.to(() => ArtistWithdraw());
+                            },
+                            buttonColor: whiteColor,
+                            labelColor: Get.isDarkMode
+                                ? goldPrimary
+                                : mainThemeColor,
+                          ),
+                        ],
                       ],
                     ),
                   ],

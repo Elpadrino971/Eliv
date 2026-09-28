@@ -67,12 +67,22 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
                 if (events == null) {
                   return const EventTileShimmer();
                 }
+                // « postponed » reste à venir ; « ended » (live terminé) va
+                // dans l'historique — avant, ces billets disparaissaient.
                 final upcomingEvents = events
-                    .where((e) => e.status == 'published' || e.status == 'live')
+                    .where(
+                      (e) =>
+                          e.status == 'published' ||
+                          e.status == 'live' ||
+                          e.status == 'postponed',
+                    )
                     .toList();
                 final pastEvents = events
                     .where(
-                      (e) => e.status == 'completed' || e.status == 'cancelled',
+                      (e) =>
+                          e.status == 'completed' ||
+                          e.status == 'cancelled' ||
+                          e.status == 'ended',
                     )
                     .toList();
                 return Expanded(

@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Image.asset('assets/logo2.png'),
                 Text(
                   textAlign: TextAlign.center,
-                  'Welcome',
+                  'login_welcome_to'.tr,
                   style: TextStyle(
                     color: Get.isDarkMode ? whiteColor : blackColor,
                     fontWeight: FontWeight.bold,
@@ -104,9 +104,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // « Bienvenue sur » (traduit) puis la marque VybzzZ.
                     Text(
                       textAlign: TextAlign.center,
-                      'To VyB',
+                      'VyB',
                       style: TextStyle(
                         color: Get.isDarkMode ? whiteColor : blackColor,
                         fontWeight: FontWeight.bold,

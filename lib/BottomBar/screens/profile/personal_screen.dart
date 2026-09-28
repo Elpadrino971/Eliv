@@ -151,7 +151,7 @@ class _PersonalScreenState extends State<PersonalScreen> {
                     ),
 
                     Text(
-                      'Email Address',
+                      'auth_email_address'.tr,
                       style: TextStyle(
                         color: greyColor,
                         fontSize: 14,

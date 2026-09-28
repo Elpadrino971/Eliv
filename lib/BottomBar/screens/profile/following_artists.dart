@@ -30,7 +30,7 @@ class _FollowingArtistsState extends State<FollowingArtists> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Artists'),
+      appBar: MyAppbar(title: 'following_title'.tr),
       body: Padding(
         padding: myPadding,
         child: Column(

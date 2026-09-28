@@ -92,12 +92,21 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                         // de live (pas seulement "published"), sinon un
                         // artiste perd de vue son propre concert dès qu'il
                         // l'a démarré.
+                        // Les concerts sans date sont écartés : le tri
+                        // ci-dessous compare les dates sans `!` sur null.
                         final published = events
                             .where(
                               (e) =>
-                                  e.status == 'published' || e.status == 'live',
+                                  (e.status == 'published' ||
+                                      e.status == 'live' ||
+                                      e.status == 'postponed') &&
+                                  e.startDateTime != null,
                             )
-                            .toList();
+                            .toList()
+                          ..sort(
+                            (a, b) =>
+                                a.startDateTime!.compareTo(b.startDateTime!),
+                          );
                         if (published.isEmpty) {
                           return Center(
                             child: Text(
@@ -119,10 +128,6 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                           padding: EdgeInsets.all(0),
                           physics: NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
-                            published.sort(
-                              (a, b) =>
-                                  a.startDateTime!.compareTo(b.startDateTime!),
-                            );
                             final event = published[index];
                             return MyContainer(
                               widget: Column(

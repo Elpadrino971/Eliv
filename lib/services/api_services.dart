@@ -1,7 +1,29 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:artist/Global/global.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+
+/// Délai maximal d'une requête simple (GET/POST/DELETE). Sans lui, une
+/// connexion qui ne répond jamais laissait le loader tourner indéfiniment.
+const Duration apiTimeout = Duration(seconds: 15);
+
+/// Délai des envois de fichiers (photos, vidéos).
+const Duration apiUploadTimeout = Duration(seconds: 300);
+
+/// Réponse « réseau » au même format que les erreurs serveur
+/// (`error {json}`) : tous les appelants la traitent déjà via
+/// `value.split(' ').first != 'error'` et [parseError] affiche le message.
+/// Avant, une coupure réseau levait une exception non gérée -> loader
+/// infini.
+String networkErrorResponse(Object e) {
+  myPrint(e);
+  return 'error ${jsonEncode({
+        'status': 'error',
+        'code': 'network',
+        'message': 'msg_network_error'.tr,
+      })}';
+}
 
 abstract class ApiService {
   Future hitAPI();
@@ -53,33 +75,35 @@ class ApiResponse extends ApiService {
     final finalHeaders = _getHeaders();
     try {
       if (type == 'get') {
-        final response = await http.get(
-          Uri.parse(_url!),
-          headers: finalHeaders,
-        );
+        final response = await http
+            .get(Uri.parse(_url!), headers: finalHeaders)
+            .timeout(apiTimeout);
         if (response.statusCode == 200 || response.statusCode == 201) {
           final data = response.body;
           return data;
         } else {
+          myPrint('HTTP ${response.statusCode} $_url -> ${response.body}');
           return "error ${response.body}";
         }
       } else if (type == 'delete') {
-        final response = await http.delete(
-          Uri.parse(_url!),
-          headers: finalHeaders,
-        );
+        final response = await http
+            .delete(Uri.parse(_url!), headers: finalHeaders)
+            .timeout(apiTimeout);
         if (response.statusCode == 200 || response.statusCode == 201) {
           final data = response.body;
           return data;
         } else {
+          myPrint('HTTP ${response.statusCode} $_url -> ${response.body}');
           return "error ${response.body}";
         }
       } else if (type == 'post') {
-        final response = await http.post(
-          Uri.parse(_url!),
-          headers: finalHeaders,
-          body: _body ?? jsonEncode(_body2),
-        );
+        final response = await http
+            .post(
+              Uri.parse(_url!),
+              headers: finalHeaders,
+              body: _body ?? jsonEncode(_body2),
+            )
+            .timeout(apiTimeout);
         if (response.statusCode == 200 || response.statusCode == 201) {
           final data = response.body;
           return data;
@@ -88,9 +112,9 @@ class ApiResponse extends ApiService {
           return "error ${response.body}";
         }
       }
+      return networkErrorResponse('hitAPI: type de requête inconnu "$type"');
     } catch (e) {
-      myPrint(e);
-      throw Exception(e);
+      return networkErrorResponse(e);
     }
   }
 
@@ -120,7 +144,7 @@ class ApiResponse extends ApiService {
               ),
             );
       http.StreamedResponse value = await request.send().timeout(
-        const Duration(seconds: 300),
+        apiUploadTimeout,
       );
       final response = await http.Response.fromStream(value);
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -131,8 +155,7 @@ class ApiResponse extends ApiService {
         return "error ${response.body}";
       }
     } catch (e) {
-      myPrint(e);
-      throw Exception(e);
+      return networkErrorResponse(e);
     }
   }
 
@@ -156,7 +179,7 @@ class ApiResponse extends ApiService {
       }
 
       http.StreamedResponse value = await request.send().timeout(
-        const Duration(seconds: 300),
+        apiUploadTimeout,
       );
       final response = await http.Response.fromStream(value);
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -167,8 +190,7 @@ class ApiResponse extends ApiService {
         return "error ${response.body}";
       }
     } catch (e) {
-      myPrint(e);
-      throw Exception(e);
+      return networkErrorResponse(e);
     }
   }
 }

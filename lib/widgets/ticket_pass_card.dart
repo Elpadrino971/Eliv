@@ -70,10 +70,16 @@ class TicketPassCard extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: _InfoBlock(label: 'DATE', value: dateStr),
+                      child: _InfoBlock(
+                        label: 'ticket_date'.tr,
+                        value: dateStr,
+                      ),
                     ),
                     Expanded(
-                      child: _InfoBlock(label: 'TIME', value: timeStr),
+                      child: _InfoBlock(
+                        label: 'ticket_time'.tr,
+                        value: timeStr,
+                      ),
                     ),
                   ],
                 ),
@@ -82,14 +88,14 @@ class TicketPassCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _InfoBlock(
-                        label: 'LOCATION',
-                        value: event.artist?.address ?? 'TBA',
+                        label: 'ticket_location'.tr,
+                        value: event.artist?.address ?? 'ticket_tba'.tr,
                       ),
                     ),
                     Expanded(
                       child: _InfoBlock(
-                        label: 'SEAT',
-                        value: 'General Admission',
+                        label: 'ticket_seat'.tr,
+                        value: 'ticket_general_admission'.tr,
                       ),
                     ),
                   ],
@@ -166,7 +172,9 @@ class _Header extends StatelessWidget {
             top: 12,
             left: 12,
             child: _Badge(
-              label: isPast ? 'ATTENDED' : (isLive ? 'LIVE NOW' : 'UPCOMING'),
+              label: isPast
+                  ? 'ticket_attended'.tr
+                  : (isLive ? 'ticket_live_now'.tr : 'ticket_upcoming'.tr),
               color: isPast
                   ? greyColor
                   : (isLive ? const Color(0xffDD0000) : vybzzzGold),

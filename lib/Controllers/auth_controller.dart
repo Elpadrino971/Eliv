@@ -14,7 +14,6 @@ import 'package:artist/Models/genre_model.dart';
 import 'package:artist/Models/packages_model.dart';
 import 'package:artist/Models/transactions_model.dart';
 import 'package:artist/Models/user_model.dart';
-import 'package:artist/Auth/complete_profile.dart';
 import 'package:artist/Auth/create_passwrod.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/artist_bottom_bar/artist_bottom_bar.dart';
@@ -43,8 +42,9 @@ class AuthController extends GetxController {
     try {
       value = await response.hitAPI();
     } catch (_) {
-      // Pas de réseau / serveur injoignable : on ferme le loader et on
-      // l'explique doucement, au lieu de laisser le loader tourner.
+      // Filet de sécurité : hitAPI ne lève plus d'exception (une coupure
+      // réseau renvoie `error {"code":"network",…}`, traité plus bas via
+      // _errorCode), mais on garde ce chemin au cas où.
       Get.back();
       await showLoginFailedSheet(code: 'network', email: email);
       return;
@@ -137,11 +137,37 @@ class AuthController extends GetxController {
         // via le lien reçu (elle rattache les places gagnées ou achetées sur
         // le site), mais elle ne bloque plus l'entrée.
         userModel.value = userModelFromJson(value);
+        update();
+        Get.back(); // ferme le loader
+
+        // Exception : une place (roue ou billet acheté sur le site) attend
+        // cet e-mail -> le serveur renvoie `requires_verification: true`.
+        // Le compte reste en mémoire seulement (rien en stockage) tant que
+        // le code reçu n'est pas confirmé ; verifyOtp() finit l'entrée.
+        bool requiresVerification = false;
+        try {
+          final decoded = jsonDecode(value);
+          requiresVerification =
+              decoded is Map && decoded['requires_verification'] == true;
+        } catch (_) {}
+        if (requiresVerification) {
+          Get.off(() => OtpScreen(email: email));
+          Get.snackbar(
+            'signup_verify_place_title'.tr,
+            'signup_verify_place'.tr,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: cardDeep,
+            colorText: ivory,
+            margin: const EdgeInsets.all(14),
+            borderRadius: 14,
+            duration: const Duration(seconds: 6),
+          );
+          return;
+        }
+
         box.write('user', userModel.value.toJson());
         final id = userModel.value.user?.id;
         if (id != null) unawaited(SubscriptionController.syncIdentity(id));
-        update();
-        Get.back();
         Get.offAll(() => MyBottomBar(index: 2));
         Get.snackbar(
           'signup_welcome_title'.tr,
@@ -177,14 +203,19 @@ class AuthController extends GetxController {
           subtitle: 'msg_otp_verified'.tr,
           ontap: () async {
             if (fromForget) {
-              Get.to(() => CreatePasswrod(fromForget: true, email: email));
+              Get.to(
+                () => CreatePasswrod(fromForget: true, email: email, otp: otp),
+              );
             } else {
+              // Inscription confirmée (places rattachées côté serveur) :
+              // on mémorise la session et on entre directement sur le
+              // Live + Feed, comme après une inscription sans place.
               box.write('user', userModel.value.toJson());
               final id = userModel.value.user?.id;
               if (id != null) {
                 unawaited(SubscriptionController.syncIdentity(id));
               }
-              Get.to(() => CompleteProfile());
+              Get.offAll(() => MyBottomBar(index: 2));
             }
           },
         );
@@ -215,22 +246,27 @@ class AuthController extends GetxController {
     });
   }
 
+  /// Mot de passe oublié : le code reçu par e-mail est envoyé AVEC le nouveau
+  /// mot de passe. Le backend (/reset-password) exige `otp_code` + `password`
+  /// — avant, l'app envoyait `new_password`/`confirm_password` sans le code,
+  /// donc toujours refusé.
   Future resetPassword({
     required String password,
     required String email,
+    required String otp,
   }) async {
     myLoadingDialog();
     response.typeSetter = 'post';
     response.urlSetter = APIs.resetPasswordAPI;
     response.bodySetter = {
-      'new_password': password,
-      "confirm_password": password,
       'email': email,
+      'otp_code': otp,
+      'password': password,
     };
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
-        userModel.value = userModelFromJson(value);
-        update();
+        // /reset-password ne renvoie qu'un message : rien à parser.
+        Get.back(); // ferme le loader avant le dialogue de succès
         mySuccessDialog(
           subtitle: 'msg_password_reset'.tr,
           ontap: () {
@@ -241,6 +277,34 @@ class AuthController extends GetxController {
         parseError(value, doBack: true);
       }
     });
+  }
+
+  /// Changement de mot de passe depuis « Mot de passe et sécurité »
+  /// (utilisateur connecté). Le backend (/update-password) attend
+  /// `old_password` + `password`.
+  Future<void> updatePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    myLoadingDialog();
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.updatePasswordAPI;
+    response.bodySetter = {
+      'old_password': oldPassword,
+      'password': newPassword,
+    };
+    final value = await response.hitAPI();
+    if (value.split(' ').first != 'error') {
+      Get.back(); // ferme le loader
+      mySuccessDialog(
+        subtitle: 'sec_pwd_changed'.tr,
+        ontap: () {
+          Get.close(2); // dialogue + écran sécurité
+        },
+      );
+    } else {
+      parseError(value, doBack: true);
+    }
   }
 
   Future<void> getGenres() async {
@@ -550,25 +614,43 @@ class AuthController extends GetxController {
         settings.value = jsonDecode(value)["data"] ?? {};
         update();
       } else {
-        parseError(value);
+        // Appelé dès le démarrage (main.dart), avant tout écran : pas de
+        // dialogue ici. La page CGU/confidentialité propose « Réessayer ».
+        parseError(value, showDialog: false);
       }
     });
   }
 
-  // Déconnexion complète (déplacée depuis l'écran Profil vers ⚙ Réglages).
-  Future<void> logout() async {
-    myLoadingDialog();
+  /// Oublie la session locale : sujets push, session Google, identité
+  /// RevenueCat, stockage et modèle en mémoire. Chaque étape est isolée :
+  /// un échec réseau (désabonnement push) ne doit jamais empêcher la purge
+  /// du stockage. Partagé par la déconnexion et la suppression de compte.
+  Future<void> _clearLocalSession() async {
     try {
       final id = userModel.value.user?.id;
       await FirebaseMessaging.instance.unsubscribeFromTopic('00$id');
       await FirebaseMessaging.instance.unsubscribeFromTopic('users');
       await FirebaseMessaging.instance.unsubscribeFromTopic('artist');
+    } catch (_) {}
+    try {
       if (userModel.value.user?.registrationType == 'social') {
         await GoogleSignIn.instance.signOut();
       }
+    } catch (_) {}
+    try {
       await SubscriptionController.clearIdentity();
+    } catch (_) {}
+    try {
       await box.remove('user');
     } catch (_) {}
+    userModel.value = UserModel();
+    update();
+  }
+
+  // Déconnexion complète (déplacée depuis l'écran Profil vers ⚙ Réglages).
+  Future<void> logout() async {
+    myLoadingDialog();
+    await _clearLocalSession();
     await Future.delayed(const Duration(seconds: 1));
     Get.offAll(() => LoginScreen());
   }
@@ -578,17 +660,20 @@ class AuthController extends GetxController {
     response.typeSetter = 'post';
     response.urlSetter = APIs.deleteAccountAPI;
     response.bodySetter = {"id": "${userModel.value.user?.id ?? 1}"};
-    await response.hitAPI().then((value) {
-      if (value.split(' ').first != 'error') {
-        mySuccessDialog(
-          subtitle: 'msg_account_deleted'.tr,
-          ontap: () {
-            Get.offAll(() => LoginScreen());
-          },
-        );
-      } else {
-        parseError(value, doBack: true);
-      }
-    });
+    final value = await response.hitAPI();
+    if (value.split(' ').first != 'error') {
+      // Même purge qu'à la déconnexion : sans elle, l'app rouvrait sur le
+      // compte supprimé (encore en stockage) au prochain lancement.
+      await _clearLocalSession();
+      Get.back(); // ferme le loader
+      mySuccessDialog(
+        subtitle: 'msg_account_deleted'.tr,
+        ontap: () {
+          Get.offAll(() => LoginScreen());
+        },
+      );
+    } else {
+      parseError(value, doBack: true);
+    }
   }
 }
