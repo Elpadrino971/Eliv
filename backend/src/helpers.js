@@ -217,6 +217,15 @@ function serializeEvent(row, { currentUserId = null } = {}) {
   // à un admin. Le teaser (video_reel qui n'est PAS une URL Mux) reste
   // public : il alimente le feed « Pour toi » et la bannière.
   // stream_key / stream_url (clé d'ingest RTMP) ne sortent plus jamais.
+  //
+  // Mode « pro » (lot 12, live_mode='pro') : c'est CE contrôle qui protège le
+  // direct de la régie vidéo, les fans lisant
+  // https://stream.mux.com/<mux_live_playback_id>.m3u8. mux_live_playback_id
+  // est renvoyé à : l'artiste (propriétaire), un admin, un détenteur de billet
+  // non remboursé, et à tout le monde si le concert est gratuit ; `null` pour
+  // les autres (anonyme ou sans billet sur un concert payant).
+  // Limite connue : politique de lecture Mux `public` -> un playback_id déjà
+  // divulgué reste lisible ; passer en `signed` si le besoin apparaît.
   const isPaid = (parseFloat(row.ticket_price) || 0) > 0;
   const hasTicket = ticketRows.length > 0;
   const isOwner = !!currentUserId && Number(currentUserId) === Number(row.artist_id);
@@ -266,6 +275,9 @@ function serializeEvent(row, { currentUserId = null } = {}) {
     likes_count: row.likes_count,
     mux_playback_id: canWatch ? rawPlayback : null,
     mux_live_playback_id: canWatch ? rawLive : null,
+    // 'mobile' (l'artiste diffuse depuis l'app, salle Zego) | 'pro' (régie
+    // vidéo -> Mux ; l'app lit le HLS de mux_live_playback_id).
+    live_mode: row.live_mode === 'pro' ? 'pro' : 'mobile',
     has_replay: hasReplay,
     has_ticket: hasTicket,
     replay_expires_at: replayExpiresAt,

@@ -288,18 +288,33 @@ router.post('/:eventId/clock', (req, res) => {
 // pour afficher les vraies cams des fans. Rôle : stage | regie.
 router.get('/:eventId/zego-token', (req, res) => {
   if (!keyOk(req)) return res.status(401).json({ status: 'error', message: 'Clé API requise.' });
-  if (!zegoService.isConfigured()) return res.status(503).json({ status: 'error', message: 'ZegoCloud non configuré (ZEGO_APP_ID / ZEGO_SERVER_SECRET).' });
-  const role = req.query.role === 'stage' ? 'stage' : 'regie';
-  const userId = 'web_' + role + '_' + req.params.eventId + '_' + Math.random().toString(36).slice(2, 8);
   // artist_id : l'écran repère le flux de l'artiste (`<concert>_<artist_id>_main`)
   // pour l'afficher en grand ; les autres flux publiés sont les fans sur scène.
-  let artistId = null;
-  try { const ev = db.prepare('SELECT artist_id FROM events WHERE id = ?').get(req.params.eventId); artistId = ev ? ev.artist_id : null; } catch (_) {}
+  // live_mode / mux_live_playback_id (lot 12) : en mode 'pro', la tuile
+  // principale lit le HLS Mux de la régie vidéo au lieu du flux Zego. Exposé
+  // ici sans condition de billet : la route exige déjà la clé API (régie).
+  let artistId = null, liveMode = 'mobile', livePlayback = null;
+  try {
+    const ev = db.prepare('SELECT artist_id, live_mode, mux_live_playback_id FROM events WHERE id = ?').get(req.params.eventId);
+    if (ev) { artistId = ev.artist_id; liveMode = ev.live_mode === 'pro' ? 'pro' : 'mobile'; livePlayback = ev.mux_live_playback_id || null; }
+  } catch (_) {}
+  const modeInfo = { live_mode: liveMode, mux_live_playback_id: livePlayback };
+  if (!zegoService.isConfigured()) {
+    // En mode pro, l'écran peut fonctionner sans Zego (vidéo = HLS Mux) :
+    // on renvoie le mode sans jeton plutôt qu'une erreur.
+    if (liveMode === 'pro') {
+      return res.json({ status: 'success', data: { app_id: null, token: null, room_id: String(req.params.eventId), artist_id: artistId != null ? String(artistId) : null, ...modeInfo } });
+    }
+    return res.status(503).json({ status: 'error', message: 'ZegoCloud non configuré (ZEGO_APP_ID / ZEGO_SERVER_SECRET).', data: modeInfo });
+  }
+  const role = req.query.role === 'stage' ? 'stage' : 'regie';
+  const userId = 'web_' + role + '_' + req.params.eventId + '_' + Math.random().toString(36).slice(2, 8);
   try {
     const { token, appId, expiresAt } = zegoService.generateToken04(userId);
     return res.json({ status: 'success', data: {
       app_id: appId, token, expires_at: expiresAt, room_id: String(req.params.eventId),
       artist_id: artistId != null ? String(artistId) : null,
+      ...modeInfo,
       user_id: userId, user_name: role === 'stage' ? 'Stage VybzzZ' : 'Régie VybzzZ',
       server: 'wss://webliveroom' + appId + '-api.zegocloud.com/ws',
     } });

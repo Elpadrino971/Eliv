@@ -872,6 +872,12 @@ function init() {
     "ALTER TABLE events ADD COLUMN replay_expires_at TEXT",
     "ALTER TABLE events ADD COLUMN mux_live_stream_id TEXT",
     "ALTER TABLE events ADD COLUMN mux_stream_key TEXT",
+    // Mode de diffusion (lot 12) : 'mobile' = l'artiste diffuse depuis l'app
+    // (salle ZegoCloud, relais Mux pour le replay) ; 'pro' = une régie vidéo
+    // (OBS / vMix / ATEM) pousse en RTMP vers un Live Stream Mux créé depuis
+    // l'admin, les fans lisent le HLS Mux. Basculé par POST/DELETE
+    // /api/admin/events/:id/mux/live-stream.
+    "ALTER TABLE events ADD COLUMN live_mode TEXT DEFAULT 'mobile'",
     // Replay : l'artiste (à la création) et l'admin choisissent si le concert
     // est rejouable et pour combien de jours (défaut 60j = fenêtre de hold des
     // fonds Apple/remboursement). replay_duration_days sert à calculer

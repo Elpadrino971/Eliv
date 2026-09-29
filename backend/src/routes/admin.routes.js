@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const { db } = require('../db');
 const agenda = require('../services/agenda_bizouk');
 const { runAgendaSync } = require('../jobs/agendaSync');
-const { platformCounters, payoutCountdown } = require('../helpers');
+const { platformCounters, payoutCountdown, asyncHandler } = require('../helpers');
 const { hash, compare, SECRET, sha256 } = require('../auth');
 const crypto = require('crypto');
 const { saveUpload, saveClipVideo } = require('../uploads');
@@ -425,7 +425,7 @@ router.get('/events', requireAdmin, (req, res) => {
             e.is_banner, e.tz_offset_minutes, e.mux_upload_status, e.mux_asset_id,
             e.replay_expires_at, e.replay_enabled, e.replay_duration_days,
             e.geo_mode, e.geo_countries, e.geo_block_until, e.price_schedule,
-            e.mux_live_stream_id, u.artist_name AS artist
+            e.mux_live_stream_id, COALESCE(e.live_mode, 'mobile') AS live_mode, u.artist_name AS artist
      FROM events e LEFT JOIN users u ON u.id = e.artist_id
      ORDER BY e.id DESC`
   ).all().map((e) => {
@@ -445,11 +445,12 @@ router.get('/events', requireAdmin, (req, res) => {
 // Concerts actuellement EN DIRECT — supervision / modération (la plateforme
 // est responsable du contenu diffusé). Renvoie de quoi lister ET regarder via
 // le flux HLS Mux (mux_live_playback_id, disponible une fois le relais
-// Zego->Mux branché).
+// Zego->Mux branché). `live_mode` (lot 12) : 'pro' -> l'admin regarde le HLS
+// Mux (flux de la régie vidéo) ; 'mobile' -> la salle Zego de l'artiste.
 router.get('/live-events', requireAdmin, (req, res) => {
   const rows = db.prepare(
     `SELECT e.id, e.name, e.start_date_time, e.likes_count,
-            e.mux_live_playback_id, e.mux_live_stream_id,
+            e.mux_live_playback_id, e.mux_live_stream_id, COALESCE(e.live_mode, 'mobile') AS live_mode,
             u.artist_name AS artist, u.id AS artist_id, u.email AS artist_email,
             (SELECT COUNT(DISTINCT t.user_id) FROM tickets t WHERE t.event_id = e.id) AS buyers
      FROM events e LEFT JOIN users u ON u.id = e.artist_id
@@ -545,7 +546,11 @@ router.put('/events/:id', requireAdmin, (req, res) => {
   db.prepare(
     `UPDATE events SET artist_id = @artist_id, name = @name, cover_image = @cover,
         ticket_price = @price, start_date_time = @start, tz_offset_minutes = @tzOffset, genre_id = @genre, description = @desc,
-        status = @status, mux_playback_id = @mux, mux_live_playback_id = @muxLive,
+        status = @status, mux_playback_id = @mux,
+        -- Mode pro (lot 12) : le playback du Live Stream de la régie ne doit pas
+        -- être écrasé en enregistrant le formulaire pendant/avant le direct.
+        mux_live_playback_id = CASE WHEN live_mode = 'pro' AND mux_live_stream_id IS NOT NULL
+                                    THEN mux_live_playback_id ELSE @muxLive END,
         video_reel = @reel, is_banner = @banner,
         replay_enabled = @replayEnabled, replay_duration_days = @replayDays,
         geo_mode = @geoMode, geo_countries = @geoCountries, geo_block_until = @geoBlockUntil,
@@ -647,18 +652,28 @@ router.post('/events/:id/mux/live-stream', requireAdmin, (req, res) => {
   if (!mux.isConfigured()) {
     return res.status(503).json({ status: 'error', message: 'Mux non configuré côté serveur.' });
   }
-  const event = db.prepare('SELECT id FROM events WHERE id = ?').get(req.params.id);
+  const event = db.prepare('SELECT id, mux_live_stream_id FROM events WHERE id = ?').get(req.params.id);
   if (!event) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
 
-  mux.createLiveStream({ passthrough: { kind: 'event', id: event.id } })
+  // Mode « pro » (lot 12) : faible latence Mux + live_mode='pro' (la régie web
+  // et l'écran de scène lisent alors le HLS Mux au lieu de la salle Zego ;
+  // recording/start de l'app ne crée plus de 2e flux). Un flux déjà présent
+  // (ex. relais mobile) est supprimé côté Mux : il ne doit pas rester ouvert
+  // avec une clé orpheline.
+  const previous = event.mux_live_stream_id;
+  (previous ? mux.deleteLiveStream(previous).catch((e) => console.error('[mux live-stream replace]', e.message)) : Promise.resolve())
+    .then(() => mux.createLiveStream({ passthrough: { kind: 'event', id: event.id }, latencyMode: 'low' }))
     .then(({ liveStreamId, streamKey, playbackId, ingestUrl }) => {
       db.prepare(
-        `UPDATE events SET mux_live_stream_id = ?, mux_stream_key = ?, mux_live_playback_id = ?
+        `UPDATE events SET mux_live_stream_id = ?, mux_stream_key = ?, mux_live_playback_id = ?, live_mode = 'pro'
          WHERE id = ?`
       ).run(liveStreamId, streamKey, playbackId, event.id);
       return res.json({
         status: 'success',
-        data: { live_stream_id: liveStreamId, stream_key: streamKey, playback_id: playbackId, ingest_url: ingestUrl },
+        data: {
+          live_stream_id: liveStreamId, stream_key: streamKey, playback_id: playbackId, ingest_url: ingestUrl,
+          live_mode: 'pro', latency_mode: 'low',
+        },
       });
     })
     .catch((e) => {
@@ -668,18 +683,41 @@ router.post('/events/:id/mux/live-stream', requireAdmin, (req, res) => {
 });
 
 router.delete('/events/:id/mux/live-stream', requireAdmin, (req, res) => {
-  const event = db.prepare('SELECT mux_live_stream_id FROM events WHERE id = ?').get(req.params.id);
-  if (!event?.mux_live_stream_id) return res.json({ status: 'success', message: 'Aucun live stream actif.' });
+  const event = db.prepare('SELECT id, mux_live_stream_id FROM events WHERE id = ?').get(req.params.id);
+  if (!event) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  if (!event.mux_live_stream_id) {
+    db.prepare("UPDATE events SET live_mode = 'mobile' WHERE id = ?").run(event.id);
+    return res.json({ status: 'success', message: 'Aucun live stream actif.', data: { live_mode: 'mobile' } });
+  }
 
   mux.deleteLiveStream(event.mux_live_stream_id)
     .catch((e) => console.error('[mux live-stream delete]', e.message))
     .finally(() => {
       db.prepare(
-        "UPDATE events SET mux_live_stream_id = NULL, mux_stream_key = NULL, mux_live_playback_id = NULL WHERE id = ?"
-      ).run(req.params.id);
-      return res.json({ status: 'success', message: 'Live stream arrêté.' });
+        "UPDATE events SET mux_live_stream_id = NULL, mux_stream_key = NULL, mux_live_playback_id = NULL, live_mode = 'mobile' WHERE id = ?"
+      ).run(event.id);
+      return res.json({ status: 'success', message: 'Live stream arrêté.', data: { live_mode: 'mobile' } });
     });
 });
+
+// État du flux reçu par Mux (lot 12) : l'admin affiche « ● reçu » quand la
+// régie vidéo pousse bien en RTMP. Mux `status` : active | idle | disabled.
+// Toujours 200 (l'admin affiche « — » sur `status: null`) : un Mux lent ou en
+// erreur ne doit pas casser la page Concerts.
+router.get('/events/:id/mux/live-status', requireAdmin, asyncHandler(async (req, res) => {
+  const event = db.prepare('SELECT id, live_mode, mux_live_stream_id FROM events WHERE id = ?').get(req.params.id);
+  if (!event) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  const base = { live_mode: event.live_mode || 'mobile', live_stream_id: event.mux_live_stream_id || null };
+  if (!event.mux_live_stream_id) return res.json({ status: 'success', data: { ...base, status: null, reason: 'no_stream' } });
+  if (!mux.isConfigured()) return res.json({ status: 'success', data: { ...base, status: null, reason: 'mux_not_configured' } });
+  try {
+    const ls = await mux.getLiveStream(event.mux_live_stream_id);
+    return res.json({ status: 'success', data: { ...base, status: ls?.status || null, latency_mode: ls?.latency_mode || null } });
+  } catch (e) {
+    console.error('[mux live-status]', e.message);
+    return res.json({ status: 'success', data: { ...base, status: null, reason: 'mux_error' } });
+  }
+}));
 
 // ─── Packages ───
 router.get('/packages', requireAdmin, (req, res) => {
