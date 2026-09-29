@@ -14,6 +14,8 @@ const revenuecat = require('../services/revenuecat');
 const livebus = require('../services/livebus');
 const badges = require('../services/badges');
 const eventAccess = require('../services/event_access');
+const featuredEvent = require('../services/featured_event');
+const emailService = require('../services/email');
 const geo = require('../services/geo');
 
 // Délai avant le 2e essai de vérification RevenueCat dans /buy-ticket
@@ -60,6 +62,121 @@ router.get('/banner-events', optionalAuth, (req, res) => {
     .prepare("SELECT * FROM events WHERE is_banner = 1 AND status IN ('published','live') ORDER BY datetime(start_date_time) ASC")
     .all();
   return ok(res, rows.map((r) => serializeEvent(r, { currentUserId: req.user?.id })));
+});
+
+// GET /api/featured-event — concert « à la une » au lancement de l'app (popup),
+// piloté depuis l'admin. data = null si rien d'actif. `event` est le MÊME objet
+// que dans GET /api/events (Event.fromJson côté app).
+router.get('/featured-event', optionalAuth, (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const f = featuredEvent.resolve();
+  if (!f) return ok(res, null);
+  return ok(res, {
+    id: f.event_id,
+    headline: f.headline,
+    until: f.until,
+    event: serializeEvent(f.event, { currentUserId: req.user?.id }),
+  });
+});
+
+// ─── Places offertes par l'artiste ───
+// L'artiste offre une place à une adresse e-mail : billet immédiat si un
+// compte VÉRIFIÉ porte cette adresse, sinon place en attente rattachée à la
+// création/vérification du compte (même mécanique que la roue et le site).
+// Quota par concert (ARTIST_GIFT_MAX, défaut 100), gratuit : aucune ligne de
+// commission n'est écrite (insertTicket saute la répartition à 0 €).
+const GIFT_WINDOW_MS = 15 * 60 * 1000;
+const GIFT_MAX_PER_WINDOW = 30;
+const giftHits = new Map(); // userId -> [timestamps]
+function giftRateLimited(userId) {
+  const now = Date.now();
+  const hits = (giftHits.get(userId) || []).filter((t) => now - t < GIFT_WINDOW_MS);
+  if (hits.length >= GIFT_MAX_PER_WINDOW) { giftHits.set(userId, hits); return true; }
+  hits.push(now);
+  giftHits.set(userId, hits);
+  // Nettoyage occasionnel des clés inactives (mémoire bornée).
+  if (giftHits.size > 1000) {
+    for (const [k, v] of giftHits) if (!v.some((t) => now - t < GIFT_WINDOW_MS)) giftHits.delete(k);
+  }
+  return false;
+}
+
+const SITE_URL = (process.env.SITE_URL || 'https://vybzzz.online').replace(/\/+$/, '');
+function frDate(iso, tz) {
+  try {
+    return new Date(iso).toLocaleString('fr-FR', { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  } catch (_) { return null; }
+}
+function giftEmailHtml({ artistName, eventName, startIso }) {
+  const e = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const paris = startIso ? frDate(startIso, 'Europe/Paris') : null;
+  const antilles = startIso ? frDate(startIso, 'America/Martinique') : null;
+  const when = paris ? `<p style="color:#B9C0D0;line-height:1.6;margin:0 0 24px">${e(paris)} (heure de Paris) · ${e(antilles)} (heure des Antilles)</p>` : '';
+  return `<!doctype html><html lang="fr"><body style="margin:0;background:#0A1226;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#F4EFE3">
+<div style="max-width:520px;margin:0 auto;padding:36px 26px;text-align:center">
+  <div style="font-weight:800;letter-spacing:.12em;font-size:18px">Vybzz<span style="color:#E6C76A">Z</span></div>
+  <h1 style="font-size:24px;margin:28px 0 10px">${e(artistName)} t'offre une place pour ${e(eventName)}</h1>
+  ${when}
+  <p style="color:#B9C0D0;line-height:1.6;margin:0 0 26px">Ouvre l'app VybzzZ avec cette adresse e-mail : ta place t'y attend. Pas encore de compte ? Crée-le avec cette adresse, la place y sera automatiquement.</p>
+  <a href="${SITE_URL}/app.html" style="display:inline-block;background:#E6C76A;color:#0A1226;text-decoration:none;font-weight:700;padding:15px 28px;border-radius:12px">Ouvrir l'application</a>
+</div></body></html>`;
+}
+
+// POST /api/events/:id/gift-ticket {email} — réservé à l'artiste du concert.
+router.post('/events/:id/gift-ticket', requireAuth, (req, res) => {
+  const eventId = Number(req.params.id);
+  const event = Number.isInteger(eventId) ? db.prepare('SELECT * FROM events WHERE id = ?').get(eventId) : null;
+  if (!event) return fail(res, 'Concert introuvable.', 404);
+  if (Number(event.artist_id) !== Number(req.user.id)) return fail(res, 'Réservé à l’artiste de ce concert.', 403);
+  if (giftRateLimited(req.user.id)) return fail(res, 'Trop de places offertes en peu de temps, réessaie dans quelques minutes.', 429);
+
+  const email = eventAccess.normEmail(req.body?.email);
+  if (!eventAccess.isValidEmail(email)) return fail(res, 'Adresse e-mail invalide.', 422, { email: ['Adresse e-mail invalide.'] });
+  const canon = eventAccess.canonEmail(email);
+  const max = eventAccess.ARTIST_GIFT_MAX;
+
+  if (eventAccess.hasAccess(canon, event.id)) return fail(res, 'Cette adresse a déjà sa place.', 409);
+  const before = eventAccess.countGiftTickets(event.id);
+  if (before >= max) return fail(res, `Quota de places offertes atteint (${max})`, 429);
+
+  let r;
+  try {
+    r = eventAccess.grantByEmail({
+      email: canon, eventId: event.id, pricePaid: '0', storeFeeRate: 0, source: 'artist_gift', ref: `${event.id}:${canon}`,
+    });
+  } catch (e) {
+    console.error(`[places offertes] concert #${event.id} (${eventAccess.maskEmail(email)}) :`, e.message);
+    return fail(res, 'Impossible d’offrir cette place pour le moment.', 500);
+  }
+  // Rejeu (double clic, adresse déjà offerte) : la place existe déjà.
+  if (r.replay || r.status === 'already') return fail(res, 'Cette adresse a déjà sa place.', 409);
+
+  const giftedCount = eventAccess.countGiftTickets(event.id);
+  console.log(`[places offertes] artiste #${req.user.id} -> ${eventAccess.maskEmail(email)} (concert #${event.id}) : ${r.status} (${giftedCount}/${max})`);
+
+  if (emailService.isConfigured()) {
+    const artistName = req.user.artist_name || req.user.full_name || 'Ton artiste';
+    const start = eventAccess.normalizeIsoUtc(event.start_date_time);
+    emailService.sendEmail({
+      to: email,
+      subject: `${artistName} t'offre une place pour ${event.name}`,
+      html: giftEmailHtml({ artistName, eventName: event.name, startIso: start.ok ? start.value : null }),
+      kind: 'artist_gift',
+    }).catch((e) => console.error(`[places offertes] e-mail non envoyé (${eventAccess.maskEmail(email)}) :`, e.message));
+  }
+
+  return ok(res, { email, state: r.status, gifted_count: giftedCount, max });
+});
+
+// GET /api/events/:id/gift-tickets — propriétaire du concert ou admin.
+router.get('/events/:id/gift-tickets', requireAuth, (req, res) => {
+  const eventId = Number(req.params.id);
+  const event = Number.isInteger(eventId) ? db.prepare('SELECT id, artist_id FROM events WHERE id = ?').get(eventId) : null;
+  if (!event) return fail(res, 'Concert introuvable.', 404);
+  const isOwner = Number(event.artist_id) === Number(req.user.id);
+  if (!isOwner && req.user.role !== 'admin') return fail(res, 'Réservé à l’artiste de ce concert.', 403);
+  const items = eventAccess.listGiftTickets(event.id);
+  return ok(res, { gifted_count: items.length, max: eventAccess.ARTIST_GIFT_MAX, items });
 });
 
 // GET /api/featured-artists
@@ -245,8 +362,8 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
     apporteurLedger.computeForSale(event.artist_id, gross);
   const grant = db.transaction(() => {
     const info = db.prepare(
-      `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status, commission_rate, artist_share, rc_transaction_id)
-       VALUES (?, ?, ?, ?, 'active', ?, ?, ?)`
+      `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status, commission_rate, artist_share, rc_transaction_id, source)
+       VALUES (?, ?, ?, ?, 'active', ?, ?, ?, 'store')`
     ).run(b.event_id, userId, String(event.ticket_price || '0'), genReceipt(), artistRatePct, breakdown.artist.toFixed(2), rcTransactionId);
     db.prepare(
       `INSERT INTO activities (user_id, event_id, type, description)
