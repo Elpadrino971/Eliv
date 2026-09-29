@@ -422,7 +422,8 @@ function badgeFor(uid){uid=String(uid);
 function parseUid(id){var m=String(id).match(/^\d+_(.+?)_main$/);return m?m[1]:String(id);}
 function isArtist(s){return ARTIST_ID!=null&&String(s.user_id)===ARTIST_ID;}
 function artistSlot(){return SLOTS.find(isArtist)||(ARTIST_ID==null?SLOTS[0]:null)||null;}
-function addStream(st){var uid=parseUid(st.streamID);if(SLOTS.some(function(s){return s.stream_id===st.streamID;}))return;
+function addStream(st){if(PRO.on)return; // mode pro : pas de fans sur scène (on ne lit aucun flux Zego)
+  var uid=parseUid(st.streamID);if(SLOTS.some(function(s){return s.stream_id===st.streamID;}))return;
   var art=ARTIST_ID!=null&&uid===ARTIST_ID;if(!art&&SLOTS.filter(function(s){return !isArtist(s);}).length>=8)return;
   var s={user_id:uid,name:(st.user&&st.user.userName)||(art?'Artiste':'Fan '+uid),stream_id:st.streamID,media:null,video:null};SLOTS.push(s);renderWallLive();
   ZG.startPlayingStream(st.streamID).then(function(m){s.media=m;renderWallLive();}).catch(function(){});}
@@ -436,9 +437,12 @@ function setZStatus(m){ZSTATUS=m;if(LIVE)renderWallLive();}
 function startZego(role){
   var tok=null;setZStatus('Connexion à la salle vidéo…');
   fetch(API+'/live/'+EVID+'/zego-token?role='+role,{headers:H}).then(function(r){return r.json().catch(function(){return {};});})
-  .then(function(j){var d=j&&j.data;if(!d||!d.app_id)throw new Error((j&&j.message)||'jeton vidéo refusé');
+  .then(function(j){var d=j&&j.data;
+    if(d&&d.live_mode==='pro')startPro(d.mux_live_playback_id); // vidéo = HLS Mux de la régie vidéo
+    if(!d||!d.app_id){if(PRO.on)return null;throw new Error((j&&j.message)||'jeton vidéo refusé');} // pro sans Zego : OK
     tok=d;if(d.artist_id!=null&&d.artist_id!=='')ARTIST_ID=String(d.artist_id);return loadZego();})
   .then(function(Engine){
+    if(!Engine)return 'skip';
     ZG=new Engine(tok.app_id,tok.server);
     ZG.on('roomStreamUpdate',function(roomID,type,list){(list||[]).forEach(function(st){if(type==='ADD')addStream(st);else removeStream(st.streamID);});});
     ZG.on('roomUserUpdate',function(roomID,type,list){(list||[]).forEach(function(u){if(!u||u.userID==null)return;if(type==='ADD')ROOM_USERS[String(u.userID)]=u.userName||'';else delete ROOM_USERS[String(u.userID)];});renderViewers();});
@@ -446,9 +450,57 @@ function startZego(role){
     ZG.on('soundLevelUpdate',function(levels){(levels||[]).forEach(function(l){var s=SLOTS.find(function(x){return x.stream_id===l.streamID;});if(!s||!s.video||!s.video.parentNode)return;s.video.parentNode.classList.toggle('speaking',l.soundLevel>8&&MIC_STREAM===l.streamID);});});
     try{ZG.setSoundLevelDelegate(true,300);}catch(_){}
     return ZG.loginRoom(tok.room_id,tok.token,{userID:tok.user_id,userName:tok.user_name},{userUpdate:true});
-  }).then(function(ok){if(ok===false)throw new Error('connexion à la salle refusée');setZStatus('');})
-  .catch(function(e){setZStatus('Vidéo indisponible : '+(e&&e.message?e.message:'Zego'));});
+  }).then(function(ok){if(ok==='skip')return;if(ok===false)throw new Error('connexion à la salle refusée');setZStatus('');})
+  .catch(function(e){if(PRO.on){setZStatus('');return;}setZStatus('Vidéo indisponible : '+(e&&e.message?e.message:'Zego'));});
 }
+
+// ═══ MODE PRO (lot 12) : régie vidéo (OBS / vMix / ATEM) -> RTMP -> Mux ═══
+// La tuile principale lit le HLS Mux (hls.js chargé à la volée, lecture native
+// sur Safari), TOUJOURS muette ici (écran dans la salle = larsen). Tant que le
+// manifest répond 412/404, « En attente du flux de la régie vidéo… » et nouvel
+// essai / 5 s. Pas de fans sur scène : la salle Zego ne sert qu'au compteur.
+var PRO={on:false,playback:null,video:null,hls:null,state:'wait',msg:'',timer:null};
+var HLS_JS='https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js',_hlsP=null;
+function loadHlsJs(){
+  if(window.Hls)return Promise.resolve(window.Hls);
+  if(!_hlsP)_hlsP=new Promise(function(ok,ko){var s=document.createElement('script');s.src=HLS_JS;s.async=true;
+    s.onload=function(){window.Hls?ok(window.Hls):ko(new Error('hls.js introuvable'));};
+    s.onerror=function(){_hlsP=null;ko(new Error('lecteur HLS non chargé'));};document.head.appendChild(s);});
+  return _hlsP;}
+function proUrl(){return 'https://stream.mux.com/'+encodeURIComponent(PRO.playback)+'.m3u8';}
+function proDetach(){if(PRO.hls){try{PRO.hls.destroy();}catch(_){}PRO.hls=null;}
+  if(PRO.video){try{PRO.video.pause();PRO.video.removeAttribute('src');PRO.video.load();}catch(_){}}}
+function proWait(msg){proDetach();PRO.state='wait';PRO.msg=msg||'';renderWallLive();clearTimeout(PRO.timer);PRO.timer=setTimeout(proProbe,5000);}
+function proProbe(){if(!PRO.on||!PRO.playback)return;
+  fetch(proUrl(),{cache:'no-store'}).then(function(r){
+    if(r.status===412||r.status===404)return proWait('');
+    if(!r.ok)return proWait('Flux vidéo momentanément indisponible.');
+    proAttach();
+  }).catch(function(){proWait('Flux vidéo momentanément indisponible.');});}
+function proPlaying(){if(PRO.state==='play')return;PRO.state='play';PRO.msg='';renderWallLive();}
+function proPlay(v){v.muted=true;var p=v.play&&v.play();if(p&&p.catch)p.catch(function(){});}
+function proAttach(){
+  var v=PRO.video;if(!v){v=document.createElement('video');v.className='camv';v.autoplay=true;v.playsInline=true;v.muted=true;PRO.video=v;
+    v.addEventListener('playing',proPlaying);
+    v.addEventListener('ended',function(){proWait('');});}
+  var url=proUrl();
+  if(v.canPlayType('application/vnd.apple.mpegurl')&&!window.MediaSource&&!window.ManagedMediaSource){ // Safari iOS : HLS natif
+    v.onerror=function(){proWait('');};v.onloadedmetadata=proPlaying;v.src=url;proPlay(v);return;}
+  loadHlsJs().then(function(Hls){
+    if(!Hls.isSupported()){if(v.canPlayType('application/vnd.apple.mpegurl')){v.onloadedmetadata=proPlaying;v.src=url;proPlay(v);return;}throw new Error('HLS non pris en charge par ce navigateur');}
+    proDetach();var h=new Hls({lowLatencyMode:true,liveDurationInfinity:true});PRO.hls=h;
+    h.on(Hls.Events.MANIFEST_PARSED,function(){proPlaying();proPlay(v);});
+    h.on(Hls.Events.ERROR,function(_,d){if(d&&d.fatal)proWait('');});
+    h.loadSource(url);h.attachMedia(v);
+  }).catch(function(e){proWait((e&&e.message)||'Lecteur vidéo indisponible');});}
+function startPro(playback){if(PRO.on)return;PRO.on=true;PRO.playback=playback||null;document.body.classList.add('pro');
+  SLOTS.forEach(function(s){try{ZG&&ZG.stopPlayingStream(s.stream_id);}catch(_){}});SLOTS=[];
+  if(!PRO.playback){PRO.msg='Aucun flux Mux configuré pour ce concert.';renderWallLive();return;}
+  renderWallLive();proProbe();}
+function proTile(){var t=document.createElement('div');t.className='tile main';
+  if(PRO.state==='play'&&PRO.video){t.innerHTML='';PRO.video.muted=true;t.prepend(PRO.video);if(PRO.video.paused)proPlay(PRO.video);}
+  else t.innerHTML='<div class="wait"><span class="pulse"></span><b>En attente du flux de la régie vidéo…</b>'+(PRO.msg?'<small>'+esc(PRO.msg)+'</small>':'')+'</div>';
+  return t;}
 
 function camTile(s,main){var t=document.createElement('div');
   var on=!main&&!!MIC_STREAM&&MIC_STREAM===s.stream_id,b=main?null:badgeFor(s.user_id);
@@ -461,6 +513,7 @@ function camTile(s,main){var t=document.createElement('div');
 function waitTile(){var t=document.createElement('div');t.className='tile main';
   t.innerHTML='<div class="wait"><span class="pulse"></span><b>En attente du flux de l\'artiste…</b>'+(ZSTATUS?'<small>'+esc(ZSTATUS)+'</small>':'')+'</div>';return t;}
 function renderWallLive(){
+  if(PRO.on){grid.className='grid live';grid.innerHTML='';grid.appendChild(proTile());return;} // régie pro : une tuile, pas de fans
   var art=artistSlot(),fans=SLOTS.filter(function(s){return s!==art;}).sort(function(a,b){return (badgeFor(b.user_id)?1:0)-(badgeFor(a.user_id)?1:0);}).slice(0,8);
   grid.className='grid live'+(fans.length?' withfans':'')+(fans.length>4?' many':'');
   grid.innerHTML='';grid.appendChild(art?camTile(art,true):waitTile());
