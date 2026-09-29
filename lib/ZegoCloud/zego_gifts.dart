@@ -25,6 +25,12 @@ String giftFallbackEmoji(Datum gift) {
   }
   if (key.contains('diamant') || key.contains('diamond')) return '💎';
   if (key.contains('couronne') || key.contains('crown')) return '👑';
+  if (key.contains('flamme') || key.contains('feu') || key.contains('fire')) {
+    return '🔥';
+  }
+  if (key.contains('fusée') || key.contains('fusee') || key.contains('rocket')) {
+    return '🚀';
+  }
   if (key.contains('chateau') || key.contains('château') || key.contains('castle')) {
     return '🏰';
   }
