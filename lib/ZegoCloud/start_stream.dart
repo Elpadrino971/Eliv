@@ -359,6 +359,27 @@ class _StartStreamState extends State<StartStream> {
   }
 
   // Petit bouton rond de contrôle hôte (œil / chat).
+  /// Fin du live demandée par l'artiste : confirmation, puis sortie de la
+  /// salle Zego. Quitter l'écran déclenche /recording/stop (dispose) qui
+  /// passe le concert en « terminé » côté serveur.
+  Future<void> _confirmEndLive() async {
+    await myAlertDialog(
+      title: 'live_end_title'.tr,
+      content: 'live_end_msg'.tr,
+      onTap: () async {
+        Get.back(); // ferme la confirmation
+        var left = false;
+        try {
+          left = await ZegoUIKitPrebuiltLiveStreamingController.instance
+              .leave(context, showConfirmation: false);
+        } catch (e) {
+          myPrint('endLive: leave -> $e');
+        }
+        if (!left && mounted) Get.back();
+      },
+    );
+  }
+
   Widget _hostToggle({
     required IconData icon,
     required bool active,
@@ -436,6 +457,41 @@ class _StartStreamState extends State<StartStream> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Terminer le live (le kit Zego n'affiche pas de bouton
+                    // de fermeture fiable pour l'hôte : sans ceci, l'artiste
+                    // est coincé dans son direct).
+                    GestureDetector(
+                      onTap: _confirmEndLive,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: liveRed,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.stop_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'live_end_btn'.tr,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     // Couper / réafficher le chat (inutile en mode épuré)
                     if (!_overlayHidden)
                     _hostToggle(

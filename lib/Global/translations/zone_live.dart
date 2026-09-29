@@ -2,6 +2,9 @@
 // Rempli par l'agent dédié. Fusionné dans AppTranslations.keys.
 const Map<String, Map<String, String>> liveTranslations = {
   'en': {
+    'live_end_btn': 'End',
+    'live_end_title': 'End the live?',
+    'live_end_msg': 'The stream will stop for all viewers. The replay will be available afterwards if enabled.',
     'live_tab_for_you': 'For You',
     'live_tab_live': 'Live',
     'live_no_reel': 'No Reel Available',
@@ -80,6 +83,9 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_quota_reached': 'Gifted seats quota reached.',
   },
   'fr': {
+    'live_end_btn': 'Terminer',
+    'live_end_title': 'Terminer le live ?',
+    'live_end_msg': 'Le direct s’arrêtera pour tous les spectateurs. Le replay sera disponible ensuite s’il est activé.',
     'live_tab_for_you': 'Pour toi',
     'live_tab_live': 'En direct',
     'live_no_reel': 'Aucun reel disponible',
@@ -162,6 +168,9 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_quota_reached': 'Quota de places offertes atteint.',
   },
   'es': {
+    'live_end_btn': 'Terminar',
+    'live_end_title': '¿Terminar el directo?',
+    'live_end_msg': 'La emisión se detendrá para todos. El replay estará disponible después si está activado.',
     'live_tab_for_you': 'Para ti',
     'live_tab_live': 'En directo',
     'live_no_reel': 'No hay reels disponibles',
@@ -244,6 +253,9 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_quota_reached': 'Cuota de entradas regaladas alcanzada.',
   },
   'it': {
+    'live_end_btn': 'Termina',
+    'live_end_title': 'Terminare la diretta?',
+    'live_end_msg': 'La diretta si fermerà per tutti gli spettatori. Il replay sarà disponibile dopo, se attivo.',
     'live_tab_for_you': 'Per te',
     'live_tab_live': 'In diretta',
     'live_no_reel': 'Nessun reel disponibile',
@@ -326,6 +338,9 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_quota_reached': 'Quota di posti regalati raggiunta.',
   },
   'de': {
+    'live_end_btn': 'Beenden',
+    'live_end_title': 'Live beenden?',
+    'live_end_msg': 'Der Stream endet für alle Zuschauer. Das Replay ist danach verfügbar, falls aktiviert.',
     'live_tab_for_you': 'Für dich',
     'live_tab_live': 'Live',
     'live_no_reel': 'Kein Reel verfügbar',
@@ -408,6 +423,9 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_quota_reached': 'Kontingent verschenkter Plätze erreicht.',
   },
   'pt': {
+    'live_end_btn': 'Encerrar',
+    'live_end_title': 'Encerrar a live?',
+    'live_end_msg': 'A transmissão vai parar para todos. O replay ficará disponível depois, se ativado.',
     'live_tab_for_you': 'Para você',
     'live_tab_live': 'Ao vivo',
     'live_no_reel': 'Nenhum reel disponível',
@@ -490,6 +508,9 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_quota_reached': 'Quota de lugares oferecidos atingida.',
   },
   'zh': {
+    'live_end_btn': '结束',
+    'live_end_title': '结束直播？',
+    'live_end_msg': '直播将对所有观众结束。如已启用，稍后可观看回放。',
     'live_tab_for_you': '为你推荐',
     'live_tab_live': '直播中',
     'live_no_reel': '暂无短视频',
@@ -568,6 +589,9 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_quota_reached': '已达到赠送座位的上限。',
   },
   'ko': {
+    'live_end_btn': '종료',
+    'live_end_title': '라이브를 종료할까요?',
+    'live_end_msg': '모든 시청자에게 방송이 종료됩니다. 활성화된 경우 이후 다시보기가 제공됩니다.',
     'live_tab_for_you': '추천',
     'live_tab_live': '라이브',
     'live_no_reel': '사용 가능한 릴이 없습니다',
@@ -646,6 +670,9 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_quota_reached': '선물 좌석 한도에 도달했습니다.',
   },
   'ja': {
+    'live_end_btn': '終了',
+    'live_end_title': 'ライブを終了しますか？',
+    'live_end_msg': 'すべての視聴者に対して配信が終了します。有効な場合は後でリプレイを視聴できます。',
     'live_tab_for_you': 'おすすめ',
     'live_tab_live': 'ライブ',
     'live_no_reel': '利用できるリールがありません',
@@ -724,6 +751,9 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_quota_reached': 'プレゼントできる席の上限に達しました。',
   },
   'ar': {
+    'live_end_btn': 'إنهاء',
+    'live_end_title': 'إنهاء البث؟',
+    'live_end_msg': 'سيتوقف البث لجميع المشاهدين. ستتوفر الإعادة لاحقًا إن كانت مفعّلة.',
     'live_tab_for_you': 'لك',
     'live_tab_live': 'مباشر',
     'live_no_reel': 'لا يوجد مقطع متاح',
@@ -802,6 +832,9 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_quota_reached': 'تم بلوغ الحد الأقصى للمقاعد المُهداة.',
   },
   'hi': {
+    'live_end_btn': 'समाप्त',
+    'live_end_title': 'लाइव समाप्त करें?',
+    'live_end_msg': 'सभी दर्शकों के लिए प्रसारण रुक जाएगा। सक्षम होने पर रिप्ले बाद में उपलब्ध होगा।',
     'live_tab_for_you': 'आपके लिए',
     'live_tab_live': 'लाइव',
     'live_no_reel': 'कोई रील उपलब्ध नहीं',
@@ -880,6 +913,9 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_quota_reached': 'उपहार सीटों की सीमा पूरी हो गई।',
   },
   'ru': {
+    'live_end_btn': 'Завершить',
+    'live_end_title': 'Завершить эфир?',
+    'live_end_msg': 'Эфир завершится для всех зрителей. Запись будет доступна позже, если включена.',
     'live_tab_for_you': 'Для вас',
     'live_tab_live': 'В эфире',
     'live_no_reel': 'Нет доступных роликов',
