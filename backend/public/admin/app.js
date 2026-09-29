@@ -2315,10 +2315,14 @@ async function openZegoViewer(row) {
   bg.querySelector('[data-close]').onclick = close;
   bg.onclick = (e) => { if (e.target === bg) close(); };
   try {
-    await loadScriptOnce('https://cdn.jsdelivr.net/npm/zego-express-engine-webrtc/ZegoExpressWebRTC.js');
+    // Le fichier UMD du SDK attend des dépendances globales absentes du
+    // navigateur : on charge la version ESM empaquetée par jsDelivr.
+    const mod = await import('https://cdn.jsdelivr.net/npm/zego-express-engine-webrtc@3.12.0/+esm');
+    const ZegoEngine = (mod.default && mod.default.ZegoExpressEngine) || mod.ZegoExpressEngine;
+    if (!ZegoEngine) throw new Error('SDK ZegoCloud indisponible');
     const r = await api('GET', `/events/${row.id}/zego-token`);
     const d = r.data;
-    zg = new ZegoExpressEngine(d.app_id, d.server);
+    zg = new ZegoEngine(d.app_id, d.server);
     const wanted = `${row.id}_${d.artist_id}_main`;
     const attach = async (streamID) => {
       if (playing) return;
