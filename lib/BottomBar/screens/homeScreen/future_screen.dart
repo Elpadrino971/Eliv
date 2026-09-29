@@ -5,7 +5,6 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/Global/live_router.dart';
 import 'package:artist/BottomBar/screens/homeScreen/check_out_screen.dart';
 import 'package:artist/Models/event_model.dart';
-import 'package:artist/ZegoCloud/pre_stream_screen.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_textfield.dart';
@@ -426,7 +425,7 @@ class _FutureScreenState extends State<FutureScreen> {
                       borderColor: goldPrimary,
                       labelColor: goldPrimary,
                       onTap: () async {
-                        await Get.to(() => PreStreamScreen(event: event));
+                        await openWaitingRoom(event);
                         await myInitMethod();
                         final data = eventController.userJoinedEvents.value.data
                             ?.where((element) => element.id == event.id)

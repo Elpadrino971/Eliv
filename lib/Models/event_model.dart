@@ -62,6 +62,10 @@ class Event {
   /// Playback id Mux du LIVE (mux_live_playback_id). Nullable : absent tant
   /// que le backend n'a pas créé de flux Mux pour ce concert.
   final String? muxLivePlaybackId;
+  /// Mode de diffusion (live_mode) : 'mobile' (défaut, live depuis le
+  /// téléphone via ZegoCloud) ou 'pro' (régie vidéo OBS/ATEM -> Mux, les fans
+  /// regardent le HLS). Nullable : absent des anciennes réponses = 'mobile'.
+  final String? liveMode;
   final DateTime? replayExpiresAt;
   final bool? replayExpired;
   final DateTime? createdAt;
@@ -96,6 +100,7 @@ class Event {
     this.streamKey,
     this.streamUrl,
     this.muxLivePlaybackId,
+    this.liveMode,
     this.replayExpiresAt,
     this.replayExpired,
     this.createdAt,
@@ -107,6 +112,9 @@ class Event {
     this.activities,
     this.guests,
   });
+
+  /// Vrai si le concert est diffusé par une régie vidéo (OBS/ATEM -> Mux).
+  bool get isProLive => liveMode == 'pro';
 
   Event copyWith({
     int? id,
@@ -129,6 +137,7 @@ class Event {
     String? streamKey,
     String? streamUrl,
     String? muxLivePlaybackId,
+    String? liveMode,
     DateTime? replayExpiresAt,
     bool? replayExpired,
     DateTime? createdAt,
@@ -160,6 +169,7 @@ class Event {
     streamKey: streamKey ?? this.streamKey,
     streamUrl: streamUrl ?? this.streamUrl,
     muxLivePlaybackId: muxLivePlaybackId ?? this.muxLivePlaybackId,
+    liveMode: liveMode ?? this.liveMode,
     replayExpiresAt: replayExpiresAt ?? this.replayExpiresAt,
     replayExpired: replayExpired ?? this.replayExpired,
     createdAt: createdAt ?? this.createdAt,
@@ -197,6 +207,7 @@ class Event {
     streamKey: json["stream_key"],
     streamUrl: json["stream_url"],
     muxLivePlaybackId: json["mux_live_playback_id"]?.toString(),
+    liveMode: json["live_mode"]?.toString(),
     replayExpiresAt: json["replay_expires_at"] == null
         ? null
         : DateTime.parse(json["replay_expires_at"]),
@@ -253,6 +264,7 @@ class Event {
     "stream_key": streamKey,
     "stream_url": streamUrl,
     "mux_live_playback_id": muxLivePlaybackId,
+    "live_mode": liveMode,
     "replay_expires_at": replayExpiresAt?.toIso8601String(),
     "replay_expired": replayExpired,
     "created_at": createdAt?.toIso8601String(),

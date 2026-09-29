@@ -795,9 +795,13 @@ class EventController extends GetxController {
     });
   }
 
+  /// [broadcastToZego] : relaie l'animation du cadeau dans la salle Zego
+  /// (live mobile). Faux pour un concert « pro » (régie vidéo -> Mux) : il
+  /// n'y a alors pas de salle Zego, le cadeau passe uniquement par le backend.
   Future<List<Activity>?> sendGift({
     required String eventId,
     required String giftId,
+    bool broadcastToZego = true,
   }) async {
     List<Activity>? data;
     response.typeSetter = 'post';
@@ -814,18 +818,20 @@ class EventController extends GetxController {
             .toList();
 
         // Broadcast to Zego
-        try {
-          final gift = gifts.value.data?.firstWhere(
-            (element) => element.id.toString() == giftId,
-          );
-          if (gift != null) {
-            ZegoUIKit().sendInRoomCommand(
-              'gift:${gift.name}:${gift.image}',
-              [],
+        if (broadcastToZego) {
+          try {
+            final gift = gifts.value.data?.firstWhere(
+              (element) => element.id.toString() == giftId,
             );
+            if (gift != null) {
+              ZegoUIKit().sendInRoomCommand(
+                'gift:${gift.name}:${gift.image}',
+                [],
+              );
+            }
+          } catch (e) {
+            myPrint('Error broadcasting gift: $e');
           }
-        } catch (e) {
-          myPrint('Error broadcasting gift: $e');
         }
 
         update();

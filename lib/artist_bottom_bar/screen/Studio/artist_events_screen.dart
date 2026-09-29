@@ -3,6 +3,7 @@ import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
+import 'package:artist/ZegoCloud/pro_live_screen.dart';
 import 'package:artist/ZegoCloud/start_stream.dart';
 import 'package:artist/artist_bottom_bar/screen/Events/analytics_screen.dart';
 import 'package:artist/artist_bottom_bar/screen/Events/event_guests_sheet.dart';
@@ -340,6 +341,13 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                               );
                                               return;
                                             }
+                                            // Concert « pro » : c'est la
+                                            // régie vidéo qui diffuse, pas
+                                            // la caméra du téléphone.
+                                            if (event.isProLive) {
+                                              _showProLiveInfo(event);
+                                              return;
+                                            }
                                             if (!await ensureLivePermissions()) {
                                               return;
                                             }
@@ -415,6 +423,22 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Concert « pro » (régie vidéo OBS/ATEM -> Mux) : pas de caméra. Le
+  /// statut passe tout seul à `live` quand la régie envoie l'image (et à
+  /// `completed` quand elle s'arrête) ; l'artiste peut regarder le direct.
+  void _showProLiveInfo(Event event) {
+    myWarningDialog(
+      title: 'pro_regie_title'.tr,
+      subtitle: 'pro_regie_msg'.tr,
+      btnTitle: 'pro_watch_live'.tr,
+      ontap: () {
+        Get.back(); // ferme le dialogue
+        Get.to(() => ProLiveScreen(event: event));
+      },
+      secondBtnTitle: 'pro_close'.tr,
     );
   }
 
