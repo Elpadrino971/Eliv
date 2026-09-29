@@ -843,6 +843,10 @@ function init() {
     // Unicité au niveau base : deux requêtes concurrentes ne peuvent pas
     // consommer le même reçu (double-crédit). Index partiel (ignore les NULL).
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_tickets_rc_txn ON tickets(rc_transaction_id) WHERE rc_transaction_id IS NOT NULL",
+    // Origine du billet (lot 4) : store | wheel | stripe | artist_gift. Avant,
+    // elle n'était lisible qu'en décodant rc_transaction_id (`<source>:<ref>`).
+    "ALTER TABLE tickets ADD COLUMN source TEXT",
+    "CREATE INDEX IF NOT EXISTS idx_tickets_event_source ON tickets(event_id, source)",
     // Traçage NET + part apporteur dans le ledger (part plateforme = ta marge réelle).
     "ALTER TABLE platform_earnings ADD COLUMN store_fee TEXT",
     "ALTER TABLE platform_earnings ADD COLUMN net TEXT",

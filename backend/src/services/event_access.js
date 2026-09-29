@@ -118,6 +118,19 @@ function normalizeIsoUtc(raw, label = 'date') {
   return { ok: true, value: new Date(t).toISOString() };
 }
 
+// Adresse plausible (même règle que la billetterie du site).
+function isValidEmail(e) {
+  const n = normEmail(e);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(n) && n.length <= 190;
+}
+
+// datetime('now') SQLite (« 2026-10-04 03:50:00 », UTC) -> ISO « Z ».
+function sqliteToIso(s) {
+  if (!s) return null;
+  const r = normalizeIsoUtc(s);
+  return r.ok ? r.value : String(s);
+}
+
 // Journalisation : jamais l'adresse en clair (a***@domaine).
 function maskEmail(e) {
   const n = normEmail(e);
@@ -252,6 +265,9 @@ function insertTicket(userId, eventId, { pricePaid = 0, storeFeeRate = 0, source
   const event = db.prepare('SELECT * FROM events WHERE id = ?').get(eventId);
   if (!event) throw new Error(`concert #${eventId} introuvable`);
 
+  // Place gratuite (roue, place offerte par l'artiste) : aucune répartition,
+  // aucune ligne platform_earnings ni commission apporteur (breakdown reste
+  // null -> le bloc de comptabilisation plus bas est sauté).
   const gross = parseFloat(pricePaid) || 0;
   let rate = null;
   let artistShare = '0';
@@ -266,12 +282,13 @@ function insertTicket(userId, eventId, { pricePaid = 0, storeFeeRate = 0, source
   }
 
   const info = db.prepare(
-    `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status, commission_rate, artist_share, rc_transaction_id)
-     VALUES (?, ?, ?, ?, 'active', ?, ?, ?)`
-  ).run(eventId, userId, gross.toFixed(2), genReceipt(), rate, artistShare, `${source}:${ref}`);
+    `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status, commission_rate, artist_share, rc_transaction_id, source)
+     VALUES (?, ?, ?, ?, 'active', ?, ?, ?, ?)`
+  ).run(eventId, userId, gross.toFixed(2), genReceipt(), rate, artistShare, `${source}:${ref}`, source);
+  const ACTIVITY_LABEL = { wheel: 'won a ticket', artist_gift: 'received a ticket offered by the artist' };
   db.prepare(
     `INSERT INTO activities (user_id, event_id, type, description) VALUES (?, ?, 'ticket', ?)`
-  ).run(userId, eventId, source === 'wheel' ? 'won a ticket' : 'bought a ticket on the website');
+  ).run(userId, eventId, ACTIVITY_LABEL[source] || 'bought a ticket on the website');
 
   if (breakdown && event.artist_id) {
     const artist = db.prepare('SELECT wallet FROM users WHERE id = ?').get(event.artist_id);
@@ -416,6 +433,48 @@ function listPending({ limit = 500 } = {}) {
   });
 }
 
+// ─── Places offertes par l'artiste (source 'artist_gift') ───
+// Plafond par concert, surchargeable (ARTIST_GIFT_MAX).
+const ARTIST_GIFT_MAX = Math.max(1, parseInt(process.env.ARTIST_GIFT_MAX, 10) || 100);
+
+/**
+ * Places offertes pour un concert : billets créés (source artist_gift, non
+ * remboursés) + places encore en attente d'un compte vérifié. La trace
+ * pending_tickets porte l'e-mail tel qu'offert ; un billet artist_gift sans
+ * trace (cas théorique) est retrouvé via l'e-mail du compte.
+ * @returns {Array<{email:string, state:'granted'|'pending', created_at:string}>}
+ */
+function listGiftTickets(eventId) {
+  dbPayments.run();
+  const id = Number(eventId);
+  const traced = db.prepare(
+    `SELECT p.email, p.created_at, p.ticket_id, t.status AS ticket_status
+       FROM pending_tickets p LEFT JOIN tickets t ON t.id = p.ticket_id
+      WHERE p.source = 'artist_gift' AND p.event_id = ? AND p.refunded_at IS NULL
+      ORDER BY p.id ASC`
+  ).all(id);
+  const items = [];
+  for (const p of traced) {
+    if (p.ticket_id && p.ticket_status === 'refunded') continue;
+    items.push({ email: p.email, state: p.ticket_id ? 'granted' : 'pending', created_at: sqliteToIso(p.created_at) });
+  }
+  const untraced = db.prepare(
+    `SELECT t.id, t.created_at, u.email
+       FROM tickets t JOIN users u ON u.id = t.user_id
+      WHERE t.event_id = ? AND t.source = 'artist_gift' AND COALESCE(t.status, 'active') <> 'refunded'
+        AND NOT EXISTS (SELECT 1 FROM pending_tickets p WHERE p.ticket_id = t.id)
+      ORDER BY t.id ASC`
+  ).all(id);
+  for (const t of untraced) {
+    items.push({ email: normEmail(t.email), state: 'granted', created_at: sqliteToIso(t.created_at) });
+  }
+  return items;
+}
+
+function countGiftTickets(eventId) {
+  return listGiftTickets(eventId).length;
+}
+
 // ─── Migration de données (une fois) : canonise les e-mails Gmail déjà
 // enregistrés (tirages, places en attente) avant l'arrivée de canonEmail,
 // pour que « a.b.c@gmail.com » (ancienne ligne) bloque bien « abc@gmail.com ».
@@ -454,7 +513,8 @@ process.nextTick(migrateCanonEmails);
 
 module.exports = {
   ALLOWED_TICKET_PRICES, normalizeTicketPrice, normalizeIsoUtc,
-  normEmail, canonEmail, emailKeys, isDisposableEmail, maskEmail,
+  normEmail, canonEmail, emailKeys, isDisposableEmail, isValidEmail, maskEmail, sqliteToIso,
   findUserByEmail, findVerifiedUserByEmail, hasAccess, hasPendingForEmail,
   grantByEmail, attachPendingForUser, assignPendingToUser, listPending, refundTicket, stripeFeeRate,
+  ARTIST_GIFT_MAX, listGiftTickets, countGiftTickets,
 };
