@@ -826,6 +826,74 @@ async function showGiftTickets(id) {
   bg.onclick = (e) => { if (e.target === bg) close(); };
 }
 
+// Artistes invités + partage de la part artiste (GET/PUT /admin/events/:id/guests).
+async function showEventGuests(id) {
+  let d, artists;
+  try {
+    [d, artists] = await Promise.all([api('GET', `/events/${id}/guests`), api('GET', '/artists-list')]);
+    d = d.data; artists = artists.data || [];
+  } catch (e) { toast(e.message); return; }
+  const eur = (n) => (Math.round((parseFloat(n) || 0) * 100) / 100).toFixed(2).replace('.', ',') + ' €';
+  const pct = (n) => String(Math.round((parseFloat(n) || 0) * 100) / 100).replace('.', ',') + ' %';
+  const mainName = (d.estimate?.parts || []).find((p) => p.role === 'main')?.name || ('#' + d.event.artist_id);
+  const candidates = artists.filter((a) => a.id !== d.event.artist_id);
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal" style="width:620px">
+    <h3>🎤 Artistes invités — ${esc(d.event.name)}</h3>
+    <p style="color:var(--muted);font-size:13px;margin:4px 0 10px">Chaque invité reçoit un pourcentage de la <b>part artiste</b> (pas du prix). Le reste revient à <b>${esc(mainName)}</b>.
+      ${d.has_paid_sales ? '<br><b style="color:#ff8a8a">Des billets ont déjà été vendus : la répartition ne peut plus être modifiée.</b>' : ''}</p>
+    <table class="tbl"><thead><tr><th>Artiste invité</th><th style="width:110px">% part artiste</th><th style="width:40px"></th></tr></thead><tbody id="guest-rows"></tbody></table>
+    <div style="margin:8px 0 14px"><button class="btn dup" id="guest-add" type="button">+ Ajouter un invité</button>
+      <span id="guest-remaining" style="margin-left:10px;color:var(--muted);font-size:13px"></span></div>
+    <div class="tcard" style="padding:12px 14px"><h4 style="color:var(--gold);margin:0 0 6px">Répartition estimée pour un billet à ${eur(d.event.ticket_price)}</h4>
+      <div style="color:var(--muted);font-size:13px;margin-bottom:6px">Net après store : ${eur(d.estimate?.net)} · part artiste ${eur(d.estimate?.artist_share)}${d.estimate?.promo ? ' (phase promo)' : ''} · part plateforme ${eur(d.estimate?.platform_share)}</div>
+      <div id="guest-split"></div></div>
+    <div class="modal-actions"><button class="cancel">Fermer</button><button class="btn gold save" ${d.has_paid_sales ? 'disabled' : ''}>Enregistrer</button></div>
+  </div>`;
+  document.body.appendChild(bg);
+  const rowsEl = bg.querySelector('#guest-rows');
+  const addRow = (g) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><select data-gu>${candidates.map((a) => `<option value="${a.id}" ${g && a.id === g.user_id ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}</select></td>
+      <td><input type="number" data-gp min="1" max="100" step="0.5" value="${g ? g.share_pct : 10}"></td>
+      <td><button class="btn del" type="button" data-grm>✕</button></td>`;
+    tr.querySelector('[data-grm]').onclick = () => { tr.remove(); render(); };
+    tr.querySelector('[data-gp]').oninput = render;
+    tr.querySelector('[data-gu]').onchange = render;
+    rowsEl.appendChild(tr);
+  };
+  const current = () => [...rowsEl.querySelectorAll('tr')].map((tr) => ({
+    user_id: Number(tr.querySelector('[data-gu]').value), share_pct: parseFloat(tr.querySelector('[data-gp]').value) || 0,
+    name: tr.querySelector('[data-gu]').selectedOptions[0]?.textContent || '',
+  }));
+  const render = () => {
+    const list = current();
+    const total = list.reduce((n, g) => n + g.share_pct, 0);
+    const rem = Math.round((100 - total) * 100) / 100;
+    bg.querySelector('#guest-remaining').innerHTML = rem < 0 ? `<b style="color:#ff8a8a">Somme des parts : ${pct(total)} — dépasse 100 %</b>` : `Reste à l'artiste principal : <b>${pct(rem)}</b>`;
+    const share = parseFloat(d.estimate?.artist_share) || 0;
+    let rest = share;
+    const lines = list.map((g) => { const amt = Math.round(share * g.share_pct) / 100; rest = Math.round((rest - amt) * 100) / 100; return `<div class="kv"><span>${esc(g.name)} (${pct(g.share_pct)})</span><span>${eur(amt)}</span></div>`; });
+    lines.unshift(`<div class="kv"><span><b>${esc(mainName)}</b> (${pct(Math.max(0, rem))})</span><span><b>${eur(Math.max(0, rest))}</b></span></div>`);
+    bg.querySelector('#guest-split').innerHTML = share > 0 ? lines.join('') : '<div class="empty">Concert gratuit : rien à répartir.</div>';
+  };
+  (d.guests || []).forEach(addRow);
+  render();
+  bg.querySelector('#guest-add').onclick = () => { if (!candidates.length) { toast('Aucun autre artiste disponible.'); return; } addRow(null); render(); };
+  const close = () => bg.remove();
+  bg.querySelector('.cancel').onclick = close;
+  bg.onclick = (e) => { if (e.target === bg) close(); };
+  bg.querySelector('.save').onclick = async () => {
+    const guests = current().map(({ user_id, share_pct }) => ({ user_id, share_pct }));
+    try {
+      const r = await api('PUT', `/events/${id}/guests`, { guests });
+      toast(`Invités enregistrés (${r.data.guests.length})`);
+      close();
+    } catch (e) { toast(e.message); }
+  };
+}
+
 async function pageEvents() {
   EDIT.event = (id) => { const r = currentRows.find((x) => x.id == id); if (r) openEventForm(r); };
   DUP.event = (id) => { const r = currentRows.find((x) => x.id == id); if (r) openEventForm(r, { duplicate: true }); };
@@ -840,7 +908,7 @@ async function pageEvents() {
       { label: 'Statut', render: (r) => badge(r.status) },
       { label: 'Vidéo', render: (r) => `${muxBadge(r.mux_upload_status)}${r.mux_live_stream_id ? '<div class="em">🔴 live en cours</div>' : ''}${r.replay_expires_at ? `<div class="em">replay jusqu'au ${fmtDate(r.replay_expires_at)}</div>` : ''}` },
       { label: 'Date', render: (r) => fmtDate(r.start_date_time) },
-      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="event:${r.id}">🎬 Upload</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button><button class="btn grant" data-feature="${r.id}">⭐ À la une</button><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="event:${r.id}">🎬 Upload</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button><button class="btn grant" data-feature="${r.id}">⭐ À la une</button><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn" data-guests="${r.id}">🎤 Invités</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
     ],
   });
   renderFeaturedBanner();
@@ -1990,6 +2058,8 @@ document.addEventListener('click', (e) => {
   if (fe) { featureEvent(fe.dataset.feature); return; }
   const gt = e.target.closest('[data-gifts]');
   if (gt) { showGiftTickets(gt.dataset.gifts); return; }
+  const evg = e.target.closest('[data-guests]');
+  if (evg) { showEventGuests(evg.dataset.guests); return; }
   const ml = e.target.closest('[data-muxlive]');
   if (ml) { const [, id, hasLive] = ml.dataset.muxlive.split(':'); toggleMuxLiveStream(id, hasLive === '1'); return; }
   const st = e.target.closest('[data-status]');
