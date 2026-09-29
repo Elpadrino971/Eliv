@@ -49,6 +49,7 @@ class FeaturedEvent {
 }
 
 Future<FeaturedEvent?>? _prefetch;
+FeaturedEvent? _cached;
 bool _shownThisSession = false;
 bool _checking = false;
 
@@ -56,9 +57,42 @@ bool _checking = false;
 /// mis en cache : un appel ultérieur (ex. après connexion) réessaie.
 Future<FeaturedEvent?> prefetchFeaturedEvent() {
   return _prefetch ??= _fetchFeaturedEvent().then((value) {
-    if (value == null) _prefetch = null;
+    if (value == null) {
+      _prefetch = null;
+    } else {
+      _cached = value;
+    }
     return value;
   });
+}
+
+/// Concert à la une mis en cache par [prefetchFeaturedEvent] (déclenché dès
+/// le splash). Renvoie la valeur en cache si elle est encore active, sinon
+/// (re)lance l'appel réseau silencieux. Null quand l'admin n'a rien mis à
+/// la une (`data: null`), quand la mise en avant est expirée, ou en cas
+/// d'échec réseau — l'appelant n'affiche alors simplement rien.
+Future<FeaturedEvent?> getFeaturedEvent() async {
+  final cached = _cached;
+  if (cached != null && cached.isActive) return cached;
+  final value = await prefetchFeaturedEvent();
+  if (value == null || !value.isActive) return null;
+  return value;
+}
+
+/// Valeur en cache SANS appel réseau (rendu immédiat), ou null.
+FeaturedEvent? get cachedFeaturedEvent {
+  final cached = _cached;
+  if (cached != null && cached.isActive) return cached;
+  return null;
+}
+
+/// URL de couverture d'un concert : nom de fichier sur le backend, ou URL
+/// complète collée telle quelle dans le champ (comme les cartes existantes).
+String? featuredCoverUrl(Event event) {
+  final cover = (event.coverImage ?? '').trim();
+  if (cover.isEmpty) return null;
+  if (cover.startsWith('http')) return cover;
+  return '${APIs.eventImageIP}/$cover';
 }
 
 Future<FeaturedEvent?> _fetchFeaturedEvent() async {
@@ -155,14 +189,7 @@ class FeaturedEventSheet extends StatelessWidget {
     return (a?.fullName ?? '').trim();
   }
 
-  /// URL de couverture : nom de fichier sur le backend, ou URL complète
-  /// collée telle quelle dans le champ (comme les cartes existantes).
-  String? get _coverUrl {
-    final cover = (event.coverImage ?? '').trim();
-    if (cover.isEmpty) return null;
-    if (cover.startsWith('http')) return cover;
-    return '${APIs.eventImageIP}/$cover';
-  }
+  String? get _coverUrl => featuredCoverUrl(event);
 
   void _dismissForToday() {
     box.write('featured_dismissed_${featured.id}', _todayKey());
@@ -402,6 +429,370 @@ class FeaturedEventSheet extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// ────────────────────────────────────────────────────────────────────────
+/// Carte « À la une » réutilisable : bloc d'entête de l'accueil ([hero]),
+/// et carte compacte pour les états vides (onglet « En direct », « Pour toi »,
+/// « Concerts à venir »). Tap → fiche du concert ([FutureScreen]).
+/// ────────────────────────────────────────────────────────────────────────
+class FeaturedEventCard extends StatelessWidget {
+  const FeaturedEventCard({
+    super.key,
+    required this.featured,
+    this.hero = false,
+    this.badgeLabel,
+    this.onTap,
+  });
+
+  final FeaturedEvent featured;
+
+  /// Grand format (couverture pleine largeur) ; sinon carte compacte en ligne.
+  final bool hero;
+
+  /// Texte du badge ; par défaut le titre saisi par l'admin ou « À la une ».
+  final String? badgeLabel;
+
+  /// Action au tap ; par défaut, ouvre la fiche du concert.
+  final VoidCallback? onTap;
+
+  Event get event => featured.event;
+
+  bool get _hasTicket {
+    final uid = userModel.value.user?.id;
+    if (uid == null) return false;
+    if (event.artistId == uid) return true;
+    return event.ticketBuyerIds?.contains(uid) ?? false;
+  }
+
+  String get _artistName {
+    final a = event.artist;
+    final name = (a?.artistName ?? '').trim();
+    if (name.isNotEmpty) return name;
+    return (a?.fullName ?? '').trim();
+  }
+
+  /// Date + heure dans le fuseau du spectateur (ex. « sam. 26 juil. · 20:00 »).
+  String get _dateLabel {
+    final start = event.startDateTime;
+    if (start == null) return '';
+    return '${AppDate.dayDate(start)} · ${AppDate.time(start)}';
+  }
+
+  void _open() {
+    final custom = onTap;
+    if (custom != null) {
+      custom();
+      return;
+    }
+    Get.to(() => FutureScreen(event: event));
+  }
+
+  Widget _fallbackCover() {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [cardDeep, midnightSecondary, Color(0xff3A2E12)],
+        ),
+      ),
+      child: Center(
+        child: Icon(Icons.music_note_rounded, color: goldSecondary, size: 42),
+      ),
+    );
+  }
+
+  Widget _cover() {
+    final url = featuredCoverUrl(event);
+    if (url == null) return _fallbackCover();
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => const ColoredBox(color: cardDeep),
+      errorWidget: (_, __, ___) => _fallbackCover(),
+    );
+  }
+
+  Widget _badge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: midnightPrimary.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: goldSecondary.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: const BoxDecoration(
+              color: liveRed,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              badgeLabel ?? featured.headline ?? 'feat_badge'.tr,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: AppFonts.ui,
+                color: ivory,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _priceChip() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: midnightPrimary.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: goldSecondary, width: 1.2),
+      ),
+      child: Text(
+        priceLabel(event.ticketPrice),
+        style: const TextStyle(
+          fontFamily: AppFonts.ui,
+          color: goldPrimary,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _dateRow({Color color = ivory}) {
+    return Row(
+      children: [
+        const Icon(Icons.calendar_today_rounded, color: goldPrimary, size: 14),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            _dateLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: AppFonts.body,
+              color: color,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _ctaPill() {
+    return Container(
+      height: 46,
+      decoration: BoxDecoration(
+        gradient: kGoldGradient,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: goldPrimary.withValues(alpha: 0.25),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.confirmation_number_rounded,
+            color: midnightPrimary,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              (_hasTicket ? 'feat_view'.tr : 'feat_book'.tr).toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: AppFonts.ui,
+                color: midnightPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHero() {
+    final artist = _artistName;
+    return Container(
+      width: double.infinity,
+      height: Get.height * 0.42,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: cardDeep,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: goldSecondary.withValues(alpha: 0.35)),
+        boxShadow: kCardShadow,
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _cover(),
+          const DecoratedBox(
+            decoration: BoxDecoration(gradient: kImageOverlay),
+          ),
+          Positioned(
+            top: 14,
+            left: 14,
+            right: 14,
+            child: Align(alignment: Alignment.centerLeft, child: _badge()),
+          ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (artist.isNotEmpty) ...[
+                  Text(
+                    artist.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: AppFonts.ui,
+                      color: goldPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                ],
+                Text(
+                  event.name ?? '',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: AppFonts.heading,
+                    color: ivory,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    height: 1.1,
+                  ),
+                ),
+                if (_dateLabel.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  _dateRow(),
+                ],
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(child: _ctaPill()),
+                    const SizedBox(width: 12),
+                    _priceChip(),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompact() {
+    final artist = _artistName;
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: cardDeep,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: goldSecondary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: SizedBox(width: 96, height: 120, child: _cover()),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _badge(),
+                const SizedBox(height: 8),
+                if (artist.isNotEmpty) ...[
+                  Text(
+                    artist.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: AppFonts.ui,
+                      color: goldPrimary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                ],
+                Text(
+                  event.name ?? '',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: AppFonts.heading,
+                    color: ivory,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    height: 1.15,
+                  ),
+                ),
+                if (_dateLabel.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  _dateRow(color: textMuted),
+                ],
+                const SizedBox(height: 8),
+                Align(alignment: Alignment.centerLeft, child: _priceChip()),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Icon(Icons.chevron_right_rounded, color: goldPrimary, size: 24),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _open,
+      child: hero ? _buildHero() : _buildCompact(),
     );
   }
 }
