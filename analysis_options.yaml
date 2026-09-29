@@ -9,6 +9,12 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+# Les paquets Swift résolus par Flutter (build/ios|macos/SourcePackages)
+# contiennent des exemples/tests étrangers au projet : on ne les analyse pas.
+analyzer:
+  exclude:
+    - build/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
