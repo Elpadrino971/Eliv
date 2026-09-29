@@ -17,6 +17,7 @@ const statements = require('../services/statements');
 const geo = require('../services/geo');
 const eventAccess = require('../services/event_access');
 const revenueSplit = require('../services/revenue_split');
+const pricing = require('../services/pricing');
 const truthy = (v) => v === true || v === 1 || v === '1' || v === 'true' || v === 'on';
 const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
 
@@ -406,11 +407,21 @@ router.get('/events', requireAdmin, (req, res) => {
             e.artist_id, e.genre_id, e.description, e.cover_image, e.mux_playback_id,
             e.is_banner, e.tz_offset_minutes, e.mux_upload_status, e.mux_asset_id,
             e.replay_expires_at, e.replay_enabled, e.replay_duration_days,
-            e.geo_mode, e.geo_countries, e.geo_block_until,
+            e.geo_mode, e.geo_countries, e.geo_block_until, e.price_schedule,
             e.mux_live_stream_id, u.artist_name AS artist
      FROM events e LEFT JOIN users u ON u.id = e.artist_id
      ORDER BY e.id DESC`
-  ).all();
+  ).all().map((e) => {
+    // Tarification dynamique (lot 9) : ticket_price reste le prix de BASE
+    // (formulaire) ; la page Concerts affiche en plus le prix EN COURS.
+    const p = pricing.effectivePrice(e);
+    return {
+      ...e, price_schedule: p.schedule, effective_price: p.price, next_price: p.next_price, next_price_at: p.next_price_at,
+      // Replay MP4 téléchargeable (lot 9) : 404 tant que Mux n'a pas préparé
+      // la rendition (assets d'avant cette version -> « Préparer le MP4 »).
+      replay_mp4_url: e.mux_playback_id ? mux.staticRenditionUrl(e.mux_playback_id, e.name) : null,
+    };
+  });
   return res.json({ status: 'success', data: rows });
 });
 
@@ -460,16 +471,24 @@ function computeGeoBlockUntil(startIso, hoursRaw) {
   return new Date(base + hours * 60 * 60 * 1000).toISOString();
 }
 
-// Prix (grille fermée = produits store) + date de début (ISO UTC « Z ») d'un
-// concert créé/édité depuis l'admin. Renvoie { error } ou { price, startUtc }.
+// Prix (grille fermée = produits store) + grille dynamique (paliers) + date de
+// début (ISO UTC « Z ») d'un concert créé/édité depuis l'admin.
+// Renvoie { error } ou { price, priceSchedule, startUtc, tzOffset }.
 function validateEventInput(b) {
   const price = eventAccess.normalizeTicketPrice(b.ticket_price);
   if (!price.ok) return { error: price.error };
+  // Tarification dynamique (lot 9) : `price_schedule` = JSON string (ou liste)
+  // de paliers ; prix de la grille IAP, heures strictement décroissantes.
+  const schedule = pricing.parseSchedule(b.price_schedule);
+  if (!schedule.ok) return { error: schedule.error };
   const tzOffset = Number(b.tz_offset_minutes) || 0;
   const startUtc = localToUtcIso(b.start_date_time, tzOffset);
   const start = eventAccess.normalizeIsoUtc(startUtc, 'Date/heure de début');
   if (!start.ok) return { error: start.error };
-  return { price: price.value, startUtc: start.value, tzOffset };
+  return {
+    price: price.value, startUtc: start.value, tzOffset,
+    priceSchedule: schedule.schedule.length ? JSON.stringify(schedule.schedule) : null,
+  };
 }
 
 router.post('/events', requireAdmin, (req, res) => {
@@ -483,12 +502,12 @@ router.post('/events', requireAdmin, (req, res) => {
   db.prepare(
     `INSERT INTO events (artist_id, name, cover_image, ticket_price, start_date_time, tz_offset_minutes, genre_id,
         description, status, mux_playback_id, mux_live_playback_id, video_reel, is_banner,
-        replay_enabled, replay_duration_days, geo_mode, geo_countries, geo_block_until)
+        replay_enabled, replay_duration_days, geo_mode, geo_countries, geo_block_until, price_schedule)
      VALUES (@artist_id, @name, @cover, @price, @start, @tzOffset, @genre, @desc, @status, @mux, @muxLive, @reel, @banner,
-        @replayEnabled, @replayDays, @geoMode, @geoCountries, @geoBlockUntil)`
+        @replayEnabled, @replayDays, @geoMode, @geoCountries, @geoBlockUntil, @priceSchedule)`
   ).run({
     artist_id: b.artist_id || null, name: b.name, cover,
-    price: v.price, start: startUtc, tzOffset, genre: b.genre_id || null,
+    price: v.price, priceSchedule: v.priceSchedule, start: startUtc, tzOffset, genre: b.genre_id || null,
     desc: b.description || null, status: b.status || 'published',
     mux: b.mux_playback_id || null, muxLive: b.status === 'live' ? (b.mux_playback_id || null) : null,
     reel: muxHls(b.mux_playback_id), banner: b.is_banner ? 1 : 0,
@@ -512,11 +531,12 @@ router.put('/events/:id', requireAdmin, (req, res) => {
         status = @status, mux_playback_id = @mux, mux_live_playback_id = @muxLive,
         video_reel = @reel, is_banner = @banner,
         replay_enabled = @replayEnabled, replay_duration_days = @replayDays,
-        geo_mode = @geoMode, geo_countries = @geoCountries, geo_block_until = @geoBlockUntil, updated_at = datetime('now')
+        geo_mode = @geoMode, geo_countries = @geoCountries, geo_block_until = @geoBlockUntil,
+        price_schedule = @priceSchedule, updated_at = datetime('now')
      WHERE id = @id`
   ).run({
     id: req.params.id, artist_id: b.artist_id || null, name: b.name, cover,
-    price: v.price, start: startUtc, tzOffset, genre: b.genre_id || null,
+    price: v.price, priceSchedule: v.priceSchedule, start: startUtc, tzOffset, genre: b.genre_id || null,
     desc: b.description || null, status: b.status || 'published',
     mux: b.mux_playback_id || null, muxLive: b.status === 'live' ? (b.mux_playback_id || null) : null,
     reel: muxHls(b.mux_playback_id), banner: b.is_banner ? 1 : 0,
@@ -530,6 +550,37 @@ router.put('/events/:id', requireAdmin, (req, res) => {
 router.delete('/events/:id', requireAdmin, (req, res) => {
   db.prepare('DELETE FROM events WHERE id = ?').run(req.params.id);
   return res.json({ status: 'success', message: 'Concert supprimé.' });
+});
+
+// ─── Replay téléchargeable (lot 9) ───
+// Les NOUVEAUX lives/uploads demandent une rendition MP4 statique à la
+// création (services/mux.js) : le fichier est servi par Mux à
+// https://stream.mux.com/<playback_id>/highest.mp4?download=<nom>.
+// Pour un asset EXISTANT (créé sans rendition), cette route la demande après
+// coup (POST /video/v1/assets/{id}/static-renditions) — best effort : Mux
+// prépare le fichier en tâche de fond, le lien répond 404 jusque-là.
+router.post('/events/:id/replay-mp4', requireAdmin, (req, res) => {
+  const ev = db.prepare('SELECT id, name, mux_asset_id, mux_playback_id FROM events WHERE id = ?').get(req.params.id);
+  if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  if (!ev.mux_asset_id) {
+    return res.status(409).json({ status: 'error', message: 'Aucun asset Mux connu pour ce concert (replay absent, ou ID collé à la main sans asset).' });
+  }
+  if (!mux.isConfigured()) return res.status(503).json({ status: 'error', message: 'Mux non configuré sur ce serveur.' });
+  mux.createStaticRendition(ev.mux_asset_id)
+    .then((r) => res.json({
+      status: 'success',
+      message: r.status === 'ready' ? 'MP4 déjà disponible.' : 'MP4 en préparation chez Mux : le lien « Replay MP4 » fonctionnera dans quelques minutes.',
+      data: { rendition_id: r.id, name: r.name, resolution: r.resolution, rendition_status: r.status, download_url: mux.staticRenditionUrl(ev.mux_playback_id, ev.name) },
+    }))
+    .catch((e) => {
+      // Déjà demandée -> Mux répond 4xx (doublon) : on le dit sans planter.
+      const dup = e.status === 400 || e.status === 409 || e.status === 422;
+      console.error('[admin] replay-mp4', ev.id, e.message);
+      return res.status(dup ? 409 : 502).json({
+        status: 'error',
+        message: dup ? 'Rendition MP4 déjà demandée pour cet asset (ou refusée par Mux) : réessaie le lien dans quelques minutes.' : 'Mux indisponible, réessaie.',
+      });
+    });
 });
 
 // ─── Mux : Direct Upload (replay/vidéo event ou clip) ───

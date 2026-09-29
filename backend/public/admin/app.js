@@ -704,6 +704,9 @@ async function openEventForm(row, { duplicate = false } = {}) {
       { name: 'genre_id', label: 'Genre', type: 'select', value: row?.genre_id, options: [{ value: '', label: '— Choisir —' }, ...genres.map((g) => ({ value: g.id, label: g.name }))] },
       { name: 'status', label: 'Statut', type: 'select', value: row?.status || 'published', options: [{ value: 'published', label: 'Publié' }, { value: 'live', label: 'En direct' }, { value: 'completed', label: 'Terminé' }, { value: 'cancelled', label: 'Annulé' }] },
       { name: 'ticket_price', label: 'Prix du billet (€, 0 = gratuit)', type: 'number', value: row?.ticket_price || '0' },
+      // Tarification dynamique (lot 9) : champ caché (JSON) piloté par
+      // l'éditeur de paliers monté dans afterRender (attachPriceScheduleEditor).
+      { name: 'price_schedule', label: 'Tarification dynamique (optionnel) — le prix monte à l\'approche du concert', type: 'hidden', value: JSON.stringify(Array.isArray(row?.price_schedule) ? row.price_schedule : []) },
       { name: 'start_date_time', label: 'Date/heure LOCALE du lieu (calendrier)', type: 'datetime', value: row ? utcToLocalDisplay(row.start_date_time, row.tz_offset_minutes) : '' },
       { name: 'tz_offset_minutes', label: 'Fuseau horaire du lieu', type: 'select', value: row?.tz_offset_minutes ?? '0', options: TZ_OFFSETS },
       { name: 'mux_playback_id', label: 'Vidéo — Mux Playback ID', value: row?.mux_playback_id, placeholder: 'colle l\'ID Mux (ou laisse vide)' },
@@ -725,13 +728,135 @@ async function openEventForm(row, { duplicate = false } = {}) {
           : '',
         hint: 'Ex : 4 → bloqué 4h dès le début du concert, puis la diffusion REPART automatiquement. Vide ou 0 = permanent.' },
     ],
-    afterRender: (bg) => attachAiDescriptionButton(bg, 'event'),
+    afterRender: (bg) => { attachAiDescriptionButton(bg, 'event'); attachPriceScheduleEditor(bg); },
     onSave: async (d) => {
       if (row && !duplicate) { await api('PUT', '/events/' + row.id, d); toast('Concert mis à jour'); }
       else { await api('POST', '/events', d); toast(duplicate ? 'Concert dupliqué' : 'Concert créé'); }
       route();
     },
   });
+}
+
+// ─── Tarification dynamique (lot 9) ───
+// Grille IAP (mêmes paliers que normalizeTicketPrice côté serveur, produits
+// store ticket_<n>). Un palier ne peut pas être « gratuit ».
+const PRICE_GRID = ['2.99', '4.99', '6.99', '9.99', '14.99', '19.99', '29.99', '39.99', '49.99', '59.99', '79.99', '99.99'];
+const PS_MAX_ROWS = 3;
+const eurFmt = (p) => (parseFloat(p) > 0 ? parseFloat(p).toFixed(2).replace('.', ',') + ' €' : 'Gratuit');
+
+// Éditeur de paliers monté sous le champ caché `price_schedule` du formulaire
+// concert : lignes « Jusqu'à [N] h avant le début → prix [grille] », bouton
+// « Ajouter un palier », prévisualisation en clair. Sérialise en JSON dans le
+// champ caché (envoyé tel quel, validé côté serveur).
+function attachPriceScheduleEditor(bg) {
+  const hidden = bg.querySelector('[data-k="price_schedule"]');
+  if (!hidden) return;
+  let tiers = [];
+  try { tiers = JSON.parse(hidden.value || '[]'); } catch (_) { tiers = []; }
+  if (!Array.isArray(tiers)) tiers = [];
+  const box = document.createElement('div');
+  box.className = 'tcard';
+  box.style.cssText = 'padding:10px 12px;margin:0 0 4px';
+  box.innerHTML = `<div class="em" style="color:var(--muted);font-size:12.5px;margin-bottom:6px">Chaque ligne : « jusqu'à N h avant le début → prix » (le premier palier vaut dès maintenant, le dernier persiste pendant le live). Heures strictement décroissantes, ${PS_MAX_ROWS} paliers max. Sans palier, le prix du billet ci-dessus s'applique ; avec, il reste le prix de base des estimations.</div>
+    <div data-ps-rows></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">
+      <button type="button" class="btn dup" data-ps-add>+ Ajouter un palier</button>
+      <button type="button" class="btn" data-ps-preview-btn>👁 Prévisualiser</button>
+    </div>
+    <div data-ps-preview style="color:var(--gold);font-size:12.5px;margin-top:6px"></div>`;
+  hidden.insertAdjacentElement('afterend', box);
+  const rowsEl = box.querySelector('[data-ps-rows]');
+  const previewEl = box.querySelector('[data-ps-preview]');
+  const priceEl = bg.querySelector('[data-k="ticket_price"]');
+  const current = () => [...rowsEl.querySelectorAll('[data-ps-row]')].map((tr) => ({
+    hours_before: tr.querySelector('[data-ps-h]').value.trim(),
+    price: tr.querySelector('[data-ps-p]').value,
+  }));
+  const preview = () => {
+    const list = current().filter((t) => t.hours_before !== '');
+    if (!list.length) { previewEl.textContent = ''; return; }
+    // Même règle que services/pricing.js : un palier vaut JUSQU'À N h avant
+    // le début, depuis la fin du précédent ; le dernier persiste ensuite.
+    const parts = list.map((t, i) => {
+      const from = i === 0 ? 'dès maintenant' : `de ${list[i - 1].hours_before} h`;
+      const to = Number(t.hours_before) > 0 ? `jusqu'à ${t.hours_before} h avant le début` : 'jusqu\'au début';
+      return `${eurFmt(t.price)} ${from} ${to}`;
+    });
+    const lastH = Number(list[list.length - 1].hours_before);
+    parts.push(`puis ${eurFmt(list[list.length - 1].price)} ${lastH > 0 ? `dès ${lastH} h avant, ` : ''}pendant le live et le replay`);
+    const bad = list.some((t, i) => i > 0 && Number(t.hours_before) >= Number(list[i - 1].hours_before));
+    previewEl.innerHTML = esc(parts.join(' · ')) + (bad ? ' <b style="color:#ff8a8a">— les heures doivent être strictement décroissantes</b>' : '');
+  };
+  const sync = () => {
+    hidden.value = JSON.stringify(current().filter((t) => t.hours_before !== ''));
+    preview();
+  };
+  const addRow = (t) => {
+    if (rowsEl.children.length >= PS_MAX_ROWS) { toast(`${PS_MAX_ROWS} paliers maximum.`); return; }
+    const tr = document.createElement('div');
+    tr.setAttribute('data-ps-row', '');
+    tr.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0';
+    tr.innerHTML = `<span>Jusqu'à</span><input type="number" min="0" step="1" data-ps-h style="width:84px;padding:7px" value="${esc(t?.hours_before ?? '')}">
+      <span>h avant le début →</span><select data-ps-p style="width:auto;padding:7px">${PRICE_GRID.map((p) => `<option value="${p}" ${String(t?.price) === p ? 'selected' : ''}>${eurFmt(p)}</option>`).join('')}</select>
+      <button type="button" class="btn del" data-ps-rm title="Retirer ce palier">✕</button>`;
+    tr.querySelector('[data-ps-rm]').onclick = () => { tr.remove(); sync(); };
+    tr.querySelector('[data-ps-h]').oninput = sync;
+    tr.querySelector('[data-ps-p]').onchange = sync;
+    rowsEl.appendChild(tr);
+  };
+  tiers.slice(0, PS_MAX_ROWS).forEach(addRow);
+  box.querySelector('[data-ps-add]').onclick = () => {
+    const last = current().slice(-1)[0];
+    // Valeurs proposées : 72 h (au prix de base) → 48 h → 0 h, chaque fois le
+    // prix suivant dans la grille.
+    const nextH = last ? Math.max(0, Number(last.hours_before) === 72 ? 48 : 0) : 72;
+    const basePrice = priceEl && parseFloat(priceEl.value) > 0 ? parseFloat(priceEl.value).toFixed(2) : '4.99';
+    const nextP = last ? (PRICE_GRID[PRICE_GRID.indexOf(last.price) + 1] || last.price) : (PRICE_GRID.includes(basePrice) ? basePrice : '4.99');
+    addRow({ hours_before: nextH, price: nextP });
+    sync();
+  };
+  box.querySelector('[data-ps-preview-btn]').onclick = preview;
+  if (priceEl) priceEl.addEventListener('input', preview);
+  sync();
+}
+
+// Colonne Prix de la page Concerts : prix fixe, ou « 4,99 € → 9,99 € (paliers) »
+// avec le prix EN COURS en gras et le prochain palier.
+function priceCell(r) {
+  const sched = Array.isArray(r.price_schedule) ? r.price_schedule : [];
+  if (!sched.length) return esc(eurFmt(r.ticket_price));
+  const cur = String(r.effective_price);
+  const bold = (p) => (String(p) === cur ? `<b style="color:var(--gold)">${esc(eurFmt(p))}</b>` : esc(eurFmt(p)));
+  const first = sched[0].price;
+  const last = sched[sched.length - 1].price;
+  let html = `${bold(first)} → ${bold(last)} <span class="em" style="color:var(--muted)">(paliers)</span>`;
+  if (cur !== String(first) && cur !== String(last)) html += `<div class="em" style="color:var(--muted)">en cours : <b style="color:var(--gold)">${esc(eurFmt(cur))}</b></div>`;
+  if (r.next_price && r.next_price_at) html += `<div class="em" style="color:var(--muted)">→ ${esc(eurFmt(r.next_price))} le ${esc(fmtDateTime(r.next_price_at))}</div>`;
+  return html;
+}
+
+// Replay (lot 9) : lecteur HLS du replay + lien MP4 téléchargeable.
+function openReplayPlayer(row) {
+  const url = `https://stream.mux.com/${row.mux_playback_id}.m3u8`;
+  const bg = document.createElement('div');
+  bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:1000';
+  bg.innerHTML = `<div style="background:#0b1220;padding:16px;border-radius:12px;max-width:900px;width:92%">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap">
+        <div style="color:#fff;font-weight:700">▶ Replay — ${esc(row.name || '')}${row.artist ? ' — ' + esc(row.artist) : ''}</div>
+        <div>${row.replay_mp4_url ? `<a class="btn" style="text-decoration:none;display:inline-block" href="${esc(row.replay_mp4_url)}" target="_blank" rel="noopener">⬇ Replay MP4</a>` : ''}<button class="btn del" data-close>Fermer</button></div></div>
+      <video controls autoplay playsinline style="width:100%;border-radius:8px;background:#000;max-height:70vh"></video>
+    </div>`;
+  document.body.appendChild(bg);
+  const video = bg.querySelector('video');
+  playHls(video, url);
+  const close = () => { try { video.pause(); video.removeAttribute('src'); video.load(); } catch (_) {} bg.remove(); };
+  bg.querySelector('[data-close]').onclick = close;
+  bg.onclick = (e) => { if (e.target === bg) close(); };
+}
+async function prepareReplayMp4(id) {
+  if (!confirm('Demander à Mux la version MP4 téléchargeable de ce replay ? (quelques minutes de préparation)')) return;
+  try { const r = await api('POST', `/events/${id}/replay-mp4`); toast(r.message || 'MP4 demandé'); }
+  catch (e) { toast(e.message); }
 }
 
 // Ajoute un bouton "✨ Générer avec IA" juste après le champ description du
@@ -904,9 +1029,9 @@ async function pageEvents() {
       { label: '#', render: (r) => r.id },
       { label: 'Concert', render: (r) => `<div class="nm">${esc(r.name)}</div>${r.mux_playback_id ? '<div class="em">🎬 vidéo Mux</div>' : ''}` },
       { label: 'Artiste', render: (r) => esc(r.artist || '—') },
-      { label: 'Prix', render: (r) => (parseFloat(r.ticket_price) > 0 ? esc(r.ticket_price) + ' €' : 'Gratuit') },
+      { label: 'Prix', render: priceCell },
       { label: 'Statut', render: (r) => badge(r.status) },
-      { label: 'Vidéo', render: (r) => `${muxBadge(r.mux_upload_status)}${r.mux_live_stream_id ? '<div class="em">🔴 live en cours</div>' : ''}${r.replay_expires_at ? `<div class="em">replay jusqu'au ${fmtDate(r.replay_expires_at)}</div>` : ''}` },
+      { label: 'Vidéo', render: (r) => `${muxBadge(r.mux_upload_status)}${r.mux_live_stream_id ? '<div class="em">🔴 live en cours</div>' : ''}${r.replay_expires_at ? `<div class="em">replay jusqu'au ${fmtDate(r.replay_expires_at)}</div>` : ''}${r.mux_playback_id ? `<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap"><button class="btn edit" data-replayplay="${r.id}" title="Lire le replay (HLS)">▶ Replay</button><a class="btn" style="text-decoration:none;display:inline-block" href="${esc(r.replay_mp4_url || '')}" target="_blank" rel="noopener" title="Télécharge le replay en MP4. Replay enregistré avant cette version : disponible après le prochain live, ou clique « Préparer le MP4 » (sinon le lien répond 404).">⬇ Replay MP4</a>${r.mux_asset_id ? `<button class="btn" data-replaymp4="${r.id}" title="Demande à Mux la version MP4 d'un replay existant (assets sans rendition)">🎞 Préparer le MP4</button>` : ''}</div>` : ''}` },
       { label: 'Date', render: (r) => fmtDate(r.start_date_time) },
       { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="event:${r.id}">🎬 Upload</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button><button class="btn grant" data-feature="${r.id}">⭐ À la une</button><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn" data-guests="${r.id}">🎤 Invités</button><button class="btn" data-links="${r.id}">🎛 Régie</button><button class="btn" data-stage="${r.id}">🖥 Scène</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
     ],
@@ -2066,6 +2191,10 @@ document.addEventListener('click', (e) => {
   if (evg) { showEventGuests(evg.dataset.guests); return; }
   const ml = e.target.closest('[data-muxlive]');
   if (ml) { const [, id, hasLive] = ml.dataset.muxlive.split(':'); toggleMuxLiveStream(id, hasLive === '1'); return; }
+  const rp = e.target.closest('[data-replayplay]');
+  if (rp) { const r = currentRows.find((x) => x.id == rp.dataset.replayplay); if (r) openReplayPlayer(r); return; }
+  const rm = e.target.closest('[data-replaymp4]');
+  if (rm) { prepareReplayMp4(rm.dataset.replaymp4); return; }
   const st = e.target.closest('[data-status]');
   if (st) {
     const r = currentRows.find((x) => x.id == st.dataset.status);
