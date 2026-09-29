@@ -722,6 +722,7 @@ class _StartStreamState extends State<StartStream> {
                               },
                             ),
                             isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
                           );
                         },
                         onHeartTap: () async {
