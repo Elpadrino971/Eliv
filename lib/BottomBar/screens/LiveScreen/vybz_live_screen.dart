@@ -228,8 +228,13 @@ class _ForYouFeedState extends State<_ForYouFeed> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initFirstReel();
-    _ensureContentLoaded();
+    // Après le premier rendu : initialiser un lecteur depuis initState fait
+    // notifier le contrôleur en pleine phase de build (écran rouge).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _initFirstReel();
+      _ensureContentLoaded();
+    });
   }
 
   void _initFirstReel() {

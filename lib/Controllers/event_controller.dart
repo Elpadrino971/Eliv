@@ -11,6 +11,7 @@ import 'package:artist/Models/follow_model.dart';
 import 'package:artist/Models/gift_model.dart';
 import 'package:artist/Models/user_model.dart';
 import 'package:artist/services/api_services.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 import 'package:zego_uikit_prebuilt_live_streaming/zego_uikit_prebuilt_live_streaming.dart';
@@ -104,7 +105,7 @@ class EventController extends GetxController {
       // play() avant la fin de initialize() est mémorisé par video_player et
       // appliqué dès que le lecteur est prêt.
       preloaded.play();
-      update();
+      _safeUpdate();
       return;
     }
     _nextController?.dispose();
@@ -124,12 +125,25 @@ class EventController extends GetxController {
       }
       controller.setLooping(true);
       controller.play();
-      update();
+      _safeUpdate();
     }).catchError((Object e) {
       myPrint('reel init: $e');
     });
     controller.play();
-    update();
+    _safeUpdate();
+  }
+
+  /// `update()` sans jamais tomber pendant une phase de build (crash
+  /// « setState() or markNeedsBuild() called during build » quand le feed
+  /// initialise son premier clip depuis initState).
+  void _safeUpdate() {
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.persistentCallbacks ||
+        phase == SchedulerPhase.midFrameMicrotasks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) => update());
+    } else {
+      update();
+    }
   }
 
   /// Précharge le clip suivant du feed (initialisé, jamais lu tant qu'il
