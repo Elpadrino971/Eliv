@@ -108,6 +108,10 @@ class _MyBottomBarState extends State<MyBottomBar> {
   @override
   void initState() {
     myInitMethod();
+    // Relance douce : l'onglet affiché et l'instant d'utilisation sont
+    // mémorisés (voir canSoftRelaunch dans global.dart) pour qu'un
+    // redémarrage à froid ramène ici sans rejouer le splash interactif.
+    rememberLastTab(widget.index);
     // « Partager → VYBZZZ » : écoute les vidéos partagées vers l'app (cold +
     // warm) et ouvre la création de clip. Idempotent.
     ShareReceiver.init();
@@ -176,6 +180,7 @@ class _MyBottomBarState extends State<MyBottomBar> {
               unselectedItemColor: const Color(0xff737373),
               elevation: 0,
               onTap: (value) {
+                rememberLastTab(value);
                 setState(() {
                   currentIndex = value;
                 });

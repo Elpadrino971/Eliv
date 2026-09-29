@@ -16,8 +16,14 @@ class HomeBannerCard extends StatefulWidget {
   State<HomeBannerCard> createState() => _HomeBannerCardState();
 }
 
-class _HomeBannerCardState extends State<HomeBannerCard> {
+class _HomeBannerCardState extends State<HomeBannerCard>
+    with WidgetsBindingObserver {
   VideoPlayerController? _videoController;
+
+  // Teaser libéré au passage en arrière-plan (décodeur + tampons HLS) et
+  // recréé au retour : l'app suspendue reste légère. Un seul teaser vit à la
+  // fois (PageView.builder : seule la bannière visible est construite).
+  bool _releasedInBackground = false;
 
   Event get event => widget.event;
 
@@ -30,6 +36,7 @@ class _HomeBannerCardState extends State<HomeBannerCard> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initVideo();
   }
 
@@ -40,7 +47,9 @@ class _HomeBannerCardState extends State<HomeBannerCard> {
     controller
         .initialize()
         .then((_) {
-          if (!mounted) return;
+          // Widget démonté ou lecteur remplacé/libéré entre-temps : ne pas
+          // toucher à un lecteur déjà disposé.
+          if (!mounted || _videoController != controller) return;
           controller
             ..setLooping(true)
             ..setVolume(0)
@@ -53,19 +62,38 @@ class _HomeBannerCardState extends State<HomeBannerCard> {
     _videoController = controller;
   }
 
+  void _releaseVideo() {
+    _videoController?.dispose();
+    _videoController = null;
+  }
+
   @override
   void didUpdateWidget(covariant HomeBannerCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.event.videoReel != widget.event.videoReel) {
-      _videoController?.dispose();
-      _videoController = null;
+      _releaseVideo();
       _initVideo();
     }
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      if (_videoController == null) return;
+      _releaseVideo();
+      _releasedInBackground = true;
+      if (mounted) setState(() {});
+    } else if (state == AppLifecycleState.resumed && _releasedInBackground) {
+      _releasedInBackground = false;
+      _initVideo();
+      if (mounted) setState(() {});
+    }
+  }
+
+  @override
   void dispose() {
-    _videoController?.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _releaseVideo();
     super.dispose();
   }
 
@@ -81,6 +109,8 @@ class _HomeBannerCardState extends State<HomeBannerCard> {
     return Image.network(
       '${APIs.eventImageIP}/${event.coverImage}',
       fit: BoxFit.cover,
+      // Couverture décodée à 1080 px max (pas en pleine résolution d'upload).
+      cacheWidth: 1080,
       errorBuilder: (_, __, ___) =>
           Image.asset('assets/background4.png', fit: BoxFit.cover),
       loadingBuilder: (context, child, progress) =>

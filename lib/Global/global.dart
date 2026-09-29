@@ -28,6 +28,61 @@ const String themeKey = 'isDarkMode';
 const String revenueCatAppleApiKey = 'appl_KIbaeOroARylQdwdEhBeHEGIVms';
 const String revenueCatGoogleApiKey = 'goog_lDZjQunqqLrPCbshbXkMrbhoZAn';
 
+// ── Relance douce ───────────────────────────────────────────────────────────
+// iOS tue une app suspendue (mémoire, inactivité) : au retour, l'app repart à
+// froid sur le splash « glisser pour entrer ». Pour que cette relance reste
+// invisible, on mémorise l'instant de la dernière utilisation et le dernier
+// onglet ouvert ; le splash saute alors son animation interactive et ramène
+// directement sur cet onglet (voir SpalashScreen et MyBottomBar).
+
+/// Clé `box` : instant de la dernière utilisation (ms depuis epoch).
+const String lastActiveAtKey = 'last_active_at';
+
+/// Clé `box` : dernier onglet ouvert dans la barre de navigation (0..4).
+const String lastTabIndexKey = 'last_tab_index';
+
+/// Au-delà de ce délai d'inactivité, le splash complet est rejoué.
+const Duration softRelaunchWindow = Duration(hours: 12);
+
+/// Nombre d'onglets de [MyBottomBar] (bornes de [readLastTab]).
+const int _bottomBarTabCount = 5;
+
+/// Mémorise « l'app vient d'être utilisée » (passage en arrière-plan,
+/// ouverture d'un onglet…). Écriture non bloquante.
+void touchLastActive() {
+  box.write(lastActiveAtKey, DateTime.now().millisecondsSinceEpoch);
+}
+
+/// Mémorise l'onglet courant de la barre de navigation et rafraîchit
+/// l'instant de dernière utilisation.
+void rememberLastTab(int index) {
+  if (index >= 0 && index < _bottomBarTabCount) {
+    box.write(lastTabIndexKey, index);
+  }
+  touchLastActive();
+}
+
+/// Dernier onglet ouvert, ou null s'il est inconnu / hors bornes.
+int? readLastTab() {
+  final raw = box.read(lastTabIndexKey);
+  final index = raw is int ? raw : int.tryParse('${raw ?? ''}');
+  if (index == null || index < 0 || index >= _bottomBarTabCount) return null;
+  return index;
+}
+
+/// Vrai si un utilisateur est connecté ET que l'app a été utilisée il y a
+/// moins de [softRelaunchWindow] : le splash interactif est alors sauté.
+bool canSoftRelaunch() {
+  if (box.read('user') == null) return false;
+  final raw = box.read(lastActiveAtKey);
+  final ms = raw is int ? raw : int.tryParse('${raw ?? ''}');
+  if (ms == null) return false;
+  final elapsed =
+      DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(ms));
+  // Horloge remontée dans le passé (elapsed négatif) -> splash complet.
+  return elapsed >= Duration.zero && elapsed < softRelaunchWindow;
+}
+
 Widget height(double height) {
   return SizedBox(height: Get.height * height);
 }

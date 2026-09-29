@@ -794,6 +794,10 @@ class _HomeClipTile extends StatelessWidget {
               CachedNetworkImage(
                 imageUrl: thumb,
                 fit: BoxFit.cover,
+                // Miniature Mux servie en 480 px : on la décode à cette
+                // largeur (et pas en pleine résolution) pour une grille de
+                // 10 vignettes légère en mémoire.
+                memCacheWidth: 480,
                 placeholder: (_, __) => const ColoredBox(color: cardDeep),
                 errorWidget: (_, __, ___) => _fallback(),
               )
