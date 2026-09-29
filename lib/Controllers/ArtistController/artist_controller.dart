@@ -109,9 +109,15 @@ class ArtistController extends GetxController {
   }
 
   /// Live instantané : crée un concert gratuit qui commence maintenant (titre
-  /// seul, pas d'affiche ni de date à choisir) et renvoie l'event prêt à être
-  /// diffusé. null si la création a échoué (message déjà affiché).
-  Future<Event?> createQuickLive({required String title}) async {
+  /// + image facultative, pas de date à choisir) et renvoie l'event prêt à
+  /// être diffusé. null si la création a échoué (message déjà affiché).
+  /// [coverPath] : chemin local d'une image choisie, envoyée en multipart sous
+  /// `cover_image` (comme createEvent) ; sans image, le serveur met son image
+  /// par défaut.
+  Future<Event?> createQuickLive({
+    required String title,
+    String? coverPath,
+  }) async {
     myLoadingDialog();
     final now = DateTime.now().toUtc();
     final req = ApiResponse();
@@ -132,7 +138,10 @@ class ArtistController extends GetxController {
       'replay_duration_days': '60',
     };
     try {
-      final value = await req.hitMultipartAPI('');
+      final cover = coverPath?.trim() ?? '';
+      final value = cover.isEmpty
+          ? await req.hitMultipartAPI('')
+          : await req.hitMultipartAPI(cover, key: 'cover_image');
       Get.back(); // ferme le loader
       if (value is String && value.split(' ').first != 'error') {
         final data = jsonDecode(value)['data'];
