@@ -424,18 +424,35 @@ String priceLabel(String? ticketPrice) {
 /// démarrage du direct, parfois alors que le micro est déjà autorisé.
 /// Renvoie true si les deux sont accordés ; sinon explique et propose les
 /// réglages, et renvoie false (le live n'est pas ouvert).
+bool _livePermSettingsShown = false;
+
 Future<bool> ensureLivePermissions() async {
-  final statuses = await [Permission.camera, Permission.microphone].request();
-  final cam = statuses[Permission.camera] ?? PermissionStatus.denied;
-  final mic = statuses[Permission.microphone] ?? PermissionStatus.denied;
-  if (cam.isGranted && mic.isGranted) return true;
-  final blocked = cam.isPermanentlyDenied || mic.isPermanentlyDenied;
+  Map<Permission, PermissionStatus> statuses;
+  try {
+    statuses = await [Permission.camera, Permission.microphone].request();
+  } catch (e) {
+    myPrint('ensureLivePermissions: $e');
+    return true; // on laisse le kit live gérer lui-même
+  }
+  final cam = statuses[Permission.camera] ?? PermissionStatus.granted;
+  final mic = statuses[Permission.microphone] ?? PermissionStatus.granted;
+  // Seul un refus explicite à l'instant (fenêtre système) bloque le départ.
+  // Les autres états (« refusé définitivement », restreint, limité) peuvent
+  // être faux positifs du plugin : on prévient une seule fois, puis on laisse
+  // le live s'ouvrir (le kit Zego a ses propres contrôles) — jamais de boucle
+  // Réglages ↔ app.
+  if ((cam.isGranted || cam.isLimited) && (mic.isGranted || mic.isLimited)) {
+    return true;
+  }
+  final justRefused = cam.isDenied || mic.isDenied;
+  if (!justRefused && _livePermSettingsShown) return true;
+  _livePermSettingsShown = true;
   await myAlertDialog(
     title: 'live_perm_title'.tr,
     content: 'live_perm_msg'.tr,
     onTap: () {
       Get.back();
-      if (blocked) openAppSettings();
+      if (!justRefused) openAppSettings();
     },
   );
   return false;
