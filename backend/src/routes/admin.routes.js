@@ -16,6 +16,7 @@ const apporteurBonus = require('../services/apporteur_bonus');
 const statements = require('../services/statements');
 const geo = require('../services/geo');
 const eventAccess = require('../services/event_access');
+const revenueSplit = require('../services/revenue_split');
 const truthy = (v) => v === true || v === 1 || v === '1' || v === 'true' || v === 'on';
 const CLIP_RETENTION_DAYS = Number(process.env.CLIP_RETENTION_DAYS) || 30;
 
@@ -720,6 +721,33 @@ router.get('/events/:id/gift-tickets', requireAdmin, (req, res) => {
   if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
   const items = eventAccess.listGiftTickets(ev.id);
   return res.json({ status: 'success', data: { event: { id: ev.id, name: ev.name }, gifted_count: items.length, max: eventAccess.ARTIST_GIFT_MAX, items } });
+});
+
+// ─── Artistes invités (lot 7) : partage de la part artiste, page Concerts ───
+// GET : invités + % + reste + répartition estimée au prix du concert.
+function adminGuestsPayload(ev) {
+  return {
+    event: { id: ev.id, name: ev.name, artist_id: ev.artist_id, ticket_price: ev.ticket_price },
+    ...revenueSplit.guestsView(ev.id),
+    has_paid_sales: revenueSplit.hasPaidSales(ev.id),
+    estimate: revenueSplit.estimateForEvent(ev.id),
+  };
+}
+router.get('/events/:id/guests', requireAdmin, (req, res) => {
+  const ev = db.prepare('SELECT id, name, artist_id, ticket_price FROM events WHERE id = ?').get(Number(req.params.id));
+  if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  return res.json({ status: 'success', data: adminGuestsPayload(ev) });
+});
+// PUT : même validation et même règle (409 après ventes) que le PUT artiste.
+router.put('/events/:id/guests', requireAdmin, (req, res) => {
+  const ev = db.prepare('SELECT id, name, artist_id, ticket_price FROM events WHERE id = ?').get(Number(req.params.id));
+  if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  const raw = req.body ? req.body.guests : undefined;
+  if (raw === undefined) return res.status(422).json({ status: 'error', message: 'Le champ guests est requis (liste, éventuellement vide).' });
+  const r = revenueSplit.replaceGuests(ev.id, ev.artist_id, raw);
+  if (!r.ok) return res.status(r.code).json({ status: 'error', message: r.error });
+  console.log(`[invités] admin #${req.admin.id} : concert #${ev.id} -> ${r.data.guests.length} invité(s)`);
+  return res.json({ status: 'success', data: adminGuestsPayload(ev) });
 });
 
 // ─── Agenda régional (concerts collectés sur des sources publiques) ───

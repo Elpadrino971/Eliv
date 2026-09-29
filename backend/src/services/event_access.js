@@ -18,6 +18,7 @@ const { db } = require('../db');
 const dbPayments = require('../db_payments');
 const { genReceipt } = require('../helpers');
 const apporteurLedger = require('./apporteur_ledger');
+const revenueSplit = require('./revenue_split');
 
 // Frais Stripe pour une carte européenne standard : 1,5 % + 0,25 €. Exprimés
 // en taux effectif sur le montant, car c'est ce qu'attend le calcul de
@@ -222,15 +223,11 @@ function refundTicket(ticketId, { reason = 'refund' } = {}) {
           sale.artist_id, sale.source, t.id, neg(sale.gross), neg(sale.artist_share), neg(sale.platform_share),
           sale.commission_rate, neg(sale.store_fee), neg(sale.net), sale.apporteur_id, neg(sale.apporteur_amount),
         );
+        // Part artiste reprise à chacun (principal + invités) au prorata de ce
+        // qui avait été crédité pour ce billet (services/revenue_split.js).
         const share = parseFloat(sale.artist_share) || 0;
         if (share > 0 && sale.artist_id) {
-          const artist = db.prepare('SELECT wallet FROM users WHERE id = ?').get(sale.artist_id);
-          const wallet = parseFloat(artist?.wallet) || 0;
-          const next = Math.max(0, wallet - share);
-          db.prepare('UPDATE users SET wallet = ? WHERE id = ?').run(next.toFixed(2), sale.artist_id);
-          if (wallet - share < -0.005) {
-            console.warn(`[remboursement] wallet artiste #${sale.artist_id} insuffisant : ${share.toFixed(2)} € à reprendre, ${wallet.toFixed(2)} € disponibles (billet #${t.id}) -> à régulariser à la main`);
-          }
+          revenueSplit.debitArtistShare(db, t.event_id, share, { ticketId: t.id, source: sale.source });
         }
         // Commission apporteur liée à cette vente : ligne miroir négative.
         const comm = db.prepare(
@@ -291,9 +288,9 @@ function insertTicket(userId, eventId, { pricePaid = 0, storeFeeRate = 0, source
   ).run(userId, eventId, ACTIVITY_LABEL[source] || 'bought a ticket on the website');
 
   if (breakdown && event.artist_id) {
-    const artist = db.prepare('SELECT wallet FROM users WHERE id = ?').get(event.artist_id);
-    const wallet = ((parseFloat(artist?.wallet) || 0) + breakdown.artist).toFixed(2);
-    db.prepare('UPDATE users SET wallet = ? WHERE id = ?').run(wallet, event.artist_id);
+    // Part artiste : principal + invités (partage de la part artiste, lot 7),
+    // une ligne wallet_transactions par bénéficiaire.
+    revenueSplit.creditArtistShare(db, eventId, breakdown.artist, { ticketId: info.lastInsertRowid, source: 'ticket_web' });
     db.prepare(
       `INSERT INTO platform_earnings
          (artist_id, source, source_id, gross, artist_share, platform_share, commission_rate, store_fee, net, apporteur_id, apporteur_amount)

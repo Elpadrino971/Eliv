@@ -6,6 +6,12 @@
  * partir du ledger, et affiche les écarts avec la valeur stockée.
  *
  *   wallet attendu = Σ platform_earnings.artist_share (source ticket / ticket_web, en €)
+ *                    pour les billets SANS lignes wallet_transactions 'ticket_share'
+ *                    (ventes antérieures au lot 7)
+ *                  + Σ wallet_transactions 'ticket_share' (crédits − débits, en €)
+ *                    (lot 7 : part artiste partagée entre principal et invités —
+ *                    platform_earnings porte la part artiste TOTALE sur le
+ *                    principal, les lignes ticket_share portent ce que chacun touche)
  *                  + Σ platform_earnings.artist_share (source gift, en POINTS) / 100
  *                  − Σ withdrawals.amount (hors statut rejected / refused / cancelled)
  *
@@ -43,8 +49,14 @@ const artists = db.prepare(
 ).all(...(ONLY ? [ONLY] : []));
 
 const qTickets = db.prepare(
-  `SELECT COALESCE(SUM(CAST(artist_share AS REAL)), 0) s FROM platform_earnings
-    WHERE artist_id = ? AND source IN ('ticket', 'ticket_web')`
+  `SELECT COALESCE(SUM(CAST(p.artist_share AS REAL)), 0) s FROM platform_earnings p
+    WHERE p.artist_id = ? AND p.source IN ('ticket', 'ticket_web')
+      AND NOT EXISTS (SELECT 1 FROM wallet_transactions w
+                       WHERE w.type = 'ticket_share' AND w.source_id = CAST(p.source_id AS TEXT))`
+);
+const qShares = db.prepare(
+  `SELECT COALESCE(SUM(CASE WHEN direction = 'credit' THEN CAST(amount AS REAL) ELSE -CAST(amount AS REAL) END), 0) s
+     FROM wallet_transactions WHERE user_id = ? AND type = 'ticket_share'`
 );
 const qGifts = db.prepare(
   `SELECT COALESCE(SUM(CAST(artist_share AS REAL)), 0) s FROM platform_earnings
@@ -70,7 +82,7 @@ console.log('');
 let diffs = 0;
 const rows = [];
 for (const a of artists) {
-  const tickets = qTickets.get(a.id).s;          // €
+  const tickets = round2(qTickets.get(a.id).s + qShares.get(a.id).s); // €
   const giftsPts = qGifts.get(a.id).s;           // points
   const withdrawn = qWithdrawals.get(a.id).s;    // €
   const raw = round2(tickets + giftsPts / 100 - withdrawn);
