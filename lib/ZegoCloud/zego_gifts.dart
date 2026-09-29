@@ -38,9 +38,18 @@ String giftFallbackEmoji(Datum gift) {
 }
 
 class ZegoGifts extends StatefulWidget {
-  const ZegoGifts({super.key, required this.eventId, required this.onGiftSent});
+  const ZegoGifts({
+    super.key,
+    required this.eventId,
+    required this.onGiftSent,
+    this.broadcastToZego = true,
+  });
   final String eventId;
   final Function(List<Activity>) onGiftSent;
+
+  /// Faux pour un concert « pro » (régie vidéo) : pas de salle Zego, le
+  /// cadeau passe uniquement par le backend.
+  final bool broadcastToZego;
 
   @override
   State<ZegoGifts> createState() => _ZegoGiftsState();
@@ -190,12 +199,19 @@ class _ZegoGiftsState extends State<ZegoGifts> {
           context: context,
           giftImagePath: gift.image ?? 'assets/gift_icon.png',
           giftName: gift.name ?? 'Gift',
-          userName: Get.find<ZegoController>().userName,
+          // ZegoController n'est pas enregistré sur l'écran « pro » (régie
+          // vidéo) : on retombe alors sur le nom du profil.
+          userName: Get.isRegistered<ZegoController>()
+              ? Get.find<ZegoController>().userName
+              : (userModel.value.user?.artistName?.trim().isNotEmpty ?? false)
+              ? userModel.value.user!.artistName!.trim()
+              : (userModel.value.user?.fullName ?? ''),
         );
 
         final updatedActivities = await eventController.sendGift(
           eventId: widget.eventId,
           giftId: gift.id.toString(),
+          broadcastToZego: widget.broadcastToZego,
         );
 
         if (updatedActivities != null) {

@@ -4,7 +4,6 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/Global/live_router.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/Models/user_model.dart';
-import 'package:artist/ZegoCloud/pre_stream_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -201,7 +200,7 @@ Future<void> showLiveJoinSheet(User artist) async {
       // fermait aussitôt l'écran -> le fan était éjecté du live.
       joinLive(event);
     } else {
-      Get.to(() => PreStreamScreen(event: event));
+      openWaitingRoom(event);
     }
   }
 
