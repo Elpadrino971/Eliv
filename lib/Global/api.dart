@@ -174,4 +174,20 @@ class APIs {
 
   // Like d'un concert
   static String likeEventAPI(String id) => '$baseAPI/event/$id/like';
+
+  // ───────────────────────────────────────────────────────────────────────
+  // « À LA UNE » : concert mis en avant depuis l'admin, affiché en popup au
+  // lancement de l'app. `data` vaut null quand rien n'est à la une.
+  // ───────────────────────────────────────────────────────────────────────
+  static const String featuredEventAPI = '$baseAPI/featured-event';
+
+  // ───────────────────────────────────────────────────────────────────────
+  // PLACES OFFERTES par l'artiste (Bearer, propriétaire du concert).
+  //   POST giftTicketAPI  body { email }  -> { email, state, gifted_count, max }
+  //   GET  giftTicketsAPI                 -> { gifted_count, max, items[] }
+  // ───────────────────────────────────────────────────────────────────────
+  static String giftTicketAPI(String eventId) =>
+      '$baseAPI/events/$eventId/gift-ticket';
+  static String giftTicketsAPI(String eventId) =>
+      '$baseAPI/events/$eventId/gift-tickets';
 }

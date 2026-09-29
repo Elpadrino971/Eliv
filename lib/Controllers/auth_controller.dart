@@ -18,6 +18,7 @@ import 'package:artist/Auth/create_passwrod.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/artist_bottom_bar/artist_bottom_bar.dart';
 import 'package:artist/services/api_services.dart';
+import 'package:artist/widgets/featured_event_sheet.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -60,6 +61,7 @@ class AuthController extends GetxController {
         if (id != null) unawaited(SubscriptionController.syncIdentity(id));
         // Après connexion : direct sur le Live + Feed (index 2), comme à l'ouverture.
         Get.offAll(() => MyBottomBar(index: 2));
+        unawaited(showFeaturedEventIfAny());
       }
       Get.back();
     } else {
@@ -109,6 +111,7 @@ class AuthController extends GetxController {
         Get.back();
         // Après connexion : direct sur le Live + Feed (index 2), comme à l'ouverture.
         Get.offAll(() => MyBottomBar(index: 2));
+        unawaited(showFeaturedEventIfAny());
       } else {
         parseError(value, doBack: true);
       }
@@ -169,6 +172,7 @@ class AuthController extends GetxController {
         final id = userModel.value.user?.id;
         if (id != null) unawaited(SubscriptionController.syncIdentity(id));
         Get.offAll(() => MyBottomBar(index: 2));
+        unawaited(showFeaturedEventIfAny());
         Get.snackbar(
           'signup_welcome_title'.tr,
           'signup_welcome_msg'.tr,
@@ -216,6 +220,7 @@ class AuthController extends GetxController {
                 unawaited(SubscriptionController.syncIdentity(id));
               }
               Get.offAll(() => MyBottomBar(index: 2));
+              unawaited(showFeaturedEventIfAny());
             }
           },
         );

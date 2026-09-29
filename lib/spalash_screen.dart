@@ -10,6 +10,7 @@ import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/user_model.dart';
+import 'package:artist/widgets/featured_event_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -77,6 +78,9 @@ class _SpalashScreenState extends State<SpalashScreen>
     // Le feed « Pour toi » (premier écran après le splash) se charge pendant
     // l'animation, pour être prêt à l'arrivée sur l'onglet Live.
     unawaited(preloadLiveFeed());
+    // Concert « à la une » (popup après le splash) : l'appel part dès
+    // maintenant pour que le popup s'affiche sans délai à l'arrivée.
+    unawaited(prefetchFeaturedEvent());
   }
 
   Future<void> _loadSplashConfig() async {
@@ -322,6 +326,9 @@ class _SpalashScreenState extends State<SpalashScreen>
     // l'Accueil : l'utilisateur tombe tout de suite dans "Pour toi / En direct /
     // Clips". Le X de cet écran ramène à l'Accueil (MyBottomBar index 0).
     Get.offAll(() => hasUser ? MyBottomBar(index: 2) : LoginScreen());
+    // Popup « À la une » (utilisateur connecté uniquement, non bloquant,
+    // silencieux en cas d'échec réseau).
+    if (hasUser) unawaited(showFeaturedEventIfAny());
   }
 
   @override
