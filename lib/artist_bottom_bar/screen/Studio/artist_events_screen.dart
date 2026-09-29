@@ -5,6 +5,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/ZegoCloud/start_stream.dart';
 import 'package:artist/artist_bottom_bar/screen/Events/analytics_screen.dart';
+import 'package:artist/artist_bottom_bar/screen/Events/gift_tickets_screen.dart';
 // import 'package:artist/artist_bottom_bar/screen/Events/artist_live_screen.dart';
 import 'package:artist/widgets/widget.dart';
 import 'package:flutter/material.dart';
@@ -356,6 +357,26 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                         ),
                                       ),
                                     ],
+                                  ),
+
+                                  height(0.01),
+
+                                  // Places offertes : l'artiste invite des
+                                  // proches par e-mail (quota côté serveur).
+                                  MyButton(
+                                    label: 'gift_offer_seats'.tr,
+                                    onTap: () {
+                                      Get.to(
+                                        () => GiftTicketsScreen(event: event),
+                                      );
+                                    },
+                                    image: 'assets/gift_icon.png',
+                                    imageHeight: 15,
+                                    imageWidth: 15,
+                                    imageColor: goldPrimary,
+                                    buttonColor: Colors.transparent,
+                                    borderColor: goldSecondary,
+                                    labelColor: goldPrimary,
                                   ),
                                 ],
                               ),
