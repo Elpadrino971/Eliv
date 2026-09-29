@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:artist/Controllers/controller.dart';
 import 'package:artist/Global/app_date.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Models/event_model.dart';
+import 'package:artist/artist_bottom_bar/screen/Events/event_guests_sheet.dart';
+import 'package:artist/widgets/revenue_estimate_card.dart';
 import 'package:artist/widgets/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -46,6 +50,35 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
     '79.99', '99.99',
   ];
   String? selectedPrice;
+
+  /// Prix numérique du palier choisi (0 = « Gratuit » ou rien de choisi).
+  double get _selectedPriceValue {
+    final raw = selectedPrice;
+    if (raw == null || raw == 'common_free'.tr) return 0;
+    return double.tryParse(raw.replaceAll(' €', '').trim()) ?? 0;
+  }
+
+  /// Artistes invités (partage des revenus) choisis dans le formulaire.
+  List<EventGuest> _guests = [];
+
+  bool get _guestsOver => guestSharesTotal(_guests) > 100;
+
+  Future<void> _addGuest() async {
+    final picked = await EventGuestsSheet.pick(
+      context,
+      excludeIds: _guests.map((g) => g.userId).toSet(),
+    );
+    if (picked == null || !mounted) return;
+    // Part par défaut : 10 %, ou ce qu'il reste si moins.
+    final int remaining =
+        (100 - guestSharesTotal(_guests)).clamp(0, 100).toInt();
+    setState(() {
+      _guests = [
+        ..._guests,
+        picked.copyWith(sharePct: remaining >= 10 ? 10 : remaining),
+      ];
+    });
+  }
 
   bool liveValue = true;
 
@@ -539,29 +572,40 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                   },
                 ),
 
-                height(0.008),
-                // Suggestion de prix (aide à la conversion). La grille est déjà
-                // en charm pricing (.99) ; on met en avant le palier le plus
-                // performant pour guider l'artiste sans le contraindre.
-                Row(
-                  children: [
-                    const Text('💡', style: TextStyle(fontSize: 13)),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        '49,99 € est le tarif le plus choisi (« Populaire »). '
-                        'Entre 39,99 € et 49,99 €, c\'est le meilleur rapport ventes / revenu.',
-                        style: const TextStyle(
-                          color: Color(0xffE6C76A),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
+                // « Ce que tu gagnes » : décomposition du prix choisi (frais
+                // store, net, part artiste, VybzzZ, invités, projections).
+                // Masqué tant qu'aucun palier n'est choisi ; « Gratuit »
+                // affiche le message concert gratuit.
+                if (selectedPrice != null) ...[
+                  height(0.008),
+                  RevenueEstimateCard(
+                    price: _selectedPriceValue,
+                    guests: [
+                      for (final g in _guests)
+                        GuestShare(name: g.displayName, sharePct: g.sharePct),
+                    ],
+                  ),
+                ],
+
+                height(0.015),
+
+                // ── Artistes invités (partage des revenus) ────────────────
+                Text(
+                  'guest_section_title'.tr,
+                  style: TextStyle(
+                    color: Get.isDarkMode ? whiteColor : blackColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                height(0.005),
+                GuestSharesEditor(
+                  guests: _guests,
+                  onChanged: (list) => setState(() => _guests = list),
+                  onAdd: _addGuest,
                 ),
 
-                height(0.01),
+                height(0.015),
 
                 Text(
                   'common_settings'.tr,
@@ -684,63 +728,76 @@ class _ArtistCreateEventState extends State<ArtistCreateEvent> {
                 ],
 
                 height(0.02),
-                MyButton(
-                  label: 'ev_publish'.tr,
-                  onTap: () {
-                    if (formKey.currentState!.validate()) {
-                      // Image de couverture et vidéo teaser désormais
-                      // OPTIONNELLES : le backend les accepte vides. On ne
-                      // bloque plus la création d'un concert pour ça (grosse
-                      // friction retirée). Elles s'ajoutent quand l'artiste veut.
+                // Publier désactivé tant que les parts des invités dépassent
+                // 100 % (message rouge dans la section invités).
+                Opacity(
+                  opacity: _guestsOver ? 0.55 : 1.0,
+                  child: MyButton(
+                    label: 'ev_publish'.tr,
+                    onTap: () {
+                      if (_guestsOver) return;
+                      if (formKey.currentState!.validate()) {
+                        // Image de couverture et vidéo teaser désormais
+                        // OPTIONNELLES : le backend les accepte vides. On ne
+                        // bloque plus la création d'un concert pour ça (grosse
+                        // friction retirée). Elles s'ajoutent quand l'artiste veut.
 
-                      // Call API logic
-                      // firstOrNull : un genre non trouvé ne doit pas
-                      // planter la création (firstWhere sans orElse lançait).
-                      final selectedGenreId = artistController
-                          .genres
-                          .value
-                          .genre
-                          ?.where((e) => e.genre == selectedGenre)
-                          .firstOrNull
-                          ?.id;
+                        // Call API logic
+                        // firstOrNull : un genre non trouvé ne doit pas
+                        // planter la création (firstWhere sans orElse lançait).
+                        final selectedGenreId = artistController
+                            .genres
+                            .value
+                            .genre
+                            ?.where((e) => e.genre == selectedGenre)
+                            .firstOrNull
+                            ?.id;
 
-                      // Fin OPTIONNELLE : si vide -> début + 4h (fenêtre large
-                      // => le bouton "Passer en direct" reste actif, et le
-                      // replay a une référence de fin).
-                      final startLocal = DateTime.tryParse(
-                          '${startDateController.text} ${startTimeController.text}');
-                      final String endIso = (endDateController.text.isEmpty ||
-                              endTimeController.text.isEmpty)
-                          ? (startLocal != null
-                              ? '${startLocal.add(const Duration(hours: 4)).toUtc().toIso8601String().split('.').first}Z'
-                              : AppDate.localPartsToUtcIso(
-                                  startDateController.text, startTimeController.text))
-                          : AppDate.localPartsToUtcIso(
-                              endDateController.text, endTimeController.text);
+                        // Fin OPTIONNELLE : si vide -> début + 4h (fenêtre large
+                        // => le bouton "Passer en direct" reste actif, et le
+                        // replay a une référence de fin).
+                        final startLocal = DateTime.tryParse(
+                            '${startDateController.text} ${startTimeController.text}');
+                        final String endIso = (endDateController.text.isEmpty ||
+                                endTimeController.text.isEmpty)
+                            ? (startLocal != null
+                                ? '${startLocal.add(const Duration(hours: 4)).toUtc().toIso8601String().split('.').first}Z'
+                                : AppDate.localPartsToUtcIso(
+                                    startDateController.text, startTimeController.text))
+                            : AppDate.localPartsToUtcIso(
+                                endDateController.text, endTimeController.text);
 
-                      artistController.createEvent(
-                        name: titleController.text,
-                        description: descriptionController.text,
-                        // Envoye en UTC (avec 'Z') pour que chaque spectateur
-                        // voie l'heure dans son propre fuseau.
-                        startDateTime: AppDate.localPartsToUtcIso(
-                          startDateController.text,
-                          startTimeController.text,
-                        ),
-                        endDateTime: endIso,
-                        ticketPrice: selectedPrice == 'common_free'.tr
-                            ? '0'
-                            : (selectedPrice ?? '0').replaceAll(' €', ''),
-                        genreId: selectedGenreId?.toString() ?? '',
-                        hasLiveChat: liveValue ? '1' : '0',
-                        replayEnabled: replayEnabled ? '1' : '0',
-                        replayDurationDays: '$replayDurationDays',
-                        coverImg: coverImage?.path ?? '',
-                        visualVideo: visualVideo?.path ?? '',
-                      );
-                    }
-                  },
-                  labelColor: whiteColor,
+                        artistController.createEvent(
+                          name: titleController.text,
+                          description: descriptionController.text,
+                          // Envoye en UTC (avec 'Z') pour que chaque spectateur
+                          // voie l'heure dans son propre fuseau.
+                          startDateTime: AppDate.localPartsToUtcIso(
+                            startDateController.text,
+                            startTimeController.text,
+                          ),
+                          endDateTime: endIso,
+                          ticketPrice: selectedPrice == 'common_free'.tr
+                              ? '0'
+                              : (selectedPrice ?? '0').replaceAll(' €', ''),
+                          genreId: selectedGenreId?.toString() ?? '',
+                          hasLiveChat: liveValue ? '1' : '0',
+                          replayEnabled: replayEnabled ? '1' : '0',
+                          replayDurationDays: '$replayDurationDays',
+                          coverImg: coverImage?.path ?? '',
+                          visualVideo: visualVideo?.path ?? '',
+                          // Invités : `[{"user_id":12,"share_pct":30}]`,
+                          // omis s'il n'y en a pas.
+                          guests: _guests.isEmpty
+                              ? null
+                              : jsonEncode(
+                                  _guests.map((g) => g.toShareJson()).toList(),
+                                ),
+                        );
+                      }
+                    },
+                    labelColor: whiteColor,
+                  ),
                 ),
               ],
             ),
