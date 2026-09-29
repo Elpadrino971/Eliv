@@ -111,6 +111,23 @@ class ApiResponse extends ApiService {
           myPrint('HTTP ${response.statusCode} $_url -> ${response.body}');
           return "error ${response.body}";
         }
+      } else if (type == 'put') {
+        // Même contrat que 'post' (form-urlencoded via _body, JSON via
+        // _body2). Utilisé par PUT /events/:id/guests.
+        final response = await http
+            .put(
+              Uri.parse(_url!),
+              headers: finalHeaders,
+              body: _body ?? jsonEncode(_body2),
+            )
+            .timeout(apiTimeout);
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final data = response.body;
+          return data;
+        } else {
+          myPrint('HTTP ${response.statusCode} $_url -> ${response.body}');
+          return "error ${response.body}";
+        }
       }
       return networkErrorResponse('hitAPI: type de requête inconnu "$type"');
     } catch (e) {

@@ -71,6 +71,9 @@ class Event {
   final User? artist;
   final List<Ticket>? tickets;
   final List<Activity>? activities;
+  /// Artistes invités (partage des revenus). Nullable : absent des anciennes
+  /// réponses, `[]` quand le concert n'a pas d'invité.
+  final List<EventGuest>? guests;
 
   Event({
     this.id,
@@ -102,6 +105,7 @@ class Event {
     this.artist,
     this.tickets,
     this.activities,
+    this.guests,
   });
 
   Event copyWith({
@@ -134,6 +138,7 @@ class Event {
     User? artist,
     List<Ticket>? tickets,
     List<Activity>? activities,
+    List<EventGuest>? guests,
   }) => Event(
     id: id ?? this.id,
     artistId: artistId ?? this.artistId,
@@ -164,6 +169,7 @@ class Event {
     artist: artist ?? this.artist,
     tickets: tickets ?? this.tickets,
     activities: activities ?? this.activities,
+    guests: guests ?? this.guests,
   );
 
   factory Event.fromJson(Map<String, dynamic> json) => Event(
@@ -218,6 +224,12 @@ class Event {
         : List<Activity>.from(
             json["activity"]!.map((x) => Activity.fromJson(x)),
           ),
+    guests: json["guests"] is List
+        ? (json["guests"] as List)
+              .whereType<Map>()
+              .map((x) => EventGuest.fromJson(x))
+              .toList()
+        : null,
   );
 
   Map<String, dynamic> toJson() => {
@@ -256,6 +268,80 @@ class Event {
     "activity": activities == null 
         ? []
         : List<dynamic>.from(activities!.map((x) => x.toJson())),
+    "guests": guests == null
+        ? null
+        : List<dynamic>.from(guests!.map((x) => x.toJson())),
+  };
+}
+
+/// Artiste invité sur un concert, avec sa part (en % de la part de l'artiste
+/// principal). `sharePct` vaut 0 tant que l'artiste principal ne l'a pas
+/// renseignée (objets publics des events : seul user_id / nom / photo).
+class EventGuest {
+  final int userId;
+  final String artistName;
+  final String? fullName;
+  final String? profileImage;
+  final int sharePct;
+
+  const EventGuest({
+    required this.userId,
+    required this.artistName,
+    this.fullName,
+    this.profileImage,
+    this.sharePct = 0,
+  });
+
+  /// Nom affiché : nom d'artiste, sinon nom complet, sinon « #id ».
+  String get displayName {
+    if (artistName.trim().isNotEmpty) return artistName;
+    final full = (fullName ?? '').trim();
+    if (full.isNotEmpty) return full;
+    return '#$userId';
+  }
+
+  EventGuest copyWith({
+    int? userId,
+    String? artistName,
+    String? fullName,
+    String? profileImage,
+    int? sharePct,
+  }) => EventGuest(
+    userId: userId ?? this.userId,
+    artistName: artistName ?? this.artistName,
+    fullName: fullName ?? this.fullName,
+    profileImage: profileImage ?? this.profileImage,
+    sharePct: sharePct ?? this.sharePct,
+  );
+
+  /// Accepte les objets de `/artists/search` (id) comme ceux de
+  /// `/events/:id/guests` (user_id).
+  factory EventGuest.fromJson(Map json) {
+    final rawId = json["user_id"] ?? json["id"];
+    final rawPct = json["share_pct"];
+    return EventGuest(
+      userId: rawId is int ? rawId : int.tryParse('${rawId ?? ''}') ?? 0,
+      artistName: (json["artist_name"] ?? '').toString(),
+      fullName: json["full_name"]?.toString(),
+      profileImage: json["profile_image"]?.toString(),
+      sharePct: rawPct is int
+          ? rawPct
+          : (double.tryParse('${rawPct ?? ''}') ?? 0).round(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    "user_id": userId,
+    "artist_name": artistName,
+    "full_name": fullName,
+    "profile_image": profileImage,
+    "share_pct": sharePct,
+  };
+
+  /// Format attendu par POST /events et PUT /events/:id/guests.
+  Map<String, dynamic> toShareJson() => {
+    "user_id": userId,
+    "share_pct": sharePct,
   };
 }
 
