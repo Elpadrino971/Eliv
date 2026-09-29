@@ -190,4 +190,21 @@ class APIs {
       '$baseAPI/events/$eventId/gift-ticket';
   static String giftTicketsAPI(String eventId) =>
       '$baseAPI/events/$eventId/gift-tickets';
+
+  // ───────────────────────────────────────────────────────────────────────
+  // REVENUS & ARTISTES INVITÉS (Bearer).
+  //   GET pricingEstimateAPI(price)  -> { price, store_fee_rate, net,
+  //        artist_rate, artist_share, platform_share, promo, currency, grid }
+  //   GET artistsSearchAPI(q)        -> [{ id, artist_name, full_name,
+  //        profile_image }]
+  //   GET eventGuestsAPI(id)         -> { guests[], remaining_pct }
+  //   PUT eventGuestsAPI(id)  form { guests: '[{"user_id","share_pct"}]' }
+  // POST eventsAPI accepte aussi le champ `guests` (même JSON).
+  // ───────────────────────────────────────────────────────────────────────
+  static String pricingEstimateAPI(String price) =>
+      '$baseAPI/pricing/estimate?price=${Uri.encodeQueryComponent(price)}';
+  static String artistsSearchAPI(String query) =>
+      '$baseAPI/artists/search?q=${Uri.encodeQueryComponent(query)}';
+  static String eventGuestsAPI(String eventId) =>
+      '$baseAPI/events/$eventId/guests';
 }

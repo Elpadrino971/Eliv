@@ -54,11 +54,14 @@ class ArtistController extends GetxController {
     required String visualVideo,
     String replayEnabled = '1',
     String replayDurationDays = '60',
+    // Artistes invités (partage des revenus) : JSON string
+    // `[{"user_id":12,"share_pct":30}]`. Non envoyé si vide.
+    String? guests,
   }) async {
     myLoadingDialog();
     response.typeSetter = 'post';
     response.urlSetter = APIs.eventsAPI;
-    response.bodySetter = {
+    final Map<String, String> body = {
       'user_id': userModel.value.user?.id.toString() ?? '1',
       'name': name,
       'description': description,
@@ -71,6 +74,10 @@ class ArtistController extends GetxController {
       'replay_enabled': replayEnabled,
       'replay_duration_days': replayDurationDays,
     };
+    if (guests != null && guests.trim().isNotEmpty) {
+      body['guests'] = guests;
+    }
+    response.bodySetter = body;
     await response
         .hitMultipartAPI(
           coverImg,

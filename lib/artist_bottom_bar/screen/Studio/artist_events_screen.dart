@@ -5,6 +5,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/ZegoCloud/start_stream.dart';
 import 'package:artist/artist_bottom_bar/screen/Events/analytics_screen.dart';
+import 'package:artist/artist_bottom_bar/screen/Events/event_guests_sheet.dart';
 import 'package:artist/artist_bottom_bar/screen/Events/gift_tickets_screen.dart';
 // import 'package:artist/artist_bottom_bar/screen/Events/artist_live_screen.dart';
 import 'package:artist/widgets/widget.dart';
@@ -374,6 +375,24 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                     imageHeight: 15,
                                     imageWidth: 15,
                                     imageColor: goldPrimary,
+                                    buttonColor: Colors.transparent,
+                                    borderColor: goldSecondary,
+                                    labelColor: goldPrimary,
+                                  ),
+
+                                  height(0.01),
+
+                                  // Invités & partage des revenus : même
+                                  // sheet qu'à la création, en mode édition
+                                  // (GET puis PUT /events/:id/guests).
+                                  MyButton(
+                                    label: 'guest_manage'.tr,
+                                    onTap: () {
+                                      EventGuestsEditSheet.show(
+                                        context,
+                                        eventId: event.id.toString(),
+                                      );
+                                    },
                                     buttonColor: Colors.transparent,
                                     borderColor: goldSecondary,
                                     labelColor: goldPrimary,
