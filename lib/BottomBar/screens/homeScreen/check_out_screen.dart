@@ -49,7 +49,8 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   // Vrai quand le store ne connaît pas le produit ticket_XX.
   bool _productMissing = false;
 
-  String get _fallbackPriceLabel => '${_ticketPrice.toStringAsFixed(2)} €';
+  // « Gratuit » pour un concert à 0 € (jamais « 0.00 € »).
+  String get _fallbackPriceLabel => priceLabel(widget.event.ticketPrice);
   String get _priceLabel => _storePrice ?? _fallbackPriceLabel;
 
   /// Android : aucun produit billet n'existe encore sur Google Play -> on
@@ -359,6 +360,8 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
               height(0.01),
 
               // Paiement du billet par ACHAT IN-APP (App Store / Google Play).
+              // Concert gratuit : aucun paiement, donc pas de mention de store.
+              if (_ticketPrice > 0)
               Row(
                 children: [
                   const Icon(Icons.lock_rounded, color: goldPrimary, size: 18),
@@ -412,7 +415,9 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                     _androidUnavailableNote()
                   else
                     MyButton(
-                      label: _storePrice != null
+                      label: _ticketPrice <= 0
+                          ? 'checkout_reserve_free'.tr
+                          : _storePrice != null
                           ? 'checkout_pay_amount'.trParams({
                               'price': _storePrice!,
                             })
