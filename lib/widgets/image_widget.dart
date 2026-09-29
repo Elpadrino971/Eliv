@@ -11,6 +11,10 @@ class ImageWidget extends StatelessWidget {
   final BoxFit? fit;
   final Color? color;
   final String errorAsset;
+
+  /// Largeur max de décodage en mémoire (une couverture 4000 px décodée en
+  /// pleine résolution pèse ~60 Mo ; à 1080 px, ~5 Mo). null = inchangé.
+  final int? memCacheWidth;
   const ImageWidget({
     super.key,
     required this.url,
@@ -19,6 +23,7 @@ class ImageWidget extends StatelessWidget {
     this.fit,
     this.color,
     this.errorAsset = "assets/no_img.jpg",
+    this.memCacheWidth,
   });
 
   /// Si une URL complète a été collée DANS le champ (ex. cover_image =
@@ -45,6 +50,7 @@ class ImageWidget extends StatelessWidget {
       width: width,
       color: color,
       fit: fit ?? BoxFit.cover,
+      memCacheWidth: memCacheWidth,
       placeholder: (context, url) => Shimmer.fromColors(
         baseColor: Colors.grey.shade400,
         highlightColor: Colors.grey.shade300, //whiteColor,

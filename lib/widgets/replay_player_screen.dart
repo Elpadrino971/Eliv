@@ -63,7 +63,8 @@ class ReplayPlayerScreen extends StatefulWidget {
   State<ReplayPlayerScreen> createState() => _ReplayPlayerScreenState();
 }
 
-class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
+class _ReplayPlayerScreenState extends State<ReplayPlayerScreen>
+    with WidgetsBindingObserver {
   VideoPlayerController? _controller;
   bool _ready = false;
   bool _error = false;
@@ -72,6 +73,9 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
   bool _handedOff = false;
   // Fermeture explicite (croix) -> ne pas restaurer la mini-carte.
   bool _closed = false;
+  // Arrière-plan : la vidéo jouait -> on la relance au retour. (Un seul
+  // lecteur ici, gardé en mémoire : on reprend exactement où on en était.)
+  bool _wasPlayingBeforeBackground = false;
 
   bool _liked = false;
   int _likes = 0;
@@ -90,6 +94,7 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Ouverture d'une NOUVELLE vidéo alors qu'un mini-lecteur flotte encore :
     // on ferme l'ancien pour ne jamais avoir deux vidéos qui jouent en même
     // temps (le ré-agrandissement passe par "adopt" et ne tombe pas ici).
@@ -127,8 +132,10 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
       return;
     }
     try {
+      // Playlist de clips (mobile) : HLS plafonné à 720p pour un démarrage
+      // rapide ; replay/live de concert : URL intacte (qualité max, AirPlay).
       final src = _hasPlaylist
-          ? _playlist[_index]
+          ? Mux.mobileHls(_playlist[_index])
           : (widget.url ?? Mux.hlsUrl(widget.playbackId!));
       final c = VideoPlayerController.networkUrl(Uri.parse(src));
       await c.initialize();
@@ -166,7 +173,9 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
     await old?.pause();
     await old?.dispose();
     try {
-      final c = VideoPlayerController.networkUrl(Uri.parse(_playlist[i]));
+      final c = VideoPlayerController.networkUrl(
+        Uri.parse(Mux.mobileHls(_playlist[i])),
+      );
       await c.initialize();
       c.play();
       if (!mounted) {
@@ -217,7 +226,23 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) return;
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      _wasPlayingBeforeBackground =
+          _wasPlayingBeforeBackground || c.value.isPlaying;
+      c.pause();
+    } else if (state == AppLifecycleState.resumed) {
+      if (_wasPlayingBeforeBackground) c.play();
+      _wasPlayingBeforeBackground = false;
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _watchTimer?.cancel();
     _autoNextTimer?.cancel();
     // On ne dispose le lecteur QUE si cet écran en est le propriétaire :

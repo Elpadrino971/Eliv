@@ -6,6 +6,7 @@ import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Global/live_router.dart';
+import 'package:artist/Global/mux.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/artist_detail.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/create_short_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
@@ -33,6 +34,26 @@ String _fmtDur(Duration d) {
 ///  - Page 0 "Pour toi" : feed vertical de reels (VybzzZ Originals)
 ///  - Page 1 "En direct" : lives en cours, apercu gratuit 60s puis gate opaque
 ///  - Page 2 "Clips" : feed vertical des shorts UGC (uploadés via Mux)
+///
+/// ── Audit mémoire des lecteurs vidéo (lot 6) ──
+/// AVANT : « Pour toi » = 1 lecteur HLS (EventController.currentController),
+/// recréé à chaque swipe (init réseau complète -> démarrage lent, écran noir
+/// entre deux clips) ; « Clips » = 1 lecteur idem. Les deux feeds ne
+/// coexistent jamais (PageView horizontal sans keep-alive : la page qui sort
+/// de l'écran est détruite, son lecteur libéré dans dispose()). En
+/// arrière-plan (téléphone verrouillé) : AUCUNE pause — avec
+/// UIBackgroundModes=audio, le clip continuait à jouer, tampons HLS +
+/// décodeur conservés -> l'app suspendue restait lourde et iOS la tuait
+/// (relance à froid sur le splash).
+/// APRÈS : chaque feed garde au plus 2 lecteurs (courant + suivant préchargé,
+/// jamais lu avant d'être promu), le précédent est libéré au swipe, et TOUS
+/// les lecteurs sont libérés au passage en arrière-plan puis recréés au
+/// retour (même clip, même position). Poster Mux (720 px) par-dessus la vidéo
+/// tant que la première image n'est pas rendue. Aucun await dans build.
+/// Le PageView vertical de chaque feed n'utilise ni keepPage utile ni
+/// AutomaticKeepAliveClientMixin (pages détruites hors écran). Quand on
+/// quitte l'onglet Live (Accueil/Profil…), MyBottomBar remplace l'écran :
+/// tout est libéré.
 class VybzLiveScreen extends StatefulWidget {
   const VybzLiveScreen({super.key});
 
@@ -184,27 +205,80 @@ class _ForYouFeed extends StatefulWidget {
   State<_ForYouFeed> createState() => _ForYouFeedState();
 }
 
-class _ForYouFeedState extends State<_ForYouFeed> {
+class _ForYouFeedState extends State<_ForYouFeed> with WidgetsBindingObserver {
   final eventController = Get.find<EventController>();
 
   /// Vrai pendant le chargement de secours ([_ensureContentLoaded]) : on
   /// affiche alors un spinner (fini) plutôt que l'état vide.
   bool _loading = false;
 
+  // ── Cycle de vie (arrière-plan) ──
+  // Les lecteurs de ce feed (courant + suivant préchargé, voir
+  // EventController) sont LIBÉRÉS quand l'app passe en arrière-plan
+  // (décodeur + tampons HLS = plusieurs dizaines de Mo) et recréés au
+  // retour, sur le même clip et à la même position. Moins de mémoire pendant
+  // la suspension -> iOS tue moins souvent l'app. Note : Info.plist déclare
+  // UIBackgroundModes=audio, sans cette pause le clip continuait à jouer
+  // (son) téléphone verrouillé.
+  bool _releasedInBackground = false;
+  bool _wasPlaying = false;
+  Duration _resumeAt = Duration.zero;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initFirstReel();
     _ensureContentLoaded();
   }
 
   void _initFirstReel() {
-    final events = eventController.allEvents.value.data ?? [];
-    final url = eventController.reelUrlFor(
-      events.isNotEmpty ? events[0] : null,
-    );
+    // Le PageView repart toujours de la page 0 quand ce feed est (re)créé.
+    eventController.currentVideoIndex.value = 0;
+    final url = eventController.reelUrlAt(0);
     if (url != null) {
       eventController.initVideoPlayer(url);
+      eventController.preloadNextVideo(eventController.reelUrlAt(1));
+    }
+  }
+
+  /// Retour d'arrière-plan : recrée le lecteur du clip affiché (à la
+  /// position mémorisée) et relance le préchargement du suivant.
+  void _reopenCurrent() {
+    final index = eventController.currentVideoIndex.value;
+    final url = eventController.reelUrlAt(index);
+    if (url == null) return;
+    eventController.initVideoPlayer(url, startAt: _resumeAt);
+    eventController.preloadNextVideo(eventController.reelUrlAt(index + 1));
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final c = eventController.currentController.value;
+    if (state == AppLifecycleState.inactive) {
+      // Centre de contrôle, appel entrant, feuille de partage… : simple pause.
+      if (c != null && c.value.isInitialized) {
+        _wasPlaying = _wasPlaying || c.value.isPlaying;
+        c.pause();
+      }
+    } else if (state == AppLifecycleState.paused) {
+      if (c != null && c.value.isInitialized) {
+        _wasPlaying = _wasPlaying || c.value.isPlaying;
+        _resumeAt = c.value.position;
+      }
+      // Libère le courant ET le préchargé.
+      eventController.disposeVideoController();
+      eventController.update();
+      _releasedInBackground = true;
+    } else if (state == AppLifecycleState.resumed) {
+      if (_releasedInBackground) {
+        _releasedInBackground = false;
+        _reopenCurrent();
+        _resumeAt = Duration.zero;
+      } else if (_wasPlaying && c != null && c.value.isInitialized) {
+        c.play();
+      }
+      _wasPlaying = false;
     }
   }
 
@@ -236,6 +310,7 @@ class _ForYouFeedState extends State<_ForYouFeed> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     eventController.disposeVideoController();
     super.dispose();
   }
@@ -276,6 +351,11 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                 return GetBuilder<EventController>(
                   builder: (controller) {
                     final videoController = controller.currentController.value;
+                    // Le lecteur courant n'est rattaché qu'à SA page : la
+                    // page voisine (visible pendant le swipe) montre son
+                    // propre poster, pas la vidéo en cours.
+                    final isCurrentPage =
+                        controller.currentVideoIndex.value == index;
 
                     return Stack(
                       children: [
@@ -285,21 +365,12 @@ class _ForYouFeedState extends State<_ForYouFeed> {
                             width: Get.width,
                             height: Get.height,
                             color: blackColor,
-                            child:
-                                videoController != null &&
-                                    videoController.value.isInitialized
-                                ? Center(
-                                    child: AspectRatio(
-                                      aspectRatio:
-                                          videoController.value.aspectRatio,
-                                      child: VideoPlayer(videoController),
-                                    ),
-                                  )
-                                : FeedPoster(
-                                    url: index < clipUrls.length
-                                        ? clipUrls[index]
-                                        : null,
-                                  ),
+                            child: _ReelSurface(
+                              controller: isCurrentPage ? videoController : null,
+                              posterUrl: index < clipUrls.length
+                                  ? clipUrls[index]
+                                  : null,
+                            ),
                           ),
                         ),
                         if (controller.showVideoControls.value &&
@@ -686,6 +757,45 @@ class _LivesFeedState extends State<_LivesFeed> {
   }
 }
 
+/// Surface vidéo d'un clip de feed (« Pour toi » / « Clips ») : le lecteur
+/// dès qu'il est initialisé, avec la miniature Mux ([FeedPoster]) PAR-DESSUS
+/// tant que sa première image n'est pas rendue (position encore à zéro).
+/// Jamais d'écran noir entre deux clips ni au lancement. Se rafraîchit sur
+/// chaque changement de valeur du lecteur (init, position), sans passer par
+/// un rebuild de tout le feed.
+class _ReelSurface extends StatelessWidget {
+  const _ReelSurface({required this.controller, required this.posterUrl});
+
+  final VideoPlayerController? controller;
+  final String? posterUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = controller;
+    if (c == null) return FeedPoster(url: posterUrl);
+    return ValueListenableBuilder<VideoPlayerValue>(
+      valueListenable: c,
+      builder: (context, value, _) {
+        final firstFrameShown =
+            value.isInitialized && value.position > Duration.zero;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            if (value.isInitialized)
+              Center(
+                child: AspectRatio(
+                  aspectRatio: value.aspectRatio,
+                  child: VideoPlayer(c),
+                ),
+              ),
+            if (!firstFrameShown) FeedPoster(url: posterUrl),
+          ],
+        );
+      },
+    );
+  }
+}
+
 /// Attente (finie) d'un feed : fond bleu nuit + spinner or.
 class _FeedLoading extends StatelessWidget {
   const _FeedLoading();
@@ -942,6 +1052,9 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
           child: ImageWidget(
             url: '${APIs.eventImageIP}/${e.coverImage}',
             fit: BoxFit.cover,
+            // Couverture plein écran : décodée à 1080 px max (pas en pleine
+            // résolution d'upload).
+            memCacheWidth: 1080,
           ),
         ),
         // Dégradés pour lisibilité
@@ -1150,26 +1263,49 @@ class _ClipsFeed extends StatefulWidget {
   State<_ClipsFeed> createState() => _ClipsFeedState();
 }
 
-class _ClipsFeedState extends State<_ClipsFeed> {
+class _ClipsFeedState extends State<_ClipsFeed> with WidgetsBindingObserver {
   final eventController = Get.find<EventController>();
   final PageController _pageController = PageController();
+
+  // ── Lecteurs : au plus DEUX vivants ──
+  //  - [_controller] : clip affiché (lu quand l'onglet est actif) ;
+  //  - [_next]       : clip index + 1, initialisé SANS être lu (démarrage
+  //                    instantané au swipe), promu courant au changement de
+  //                    page. Le clip précédent est libéré à ce moment-là.
+  // Avant : 1 seul lecteur, recréé (init réseau complète) à chaque swipe.
   VideoPlayerController? _controller;
+  VideoPlayerController? _next;
+  int _nextIndex = -1;
   int _index = 0;
+
+  /// Position à appliquer au lecteur courant dès qu'il est prêt (reprise
+  /// après un passage en arrière-plan).
+  Duration? _pendingSeek;
+
+  // ── Cycle de vie (arrière-plan) : mêmes règles que « Pour toi » ──
+  bool _releasedInBackground = false;
+  bool _wasPlaying = false;
+  Duration _resumeAt = Duration.zero;
+
+  /// Plein écran (ReplayPlayerScreen) ouvert par-dessus : le clip du feed
+  /// reste en pause et n'est pas relancé au retour d'arrière-plan.
+  bool _inFullscreen = false;
 
   List<String> get _ids => eventController.clipsFeedUrls;
 
   @override
   void initState() {
     super.initState();
-    if (widget.isActive && _ids.isNotEmpty) _initVideo(_ids.first);
+    WidgetsBinding.instance.addObserver(this);
+    if (widget.isActive && _ids.isNotEmpty) _showClip(0);
   }
 
   @override
   void didUpdateWidget(covariant _ClipsFeed old) {
     super.didUpdateWidget(old);
     if (widget.isActive && !old.isActive) {
-      if (_controller == null && _ids.isNotEmpty) {
-        _initVideo(_ids[_index]);
+      if (_controller == null) {
+        _showClip(_index);
       } else {
         _controller?.play();
       }
@@ -1178,24 +1314,157 @@ class _ClipsFeedState extends State<_ClipsFeed> {
     }
   }
 
-  void _initVideo(String videoUrl) {
+  /// Nouveau lecteur HLS (URL Mux plafonnée à 720p), en boucle, init lancée
+  /// tout de suite (jamais deux initialize() sur le même lecteur).
+  VideoPlayerController _createPlayer(String url) {
+    final c = VideoPlayerController.networkUrl(Uri.parse(Mux.mobileHls(url)));
+    c.setLooping(true);
+    unawaited(
+      c.initialize().then((_) => _onInitialized(c)).catchError((Object e) {
+        myPrint('clips feed: $e');
+      }),
+    );
+    return c;
+  }
+
+  /// Fin d'initialize() : si ce lecteur est (devenu) le courant, on le lance ;
+  /// s'il est encore le préchargé, il reste en pause jusqu'à sa promotion.
+  void _onInitialized(VideoPlayerController c) {
+    if (!mounted || c != _controller) return;
+    _startCurrent(c);
+  }
+
+  /// Lance le lecteur courant (initialisé) : setLooping + position de reprise
+  /// éventuelle + play si l'onglet est visible, puis rafraîchit la page.
+  void _startCurrent(VideoPlayerController c) {
+    final seek = _pendingSeek;
+    _pendingSeek = null;
+    c.setLooping(true);
+    if (seek != null && seek > Duration.zero) c.seekTo(seek);
+    if (widget.isActive && !_inFullscreen) c.play();
+    if (mounted) setState(() {});
+  }
+
+  /// Affiche (et lit si l'onglet est actif) le clip [i] : réutilise le lecteur
+  /// préchargé s'il correspond, sinon en crée un ; libère le précédent ; puis
+  /// précharge [i] + 1. Aucun await : rien ne bloque l'UI.
+  void _showClip(int i, {Duration? startAt}) {
+    final ids = _ids;
+    if (i < 0 || i >= ids.length) return;
+    _index = i;
+    _pendingSeek = startAt;
+
+    final previous = _controller;
+    _controller = null;
+    previous?.dispose();
+
+    final VideoPlayerController c;
+    final preloaded = _next;
+    if (preloaded != null && _nextIndex == i && !preloaded.value.hasError) {
+      c = preloaded;
+      _next = null;
+      _nextIndex = -1;
+    } else {
+      _next?.dispose();
+      _next = null;
+      _nextIndex = -1;
+      c = _createPlayer(ids[i]);
+    }
+    _controller = c;
+    // Déjà prêt (préchargé) : lecture immédiate ; sinon _onInitialized suivra.
+    if (c.value.isInitialized) _startCurrent(c);
+    _preload(i + 1);
+    if (mounted) setState(() {});
+  }
+
+  /// Précharge le clip [i] (initialisé, jamais lu tant qu'il n'est pas promu).
+  void _preload(int i) {
+    final ids = _ids;
+    if (i < 0 || i >= ids.length) {
+      _next?.dispose();
+      _next = null;
+      _nextIndex = -1;
+      return;
+    }
+    if (_next != null && _nextIndex == i) return;
+    _next?.dispose();
+    _next = _createPlayer(ids[i]);
+    _nextIndex = i;
+  }
+
+  /// Libère les deux lecteurs (sortie de l'écran, arrière-plan).
+  void _releaseAll() {
     _controller?.dispose();
     _controller = null;
-    final c = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
-      ..initialize().then((_) {
-        if (mounted) setState(() {});
-      });
-    c.setLooping(true);
-    _controller = c;
-    if (widget.isActive) c.play();
-    if (mounted) setState(() {});
+    _next?.dispose();
+    _next = null;
+    _nextIndex = -1;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final c = _controller;
+    if (state == AppLifecycleState.inactive) {
+      if (c != null && c.value.isInitialized) {
+        _wasPlaying = _wasPlaying || c.value.isPlaying;
+        c.pause();
+      }
+    } else if (state == AppLifecycleState.paused) {
+      if (c == null && _next == null) return;
+      if (c != null && c.value.isInitialized) {
+        _wasPlaying = _wasPlaying || c.value.isPlaying;
+        _resumeAt = c.value.position;
+      }
+      _releaseAll();
+      _releasedInBackground = true;
+      if (mounted) setState(() {});
+    } else if (state == AppLifecycleState.resumed) {
+      if (_releasedInBackground) {
+        _releasedInBackground = false;
+        if (widget.isActive && !_inFullscreen) {
+          _showClip(_index, startAt: _resumeAt);
+        }
+        _resumeAt = Duration.zero;
+      } else if (_wasPlaying &&
+          widget.isActive &&
+          !_inFullscreen &&
+          c != null &&
+          c.value.isInitialized) {
+        c.play();
+      }
+      _wasPlaying = false;
+    }
   }
 
   @override
   void dispose() {
-    _controller?.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _releaseAll();
     _pageController.dispose();
     super.dispose();
+  }
+
+  /// Tap sur un clip (paysage) → plein écran paysage (façon YouTube).
+  Future<void> _openFullscreen(int index) async {
+    final ids = _ids;
+    if (index >= ids.length) return;
+    _controller?.pause();
+    _inFullscreen = true;
+    await Get.to(() => ReplayPlayerScreen(
+          url: ids[index],
+          playlist: ids,
+          startIndex: index,
+          autoAdvance: true,
+          forceLandscape: true,
+        ));
+    _inFullscreen = false;
+    if (!mounted || !widget.isActive) return;
+    // Le lecteur a pu être libéré pendant un passage en arrière-plan.
+    if (_controller == null) {
+      _showClip(_index);
+    } else {
+      _controller?.play();
+    }
   }
 
   @override
@@ -1209,28 +1478,14 @@ class _ClipsFeedState extends State<_ClipsFeed> {
           controller: _pageController,
           scrollDirection: Axis.vertical,
           itemCount: ids.length,
-          onPageChanged: (i) {
-            _index = i;
-            _initVideo(ids[i]);
-          },
+          onPageChanged: _showClip,
           itemBuilder: (context, index) {
-            final c = _controller;
+            // Le lecteur courant n'est rattaché qu'à SA page : la page
+            // voisine (visible pendant le swipe) montre son propre poster.
+            final c = index == _index ? _controller : null;
             final ready = c != null && c.value.isInitialized;
-            // Tap sur un clip (paysage) → plein écran paysage (façon YouTube).
-            final openFullscreen = () async {
-              if (index >= ids.length) return;
-              _controller?.pause();
-              await Get.to(() => ReplayPlayerScreen(
-                    url: ids[index],
-                    playlist: ids,
-                    startIndex: index,
-                    autoAdvance: true,
-                    forceLandscape: true,
-                  ));
-              if (mounted && widget.isActive) _controller?.play();
-            };
             return GestureDetector(
-              onTap: openFullscreen,
+              onTap: () => _openFullscreen(index),
               child: Container(
                 width: Get.width,
                 height: Get.height,
@@ -1238,15 +1493,10 @@ class _ClipsFeedState extends State<_ClipsFeed> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    if (ready)
-                      Center(
-                        child: AspectRatio(
-                          aspectRatio: c.value.aspectRatio,
-                          child: VideoPlayer(c),
-                        ),
-                      )
-                    else
-                      FeedPoster(url: index < _ids.length ? _ids[index] : null),
+                    _ReelSurface(
+                      controller: c,
+                      posterUrl: index < ids.length ? ids[index] : null,
+                    ),
                     // Indice "plein écran" en bas à droite du clip.
                     if (ready)
                       Positioned(

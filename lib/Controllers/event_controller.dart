@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/mux.dart';
 import 'package:artist/Models/abusive_words_model.dart';
 import 'package:artist/Models/artist_clips_model.dart';
 import 'package:artist/Models/event_model.dart';
@@ -68,42 +69,111 @@ class EventController extends GetxController {
   var currentVideoIndex = 0.obs;
   var showVideoControls = false.obs;
 
-  void initVideoPlayer(String videoUrl) {
+  // ── Lecteurs du feed « Pour toi » : au plus DEUX vivants ──
+  //  - [currentController] : clip affiché (lu) ;
+  //  - [_nextController]   : clip index + 1, initialisé SANS être lu
+  //    (préchargement), promu lecteur courant au swipe -> démarrage
+  //    instantané. Le clip précédent est libéré au changement de page ; les
+  //    deux sont libérés quand le feed quitte l'écran ou passe en
+  //    arrière-plan (voir _ForYouFeedState dans vybz_live_screen.dart).
+  VideoPlayerController? _nextController;
+  String? _nextUrl;
+
+  /// Accepte une URL complète (HLS Mux : https://stream.mux.com/<id>.m3u8,
+  /// plafonnée à 720p pour un démarrage plus rapide sur mobile) ou un simple
+  /// nom de fichier sur le backend.
+  Uri _videoUri(String videoUrl) => videoUrl.startsWith('http')
+      ? Uri.parse(Mux.mobileHls(videoUrl))
+      : Uri.parse('${APIs.eventVideoIP}/$videoUrl');
+
+  /// Lecteur courant du feed. [startAt] : position de reprise (retour
+  /// d'arrière-plan). Réutilise le lecteur préchargé si c'est le même clip.
+  void initVideoPlayer(String videoUrl, {Duration? startAt}) {
     currentController.value?.dispose();
     currentController.value = null;
 
-    // Accepte une URL complete (HLS Mux : https://stream.mux.com/<id>.m3u8)
-    // ou un simple nom de fichier sur le backend.
-    final uri = videoUrl.startsWith('http')
-        ? Uri.parse(videoUrl)
-        : Uri.parse('${APIs.eventVideoIP}/$videoUrl');
-    final controller =
-        VideoPlayerController.networkUrl(uri)
-          ..initialize().then((_) {
-            update();
-          });
+    // Clip déjà préchargé : promu lecteur courant, lecture immédiate.
+    final preloaded = _nextController;
+    if (preloaded != null && _nextUrl == videoUrl && !preloaded.value.hasError) {
+      _nextController = null;
+      _nextUrl = null;
+      currentController.value = preloaded;
+      preloaded.setLooping(true);
+      preloaded.setVolume(isMuted.value ? 0 : 1);
+      if (startAt != null && startAt > Duration.zero) preloaded.seekTo(startAt);
+      // play() avant la fin de initialize() est mémorisé par video_player et
+      // appliqué dès que le lecteur est prêt.
+      preloaded.play();
+      update();
+      return;
+    }
+    _nextController?.dispose();
+    _nextController = null;
+    _nextUrl = null;
+
+    final controller = VideoPlayerController.networkUrl(_videoUri(videoUrl));
     controller.setLooping(true);
     controller.setVolume(isMuted.value ? 0 : 1);
     currentController.value = controller;
+    // setLooping / play sont ré-appliqués juste après initialize() ; si le
+    // lecteur a été remplacé entre-temps (swipe rapide), on ne relance rien.
+    controller.initialize().then((_) {
+      if (currentController.value != controller) return;
+      if (startAt != null && startAt > Duration.zero) {
+        controller.seekTo(startAt);
+      }
+      controller.setLooping(true);
+      controller.play();
+      update();
+    }).catchError((Object e) {
+      myPrint('reel init: $e');
+    });
     controller.play();
     update();
   }
 
+  /// Précharge le clip suivant du feed (initialisé, jamais lu tant qu'il
+  /// n'est pas promu par [initVideoPlayer]). null -> libère le préchargé.
+  void preloadNextVideo(String? videoUrl) {
+    if (videoUrl != null && videoUrl == _nextUrl) return;
+    _nextController?.dispose();
+    _nextController = null;
+    _nextUrl = null;
+    if (videoUrl == null) return;
+    final controller = VideoPlayerController.networkUrl(_videoUri(videoUrl));
+    controller.setLooping(true);
+    controller.setVolume(isMuted.value ? 0 : 1);
+    _nextController = controller;
+    _nextUrl = videoUrl;
+    controller.initialize().then((_) {
+      // Promu lecteur courant avant la fin de l'init : la vue se rafraîchit.
+      if (currentController.value == controller) update();
+    }).catchError((Object e) {
+      myPrint('reel preload: $e');
+    });
+  }
+
+  /// URL du reel à l'index [index] du feed « Pour toi » (clips admin en
+  /// priorité, sinon vidéo du concert), ou null hors bornes / sans vidéo.
+  String? reelUrlAt(int index) {
+    final ids = forYouClipUrls;
+    if (ids.isNotEmpty) {
+      return (index >= 0 && index < ids.length) ? ids[index] : null;
+    }
+    final events = allEvents.value.data ?? const <Event>[];
+    if (index < 0 || index >= events.length) return null;
+    final reel = events[index].videoReel;
+    return (reel != null && reel.isNotEmpty) ? reel : null;
+  }
+
   void onPageChanged(int index) {
     currentVideoIndex.value = index;
-    final ids = forYouClipUrls;
-    String? url;
-    if (ids.isNotEmpty) {
-      url = ids[index % ids.length];
-    } else {
-      final reel = allEvents.value.data?[index]?.videoReel;
-      url = (reel != null && reel.isNotEmpty) ? reel : null;
-    }
+    final url = reelUrlAt(index);
     if (url != null) {
       initVideoPlayer(url);
+      preloadNextVideo(reelUrlAt(index + 1));
     } else {
-      currentController.value?.dispose();
-      currentController.value = null;
+      disposeVideoController();
     }
     update();
   }
@@ -203,9 +273,14 @@ class EventController extends GetxController {
     update();
   }
 
+  /// Libère le lecteur courant ET le clip préchargé (sortie du feed,
+  /// passage en arrière-plan).
   void disposeVideoController() {
     currentController.value?.dispose();
     currentController.value = null;
+    _nextController?.dispose();
+    _nextController = null;
+    _nextUrl = null;
   }
 
   /// Positionne le drapeau de chargement de la liste visée par
