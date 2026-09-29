@@ -1,16 +1,32 @@
+import 'dart:io';
+
 import 'package:artist/Controllers/ArtistController/artist_controller.dart';
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/ZegoCloud/start_stream.dart';
+import 'package:artist/widgets/image_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+
+/// Image par défaut d'un live sans affiche (servie par le backend).
+const String kDefaultLiveCoverUrl =
+    'https://api.vybzzz.online/defaults/live-cover.jpg';
+
+/// Choix de la feuille « Lancer un live » : titre + image facultative.
+class _QuickLiveChoice {
+  const _QuickLiveChoice({required this.title, this.coverPath});
+  final String title;
+  final String? coverPath;
+}
 
 /// Live instantané : un titre, un bouton, et l'artiste est en direct.
 ///
-/// Pas d'affiche, de date, de prix ni de genre à remplir : le concert est
-/// créé gratuit, commence maintenant et dure au plus 4 heures. Pour un
-/// concert payant ou programmé, le formulaire complet reste disponible (+).
+/// Pas de date, de prix ni de genre à remplir : le concert est créé gratuit,
+/// commence maintenant et dure au plus 4 heures. L'image est facultative
+/// (image par défaut côté serveur). Pour un concert payant ou programmé, le
+/// formulaire complet reste disponible (+).
 Future<void> openQuickLive() async {
   final user = userModel.value.user;
   final name = (user?.artistName?.isNotEmpty ?? false)
@@ -20,17 +36,20 @@ Future<void> openQuickLive() async {
     text: name.isEmpty ? '' : 'quick_live_default_title'.trParams({'name': name}),
   );
 
-  final title = await Get.bottomSheet<String>(
+  final choice = await Get.bottomSheet<_QuickLiveChoice>(
     _QuickLiveSheet(controller: controller),
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
   );
-  if (title == null || title.trim().isEmpty) return;
+  if (choice == null || choice.title.trim().isEmpty) return;
 
   final artistController = Get.isRegistered<ArtistController>()
       ? Get.find<ArtistController>()
       : Get.put(ArtistController(), permanent: true);
-  final event = await artistController.createQuickLive(title: title.trim());
+  final event = await artistController.createQuickLive(
+    title: choice.title.trim(),
+    coverPath: choice.coverPath,
+  );
   if (event == null) return;
 
   if (!await ensureLivePermissions()) return;
@@ -55,14 +74,100 @@ Future<void> openQuickLive() async {
   await artistController.getArtistEvents(artistId: '${user?.id ?? ''}');
 }
 
-class _QuickLiveSheet extends StatelessWidget {
+class _QuickLiveSheet extends StatefulWidget {
   const _QuickLiveSheet({required this.controller});
   final TextEditingController controller;
+
+  @override
+  State<_QuickLiveSheet> createState() => _QuickLiveSheetState();
+}
+
+class _QuickLiveSheetState extends State<_QuickLiveSheet> {
+  final ImagePicker _picker = ImagePicker();
+  // Image choisie dans la galerie (null = image par défaut du serveur).
+  File? _cover;
+
+  TextEditingController get controller => widget.controller;
+
+  Future<void> _pickCover() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: 1600,
+        maxHeight: 1600,
+      );
+      if (image != null && mounted) {
+        setState(() => _cover = File(image.path));
+      }
+    } catch (e) {
+      myPrint('quickLive: pickImage -> $e');
+    }
+  }
 
   void _submit() {
     final t = controller.text.trim();
     if (t.length < 2) return;
-    Get.back(result: t);
+    Get.back(result: _QuickLiveChoice(title: t, coverPath: _cover?.path));
+  }
+
+  // Vignette « Image du live (facultatif) » : aperçu de l'image par défaut
+  // ou de l'image choisie ; un tap ouvre la galerie.
+  Widget _coverTile() {
+    return GestureDetector(
+      onTap: _pickCover,
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: 96,
+              height: 60,
+              child: _cover != null
+                  ? Image.file(_cover!, fit: BoxFit.cover)
+                  : const ImageWidget(
+                      url: kDefaultLiveCoverUrl,
+                      width: 96,
+                      height: 60,
+                      fit: BoxFit.cover,
+                    ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'quick_cover_label'.tr,
+                  style: const TextStyle(
+                    color: ivory,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _cover != null
+                      ? 'quick_cover_change'.tr
+                      : 'quick_cover_pick'.tr,
+                  style: const TextStyle(color: textMuted, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          if (_cover != null)
+            IconButton(
+              tooltip: 'quick_cover_remove'.tr,
+              onPressed: () => setState(() => _cover = null),
+              icon: const Icon(Icons.close_rounded, color: textMuted),
+            )
+          else
+            const Icon(Icons.photo_library_outlined, color: goldPrimary),
+        ],
+      ),
+    );
   }
 
   @override
@@ -125,6 +230,8 @@ class _QuickLiveSheet extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 14),
+              _coverTile(),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,

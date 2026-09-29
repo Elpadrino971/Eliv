@@ -36,6 +36,9 @@ class _JoinStreamState extends State<JoinStream> {
   int _promoRemaining = 0;
   Timer? _promoTimer;
   Timer? _logTimer;
+  // Mode « place à la scène » : masque chat, actions et infos pour ne voir
+  // que le concert. Mémorisé d'un live à l'autre.
+  bool _overlayHidden = box.read('fan_overlay_hidden') == true;
 
   Future myInitMethod() async {
     final zegoTokenOk = await zegoController.fetchZegoToken();
@@ -292,70 +295,134 @@ class _JoinStreamState extends State<JoinStream> {
       ..topMenuBarConfig = ZegoTopMenuBarConfig(buttons: []);
   }
 
+  // Petit bouton rond (même style que les commandes de l'écran artiste).
+  Widget _fanToggle({
+    required IconData icon,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(left: 8),
+        padding: const EdgeInsets.all(9),
+        decoration: BoxDecoration(
+          color: active
+              ? goldPrimary
+              : Colors.black.withValues(alpha: 0.35),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: active ? midnightPrimary : ivory,
+        ),
+      ),
+    );
+  }
+
   Widget _buildOverlayUI() {
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Info Bar
+          // Décalage sous la barre du haut de Zego (avatar de l'hôte,
+          // spectateurs, fermer), sinon notre en-tête la chevauche.
+          const SizedBox(height: 54),
+
+          // En-tête compact (artiste · LIVE · titre) + bouton œil. Le bouton
+          // reste TOUJOURS visible (pour réafficher), estompé en mode épuré.
           Padding(
             padding: myPadding,
-            child: LiveStreamTopBar(event: currentEvent),
-          ),
-
-          // Bannière promo (compte à rebours) — diffusée par l'artiste
-          if (_promoPercent != null)
-            Padding(padding: myPadding, child: _promoBanner()),
-
-          const Spacer(),
-
-          // Bottom Chat + Actions
-          Padding(
-            padding: myPadding,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // Live chat feed (Zego real-time messages)
-                    Expanded(
-                      child: LiveStreamChatPreview(
-                        messages: currentEvent.activities ?? [],
-                      ),
-                    ),
-
-                    const SizedBox(width: 8),
-                    // Right action buttons
-                    LiveStreamSideActions(
-                      event: currentEvent,
-                      activities: currentEvent.activities ?? [],
-                      onGiftTap: () {
-                        Get.bottomSheet(
-                          ZegoGifts(
-                            eventId: currentEvent.id.toString(),
-                            onGiftSent: (activities) {
-                              setState(() {
-                                currentEvent = currentEvent.copyWith(
-                                  activities: activities,
-                                );
-                              });
-                            },
-                          ),
-                          isScrollControlled: true,
-                        );
-                      },
-                      onHeartTap: () async {
-                        _heartKey.currentState?.addHeart();
-                        await ZegoUIKit().sendInRoomCommand('like', []);
-                      },
-                    ),
-                  ],
+                Expanded(
+                  child: _overlayHidden
+                      ? const SizedBox.shrink()
+                      : Align(
+                          alignment: Alignment.centerLeft,
+                          child: LiveStreamTopBar(event: currentEvent),
+                        ),
                 ),
-                height(0.025),
+                Opacity(
+                  opacity: _overlayHidden ? 0.4 : 1,
+                  child: Tooltip(
+                    message: 'fan_clean_view'.tr,
+                    child: _fanToggle(
+                      icon: _overlayHidden
+                          ? Icons.visibility_off_rounded
+                          : Icons.visibility_rounded,
+                      active: !_overlayHidden,
+                      onTap: () {
+                        setState(() => _overlayHidden = !_overlayHidden);
+                        box.write('fan_overlay_hidden', _overlayHidden);
+                      },
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
+
+          // Bannière promo (compte à rebours) — diffusée par l'artiste. Reste
+          // visible en mode épuré : offre limitée dans le temps.
+          if (_promoPercent != null)
+            Padding(
+              padding: myPadding.copyWith(top: 8),
+              child: _promoBanner(),
+            ),
+
+          const Spacer(),
+
+          // Bottom Chat + Actions (masqués en mode épuré)
+          if (!_overlayHidden)
+            Padding(
+              padding: myPadding,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // Live chat feed (Zego real-time messages)
+                      Expanded(
+                        child: LiveStreamChatPreview(
+                          messages: currentEvent.activities ?? [],
+                        ),
+                      ),
+
+                      const SizedBox(width: 8),
+                      // Right action buttons
+                      LiveStreamSideActions(
+                        event: currentEvent,
+                        activities: currentEvent.activities ?? [],
+                        onGiftTap: () {
+                          Get.bottomSheet(
+                            ZegoGifts(
+                              eventId: currentEvent.id.toString(),
+                              onGiftSent: (activities) {
+                                setState(() {
+                                  currentEvent = currentEvent.copyWith(
+                                    activities: activities,
+                                  );
+                                });
+                              },
+                            ),
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                          );
+                        },
+                        onHeartTap: () async {
+                          _heartKey.currentState?.addHeart();
+                          await ZegoUIKit().sendInRoomCommand('like', []);
+                        },
+                      ),
+                    ],
+                  ),
+                  height(0.025),
+                ],
+              ),
+            ),
         ],
       ),
     );

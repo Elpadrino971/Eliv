@@ -322,10 +322,15 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Info Bar
+          // Décalage sous la barre du haut de Zego (avatar de l'hôte,
+          // spectateurs, fermer), sinon notre en-tête la chevauche.
+          const SizedBox(height: 54),
+
+          // En-tête compact (artiste · LIVE · titre) ; « LIVE » seulement
+          // une fois l'heure du concert atteinte.
           Padding(
             padding: myPadding,
-            child: LiveStreamTopBar(event: currentEvent),
+            child: LiveStreamTopBar(event: currentEvent, isLive: _started),
           ),
 
           const Spacer(),
@@ -364,6 +369,7 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
                             },
                           ),
                           isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
                         );
                       },
                       onHeartTap: () async {

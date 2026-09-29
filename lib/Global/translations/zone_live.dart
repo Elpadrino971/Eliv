@@ -91,6 +91,14 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_state_pending': 'Pending',
     'gift_empty': 'No seats gifted yet.',
     'gift_quota_reached': 'Gifted seats quota reached.',
+    // Lot 10 : haut d'écran fan, feuille cadeaux, image du live instantané
+    'fan_clean_view': 'Stage only',
+    'gift_balance': 'Balance: 🪙 @n',
+    'gift_recharge': 'Top up',
+    'quick_cover_label': 'Live image (optional)',
+    'quick_cover_pick': 'Tap to choose from your gallery',
+    'quick_cover_change': 'Tap to change',
+    'quick_cover_remove': 'Remove image',
   },
   'fr': {
     'live_end_btn': 'Terminer',
@@ -186,6 +194,14 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_state_pending': 'En attente',
     'gift_empty': 'Aucune place offerte pour l’instant.',
     'gift_quota_reached': 'Quota de places offertes atteint.',
+    // Lot 10 : haut d'écran fan, feuille cadeaux, image du live instantané
+    'fan_clean_view': 'Place à la scène',
+    'gift_balance': 'Solde : 🪙 @n',
+    'gift_recharge': 'Recharger',
+    'quick_cover_label': 'Image du live (facultatif)',
+    'quick_cover_pick': 'Touche pour choisir dans ta galerie',
+    'quick_cover_change': 'Touche pour changer',
+    'quick_cover_remove': "Retirer l'image",
   },
   'es': {
     'live_end_btn': 'Terminar',
@@ -280,6 +296,14 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_state_pending': 'Pendiente',
     'gift_empty': 'Aún no hay entradas regaladas.',
     'gift_quota_reached': 'Cuota de entradas regaladas alcanzada.',
+    // Lot 10 : haut d'écran fan, feuille cadeaux, image du live instantané
+    'fan_clean_view': 'Solo el escenario',
+    'gift_balance': 'Saldo: 🪙 @n',
+    'gift_recharge': 'Recargar',
+    'quick_cover_label': 'Imagen del directo (opcional)',
+    'quick_cover_pick': 'Toca para elegir de tu galería',
+    'quick_cover_change': 'Toca para cambiar',
+    'quick_cover_remove': 'Quitar imagen',
   },
   'it': {
     'live_end_btn': 'Termina',
@@ -374,6 +398,14 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_state_pending': 'In attesa',
     'gift_empty': 'Nessun posto regalato per ora.',
     'gift_quota_reached': 'Quota di posti regalati raggiunta.',
+    // Lot 10 : haut d'écran fan, feuille cadeaux, image du live instantané
+    'fan_clean_view': 'Solo il palco',
+    'gift_balance': 'Saldo: 🪙 @n',
+    'gift_recharge': 'Ricarica',
+    'quick_cover_label': 'Immagine del live (facoltativa)',
+    'quick_cover_pick': 'Tocca per scegliere dalla galleria',
+    'quick_cover_change': 'Tocca per cambiare',
+    'quick_cover_remove': 'Rimuovi immagine',
   },
   'de': {
     'live_end_btn': 'Beenden',
@@ -468,6 +500,14 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_state_pending': 'Ausstehend',
     'gift_empty': 'Noch keine Plätze verschenkt.',
     'gift_quota_reached': 'Kontingent verschenkter Plätze erreicht.',
+    // Lot 10 : haut d'écran fan, feuille cadeaux, image du live instantané
+    'fan_clean_view': 'Nur die Bühne',
+    'gift_balance': 'Guthaben: 🪙 @n',
+    'gift_recharge': 'Aufladen',
+    'quick_cover_label': 'Live-Bild (optional)',
+    'quick_cover_pick': 'Tippe, um aus deiner Galerie zu wählen',
+    'quick_cover_change': 'Tippe zum Ändern',
+    'quick_cover_remove': 'Bild entfernen',
   },
   'pt': {
     'live_end_btn': 'Encerrar',
@@ -562,6 +602,14 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_state_pending': 'Pendente',
     'gift_empty': 'Ainda não há lugares oferecidos.',
     'gift_quota_reached': 'Quota de lugares oferecidos atingida.',
+    // Lot 10 : haut d'écran fan, feuille cadeaux, image du live instantané
+    'fan_clean_view': 'Só o palco',
+    'gift_balance': 'Saldo: 🪙 @n',
+    'gift_recharge': 'Recarregar',
+    'quick_cover_label': 'Imagem do live (opcional)',
+    'quick_cover_pick': 'Toque para escolher na galeria',
+    'quick_cover_change': 'Toque para alterar',
+    'quick_cover_remove': 'Remover imagem',
   },
   'zh': {
     'live_end_btn': '结束',
@@ -652,6 +700,14 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_state_pending': '待处理',
     'gift_empty': '尚未赠送任何座位。',
     'gift_quota_reached': '已达到赠送座位的上限。',
+    // Lot 10 : haut d'écran fan, feuille cadeaux, image du live instantané
+    'fan_clean_view': '只看舞台',
+    'gift_balance': '余额：🪙 @n',
+    'gift_recharge': '充值',
+    'quick_cover_label': '直播封面（可选）',
+    'quick_cover_pick': '点击从相册选择',
+    'quick_cover_change': '点击更换',
+    'quick_cover_remove': '移除图片',
   },
   'ko': {
     'live_end_btn': '종료',
@@ -742,6 +798,14 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_state_pending': '대기 중',
     'gift_empty': '아직 선물한 좌석이 없습니다.',
     'gift_quota_reached': '선물 좌석 한도에 도달했습니다.',
+    // Lot 10 : haut d'écran fan, feuille cadeaux, image du live instantané
+    'fan_clean_view': '무대만 보기',
+    'gift_balance': '잔액: 🪙 @n',
+    'gift_recharge': '충전',
+    'quick_cover_label': '라이브 이미지 (선택)',
+    'quick_cover_pick': '탭하여 갤러리에서 선택',
+    'quick_cover_change': '탭하여 변경',
+    'quick_cover_remove': '이미지 삭제',
   },
   'ja': {
     'live_end_btn': '終了',
@@ -832,6 +896,14 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_state_pending': '保留中',
     'gift_empty': 'まだプレゼントした席はありません。',
     'gift_quota_reached': 'プレゼントできる席の上限に達しました。',
+    // Lot 10 : haut d'écran fan, feuille cadeaux, image du live instantané
+    'fan_clean_view': 'ステージのみ',
+    'gift_balance': '残高：🪙 @n',
+    'gift_recharge': 'チャージ',
+    'quick_cover_label': 'ライブ画像（任意）',
+    'quick_cover_pick': 'タップしてギャラリーから選択',
+    'quick_cover_change': 'タップして変更',
+    'quick_cover_remove': '画像を削除',
   },
   'ar': {
     'live_end_btn': 'إنهاء',
@@ -922,6 +994,14 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_state_pending': 'قيد الانتظار',
     'gift_empty': 'لم يتم إهداء أي مقعد بعد.',
     'gift_quota_reached': 'تم بلوغ الحد الأقصى للمقاعد المُهداة.',
+    // Lot 10 : haut d'écran fan, feuille cadeaux, image du live instantané
+    'fan_clean_view': 'المسرح فقط',
+    'gift_balance': 'الرصيد: 🪙 @n',
+    'gift_recharge': 'إعادة الشحن',
+    'quick_cover_label': 'صورة البث (اختياري)',
+    'quick_cover_pick': 'اضغط للاختيار من المعرض',
+    'quick_cover_change': 'اضغط للتغيير',
+    'quick_cover_remove': 'إزالة الصورة',
   },
   'hi': {
     'live_end_btn': 'समाप्त',
@@ -1012,6 +1092,14 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_state_pending': 'लंबित',
     'gift_empty': 'अभी तक कोई सीट उपहार में नहीं दी गई।',
     'gift_quota_reached': 'उपहार सीटों की सीमा पूरी हो गई।',
+    // Lot 10 : haut d'écran fan, feuille cadeaux, image du live instantané
+    'fan_clean_view': 'सिर्फ़ मंच',
+    'gift_balance': 'बैलेंस: 🪙 @n',
+    'gift_recharge': 'रिचार्ज करें',
+    'quick_cover_label': 'लाइव की इमेज (वैकल्पिक)',
+    'quick_cover_pick': 'गैलरी से चुनने के लिए टैप करें',
+    'quick_cover_change': 'बदलने के लिए टैप करें',
+    'quick_cover_remove': 'इमेज हटाएँ',
   },
   'ru': {
     'live_end_btn': 'Завершить',
@@ -1106,5 +1194,13 @@ const Map<String, Map<String, String>> liveTranslations = {
     'gift_state_pending': 'Ожидает',
     'gift_empty': 'Пока нет подаренных мест.',
     'gift_quota_reached': 'Лимит подаренных мест исчерпан.',
+    // Lot 10 : haut d'écran fan, feuille cadeaux, image du live instantané
+    'fan_clean_view': 'Только сцена',
+    'gift_balance': 'Баланс: 🪙 @n',
+    'gift_recharge': 'Пополнить',
+    'quick_cover_label': 'Обложка эфира (необязательно)',
+    'quick_cover_pick': 'Нажмите, чтобы выбрать из галереи',
+    'quick_cover_change': 'Нажмите, чтобы изменить',
+    'quick_cover_remove': 'Удалить изображение',
   },
 };
