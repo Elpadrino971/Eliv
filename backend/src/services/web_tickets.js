@@ -15,12 +15,13 @@ const dbPayments = require('../db_payments');
 const stripeService = require('./stripe');
 const access = require('./event_access');
 const email = require('./email');
+const pricing = require('./pricing');
 
 const SITE_URL = (process.env.SITE_URL || 'https://vybzzz.online').replace(/\/+$/, '');
 
 async function createCheckout({ eventId, rawEmail, campaign, page }) {
   if (!stripeService.isConfigured()) return { error: 'Paiement par carte indisponible pour le moment.', code: 503 };
-  const event = db.prepare('SELECT id, name, ticket_price, start_date_time FROM events WHERE id = ?').get(eventId);
+  const event = db.prepare('SELECT id, name, ticket_price, price_schedule, start_date_time FROM events WHERE id = ?').get(eventId);
   if (!event) return { error: 'Concert introuvable.', code: 404 };
 
   const e = access.normEmail(rawEmail);
@@ -28,7 +29,8 @@ async function createCheckout({ eventId, rawEmail, campaign, page }) {
   if (access.hasAccess(e, event.id)) {
     return { error: 'Cette adresse a déjà sa place pour ce concert.', code: 409 };
   }
-  const amountCents = Math.round((parseFloat(event.ticket_price) || 0) * 100);
+  // Prix EFFECTIF (tarification dynamique, lot 9) : même montant que l'app.
+  const amountCents = Math.round((parseFloat(pricing.effectivePrice(event).price) || 0) * 100);
   if (amountCents < 50) return { error: 'Ce concert est gratuit : rejoins-le directement dans l’app.', code: 422 };
 
   const back = `${SITE_URL}/${page || 'index.html'}`;

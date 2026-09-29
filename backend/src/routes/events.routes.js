@@ -18,6 +18,7 @@ const revenueSplit = require('../services/revenue_split');
 const featuredEvent = require('../services/featured_event');
 const emailService = require('../services/email');
 const geo = require('../services/geo');
+const pricing = require('../services/pricing');
 
 // Délai avant le 2e essai de vérification RevenueCat dans /buy-ticket
 // (latence de synchro du reçu). Surchargeable pour les tests.
@@ -278,6 +279,10 @@ router.post('/events', requireAuth, async (req, res) => {
   // Prix : grille fermée (produit store ticket_<n>) ; dates : ISO UTC « Z ».
   const price = eventAccess.normalizeTicketPrice(b.ticket_price);
   if (!price.ok) return fail(res, price.error, 422, { ticket_price: [price.error] });
+  // Tarification dynamique (optionnel, JSON string en multipart) : paliers
+  // validés (grille IAP, heures décroissantes, 5 max) avant l'insert.
+  const schedule = pricing.parseSchedule(b.price_schedule);
+  if (!schedule.ok) return fail(res, schedule.error, 422, { price_schedule: [schedule.error] });
   // Artistes invités (optionnel, JSON string en multipart) : validés AVANT
   // l'insert -> un 422 ne crée jamais l'event.
   const guests = revenueSplit.validateGuests(b.guests, req.user.id);
@@ -310,14 +315,16 @@ router.post('/events', requireAuth, async (req, res) => {
   const info = db.transaction(() => {
     const ins = db.prepare(
       `INSERT INTO events (artist_id, name, cover_image, ticket_price, start_date_time, end_date_time,
-          genre_id, description, video_reel, is_private, has_live_chat, replay_enabled, replay_duration_days, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'published')`
+          genre_id, description, video_reel, is_private, has_live_chat, replay_enabled, replay_duration_days,
+          price_schedule, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'published')`
     ).run(
       req.user.id, b.name, cover, price.value, startAt.value, endAt.value,
       b.genre_id || null, b.description || null, videoReel,
       (b.is_private === '1' || b.is_private === true) ? 1 : 0,
       b.has_live_chat === '0' ? 0 : 1,
-      replayEnabled, replayDays
+      replayEnabled, replayDays,
+      schedule.schedule.length ? JSON.stringify(schedule.schedule) : null
     );
     // Invités dans la même transaction : pas d'event sans ses invités.
     if (guests.guests.length) revenueSplit.writeGuests(ins.lastInsertRowid, guests.guests);
@@ -371,14 +378,19 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
     return ok(res, serializeEvent(event, { currentUserId: userId }));
   }
 
-  const gross = parseFloat(event.ticket_price) || 0;
+  // Tarification dynamique (lot 9) : prix EFFECTIF à cet instant, plus le
+  // palier PRÉCÉDENT pendant 30 min après une bascule (le fan a vu 4,99 €,
+  // a payé `ticket_4`, et l'appel arrive juste après le passage à 6,99 €).
+  // Le billet est enregistré au prix réellement payé (produit trouvé).
+  const accepted = pricing.acceptedPrices(event);
+  let gross = parseFloat(accepted[0].price) || 0;
+  let productId = accepted[0].product_id;
 
   // ── Vérification du paiement (billets payants uniquement) ──
   let rcTransactionId = null;
   if (gross > 0) {
     // L'app achète le consommable `ticket_<partie entière du prix>` via
     // RevenueCat. On dérive le même id et on confirme l'achat côté serveur.
-    const productId = `ticket_${Math.floor(gross)}`;
     if (revenuecat.isConfigured()) {
       // Un achat non encore consommé par un billet. En production, les achats
       // sandbox sont déjà écartés par le service (voir services/revenuecat.js).
@@ -400,7 +412,12 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
       for (let attempt = 0; attempt < 2 && !fresh; attempt++) {
         if (attempt > 0) await new Promise((r) => setTimeout(r, RC_RETRY_DELAY_MS));
         try {
-          fresh = findFresh(await revenuecat.nonSubscriptionPurchases(userId, productId)) || null;
+          // Produit du palier courant d'abord, puis (fenêtre de 30 min après
+          // une bascule) celui du palier précédent.
+          for (const cand of accepted) {
+            fresh = findFresh(await revenuecat.nonSubscriptionPurchases(userId, cand.product_id)) || null;
+            if (fresh) { productId = cand.product_id; gross = parseFloat(cand.price) || 0; break; }
+          }
         } catch (e) {
           console.error(`[buy-ticket] RevenueCat verify (user=${userId} product=${productId}):`, e.message);
           const msg = e.code === 'RC_TIMEOUT'
@@ -435,7 +452,7 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
     const info = db.prepare(
       `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status, commission_rate, artist_share, rc_transaction_id, source)
        VALUES (?, ?, ?, ?, 'active', ?, ?, ?, 'store')`
-    ).run(b.event_id, userId, String(event.ticket_price || '0'), genReceipt(), artistRatePct, breakdown.artist.toFixed(2), rcTransactionId);
+    ).run(b.event_id, userId, gross > 0 ? gross.toFixed(2) : '0', genReceipt(), artistRatePct, breakdown.artist.toFixed(2), rcTransactionId);
     db.prepare(
       `INSERT INTO activities (user_id, event_id, type, description)
        VALUES (?, ?, 'ticket', 'bought a ticket')`

@@ -8,6 +8,8 @@
  */
 
 const { db } = require('./db');
+// Tarification dynamique (lot 9) : ticket_price sérialisé = prix EFFECTIF.
+const pricing = require('./services/pricing');
 
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://api.vybzzz.online').replace(/\/+$/, '');
 
@@ -105,7 +107,7 @@ function serializeUser(row, { withPassword = false, full = false } = {}) {
   // Concert EN DIRECT de cet artiste (anneau "LIVE" + join direct depuis le
   // feed) : id du live + prix du billet. null si l'artiste n'est pas en live.
   const liveEvent = db
-    .prepare("SELECT id, ticket_price FROM events WHERE artist_id = ? AND status = 'live' ORDER BY id DESC LIMIT 1")
+    .prepare("SELECT id, ticket_price, price_schedule, start_date_time FROM events WHERE artist_id = ? AND status = 'live' ORDER BY id DESC LIMIT 1")
     .get(row.id);
 
   const out = {
@@ -135,7 +137,7 @@ function serializeUser(row, { withPassword = false, full = false } = {}) {
     link_spotify: row.link_spotify || null,
     is_live: !!liveEvent,
     live_event_id: liveEvent ? liveEvent.id : null,
-    live_ticket_price: liveEvent ? liveEvent.ticket_price : null,
+    live_ticket_price: liveEvent ? pricing.effectivePrice(liveEvent).price : null,
     referral_code: row.referral_code,
     genres,
     user_subscription: userSubscription,
@@ -231,12 +233,23 @@ function serializeEvent(row, { currentUserId = null } = {}) {
   const hasReplay = !!(rawPlayback || isMuxUrl(rawReel));
   const videoReel = rawReel && isMuxUrl(rawReel) && !canWatch ? null : rawReel;
 
+  // ─── Tarification dynamique (lot 9) ───
+  // `ticket_price` = prix EFFECTIF à cet instant (chaîne « 6.99 ») : l'app en
+  // dérive le produit IAP `ticket_<entier>` comme avant, rien à changer côté
+  // app. `base_price` = prix de base, `next_price`/`next_price_at` = prochain
+  // palier (« le prix passe à 9,99 € dans 5 h »), `price_schedule` = grille.
+  const price = pricing.effectivePrice(row);
+
   return {
     id: row.id,
     artist_id: row.artist_id,
     name: row.name,
     cover_image: row.cover_image,
-    ticket_price: row.ticket_price,
+    ticket_price: price.price,
+    base_price: price.base,
+    next_price: price.next_price,
+    next_price_at: price.next_price_at,
+    price_schedule: price.schedule,
     start_date_time: row.start_date_time,
     end_date_time: row.end_date_time,
     genre_id: row.genre_id,

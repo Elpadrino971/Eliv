@@ -21,6 +21,7 @@ const crypto = require('crypto');
 const { db } = require('../db');
 const access = require('./event_access');
 const email = require('./email');
+const pricing = require('./pricing');
 const { PUBLIC_BASE_URL } = require('../uploads');
 
 const CAMPAIGNS = {
@@ -92,7 +93,10 @@ function publicStatus(slug) {
   const c = campaign(slug);
   if (!c) return null;
   const eventId = linkedEventId(slug);
-  const event = eventId ? db.prepare('SELECT id, name, ticket_price, start_date_time FROM events WHERE id = ?').get(eventId) : null;
+  const event = eventId ? db.prepare('SELECT id, name, ticket_price, price_schedule, start_date_time FROM events WHERE id = ?').get(eventId) : null;
+  // Prix EFFECTIF (tarification dynamique, lot 9) + prochain palier pour la
+  // ligne d'urgence du site (« Passe à 9,99 € dans 5 h 12 »).
+  const price = event ? pricing.effectivePrice(event) : null;
   return {
     slug: c.slug,
     title: c.title,
@@ -104,7 +108,9 @@ function publicStatus(slug) {
     places: c.places,
     remaining: remaining(c),
     odds: c.odds,
-    price: event?.ticket_price || c.fallbackPrice,
+    price: price ? price.price : c.fallbackPrice,
+    next_price: price ? price.next_price : null,
+    next_price_at: price ? price.next_price_at : null,
     ticketing_open: !!event && Date.now() < Date.parse(c.startsAt) + 3 * 3600 * 1000,
     event_id: event ? event.id : null,
   };
