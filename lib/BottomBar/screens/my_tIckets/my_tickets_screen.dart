@@ -3,6 +3,7 @@ import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -63,10 +64,14 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
 
             GetBuilder<EventController>(
               builder: (controller) {
-                final events = controller.userJoinedEvents.value.data;
-                if (events == null) {
+                final loaded = controller.userJoinedEvents.value.data;
+                // Squelette uniquement pendant le chargement ; une réponse
+                // vide ou un échec réseau donne le vrai état vide (plus de
+                // shimmer infini).
+                if (loaded == null && controller.isLoadingJoinedEvents) {
                   return const EventTileShimmer();
                 }
+                final events = loaded ?? const <Event>[];
                 // « postponed » reste à venir ; « ended » (live terminé) va
                 // dans l'historique — avant, ces billets disparaissaient.
                 final upcomingEvents = events

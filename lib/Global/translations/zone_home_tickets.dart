@@ -125,6 +125,20 @@ const Map<String, Map<String, String>> homeTicketsTranslations = {
     'tk_follow': 'Follow',
     'tk_live_tour': 'Live: Neon Nights Tour',
     'tk_add_comment': 'Add comment...',
+    // Lot 5 : accueil / live — états vides et grille clips
+    'home_clips_section': 'Clips',
+    'home_upcoming_empty_t': 'The next big lives are coming.',
+    'home_upcoming_empty_s': 'Turn on notifications so you never miss one.',
+    'home_enable_alerts': 'Turn on alerts',
+    'home_alerts_enabled':
+        'Done! We’ll let you know as soon as a live is announced.',
+    'live_next_big_live': 'Next big live',
+    'live_empty_t': 'No live right now.',
+    'live_empty_s':
+        'The next one is coming soon — check out For You in the meantime.',
+    'live_go_for_you': 'Go to For You',
+    'live_no_reel_t': 'Clips are coming soon.',
+    'live_no_reel_s': 'In the meantime, discover the upcoming concerts.',
   },
   'fr': {
     'home_checkout': 'Paiement',
@@ -243,6 +257,20 @@ const Map<String, Map<String, String>> homeTicketsTranslations = {
     'tk_follow': 'Suivre',
     'tk_live_tour': 'En direct : Neon Nights Tour',
     'tk_add_comment': 'Ajouter un commentaire...',
+    // Lot 5 : accueil / live — états vides et grille clips
+    'home_clips_section': 'Clips',
+    'home_upcoming_empty_t': 'Les prochains grands lives arrivent.',
+    'home_upcoming_empty_s': 'Active les notifications pour ne rien rater.',
+    'home_enable_alerts': 'Activer les alertes',
+    'home_alerts_enabled':
+        'C’est noté ! Tu seras prévenu dès qu’un live est annoncé.',
+    'live_next_big_live': 'Prochain grand live',
+    'live_empty_t': 'Aucun live en ce moment.',
+    'live_empty_s':
+        'Le prochain arrive bientôt : reviens sur Pour toi en attendant.',
+    'live_go_for_you': 'Voir Pour toi',
+    'live_no_reel_t': 'Les clips arrivent bientôt.',
+    'live_no_reel_s': 'En attendant, découvre les prochains concerts.',
   },
   'es': {
     'home_checkout': 'Pago',
@@ -359,6 +387,21 @@ const Map<String, Map<String, String>> homeTicketsTranslations = {
     'tk_follow': 'Seguir',
     'tk_live_tour': 'En directo: Neon Nights Tour',
     'tk_add_comment': 'Añadir comentario...',
+    // Lot 5 : accueil / live — états vides et grille clips
+    'home_clips_section': 'Clips',
+    'home_upcoming_empty_t': 'Los próximos grandes directos están por llegar.',
+    'home_upcoming_empty_s':
+        'Activa las notificaciones para no perderte ninguno.',
+    'home_enable_alerts': 'Activar alertas',
+    'home_alerts_enabled':
+        '¡Listo! Te avisaremos en cuanto se anuncie un directo.',
+    'live_next_big_live': 'Próximo gran directo',
+    'live_empty_t': 'No hay ningún directo ahora mismo.',
+    'live_empty_s':
+        'El próximo llega pronto: mientras tanto, vuelve a Para ti.',
+    'live_go_for_you': 'Ir a Para ti',
+    'live_no_reel_t': 'Los clips llegan pronto.',
+    'live_no_reel_s': 'Mientras tanto, descubre los próximos conciertos.',
   },
   'it': {
     'home_checkout': 'Pagamento',
@@ -477,6 +520,19 @@ const Map<String, Map<String, String>> homeTicketsTranslations = {
     'tk_follow': 'Segui',
     'tk_live_tour': 'Live: Neon Nights Tour',
     'tk_add_comment': 'Aggiungi commento...',
+    // Lot 5 : accueil / live — états vides et grille clips
+    'home_clips_section': 'Clip',
+    'home_upcoming_empty_t': 'I prossimi grandi live stanno arrivando.',
+    'home_upcoming_empty_s': 'Attiva le notifiche per non perderne nessuno.',
+    'home_enable_alerts': 'Attiva gli avvisi',
+    'home_alerts_enabled':
+        'Fatto! Ti avviseremo non appena verrà annunciato un live.',
+    'live_next_big_live': 'Prossimo grande live',
+    'live_empty_t': 'Nessuna diretta in questo momento.',
+    'live_empty_s': 'La prossima arriva presto: nel frattempo torna su Per te.',
+    'live_go_for_you': 'Vai a Per te',
+    'live_no_reel_t': 'Le clip arrivano presto.',
+    'live_no_reel_s': 'Nel frattempo, scopri i prossimi concerti.',
   },
   'de': {
     'home_checkout': 'Kasse',
@@ -597,6 +653,21 @@ const Map<String, Map<String, String>> homeTicketsTranslations = {
     'tk_follow': 'Folgen',
     'tk_live_tour': 'Live: Neon Nights Tour',
     'tk_add_comment': 'Kommentar hinzufügen...',
+    // Lot 5 : accueil / live — états vides et grille clips
+    'home_clips_section': 'Clips',
+    'home_upcoming_empty_t': 'Die nächsten großen Lives kommen bald.',
+    'home_upcoming_empty_s':
+        'Aktiviere Benachrichtigungen, um nichts zu verpassen.',
+    'home_enable_alerts': 'Benachrichtigungen aktivieren',
+    'home_alerts_enabled':
+        'Erledigt! Wir sagen dir Bescheid, sobald ein Live angekündigt wird.',
+    'live_next_big_live': 'Nächstes großes Live',
+    'live_empty_t': 'Gerade kein Livestream.',
+    'live_empty_s':
+        'Der nächste kommt bald – schau solange bei Für dich vorbei.',
+    'live_go_for_you': 'Zu Für dich',
+    'live_no_reel_t': 'Clips kommen bald.',
+    'live_no_reel_s': 'Entdecke in der Zwischenzeit die nächsten Konzerte.',
   },
   'pt': {
     'home_checkout': 'Pagamento',
@@ -714,6 +785,20 @@ const Map<String, Map<String, String>> homeTicketsTranslations = {
     'tk_follow': 'Seguir',
     'tk_live_tour': 'Ao vivo: Neon Nights Tour',
     'tk_add_comment': 'Adicionar comentário...',
+    // Lot 5 : accueil / live — états vides et grille clips
+    'home_clips_section': 'Clips',
+    'home_upcoming_empty_t': 'Os próximos grandes lives estão chegando.',
+    'home_upcoming_empty_s': 'Ative as notificações para não perder nenhum.',
+    'home_enable_alerts': 'Ativar alertas',
+    'home_alerts_enabled':
+        'Feito! Vamos avisar você assim que um live for anunciado.',
+    'live_next_big_live': 'Próximo grande live',
+    'live_empty_t': 'Nenhuma transmissão neste momento.',
+    'live_empty_s':
+        'A próxima chega em breve: enquanto isso, volte a Para você.',
+    'live_go_for_you': 'Ir para Para você',
+    'live_no_reel_t': 'Os clips chegam em breve.',
+    'live_no_reel_s': 'Enquanto isso, descubra os próximos shows.',
   },
   'zh': {
     'home_checkout': '结账',
@@ -821,6 +906,18 @@ const Map<String, Map<String, String>> homeTicketsTranslations = {
     'tk_follow': '关注',
     'tk_live_tour': '直播：Neon Nights Tour',
     'tk_add_comment': '添加评论...',
+    // Lot 5 : accueil / live — états vides et grille clips
+    'home_clips_section': '短视频',
+    'home_upcoming_empty_t': '下一场精彩直播即将到来。',
+    'home_upcoming_empty_s': '开启通知，不错过任何一场。',
+    'home_enable_alerts': '开启提醒',
+    'home_alerts_enabled': '已完成！一有直播公布，我们会立即通知你。',
+    'live_next_big_live': '下一场精彩直播',
+    'live_empty_t': '当前没有直播。',
+    'live_empty_s': '下一场即将开始，先去「为你推荐」看看吧。',
+    'live_go_for_you': '前往「为你推荐」',
+    'live_no_reel_t': '短视频即将上线。',
+    'live_no_reel_s': '在此期间，先来看看即将举行的演唱会。',
   },
   'ko': {
     'home_checkout': '결제',
@@ -932,6 +1029,18 @@ const Map<String, Map<String, String>> homeTicketsTranslations = {
     'tk_follow': '팔로우',
     'tk_live_tour': '라이브: Neon Nights Tour',
     'tk_add_comment': '댓글 추가...',
+    // Lot 5 : accueil / live — états vides et grille clips
+    'home_clips_section': '클립',
+    'home_upcoming_empty_t': '다음 대형 라이브가 곧 시작됩니다.',
+    'home_upcoming_empty_s': '놓치지 않도록 알림을 켜 두세요.',
+    'home_enable_alerts': '알림 켜기',
+    'home_alerts_enabled': '완료! 라이브가 공개되면 바로 알려드릴게요.',
+    'live_next_big_live': '다음 대형 라이브',
+    'live_empty_t': '지금은 진행 중인 라이브가 없습니다.',
+    'live_empty_s': '다음 라이브가 곧 시작됩니다. 그동안 추천 탭을 둘러보세요.',
+    'live_go_for_you': '추천 탭으로 이동',
+    'live_no_reel_t': '클립이 곧 올라옵니다.',
+    'live_no_reel_s': '그동안 다가오는 콘서트를 둘러보세요.',
   },
   'ja': {
     'home_checkout': 'チェックアウト',
@@ -1043,6 +1152,18 @@ const Map<String, Map<String, String>> homeTicketsTranslations = {
     'tk_follow': 'フォロー',
     'tk_live_tour': 'ライブ：Neon Nights Tour',
     'tk_add_comment': 'コメントを追加...',
+    // Lot 5 : accueil / live — états vides et grille clips
+    'home_clips_section': 'クリップ',
+    'home_upcoming_empty_t': '次のビッグライブがもうすぐ始まります。',
+    'home_upcoming_empty_s': '見逃さないように通知をオンにしよう。',
+    'home_enable_alerts': '通知をオンにする',
+    'home_alerts_enabled': '完了！ライブが発表され次第お知らせします。',
+    'live_next_big_live': '次のビッグライブ',
+    'live_empty_t': '現在配信中のライブはありません。',
+    'live_empty_s': '次のライブはもうすぐ。それまでは「おすすめ」をチェックしよう。',
+    'live_go_for_you': '「おすすめ」を見る',
+    'live_no_reel_t': 'クリップはもうすぐ公開されます。',
+    'live_no_reel_s': 'それまでは、今後のコンサートをチェックしよう。',
   },
   'ar': {
     'home_checkout': 'الدفع',
@@ -1154,6 +1275,18 @@ const Map<String, Map<String, String>> homeTicketsTranslations = {
     'tk_follow': 'متابعة',
     'tk_live_tour': 'مباشر: Neon Nights Tour',
     'tk_add_comment': 'إضافة تعليق...',
+    // Lot 5 : accueil / live — états vides et grille clips
+    'home_clips_section': 'مقاطع',
+    'home_upcoming_empty_t': 'العروض المباشرة الكبيرة القادمة في الطريق.',
+    'home_upcoming_empty_s': 'فعّل الإشعارات حتى لا يفوتك أي عرض.',
+    'home_enable_alerts': 'تفعيل التنبيهات',
+    'home_alerts_enabled': 'تم! سنخبرك فور الإعلان عن عرض مباشر.',
+    'live_next_big_live': 'العرض المباشر الكبير القادم',
+    'live_empty_t': 'لا يوجد بث مباشر حاليًا.',
+    'live_empty_s': 'البث القادم قريبًا: عُد إلى «لك» في الانتظار.',
+    'live_go_for_you': 'الانتقال إلى «لك»',
+    'live_no_reel_t': 'المقاطع قادمة قريبًا.',
+    'live_no_reel_s': 'في الانتظار، اكتشف الحفلات القادمة.',
   },
   'hi': {
     'home_checkout': 'चेकआउट',
@@ -1270,6 +1403,18 @@ const Map<String, Map<String, String>> homeTicketsTranslations = {
     'tk_follow': 'फ़ॉलो करें',
     'tk_live_tour': 'लाइव: Neon Nights Tour',
     'tk_add_comment': 'टिप्पणी जोड़ें...',
+    // Lot 5 : accueil / live — états vides et grille clips
+    'home_clips_section': 'क्लिप्स',
+    'home_upcoming_empty_t': 'अगले बड़े लाइव जल्द आ रहे हैं।',
+    'home_upcoming_empty_s': 'कुछ भी मिस न करने के लिए नोटिफ़िकेशन चालू करें।',
+    'home_enable_alerts': 'अलर्ट चालू करें',
+    'home_alerts_enabled': 'हो गया! लाइव की घोषणा होते ही हम आपको बता देंगे।',
+    'live_next_big_live': 'अगला बड़ा लाइव',
+    'live_empty_t': 'अभी कोई लाइव नहीं चल रहा है।',
+    'live_empty_s': 'अगला जल्द आ रहा है: तब तक «आपके लिए» पर वापस जाएँ।',
+    'live_go_for_you': '«आपके लिए» देखें',
+    'live_no_reel_t': 'क्लिप्स जल्द आ रही हैं।',
+    'live_no_reel_s': 'तब तक, आने वाले कॉन्सर्ट देखें।',
   },
   'ru': {
     'home_checkout': 'Оформление',
@@ -1387,5 +1532,17 @@ const Map<String, Map<String, String>> homeTicketsTranslations = {
     'tk_follow': 'Подписаться',
     'tk_live_tour': 'В эфире: Neon Nights Tour',
     'tk_add_comment': 'Добавить комментарий...',
+    // Lot 5 : accueil / live — états vides et grille clips
+    'home_clips_section': 'Клипы',
+    'home_upcoming_empty_t': 'Скоро большие лайвы.',
+    'home_upcoming_empty_s': 'Включи уведомления, чтобы ничего не пропустить.',
+    'home_enable_alerts': 'Включить уведомления',
+    'home_alerts_enabled': 'Готово! Сообщим, как только объявят лайв.',
+    'live_next_big_live': 'Следующий большой лайв',
+    'live_empty_t': 'Сейчас нет прямых эфиров.',
+    'live_empty_s': 'Следующий совсем скоро: пока загляни в «Для вас».',
+    'live_go_for_you': 'Перейти в «Для вас»',
+    'live_no_reel_t': 'Клипы скоро появятся.',
+    'live_no_reel_s': 'А пока посмотри ближайшие концерты.',
   },
 };

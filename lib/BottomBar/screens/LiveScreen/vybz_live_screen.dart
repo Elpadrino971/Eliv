@@ -10,10 +10,13 @@ import 'package:artist/BottomBar/screens/LiveScreen/artist_detail.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/create_short_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Models/event_model.dart';
+import 'package:artist/widgets/featured_event_sheet.dart';
 import 'package:artist/widgets/replay_player_screen.dart';
 import 'package:artist/widgets/feed_poster.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:artist/widgets/my_button.dart';
+import 'package:artist/widgets/section_header.dart';
+import 'package:artist/widgets/upcoming_event_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
@@ -74,7 +77,7 @@ class _VybzLiveScreenState extends State<VybzLiveScreen> {
             },
             children: [
               const _ForYouFeed(),
-              const _LivesFeed(),
+              _LivesFeed(onGoForYou: () => _goTo(0)),
               _ClipsFeed(isActive: _page == 2),
             ],
           ),
@@ -184,6 +187,10 @@ class _ForYouFeed extends StatefulWidget {
 class _ForYouFeedState extends State<_ForYouFeed> {
   final eventController = Get.find<EventController>();
 
+  /// Vrai pendant le chargement de secours ([_ensureContentLoaded]) : on
+  /// affiche alors un spinner (fini) plutôt que l'état vide.
+  bool _loading = false;
+
   @override
   void initState() {
     super.initState();
@@ -208,12 +215,20 @@ class _ForYouFeedState extends State<_ForYouFeed> {
     final hasClips = eventController.forYouClipUrls.isNotEmpty;
     final hasEvents = (eventController.allEvents.value.data ?? []).isNotEmpty;
     if (hasClips || hasEvents) return;
-    await eventController.loadFeedClips();
-    if ((eventController.allEvents.value.data ?? []).isEmpty) {
-      await eventController.getEventsByStatus(
-        status: EventStatus.published,
-        dateStatus: EventDateStatus.future,
-      );
+    _loading = true;
+    try {
+      await eventController.loadFeedClips();
+      if ((eventController.allEvents.value.data ?? []).isEmpty) {
+        await eventController.getEventsByStatus(
+          status: EventStatus.published,
+          dateStatus: EventDateStatus.future,
+        );
+      }
+    } catch (e) {
+      myPrint('for you feed: $e');
+    } finally {
+      _loading = false;
+      if (mounted) setState(() {});
     }
     if (!mounted) return;
     if (eventController.currentController.value == null) _initFirstReel();
@@ -227,18 +242,27 @@ class _ForYouFeedState extends State<_ForYouFeed> {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final events = eventController.allEvents.value.data ?? [];
-      final clipUrls = eventController.forYouClipUrls;
+    // GetBuilder (et non Obx) : les drapeaux de chargement du contrôleur
+    // sont de simples bool, rafraîchis par ses update() après chaque requête.
+    return GetBuilder<EventController>(builder: (c) {
+      final events = c.allEvents.value.data ?? [];
+      final clipUrls = c.forYouClipUrls;
       final hasContent = clipUrls.isNotEmpty || events.isNotEmpty;
-      return !hasContent
-          ? Center(
-              child: Text(
-                'live_no_reel'.tr,
-                style: TextStyle(color: whiteColor),
-              ),
-            )
-          : PageView.builder(
+      if (!hasContent) {
+        // Spinner (fini) tant qu'une requête est en cours ; ensuite, au lieu
+        // du seul message « Aucun reel », la carte « À la une » + les
+        // concerts à venir.
+        final stillLoading = _loading ||
+            (!c.feedClipsLoaded && c.isLoadingFeedClips) ||
+            (c.allEvents.value.data == null && c.isLoadingUpcoming);
+        if (stillLoading) return const _FeedLoading();
+        return const _FeedFallback(
+          icon: Icons.video_collection_outlined,
+          titleKey: 'live_no_reel_t',
+          subtitleKey: 'live_no_reel_s',
+        );
+      }
+      return PageView.builder(
               scrollDirection: Axis.vertical,
               onPageChanged: eventController.onPageChanged,
               itemCount: clipUrls.isNotEmpty ? clipUrls.length : events.length,
@@ -591,7 +615,10 @@ class _ForYouFeedState extends State<_ForYouFeed> {
 // PAGE 1 — "En direct" : feed vertical des lives en cours
 // ───────────────────────────────────────────────────────────────────────────
 class _LivesFeed extends StatefulWidget {
-  const _LivesFeed();
+  const _LivesFeed({this.onGoForYou});
+
+  /// Ramène sur « Pour toi » depuis l'état vide.
+  final VoidCallback? onGoForYou;
 
   @override
   State<_LivesFeed> createState() => _LivesFeedState();
@@ -600,61 +627,232 @@ class _LivesFeed extends StatefulWidget {
 class _LivesFeedState extends State<_LivesFeed> {
   final eventController = Get.find<EventController>();
 
+  /// Vrai pendant la première séquence de requêtes (spinner fini, jamais de
+  /// shimmer infini).
+  bool _loading = true;
+
   @override
   void initState() {
     super.initState();
-    eventController.getEventsByStatus(status: EventStatus.live);
+    _load();
+  }
+
+  /// Lives en cours, puis concerts à venir (affichés dans l'état vide) s'ils
+  /// ne sont pas déjà en mémoire. Séquentiel : l'ApiResponse du contrôleur
+  /// est partagé entre les requêtes.
+  Future<void> _load() async {
+    try {
+      await eventController.getEventsByStatus(status: EventStatus.live);
+      if (eventController.allEvents.value.data == null) {
+        await eventController.getEventsByStatus(
+          status: EventStatus.published,
+          dateStatus: EventDateStatus.future,
+        );
+      }
+    } catch (e) {
+      myPrint('lives feed: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final lives = eventController.liveNowEvents.value.data ?? [];
-      if (lives.isEmpty) return const _NoLiveState();
-      return PageView.builder(
-        scrollDirection: Axis.vertical,
-        itemCount: lives.length,
-        itemBuilder: (context, index) =>
-            _LivePreviewCard(event: lives[index]),
-      );
-    });
+    return GetBuilder<EventController>(
+      builder: (controller) {
+        final lives = controller.liveNowEvents.value.data;
+        if (lives == null || lives.isEmpty) {
+          // Spinner uniquement tant que la liste n'a JAMAIS été reçue et
+          // qu'une requête est en cours ; sinon état vide chaleureux avec la
+          // carte « À la une » et les concerts à venir — jamais d'écran noir.
+          if (lives == null && (_loading || controller.isLoadingLiveNow)) {
+            return const _FeedLoading();
+          }
+          return _FeedFallback(
+            icon: Icons.sensors_off_rounded,
+            titleKey: 'live_empty_t',
+            subtitleKey: 'live_empty_s',
+            onGoForYou: widget.onGoForYou,
+          );
+        }
+        return PageView.builder(
+          scrollDirection: Axis.vertical,
+          itemCount: lives.length,
+          itemBuilder: (context, index) =>
+              _LivePreviewCard(event: lives[index]),
+        );
+      },
+    );
   }
 }
 
-class _NoLiveState extends StatelessWidget {
-  const _NoLiveState();
+/// Attente (finie) d'un feed : fond bleu nuit + spinner or.
+class _FeedLoading extends StatelessWidget {
+  const _FeedLoading();
 
   @override
   Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: midnightPrimary,
+      child: Center(child: CircularProgressIndicator(color: goldPrimary)),
+    );
+  }
+}
+
+/// État vide chaleureux d'un feed (« En direct » sans live, « Pour toi »
+/// sans clip) : message + carte « À la une » (« Prochain grand live ») si
+/// l'admin a mis un concert en avant + concerts à venir cliquables.
+class _FeedFallback extends StatefulWidget {
+  const _FeedFallback({
+    required this.icon,
+    required this.titleKey,
+    required this.subtitleKey,
+    this.onGoForYou,
+  });
+
+  final IconData icon;
+
+  /// Clés de traduction du titre / sous-titre.
+  final String titleKey;
+  final String subtitleKey;
+
+  /// Si non nul, bouton « Voir Pour toi ».
+  final VoidCallback? onGoForYou;
+
+  @override
+  State<_FeedFallback> createState() => _FeedFallbackState();
+}
+
+class _FeedFallbackState extends State<_FeedFallback> {
+  final eventController = Get.find<EventController>();
+  FeaturedEvent? _featured = cachedFeaturedEvent;
+
+  @override
+  void initState() {
+    super.initState();
+    getFeaturedEvent().then((featured) {
+      if (mounted) setState(() => _featured = featured);
+    });
+  }
+
+  /// Concerts à venir (max 5), triés par date, sans le concert déjà affiché
+  /// en « À la une ».
+  List<Event> _upcoming() {
+    final featuredId = _featured?.event.id;
+    final list = (eventController.allEvents.value.data ?? const <Event>[])
+        .where(
+          (e) =>
+              e.startDateTime != null &&
+              (featuredId == null || e.id != featuredId),
+        )
+        .toList()
+      ..sort((a, b) => a.startDateTime!.compareTo(b.startDateTime!));
+    return list.take(5).toList();
+  }
+
+  Widget _goForYouButton(VoidCallback onTap) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: goldSecondary, width: 1.2),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.play_circle_outline_rounded,
+                color: goldPrimary, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              'live_go_for_you'.tr,
+              style: const TextStyle(
+                color: goldPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final topInset = MediaQuery.of(context).padding.top;
+    final onGoForYou = widget.onGoForYou;
     return Container(
       color: midnightPrimary,
       width: Get.width,
       height: Get.height,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.sensors_off_rounded,
-              color: whiteColor.withValues(alpha: 0.4), size: 56),
-          height(0.02),
-          Text(
-            'live_no_live_title'.tr,
-            style: TextStyle(
-              color: whiteColor,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
+      child: GetBuilder<EventController>(
+        builder: (_) {
+          final featured = _featured;
+          final upcoming = _upcoming();
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(16, topInset + 80, 16, 60),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Icon(
+                    widget.icon,
+                    color: whiteColor.withValues(alpha: 0.4),
+                    size: 56,
+                  ),
+                ),
+                height(0.02),
+                Center(
+                  child: Text(
+                    widget.titleKey.tr,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: whiteColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                height(0.01),
+                Center(
+                  child: Text(
+                    widget.subtitleKey.tr,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: whiteColor.withValues(alpha: 0.6),
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                if (onGoForYou != null) ...[
+                  height(0.025),
+                  Center(child: _goForYouButton(onGoForYou)),
+                ],
+                if (featured != null) ...[
+                  height(0.04),
+                  SectionHeader(title: 'live_next_big_live'.tr),
+                  height(0.015),
+                  FeaturedEventCard(featured: featured),
+                ],
+                if (upcoming.isNotEmpty) ...[
+                  height(0.04),
+                  SectionHeader(title: 'upcoming_events'.tr),
+                  height(0.015),
+                  for (final e in upcoming)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: UpcomingEventTile(event: e),
+                    ),
+                ],
+              ],
             ),
-          ),
-          height(0.01),
-          Text(
-            'live_no_live_subtitle'.tr,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: whiteColor.withValues(alpha: 0.6),
-              fontSize: 14,
-            ),
-          ),
-
-        ],
+          );
+        },
       ),
     );
   }
