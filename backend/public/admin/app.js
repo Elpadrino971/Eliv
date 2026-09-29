@@ -471,6 +471,7 @@ function userEditForm(r) {
       { name: 'phone_number', label: 'Téléphone', value: r.phone_number },
       { name: 'address', label: 'Adresse', value: r.address },
       { name: 'is_artist', label: 'Artiste ?', type: 'checkbox', value: !!r.is_artist, hint: 'Compte artiste' },
+      { name: 'is_featured', label: 'Artiste vedette ?', type: 'checkbox', value: !!r.is_featured, hint: 'Affiché dans « Artistes vedettes » sur l’accueil de l’app' },
       { name: 'password', label: 'Nouveau mot de passe (vide = inchangé)', type: 'password' },
     ],
     onSave: async (d) => {
