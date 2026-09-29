@@ -174,6 +174,11 @@ app.use('/profiles', express.static(storageDir('profiles'), uploads.staticOption
 app.use('/events/covers', express.static(storageDir('covers'), uploads.staticOptions()));
 app.use('/events/videos', express.static(storageDir('videos'), uploads.staticOptions()));
 app.use('/giftImages', express.static(storageDir('gifts'), uploads.staticOptions()));
+// Visuels par défaut (affiche d'un live sans image, etc.).
+app.use('/defaults', express.static(path.join(__dirname, '..', 'public', 'defaults'), uploads.staticOptions()));
+// Icônes par défaut des cadeaux (rose.png, coeur.png…) si l'admin n'en a pas
+// téléversé : servies depuis l'image Docker.
+app.use('/giftImages', express.static(path.join(__dirname, '..', 'public', 'gift-defaults'), uploads.staticOptions()));
 app.use('/splash', express.static(storageDir('splash'), uploads.staticOptions()));
 app.use('/merch-images', express.static(storageDir('merch'), uploads.staticOptions()));
 

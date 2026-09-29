@@ -244,7 +244,9 @@ function serializeEvent(row, { currentUserId = null } = {}) {
     id: row.id,
     artist_id: row.artist_id,
     name: row.name,
-    cover_image: row.cover_image,
+    // Live instantané sans affiche : visuel VybzzZ par défaut (URL complète,
+    // l'app la reconnaît) pour que la carte du live ne soit jamais vide.
+    cover_image: row.cover_image || `${PUBLIC_BASE_URL}/defaults/live-cover.jpg`,
     ticket_price: price.price,
     base_price: price.base,
     next_price: price.next_price,

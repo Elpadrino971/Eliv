@@ -632,7 +632,9 @@ router.post('/apporteur/redeem', requireAuth, (req, res) => {
 // ─── Gifts ───
 // GET /api/gifts -> { status, data: [...] }
 router.get('/gifts', (req, res) => {
-  const rows = db.prepare('SELECT * FROM gifts').all();
+  // L'app lit le coût dans `coins` (et affichait « null pièces ») : on le
+  // renvoie en plus de `points`.
+  const rows = db.prepare('SELECT * FROM gifts').all().map((g) => ({ ...g, coins: g.points }));
   return ok(res, rows);
 });
 
