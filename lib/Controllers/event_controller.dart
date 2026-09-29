@@ -5,6 +5,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/Models/abusive_words_model.dart';
 import 'package:artist/Models/artist_clips_model.dart';
 import 'package:artist/Models/event_model.dart';
+import 'package:artist/Models/feed_clip_model.dart';
 import 'package:artist/Models/follow_model.dart';
 import 'package:artist/Models/gift_model.dart';
 import 'package:artist/Models/user_model.dart';
@@ -39,6 +40,27 @@ class EventController extends GetxController {
   Rx<AbusiveWordsModel> abusiveWords = AbusiveWordsModel().obs;
 
   RxBool isLoading = false.obs;
+
+  /// ── Drapeaux de chargement par liste ──
+  /// Règle d'affichage (accueil, live, billets) : un squelette (shimmer)
+  /// n'est montré QUE si la donnée est encore `null` ET que la requête est
+  /// en cours. Une liste vide après chargement (ou un échec réseau) donne un
+  /// état vide / une section masquée — jamais un shimmer infini.
+  bool isLoadingBanner = false;
+  bool isLoadingFeaturedArtists = false;
+  bool isLoadingLiveNow = false;
+  bool isLoadingNextEvents = false;
+  bool isLoadingUpcoming = false;
+  bool isLoadingJoinedEvents = false;
+  bool isLoadingFeedClips = false;
+
+  /// Vrai dès qu'une réponse (même vide ou en erreur) a été reçue pour les
+  /// artistes vedettes : [featuredArtists] est une liste non nullable, on ne
+  /// peut donc pas distinguer « jamais chargé » de « vide » sans ce drapeau.
+  bool featuredArtistsLoaded = false;
+
+  /// Idem pour les clips des feeds (listes non nullables).
+  bool feedClipsLoaded = false;
 
   /// Video Player Variables
   Rxn<VideoPlayerController> currentController = Rxn<VideoPlayerController>();
@@ -102,25 +124,49 @@ class EventController extends GetxController {
   RxList<String> forYouClipUrls = <String>[].obs;
   RxList<String> clipsFeedUrls = <String>[].obs;
 
-  Future<List<String>> _fetchFeedClipUrls(String feed) async {
+  /// Mêmes clips que [forYouClipUrls] / [clipsFeedUrls], avec leurs
+  /// métadonnées (id, titre, id de lecture Mux → miniature). Sert à la grille
+  /// « Clips » de l'accueil ; les listes d'URLs restent la source des feeds
+  /// vidéo (même ordre, mêmes index).
+  RxList<FeedClip> forYouClips = <FeedClip>[].obs;
+  RxList<FeedClip> clipsFeedClips = <FeedClip>[].obs;
+
+  Future<List<FeedClip>> _fetchFeedClips(String feed) async {
     response.typeSetter = 'get';
     response.urlSetter = '${APIs.feedClipsAPI}?feed=$feed';
-    final value = await response.hitAPI();
-    if (value == null || value.toString().split(' ').first == 'error') {
+    try {
+      final value = await response.hitAPI();
+      if (value == null || '$value'.split(' ').first == 'error') return [];
+      final decoded = jsonDecode('$value');
+      if (decoded is! Map) return [];
+      final list = (decoded['list'] as List?) ?? [];
+      return list
+          .map(FeedClip.fromJson)
+          .whereType<FeedClip>()
+          .toList();
+    } catch (e) {
+      myPrint('feed-clips ($feed): $e');
       return [];
     }
-    final decoded = jsonDecode(value) as Map<String, dynamic>;
-    final list = (decoded['list'] as List?) ?? [];
-    return list
-        .map((x) => x['video_url']?.toString())
-        .where((u) => u != null && u.isNotEmpty)
-        .map((u) => u!)
-        .toList();
   }
 
   Future<void> loadFeedClips() async {
-    forYouClipUrls.value = await _fetchFeedClipUrls('for_you');
-    clipsFeedUrls.value = await _fetchFeedClipUrls('clips');
+    // Pas d'update() ici : appelé depuis initState, un rebuild synchrone
+    // déclencherait « setState() called during build ». Le drapeau est lu
+    // au prochain build ; l'update() du finally suit un await (sans risque).
+    isLoadingFeedClips = true;
+    try {
+      final forYou = await _fetchFeedClips('for_you');
+      forYouClips.value = forYou;
+      forYouClipUrls.value = forYou.map((c) => c.videoUrl).toList();
+      final clips = await _fetchFeedClips('clips');
+      clipsFeedClips.value = clips;
+      clipsFeedUrls.value = clips.map((c) => c.videoUrl).toList();
+    } finally {
+      isLoadingFeedClips = false;
+      feedClipsLoaded = true;
+      update();
+    }
   }
 
   void toggleVideoControls() {
@@ -162,70 +208,112 @@ class EventController extends GetxController {
     currentController.value = null;
   }
 
+  /// Positionne le drapeau de chargement de la liste visée par
+  /// [getEventsByStatus] (même aiguillage que l'affectation du résultat).
+  void _setEventsLoading({
+    required EventStatus status,
+    required EventDateStatus? dateStatus,
+    required bool loading,
+  }) {
+    if (dateStatus == EventDateStatus.future) {
+      isLoadingUpcoming = loading;
+    } else if (status == EventStatus.live) {
+      isLoadingLiveNow = loading;
+    } else if (dateStatus == EventDateStatus.today) {
+      isLoadingNextEvents = loading;
+    }
+  }
+
   Future<void> getEventsByStatus({
     EventStatus status = EventStatus.published,
     EventDateStatus? dateStatus,
     List? genres,
   }) async {
+    // Pas d'update() ici (voir getBannerEvents) : le drapeau est lu au
+    // prochain build, l'update() du finally suit un await.
+    _setEventsLoading(status: status, dateStatus: dateStatus, loading: true);
     response.typeSetter = 'get';
     response.urlSetter =
         '${APIs.eventsAPI}?status=${status.name}&day=${dateStatus?.name ?? ''}&genre_ids=${genres?.join(',') ?? '[]'}';
-    await response.hitAPI().then((value) {
-      if (value.split(' ').first != 'error') {
-        /// Upcoming and All Events
-        if (dateStatus == EventDateStatus.future &&
-            status == EventStatus.published) {
-          allEvents.value = eventModelFromJson(value);
-          upcomingEvents.value = eventModelFromJson(value);
+    try {
+      await response.hitAPI().then((value) {
+        if (value.split(' ').first != 'error') {
+          /// Upcoming and All Events
+          if (dateStatus == EventDateStatus.future &&
+              status == EventStatus.published) {
+            allEvents.value = eventModelFromJson(value);
+            upcomingEvents.value = eventModelFromJson(value);
 
-          /// Upcoming Events
-        } else if (dateStatus == EventDateStatus.future) {
-          upcomingEvents.value = eventModelFromJson(value);
+            /// Upcoming Events
+          } else if (dateStatus == EventDateStatus.future) {
+            upcomingEvents.value = eventModelFromJson(value);
 
-          /// Live Events
-        } else if (status == EventStatus.live) {
-          liveNowEvents.value = eventModelFromJson(value);
+            /// Live Events
+          } else if (status == EventStatus.live) {
+            liveNowEvents.value = eventModelFromJson(value);
 
-          /// Today's Events
-        } else if (dateStatus == EventDateStatus.today) {
-          nextEvents.value = eventModelFromJson(value);
+            /// Today's Events
+          } else if (dateStatus == EventDateStatus.today) {
+            nextEvents.value = eventModelFromJson(value);
 
-          /// Filtered Events
-        } else if (genres != null) {
-          filteredEvents.value = eventModelFromJson(value);
+            /// Filtered Events
+          } else if (genres != null) {
+            filteredEvents.value = eventModelFromJson(value);
+          }
+        } else {
+          parseError(value, doBack: false);
         }
-        update();
-      } else {
-        parseError(value, doBack: false);
-      }
-    });
+      });
+    } finally {
+      _setEventsLoading(status: status, dateStatus: dateStatus, loading: false);
+      update();
+    }
   }
 
   Future<void> getBannerEvents() async {
+    // Pas d'update() ici : appelé depuis initState, un rebuild synchrone
+    // déclencherait « setState() called during build ». Le drapeau est lu
+    // au prochain build ; l'update() du finally suit un await (sans risque).
+    isLoadingBanner = true;
     response.typeSetter = 'get';
     response.urlSetter = APIs.getBannerEventsAPI;
-    await response.hitAPI().then((value) {
-      if (value.split(' ').first != 'error') {
-        bannerEvents.value = eventModelFromJson(value);
-        update();
-      } else {
-        parseError(value, doBack: false);
-      }
-    });
+    try {
+      await response.hitAPI().then((value) {
+        if (value.split(' ').first != 'error') {
+          bannerEvents.value = eventModelFromJson(value);
+        } else {
+          parseError(value, doBack: false);
+        }
+      });
+    } finally {
+      isLoadingBanner = false;
+      update();
+    }
   }
 
   Future<void> getFeaturedArtists() async {
+    // Pas d'update() ici : appelé depuis initState, un rebuild synchrone
+    // déclencherait « setState() called during build ». Le drapeau est lu
+    // au prochain build ; l'update() du finally suit un await (sans risque).
+    isLoadingFeaturedArtists = true;
     response.typeSetter = 'get';
     response.urlSetter = APIs.featuredArtistAPI;
-    await response.hitAPI().then((value) {
-      if (value.split(' ').first != 'error') {
-        List data = jsonDecode(value)['data'];
-        featuredArtists.value = data.map((e) => User.fromJson(e)).toList();
-        update();
-      } else {
-        parseError(value, doBack: false);
-      }
-    });
+    try {
+      await response.hitAPI().then((value) {
+        if (value.split(' ').first != 'error') {
+          final List data = (jsonDecode(value)['data'] as List?) ?? [];
+          featuredArtists.value = data.map((e) => User.fromJson(e)).toList();
+        } else {
+          parseError(value, doBack: false);
+        }
+      });
+    } catch (e) {
+      myPrint('getFeaturedArtists: $e');
+    } finally {
+      isLoadingFeaturedArtists = false;
+      featuredArtistsLoaded = true;
+      update();
+    }
   }
 
   Future<void> getArtistEvents({required String artistId}) async {
@@ -500,17 +588,25 @@ class EventController extends GetxController {
       buyTicketWithRetry(eventId, retry: retry);
 
   Future<void> getUserJoinedEvents() async {
+    // Pas d'update() ici : appelé depuis initState, un rebuild synchrone
+    // déclencherait « setState() called during build ». Le drapeau est lu
+    // au prochain build ; l'update() du finally suit un await (sans risque).
+    isLoadingJoinedEvents = true;
     response.typeSetter = 'post';
     response.urlSetter = APIs.userEventHistoryAPI;
     response.bodySetter = {"user_id": "${userModel.value.user?.id ?? 1}"};
-    await response.hitAPI().then((value) {
-      if (value.split(' ').first != 'error') {
-        userJoinedEvents.value = eventModelFromJson(value, 'list');
-        update();
-      } else {
-        parseError(value, doBack: false);
-      }
-    });
+    try {
+      await response.hitAPI().then((value) {
+        if (value.split(' ').first != 'error') {
+          userJoinedEvents.value = eventModelFromJson(value, 'list');
+        } else {
+          parseError(value, doBack: false);
+        }
+      });
+    } finally {
+      isLoadingJoinedEvents = false;
+      update();
+    }
   }
 
   /// Like / unlike un concert. Renvoie le nouveau nombre de likes.
