@@ -56,6 +56,34 @@ async function muxFetch(path, { method = 'GET', body } = {}) {
   return json.data;
 }
 
+/**
+ * Replay téléchargeable (lot 9) : rendition MP4 statique demandée à la
+ * création de l'asset (live stream, direct upload). API Mux actuelle :
+ * `static_renditions: [{ resolution }]` (l'ancien `mp4_support: 'capped-1080p'`
+ * est DÉPRÉCIÉ et ne peut pas être combiné avec static_renditions). Le
+ * fichier est ensuite servi à :
+ *   https://stream.mux.com/<playback_id>/<resolution>.mp4?download=<nom>
+ * (`highest` = meilleure résolution de la source ; nom de fichier `highest.mp4`).
+ */
+const STATIC_RENDITION_RESOLUTION = 'highest';
+const STATIC_RENDITIONS = [{ resolution: STATIC_RENDITION_RESOLUTION }];
+
+/** URL de téléchargement du replay MP4 (404 tant que Mux ne l'a pas préparé). */
+function staticRenditionUrl(playbackId, fileName) {
+  if (!playbackId) return null;
+  const name = String(fileName || 'replay').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'replay';
+  return `https://stream.mux.com/${playbackId}/${STATIC_RENDITION_RESOLUTION}.mp4?download=${encodeURIComponent(name)}`;
+}
+
+/** Demande la rendition MP4 sur un asset EXISTANT (créé sans). */
+function createStaticRendition(assetId, resolution = STATIC_RENDITION_RESOLUTION) {
+  return muxFetch(`/video/v1/assets/${assetId}/static-renditions`, {
+    method: 'POST',
+    body: { resolution },
+  });
+}
+
 /** Crée une Direct Upload : le client PUT le fichier sur data.url. */
 function createDirectUpload({ passthrough, corsOrigin = '*' } = {}) {
   return muxFetch('/video/v1/uploads', {
@@ -65,6 +93,7 @@ function createDirectUpload({ passthrough, corsOrigin = '*' } = {}) {
       new_asset_settings: {
         playback_policy: ['public'],
         passthrough: passthrough ? JSON.stringify(passthrough) : undefined,
+        static_renditions: STATIC_RENDITIONS, // replay MP4 téléchargeable
       },
     },
   }).then((data) => ({ uploadId: data.id, uploadUrl: data.url }));
@@ -83,7 +112,8 @@ function createAssetFromUrl(url, { passthrough } = {}) {
       input: [{ url }],
       playback_policy: ['public'],
       passthrough: passthrough ? JSON.stringify(passthrough) : undefined,
-      mp4_support: 'none',
+      // Clips du feed : pas de MP4 (défaut Mux = aucune rendition ; l'ancien
+      // `mp4_support: 'none'` est déprécié).
     },
   }).then((data) => ({
     assetId: data.id,
@@ -127,6 +157,7 @@ function createLiveStream({ passthrough } = {}) {
       passthrough: pt, // live stream + asset de replay (recopié par Mux)
       new_asset_settings: {
         playback_policy: ['public'],
+        static_renditions: STATIC_RENDITIONS, // replay MP4 téléchargeable (lot 9)
       },
     },
   }).then((data) => ({
@@ -180,6 +211,9 @@ module.exports = {
   getLiveStream,
   deleteLiveStream,
   verifyWebhookSignature,
+  createStaticRendition,
+  staticRenditionUrl,
+  STATIC_RENDITION_RESOLUTION,
   LIVE_INGEST_URL,
   LIVE_INGEST_URL_RTMP,
 };

@@ -887,6 +887,11 @@ function init() {
     "ALTER TABLE events ADD COLUMN geo_mode TEXT DEFAULT 'off'",
     "ALTER TABLE events ADD COLUMN geo_countries TEXT",
     "ALTER TABLE events ADD COLUMN geo_block_until TEXT",
+    // Tarification dynamique (lot 9) : paliers de prix JSON, du plus lointain
+    // au plus proche du début, ex. [{"hours_before":72,"price":"4.99"},
+    // {"hours_before":48,"price":"6.99"},{"hours_before":0,"price":"9.99"}].
+    // NULL/[] = prix fixe (ticket_price). Voir services/pricing.js.
+    "ALTER TABLE events ADD COLUMN price_schedule TEXT",
     "ALTER TABLE feed_clips ADD COLUMN mux_asset_id TEXT",
     "ALTER TABLE feed_clips ADD COLUMN mux_upload_id TEXT",
     "ALTER TABLE feed_clips ADD COLUMN upload_status TEXT",
