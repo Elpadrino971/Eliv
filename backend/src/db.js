@@ -964,6 +964,25 @@ function init() {
     );
   `);
 
+  // ─── Artistes invités sur un concert (lot 7) : partage de LA PART ARTISTE.
+  // share_pct = pourcentage de la part artiste (pas du prix) reversé à
+  // l'invité ; Σ share_pct ≤ 100, le reste revient à l'artiste principal.
+  // La répartition réelle est faite par services/revenue_split.js. ───
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS event_guests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        share_pct REAL NOT NULL,
+        created_at TEXT DEFAULT (datetime('now')),
+        UNIQUE (event_id, user_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_event_guests_event ON event_guests (event_id);
+      CREATE INDEX IF NOT EXISTS idx_wallet_tx_source ON wallet_transactions (type, source_id);
+    `);
+  } catch (e) { console.warn('[db] migration event_guests ignorée :', e.message); }
+
   // ─── Index (requêtes chaudes le soir d'un concert) ───
   for (const sql of [
     'CREATE INDEX IF NOT EXISTS idx_activities_event ON activities (event_id, id)',

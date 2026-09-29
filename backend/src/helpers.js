@@ -176,6 +176,18 @@ function serializeEvent(row, { currentUserId = null } = {}) {
     .all(row.id)
     .map((r) => r.user_id);
 
+  // Artistes invités (lot 7) : affichage « avec … » côté app. Le pourcentage
+  // de partage est PRIVÉ (propriétaire/admin via GET /events/:id/guests).
+  // Une requête par event, indexée (idx_event_guests_event).
+  const guests = db
+    .prepare(
+      `SELECT g.user_id, u.artist_name, u.full_name, u.profile_image
+         FROM event_guests g LEFT JOIN users u ON u.id = g.user_id
+        WHERE g.event_id = ? ORDER BY g.id ASC`
+    )
+    .all(row.id)
+    .map((g) => ({ user_id: g.user_id, artist_name: g.artist_name || g.full_name || null, profile_image: profileUrl(g.profile_image) }));
+
   // ─── Fenetre de replay : configurable par event (défaut 60j) ───
   // L'artiste/l'admin choisit la durée (replay_duration_days, plafonnée à 60j =
   // fenêtre de hold Apple) et peut désactiver le replay (replay_enabled=0).
@@ -252,6 +264,7 @@ function serializeEvent(row, { currentUserId = null } = {}) {
     ticket_buyer_ids: buyerIds,
     genre,
     artist: serializeUser(artist),
+    guests,
     tickets: ticketRows.map(serializeTicket),
   };
 }

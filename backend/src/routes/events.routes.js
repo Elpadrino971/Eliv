@@ -14,6 +14,7 @@ const revenuecat = require('../services/revenuecat');
 const livebus = require('../services/livebus');
 const badges = require('../services/badges');
 const eventAccess = require('../services/event_access');
+const revenueSplit = require('../services/revenue_split');
 const featuredEvent = require('../services/featured_event');
 const emailService = require('../services/email');
 const geo = require('../services/geo');
@@ -179,6 +180,67 @@ router.get('/events/:id/gift-tickets', requireAuth, (req, res) => {
   return ok(res, { gifted_count: items.length, max: eventAccess.ARTIST_GIFT_MAX, items });
 });
 
+// ─── Estimation de revenus (lot 7) : source de vérité = le backend ───
+// GET /api/pricing/estimate?price=4.99 — pour l'artiste connecté, avec les
+// MÊMES fonctions que la vente réelle (phase promo, offre, apporteur : la part
+// artiste reste celle qu'il touche). Rien n'est écrit en base.
+router.get('/pricing/estimate', requireAuth, (req, res) => {
+  const r = revenueSplit.estimatePricing(req.user.id, req.query.price);
+  if (!r.ok) return res.status(422).json({ status: 'error', message: r.error, errors: { price: r.grid }, grid: r.grid });
+  res.set('Cache-Control', 'no-store');
+  return ok(res, r.data);
+});
+
+// GET /api/artists/search?q=texte — artistes actifs (max 10), recherche
+// insensible à la casse sur nom d'artiste / nom complet / e-mail. L'e-mail
+// n'est JAMAIS renvoyé ; l'appelant est exclu.
+router.get('/artists/search', requireAuth, (req, res) => {
+  const q = String(req.query.q || '').trim().slice(0, 80);
+  if (!q) return ok(res, []);
+  const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const rows = db.prepare(
+    `SELECT id, artist_name, full_name, profile_image FROM users
+      WHERE is_artist = 1 AND status = 'active' AND id <> ?
+        AND (artist_name LIKE ? ESCAPE '\\' COLLATE NOCASE
+          OR full_name LIKE ? ESCAPE '\\' COLLATE NOCASE
+          OR email LIKE ? ESCAPE '\\' COLLATE NOCASE)
+      ORDER BY COALESCE(artist_name, full_name) COLLATE NOCASE ASC, id ASC LIMIT 10`
+  ).all(req.user.id, like, like, like);
+  return ok(res, rows.map((u) => ({
+    id: u.id, artist_name: u.artist_name || null, full_name: u.full_name || null, profile_image: profileUrl(u.profile_image),
+  })));
+});
+
+// ─── Artistes invités d'un concert (partage de la part artiste) ───
+function loadOwnedEvent(req, res, { adminOk = false } = {}) {
+  const eventId = Number(req.params.id);
+  const event = Number.isInteger(eventId) ? db.prepare('SELECT id, artist_id FROM events WHERE id = ?').get(eventId) : null;
+  if (!event) { fail(res, 'Concert introuvable.', 404); return null; }
+  const isOwner = Number(event.artist_id) === Number(req.user.id);
+  if (!isOwner && !(adminOk && req.user.role === 'admin')) { fail(res, 'Réservé à l’artiste de ce concert.', 403); return null; }
+  return event;
+}
+
+// GET /api/events/:id/guests — propriétaire ou admin : invités + % + reste.
+router.get('/events/:id/guests', requireAuth, (req, res) => {
+  const event = loadOwnedEvent(req, res, { adminOk: true });
+  if (!event) return;
+  return ok(res, revenueSplit.guestsView(event.id));
+});
+
+// PUT /api/events/:id/guests — propriétaire : remplace la liste.
+// Body JSON `{ guests: [{user_id, share_pct}] }` ou form `guests` = JSON string.
+// 422 si invalide ; 409 si des billets sont déjà vendus et que la répartition change.
+router.put('/events/:id/guests', requireAuth, (req, res) => {
+  const event = loadOwnedEvent(req, res);
+  if (!event) return;
+  const raw = req.body ? req.body.guests : undefined;
+  if (raw === undefined) return fail(res, 'Le champ guests est requis (liste, éventuellement vide).', 422, { guests: ['Le champ guests est requis.'] });
+  const r = revenueSplit.replaceGuests(event.id, event.artist_id, raw);
+  if (!r.ok) return fail(res, r.error, r.code, r.code === 422 ? { guests: [r.error] } : null);
+  return ok(res, r.data);
+});
+
 // GET /api/featured-artists
 router.get('/featured-artists', (req, res) => {
   const rows = db.prepare('SELECT * FROM users WHERE is_featured = 1 AND is_artist = 1').all();
@@ -216,6 +278,10 @@ router.post('/events', requireAuth, async (req, res) => {
   // Prix : grille fermée (produit store ticket_<n>) ; dates : ISO UTC « Z ».
   const price = eventAccess.normalizeTicketPrice(b.ticket_price);
   if (!price.ok) return fail(res, price.error, 422, { ticket_price: [price.error] });
+  // Artistes invités (optionnel, JSON string en multipart) : validés AVANT
+  // l'insert -> un 422 ne crée jamais l'event.
+  const guests = revenueSplit.validateGuests(b.guests, req.user.id);
+  if (!guests.ok) return fail(res, guests.error, 422, { guests: [guests.error] });
   const startAt = eventAccess.normalizeIsoUtc(b.start_date_time, 'start_date_time');
   if (!startAt.ok) return fail(res, startAt.error, 422, { start_date_time: [startAt.error] });
   const endAt = eventAccess.normalizeIsoUtc(b.end_date_time, 'end_date_time');
@@ -241,17 +307,22 @@ router.post('/events', requireAuth, async (req, res) => {
   if (!Number.isFinite(replayDays) || replayDays < 1) replayDays = 60;
   if (replayDays > 60) replayDays = 60; // plafond = fenêtre de hold Apple
 
-  const info = db.prepare(
-    `INSERT INTO events (artist_id, name, cover_image, ticket_price, start_date_time, end_date_time,
-        genre_id, description, video_reel, is_private, has_live_chat, replay_enabled, replay_duration_days, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'published')`
-  ).run(
-    req.user.id, b.name, cover, price.value, startAt.value, endAt.value,
-    b.genre_id || null, b.description || null, videoReel,
-    (b.is_private === '1' || b.is_private === true) ? 1 : 0,
-    b.has_live_chat === '0' ? 0 : 1,
-    replayEnabled, replayDays
-  );
+  const info = db.transaction(() => {
+    const ins = db.prepare(
+      `INSERT INTO events (artist_id, name, cover_image, ticket_price, start_date_time, end_date_time,
+          genre_id, description, video_reel, is_private, has_live_chat, replay_enabled, replay_duration_days, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'published')`
+    ).run(
+      req.user.id, b.name, cover, price.value, startAt.value, endAt.value,
+      b.genre_id || null, b.description || null, videoReel,
+      (b.is_private === '1' || b.is_private === true) ? 1 : 0,
+      b.has_live_chat === '0' ? 0 : 1,
+      replayEnabled, replayDays
+    );
+    // Invités dans la même transaction : pas d'event sans ses invités.
+    if (guests.guests.length) revenueSplit.writeGuests(ins.lastInsertRowid, guests.guests);
+    return ins;
+  })();
 
   const created = db.prepare('SELECT * FROM events WHERE id = ?').get(info.lastInsertRowid);
 
@@ -370,9 +441,9 @@ router.post('/buy-ticket', requireAuth, async (req, res) => {
        VALUES (?, ?, 'ticket', 'bought a ticket')`
     ).run(userId, b.event_id);
     if (event.artist_id) {
-      const artist = db.prepare('SELECT wallet FROM users WHERE id = ?').get(event.artist_id);
-      const newWallet = ((parseFloat(artist?.wallet) || 0) + breakdown.artist).toFixed(2);
-      db.prepare('UPDATE users SET wallet = ? WHERE id = ?').run(newWallet, event.artist_id);
+      // Part artiste : principal + invités (partage de la part artiste, lot 7),
+      // une ligne wallet_transactions par bénéficiaire. 0 € -> rien à créditer.
+      revenueSplit.creditArtistShare(db, event.id, breakdown.artist, { ticketId: info.lastInsertRowid, source: 'ticket' });
       db.prepare(
         `INSERT INTO platform_earnings
            (artist_id, source, source_id, gross, artist_share, platform_share, commission_rate, store_fee, net, apporteur_id, apporteur_amount)
