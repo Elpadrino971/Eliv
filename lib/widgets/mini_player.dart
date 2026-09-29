@@ -91,6 +91,21 @@ class MiniPlayerController extends GetxController {
     visible.value = false;
     pos.value = null;
   }
+
+  /// Passage en arrière-plan : met en pause. Renvoie vrai si la vidéo
+  /// jouait (pour la relancer via [resumeFromBackground]).
+  bool pauseForBackground() {
+    final c = controller.value;
+    if (c == null || !c.value.isInitialized || !c.value.isPlaying) return false;
+    c.pause();
+    return true;
+  }
+
+  /// Retour au premier plan après [pauseForBackground].
+  void resumeFromBackground() {
+    final c = controller.value;
+    if (c != null && c.value.isInitialized) c.play();
+  }
 }
 
 /// Monté au-dessus de toute l'app (builder de GetMaterialApp). Affiche la

@@ -31,6 +31,11 @@ Future<void> main() async {
   ]);
 
   await GetStorage.init();
+  // Relance douce + mini-lecteur : suit le cycle de vie de l'app (voir
+  // _AppLifecycleWatcher). Enregistré AVANT le premier écran, mais sans
+  // écrire `last_active_at` maintenant : le splash doit d'abord lire la
+  // valeur de la session précédente pour décider s'il se joue en entier.
+  WidgetsBinding.instance.addObserver(_AppLifecycleWatcher());
   // Donnees de formatage des dates pour toutes les langues (mois/jours
   // localises selon la langue choisie).
   await initializeDateFormatting();
@@ -93,6 +98,35 @@ Future<void> main() async {
   }
 
   runApp(const MyApp());
+}
+
+/// Observateur global du cycle de vie de l'app :
+///  - mémorise l'instant de la dernière utilisation à chaque passage en
+///    arrière-plan (relance douce : un redémarrage à froid dans les 12 h
+///    ramène directement sur le dernier onglet, voir canSoftRelaunch) ;
+///  - met en pause le mini-lecteur flottant (global, hors de tout écran)
+///    quand l'app est suspendue et le relance au retour s'il jouait.
+/// Les lecteurs des feeds (Pour toi / Clips / bannière d'accueil) gèrent
+/// eux-mêmes leur cycle de vie dans leur State (libération + recréation).
+class _AppLifecycleWatcher with WidgetsBindingObserver {
+  bool _miniWasPlaying = false;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      touchLastActive();
+    }
+    if (!Get.isRegistered<MiniPlayerController>()) return;
+    final mini = MiniPlayerController.to;
+    if (state == AppLifecycleState.paused) {
+      _miniWasPlaying = _miniWasPlaying || mini.pauseForBackground();
+    } else if (state == AppLifecycleState.resumed) {
+      if (_miniWasPlaying) mini.resumeFromBackground();
+      _miniWasPlaying = false;
+    }
+  }
 }
 
 class MyApp extends StatelessWidget {
