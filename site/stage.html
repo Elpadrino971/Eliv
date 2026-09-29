@@ -40,6 +40,7 @@ svg{display:block}
 .clock.warn{border-color:rgba(230,199,106,.5)}.clock.warn b{color:var(--gold)}
 .clock.last{border-color:rgba(255,77,94,.6)}.clock.last b{color:var(--live);animation:breathe 1.2s ease-in-out infinite}
 .clock.over b{color:var(--live)}
+.clock[hidden]{display:none}
 
 /* ── mur de fans ── */
 .wall{padding:18px 20px 22px 26px;min-height:0}
@@ -51,6 +52,19 @@ svg{display:block}
   background:radial-gradient(90% 70% at 50% 30%,rgba(255,255,255,.10),transparent 70%),linear-gradient(180deg,transparent 42%,rgba(8,18,42,.86))}
 .tile video.camv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1;background:#000}
 .tile.free{opacity:.35}
+/* ── DIRECT : flux de l'artiste en grand, fans sur scène à droite, aucune case vide ── */
+.grid.live{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.grid.live.withfans{grid-template-columns:minmax(0,3fr) minmax(0,1fr)}
+.grid.live.withfans.many{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.fanstrip{display:grid;grid-template-columns:minmax(0,1fr);grid-auto-rows:minmax(0,1fr);gap:14px;min-height:0}
+.many .fanstrip{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tile.main{background:#0B1734}
+.tile.main video.camv{object-fit:contain}
+.wait{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px;color:var(--muted)}
+.wait b{font-family:var(--display);font-size:30px;color:var(--ivory);font-weight:700}
+.wait small{font-size:14px;color:var(--muted-2);max-width:520px}
+.wait .pulse{width:14px;height:14px;border-radius:50%;background:var(--gold);box-shadow:0 0 16px var(--gold);animation:breathe 3.2s ease-in-out infinite}
+.calm{color:var(--muted);font-size:15px;font-weight:600;line-height:1.4;padding:6px 2px}
 .tile__mono{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:72px;color:rgba(255,255,255,.13);z-index:-1}
 .tile.speaking{border-color:rgba(230,199,106,.7);box-shadow:0 0 0 1px rgba(230,199,106,.45),0 0 30px -6px rgba(230,199,106,.5)}
 .name{position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:8px;padding:8px 14px 8px 10px;border-radius:999px;
@@ -148,6 +162,9 @@ svg{display:block}
   .top{padding:10px 14px}.logo b{font-size:20px}.livepill{font-size:14px;padding:8px 12px}.livepill b{font-size:16px}
   .clock{padding:8px 12px}.clock b{font-size:16px}.clock__l{font-size:12px}
   .wall{padding:10px 12px}.grid{height:auto;grid-template-rows:none;gap:8px}.tile{aspect-ratio:1/1;border-radius:12px}
+  .grid.live{display:flex;flex-direction:column}.tile.main{aspect-ratio:16/10}
+  .fanstrip,.many .fanstrip{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:auto;gap:8px}
+  .wait b{font-size:18px}
   .tile__mono{font-size:34px}.name{font-size:12px;padding:5px 9px 5px 7px;left:8px;bottom:8px}.name .m{width:12px;height:12px}
   .badge{padding:4px 8px;font-size:8.5px;top:8px;right:8px}
   .rail{border-left:0;border-top:1px solid var(--line);padding:12px 14px;gap:12px;overflow:visible}
@@ -170,7 +187,7 @@ svg{display:block}
   <section class="wall"><div class="grid" id="grid"></div></section>
 
   <aside class="rail">
-    <div class="card goal">
+    <div class="card goal" id="goalCard">
       <div class="eyebrow">Objectif du public</div>
       <h3 id="goalTitle">100 roses = un rappel 🌹</h3>
       <div class="num"><b id="goalNow">64</b><span>/ <span id="goalMax">100</span> roses</span></div>
@@ -189,10 +206,10 @@ svg{display:block}
 
 <div class="anim" id="anim"><img id="animP" alt=""><video id="animV" muted playsinline preload="auto"></video></div>
 <div class="hero" id="hero"><div class="hero__card">
-  <div class="hero__gift" id="hGift">🌹</div>
-  <div class="hero__what" id="hWhat">Rose ×20</div>
+  <div class="hero__gift" id="hGift"></div>
+  <div class="hero__what" id="hWhat"></div>
   <div class="hero__from">envoyé par</div>
-  <div class="hero__name" id="hName">Lyna_973</div>
+  <div class="hero__name" id="hName"></div>
 </div></div>
 <div class="qa" id="qa" role="status" aria-live="polite">
   <div><div class="qa__k" id="qaK">❓ Question du public · à répondre</div><div class="qa__t" id="qaT"></div><div class="qa__m" id="qaM"></div></div>
@@ -205,9 +222,15 @@ svg{display:block}
 <g id="i-mic"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></g>
 <g id="i-mic-off"><path d="M9 9v2a3 3 0 0 0 4.5 2.6M15 10V6a3 3 0 0 0-5.6-1.5"/><path d="M5 11a7 7 0 0 0 11 5.3M12 18v3"/><path d="M4 4l16 16"/></g>
 </defs></svg>
-<script src="https://cdn.jsdelivr.net/npm/zego-express-engine-webrtc/ZegoExpressWebRTC.js"></script>
 <script>
-var GUESTS=[
+// ── MODE DIRECT : stage.html?event=<id du concert>&key=<clé API>[&api=https://api.vybzzz.online/api]
+// Le backend pousse en SSE chaque cadeau / billet CONFIRMÉ (inscrit en base) ; sans
+// paramètres, la page reste en démo (cadeaux simulés toutes les 16 s, touche G).
+// RÈGLE DIRECT : AUCUN faux fan — les listes de démo sont vides et toutes les
+// minuteries de simulation (cadeaux, cœurs, compteur, « qui parle ») ne tournent que si !LIVE.
+var Q=new URLSearchParams(location.search), LIVE=!!(Q.get('event')&&Q.get('key'));
+var API=(Q.get('api')||'https://api.vybzzz.online/api').replace(/\/$/,'');
+var GUESTS=LIVE?[]:[
  {n:'Kay West',mic:1,badge:{t:'Top Supporter',e:'👑'},hue:24}, // un seul micro ouvert à la fois
  {n:'Nesly',mic:0,badge:{t:'Invitée spéciale',e:'⭐'},hue:300},
  {n:'DJ Glad',mic:0,badge:{t:'Meilleur Tippeur',e:'💸'},hue:266},
@@ -215,9 +238,10 @@ var GUESTS=[
  {n:'Léa',mic:0,hue:330},{n:'Tom_973',mic:0,hue:40},{n:'Jordan',mic:0,hue:190},
 ];
 var AV=['#F0679B','#E6C76A','#7EA6FF','#63D6A6','#C58BFF','#FF9F6B','#63C6D6','#F58BB0','#9DD16B'];
-function ini(n){return n.replace(/[^A-Za-zÀ-ÿ]/g,'').slice(0,1).toUpperCase();}
+function ini(n){return String(n||'').replace(/[^A-Za-zÀ-ÿ]/g,'').slice(0,1).toUpperCase();}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 
-// mur
+// mur (démo : 9 faux fans ; direct : voir renderWallLive plus bas)
 var grid=document.getElementById('grid');
 GUESTS.forEach(function(g){
   var t=document.createElement('div');t.className='tile'+(g.mic?' speaking':'');
@@ -227,38 +251,44 @@ GUESTS.forEach(function(g){
    '<div class="name"><svg class="m'+(g.mic?'':' off')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#'+(g.mic?'i-mic':'i-mic-off')+'"/></svg>'+g.n+'</div>';
   grid.appendChild(t);
 });
-// "qui parle" : lent, discret
+// "qui parle" : lent, discret (démo)
 if(!LIVE)setInterval(function(){[].forEach.call(document.querySelectorAll('.tile'),function(t,i){if(GUESTS[i]&&GUESTS[i].mic&&Math.random()<.35)t.classList.toggle('speaking');});},2600);
 
-// top fans permanent
-var FANS=[['Lyna_973',2410],['DJ Glad',1980],['Kevin',1220],['Mimi_off',960],['Tifany',740]];
+// top fans permanent — direct : GET /live/:event/top-fans (points de cadeaux confirmés)
+var FANS=LIVE?[]:[['Lyna_973',2410],['DJ Glad',1980],['Kevin',1220],['Mimi_off',960],['Tifany',740]];
 function renderFans(){
   FANS.sort(function(a,b){return b[1]-a[1];});
   var el=document.getElementById('fans');el.innerHTML='';
+  if(!FANS.length){el.innerHTML='<div class="calm">Le classement s\'affichera avec les premiers cadeaux.</div>';return;}
   FANS.slice(0,5).forEach(function(f,i){
     var d=document.createElement('div');d.className='fan'+(i<3?' top'+(i+1):'');
-    d.innerHTML='<span class="rk">'+(i+1)+'</span><span class="av" style="background:'+AV[i%AV.length]+'">'+ini(f[0])+'</span>'+
-     '<span class="nm">'+f[0]+'</span><span class="amt"><span class="coin"></span>'+f[1].toLocaleString('fr-FR')+'</span>';
+    d.innerHTML='<span class="rk">'+(i+1)+'</span><span class="av" style="background:'+AV[i%AV.length]+'">'+esc(ini(f[0]))+'</span>'+
+     '<span class="nm">'+esc(f[0])+'</span><span class="amt"><span class="coin"></span>'+(+f[1]||0).toLocaleString('fr-FR')+'</span>';
     el.appendChild(d);
   });
 }
 renderFans();
 
-// objectif
-var goal={now:64,max:100};
-function renderGoal(){document.getElementById('goalNow').textContent=goal.now;document.getElementById('gauge').style.width=Math.min(100,goal.now/goal.max*100)+'%';}
+// objectif — direct : masqué tant que la régie n'a pas fixé d'objectif (événement SSE 'goal')
+var goal={now:LIVE?0:64,max:100};
+function renderGoal(){document.getElementById('goalNow').textContent=goal.now;document.getElementById('goalMax').textContent=goal.max;document.getElementById('gauge').style.width=Math.min(100,goal.now/goal.max*100)+'%';}
+if(LIVE)document.getElementById('goalCard').hidden=true;
 setTimeout(renderGoal,300);
 
 // moments (peu, gros)
 var notes=document.getElementById('notes');
-function addNote(who,txt,gift){
+function notesEmpty(){if(!notes.children.length)notes.innerHTML='<div class="calm" id="notesEmpty">Les moments forts du concert s\'afficheront ici.</div>';}
+function addNote(who,txt,gift){var e0=document.getElementById('notesEmpty');if(e0)e0.remove();
   var d=document.createElement('div');d.className='note'+(gift?' gift':'');
-  d.innerHTML='<span class="av" style="background:'+AV[who.length%AV.length]+'">'+ini(who)+'</span><div><div class="who">'+who+'</div><div class="txt">'+txt+'</div></div>';
+  d.innerHTML='<span class="av" style="background:'+AV[String(who).length%AV.length]+'">'+esc(ini(who))+'</span><div><div class="who">'+esc(who)+'</div><div class="txt">'+esc(txt)+'</div></div>';
   notes.prepend(d);while(notes.children.length>4)notes.lastChild.remove();
 }
-addNote('Lyna_973','Rose ×20 🌹',1);
-addNote('Kevin','Quel son ! 🔥');
-addNote('SarahK','On veut la suite ! 🎶');
+if(!LIVE){
+  addNote('Lyna_973','Rose ×20 🌹',1);
+  addNote('Kevin','Quel son ! 🔥');
+  addNote('SarahK','On veut la suite ! 🎶');
+}
+notesEmpty();
 
 // CADEAU HÉROS : grand, doux, 4,5 s, puis s'efface
 var hero=document.getElementById('hero'),hT,aT;
@@ -266,7 +296,7 @@ var hero=document.getElementById('hero'),hT,aT;
 // L'animation = une vidéo verticale de 3 s dans assets/tips/ (jouée en calque).
 var ANIMS={rose:'assets/tips/rose.mp4',chateau:'assets/tips/chateau.mp4',couronne:'assets/tips/couronne.mp4',feu:'assets/tips/feu.mp4',diamant:'assets/tips/diamant.mp4',fusee:'assets/tips/fusee.mp4'};
 var POSTERS={rose:'assets/tips/rose.jpg',chateau:'assets/tips/chateau.jpg',couronne:'assets/tips/couronne.jpg',feu:'assets/tips/feu.jpg',diamant:'assets/tips/diamant.jpg',fusee:'assets/tips/fusee.jpg'};
-var GIFTS=[['🌹','Rose ×20','Lyna_973',20,'rose'],['💎','Diamant','DJ Glad',30,'diamant'],['🔥','Feu ×10','Océane',10,'feu'],
+var GIFTS=LIVE?[]:[['🌹','Rose ×20','Lyna_973',20,'rose'],['💎','Diamant','DJ Glad',30,'diamant'],['🔥','Feu ×10','Océane',10,'feu'],
            ['👑','Couronne','Naïma',40,'couronne'],['🚀','Fusée','Brayan',25,'fusee'],['🏰','Château','Kevin',100,'chateau']];
 var anim=document.getElementById('anim'),animV=document.getElementById('animV'),animP=document.getElementById('animP');
 function stopAnim(){anim.classList.remove('on');hero.classList.remove('with-anim');setTimeout(function(){animV.pause();animV.removeAttribute('src');animV.load();},500);}
@@ -286,33 +316,38 @@ function gift(g){
   hero.classList.add('on');clearTimeout(hT);hT=setTimeout(function(){hero.classList.remove('on');},4500);
   addNote(g[2],g[1]+' '+g[0],1);
   goal.now=Math.min(goal.max,goal.now+g[3]);renderGoal();
-  var f=FANS.find(function(x){return x[0]===g[2];});if(f)f[1]+=g[3]*40;else FANS.push([g[2],g[3]*40]);renderFans();
+  if(LIVE)loadTopFansSoon(); // classement réel recalculé côté serveur
+  else{var f=FANS.find(function(x){return x[0]===g[2];});if(f)f[1]+=g[3]*40;else FANS.push([g[2],g[3]*40]);renderFans();}
   if(goal.now>=goal.max){setTimeout(function(){document.getElementById('goalTitle').textContent='Objectif atteint 🎉 Rappel !';},1500);}
   for(var k=0;k<5;k++)setTimeout(heart,k*260);
 }
-// ── MODE DIRECT : stage.html?event=<id du concert>&key=<clé API>[&api=https://api.vybzzz.online/api]
-// Le backend pousse en SSE chaque cadeau / billet CONFIRMÉ (inscrit en base) ; sans
-// paramètres, la page reste en démo (cadeaux simulés toutes les 16 s, touche G).
-var Q=new URLSearchParams(location.search), LIVE=Q.get('event')&&Q.get('key');
-var API=(Q.get('api')||'https://api.vybzzz.online/api').replace(/\/$/,'');
 function animFor(name){var n=(name||'').toLowerCase();
   if(/rose/.test(n))return['🌹','rose'];if(/feu|flamme|fire/.test(n))return['🔥','feu'];if(/diam/.test(n))return['💎','diamant'];
   if(/couronne|crown/.test(n))return['👑','couronne'];if(/fus|rocket/.test(n))return['🚀','fusee'];if(/ch[âa]teau|castle/.test(n))return['🏰','chateau'];
   return['🎁',null];}
+var TF_T=null;
+function loadTopFans(){if(!LIVE)return;
+  fetch(API+'/live/'+encodeURIComponent(Q.get('event'))+'/top-fans?limit=5',{headers:{'X-API-Key':Q.get('key')}}).then(function(r){return r.json();})
+    .then(function(j){if(Array.isArray(j.data)){FANS=j.data.map(function(f){return [f.name||'Un fan',+f.points||0];});renderFans();}}).catch(function(){});}
+function loadTopFansSoon(){clearTimeout(TF_T);TF_T=setTimeout(loadTopFans,800);}
 var gi=0;
 if(LIVE){
   document.querySelector('.hint').textContent='Écran projeté · DIRECT · concert #'+Q.get('event');
+  document.getElementById('count').textContent='0';
   var es=new EventSource(API+'/live/'+encodeURIComponent(Q.get('event'))+'/stream?key='+encodeURIComponent(Q.get('key')));
   es.addEventListener('gift',function(e){var d=JSON.parse(e.data),a=animFor(d.gift);
     // valeur provisoire pour l'objectif : 1 "rose" par tranche de 100 pts (à caler sur la grille de prix)
     gift([a[0],d.gift||'Cadeau',d.user||'Un fan',Math.max(1,Math.round((+d.points||0)/100)),a[1]]);});
   es.addEventListener('ticket',function(e){var d=JSON.parse(e.data);addNote(d.user||'Un fan','a pris son ticket 🎟️');for(var k=0;k<3;k++)setTimeout(heart,k*300);});
   es.addEventListener('note',function(e){var d=JSON.parse(e.data);addNote(d.user||'Régie',d.text||'');});
-  es.addEventListener('goal',function(e){var d=JSON.parse(e.data);if(d.title)document.getElementById('goalTitle').textContent=d.title;if(d.max){goal.max=+d.max;document.getElementById('goalMax').textContent=goal.max;}if(d.now!=null)goal.now=+d.now;renderGoal();});
+  es.addEventListener('goal',function(e){var d=JSON.parse(e.data);document.getElementById('goalCard').hidden=false;document.getElementById('goalTitle').textContent=d.title||'Objectif du public';
+    if(d.max){goal.max=+d.max;}if(d.now!=null)goal.now=+d.now;renderGoal();});
   // Question à répondre : le backend envoie LA question à afficher (mise à l'écran par la régie, sinon la plus likée)
   es.addEventListener('question',function(e){var d=JSON.parse(e.data);showQuestion(d.question,d.reason);});
   fetch(API+'/live/'+encodeURIComponent(Q.get('event'))+'/questions',{headers:{'X-API-Key':Q.get('key')}}).then(function(r){return r.json();}).then(function(j){if(j.board)showQuestion(j.board.question,j.board.reason);}).catch(function(){});
+  es.onopen=function(){document.querySelector('.hint').textContent='Écran projeté · DIRECT · concert #'+Q.get('event');};
   es.onerror=function(){document.querySelector('.hint').textContent='Écran projeté · DIRECT · reconnexion…';};
+  loadTopFans();
 }else{
   setInterval(function(){gift(GIFTS[gi%GIFTS.length]);gi++;},16000);
   setTimeout(function(){showQuestion(DEMO_Q[0],'top');},7000); // démo : la question la plus likée remonte
@@ -345,53 +380,91 @@ function showQuestion(q,reason){var el=document.getElementById('qa');if(!q){el.c
   document.getElementById('qaK').textContent=(reason==='featured'?'❓ Question choisie par la régie':'❓ Question du public · la plus likée');
   document.getElementById('qaT').textContent='« '+q.text+' »';document.getElementById('qaM').textContent='— '+(q.user||'Un fan');
   document.getElementById('qaL').textContent=q.likes||0;el.classList.add('on');}
-document.addEventListener('keydown',function(e){var k=e.key.toLowerCase();
+document.addEventListener('keydown',function(e){if(LIVE)return; // raccourcis de démo uniquement (aucun faux cadeau en direct)
+  var k=e.key.toLowerCase();
   if(k==='g'){gift(GIFTS[gi%GIFTS.length]);gi++;}
-  if(k==='q'&&!LIVE){dq++;showQuestion(dq%(DEMO_Q.length+1)===DEMO_Q.length?null:DEMO_Q[dq%(DEMO_Q.length+1)],dq%2?'featured':'top');}
-  if(!LIVE&&(e.key==='+'||e.key==='-')&&CLOCK.endsAt){var d=e.key==='+'?5:-5;setClock(new Date(CLOCK.endsAt+d*60000).toISOString(),null,d);}});
+  if(k==='q'){dq++;showQuestion(dq%(DEMO_Q.length+1)===DEMO_Q.length?null:DEMO_Q[dq%(DEMO_Q.length+1)],dq%2?'featured':'top');}
+  if((e.key==='+'||e.key==='-')&&CLOCK.endsAt){var d=e.key==='+'?5:-5;setClock(new Date(CLOCK.endsAt+d*60000).toISOString(),null,d);}});
 
-// cœurs : rares, lents
+// cœurs : rares, lents — démo seulement ; en direct ils suivent les vrais cadeaux / billets
 var hearts=document.getElementById('hearts'),EMO=['❤️','🧡','💛'];
 function heart(){var s=document.createElement('span');s.className='fx';s.textContent=EMO[Math.floor(Math.random()*EMO.length)];
   s.style.right=(Math.random()*80)+'px';s.style.fontSize=(18+Math.random()*12)+'px';s.style.setProperty('--dx',((Math.random()*50-25)|0)+'px');
   var d=5+Math.random()*2.5;s.style.animationDuration=d+'s';hearts.appendChild(s);setTimeout(function(){s.remove();},d*1000+100);}
-if(!matchMedia('(prefers-reduced-motion:reduce)').matches){setInterval(heart,1900);}
-// compteur qui vit doucement
-setInterval(function(){var c=document.getElementById('count');c.textContent=Math.max(200,parseInt(c.textContent,10)+(Math.random()<.5?-1:1));},5000);
+if(!LIVE&&!matchMedia('(prefers-reduced-motion:reduce)').matches){setInterval(heart,1900);}
+// compteur qui vit doucement (démo) — en direct : utilisateurs réels de la salle Zego
+if(!LIVE)setInterval(function(){var c=document.getElementById('count');c.textContent=Math.max(200,parseInt(c.textContent,10)+(Math.random()<.5?-1:1));},5000);
 
 // ═══ DIRECT : vraies cams (ZegoCloud) · badges réels · micro unique ═══
-function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
-var SLOTS=[],MIC_STREAM=null,BADGES={},ZG=null;
+// Mur : le flux de l'ARTISTE (`<concert>_<artist_id>_main`) en grand ; les autres flux
+// publiés dans la salle = fans montés sur scène (main levée accordée), à droite.
+// Aucune case vide : tant que l'artiste ne diffuse pas, « En attente du flux… ».
+// Son : l'artiste est TOUJOURS coupé ici (écran dans la salle = larsen) ; seul le fan
+// qui a le micro sonne.
+var SLOTS=[],MIC_STREAM=null,BADGES={},ZG=null,ARTIST_ID=null,ZSTATUS='Connexion à la salle vidéo…',ROOM_USERS={},ONLINE=null,GEST=false;
+document.addEventListener('pointerdown',function(){GEST=true;},{once:true,capture:true});
+function soundOk(){return GEST||!!(navigator.userActivation&&navigator.userActivation.hasBeenActive);}
+// SDK web Zego : le fichier UMD (ZegoExpressWebRTC.js) attend des globales absentes du
+// navigateur (long, protobufjs/minimal, zego-express-logger, localforage) et
+// window.ZegoExpressEngine n'existait jamais. On charge la version ESM empaquetée par
+// jsDelivr, une seule fois (Promise du constructeur mise en cache).
+var ZEGO_ESM='https://cdn.jsdelivr.net/npm/zego-express-engine-webrtc@3.12.0/+esm',_zegoP=null;
+function loadZego(){
+  if(typeof window.ZegoExpressEngine==='function')return Promise.resolve(window.ZegoExpressEngine);
+  if(!_zegoP)_zegoP=import(ZEGO_ESM).then(function(m){var C=(m.default&&m.default.ZegoExpressEngine)||m.ZegoExpressEngine;
+      if(typeof C!=='function')throw new Error('SDK vidéo introuvable');window.ZegoExpressEngine=C;return C;})
+    .catch(function(e){_zegoP=null;throw e;});
+  return _zegoP;}
 function badgeFor(uid){uid=String(uid);
   if(BADGES.vip&&String(BADGES.vip.user_id)===uid)return {t:'Invité VIP',e:'⭐'};
   if(BADGES.top_supporter&&String(BADGES.top_supporter.user_id)===uid)return {t:'Top Supporter',e:'👑'};
   if(BADGES.best_tipper&&String(BADGES.best_tipper.user_id)===uid)return {t:'Meilleur Tippeur',e:'💸'};return null;}
 function parseUid(id){var m=String(id).match(/^\d+_(.+?)_main$/);return m?m[1]:String(id);}
-function addStream(st){var uid=parseUid(st.streamID);if(SLOTS.some(function(s){return s.stream_id===st.streamID;}))return;if(SLOTS.length>=9)return;
-  var s={user_id:uid,name:(st.user&&st.user.userName)||('Fan '+uid),stream_id:st.streamID,media:null,video:null};SLOTS.push(s);renderWallLive();
+function isArtist(s){return ARTIST_ID!=null&&String(s.user_id)===ARTIST_ID;}
+function artistSlot(){return SLOTS.find(isArtist)||(ARTIST_ID==null?SLOTS[0]:null)||null;}
+function addStream(st){var uid=parseUid(st.streamID);if(SLOTS.some(function(s){return s.stream_id===st.streamID;}))return;
+  var art=ARTIST_ID!=null&&uid===ARTIST_ID;if(!art&&SLOTS.filter(function(s){return !isArtist(s);}).length>=8)return;
+  var s={user_id:uid,name:(st.user&&st.user.userName)||(art?'Artiste':'Fan '+uid),stream_id:st.streamID,media:null,video:null};SLOTS.push(s);renderWallLive();
   ZG.startPlayingStream(st.streamID).then(function(m){s.media=m;renderWallLive();}).catch(function(){});}
 function removeStream(id){var i=SLOTS.findIndex(function(s){return s.stream_id===id;});if(i<0)return;try{ZG.stopPlayingStream(id);}catch(_){}SLOTS.splice(i,1);renderWallLive();}
-function startZego(role,say){
-  if(!window.ZegoExpressEngine){say('Cams : SDK vidéo non chargé (aperçu ?)');return;}
-  fetch(API+'/live/'+EVID+'/zego-token?role='+role,{headers:H}).then(function(r){return r.json();}).then(function(j){var d=j.data;if(!d)throw new Error(j.message||'jeton');
-    ZG=new ZegoExpressEngine(d.app_id,d.server);
+// Spectateurs réels = utilisateurs de la salle Zego, hors écrans web (web_*) et hors artiste.
+function renderViewers(){var fans=0,webs=0,art=0;
+  Object.keys(ROOM_USERS).forEach(function(id){if(/^web_/.test(id))webs++;else if(ARTIST_ID!=null&&id===ARTIST_ID)art++;else fans++;});
+  var n=fans;if(ONLINE!=null)n=Math.max(fans,ONLINE-1-webs-art); // compteur Zego : inclut cet écran
+  document.getElementById('count').textContent=Math.max(0,n).toLocaleString('fr-FR');}
+function setZStatus(m){ZSTATUS=m;if(LIVE)renderWallLive();}
+function startZego(role){
+  var tok=null;setZStatus('Connexion à la salle vidéo…');
+  fetch(API+'/live/'+EVID+'/zego-token?role='+role,{headers:H}).then(function(r){return r.json().catch(function(){return {};});})
+  .then(function(j){var d=j&&j.data;if(!d||!d.app_id)throw new Error((j&&j.message)||'jeton vidéo refusé');
+    tok=d;if(d.artist_id!=null&&d.artist_id!=='')ARTIST_ID=String(d.artist_id);return loadZego();})
+  .then(function(Engine){
+    ZG=new Engine(tok.app_id,tok.server);
     ZG.on('roomStreamUpdate',function(roomID,type,list){(list||[]).forEach(function(st){if(type==='ADD')addStream(st);else removeStream(st.streamID);});});
+    ZG.on('roomUserUpdate',function(roomID,type,list){(list||[]).forEach(function(u){if(!u||u.userID==null)return;if(type==='ADD')ROOM_USERS[String(u.userID)]=u.userName||'';else delete ROOM_USERS[String(u.userID)];});renderViewers();});
+    ZG.on('roomOnlineUserCountUpdate',function(roomID,count){ONLINE=+count||0;renderViewers();});
     ZG.on('soundLevelUpdate',function(levels){(levels||[]).forEach(function(l){var s=SLOTS.find(function(x){return x.stream_id===l.streamID;});if(!s||!s.video||!s.video.parentNode)return;s.video.parentNode.classList.toggle('speaking',l.soundLevel>8&&MIC_STREAM===l.streamID);});});
     try{ZG.setSoundLevelDelegate(true,300);}catch(_){}
-    return ZG.loginRoom(d.room_id,d.token,{userID:d.user_id,userName:d.user_name},{userUpdate:true});
-  }).then(function(){renderWallLive();say('Connecté à la room du concert 🎥');}).catch(function(e){say('Cams indisponibles : '+(e&&e.message?e.message:'Zego'));});
+    return ZG.loginRoom(tok.room_id,tok.token,{userID:tok.user_id,userName:tok.user_name},{userUpdate:true});
+  }).then(function(ok){if(ok===false)throw new Error('connexion à la salle refusée');setZStatus('');})
+  .catch(function(e){setZStatus('Vidéo indisponible : '+(e&&e.message?e.message:'Zego'));});
 }
 
+function camTile(s,main){var t=document.createElement('div');
+  var on=!main&&!!MIC_STREAM&&MIC_STREAM===s.stream_id,b=main?null:badgeFor(s.user_id);
+  t.className='tile'+(main?' main':'')+(on?' speaking':'');
+  t.innerHTML=(s.media?'':'<div class="tile__mono">'+esc(ini(s.name))+'</div>')+(main?'':(b?'<div class="badge"><span>'+b.e+'</span>'+b.t+'</div>':''))+
+    '<div class="name"><svg class="m'+(on||main?'':' off')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#'+(on||main?'i-mic':'i-mic-off')+'"/></svg>'+esc(s.name)+'</div>';
+  if(s.media){var v=s.video;if(!v){v=document.createElement('video');v.autoplay=true;v.playsInline=true;v.className='camv';v.srcObject=s.media;s.video=v;}
+    v.muted=main||!(on&&soundOk());t.prepend(v);if(v.play)v.play().catch(function(){v.muted=true;v.play().catch(function(){});});}
+  return t;}
+function waitTile(){var t=document.createElement('div');t.className='tile main';
+  t.innerHTML='<div class="wait"><span class="pulse"></span><b>En attente du flux de l\'artiste…</b>'+(ZSTATUS?'<small>'+esc(ZSTATUS)+'</small>':'')+'</div>';return t;}
 function renderWallLive(){
-  var items=SLOTS.slice().sort(function(a,b){return (badgeFor(b.user_id)?1:0)-(badgeFor(a.user_id)?1:0);});while(items.length<9)items.push(null);
-  grid.innerHTML='';
-  items.slice(0,9).forEach(function(s){var t=document.createElement('div');
-    if(!s){t.className='tile free';t.innerHTML='<div class="tile__mono">·</div>';grid.appendChild(t);return;}
-    var b=badgeFor(s.user_id),on=!!MIC_STREAM&&MIC_STREAM===s.stream_id;t.className='tile'+(on?' speaking':'');
-    t.innerHTML='<div class="tile__mono">'+esc(ini(s.name))+'</div>'+(b?'<div class="badge"><span>'+b.e+'</span>'+b.t+'</div>':'')+
-      '<div class="name"><svg class="m'+(on?'':' off')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#'+(on?'i-mic':'i-mic-off')+'"/></svg>'+esc(s.name)+'</div>';
-    if(s.media){var v=s.video;if(!v){v=document.createElement('video');v.autoplay=true;v.playsInline=true;v.className='camv';v.srcObject=s.media;s.video=v;}v.muted=!on;t.prepend(v);if(v.play)v.play().catch(function(){});}
-    grid.appendChild(t);});
+  var art=artistSlot(),fans=SLOTS.filter(function(s){return s!==art;}).sort(function(a,b){return (badgeFor(b.user_id)?1:0)-(badgeFor(a.user_id)?1:0);}).slice(0,8);
+  grid.className='grid live'+(fans.length?' withfans':'')+(fans.length>4?' many':'');
+  grid.innerHTML='';grid.appendChild(art?camTile(art,true):waitTile());
+  if(fans.length){var strip=document.createElement('div');strip.className='fanstrip';fans.forEach(function(s){strip.appendChild(camTile(s,false));});grid.appendChild(strip);}
 }
 if(LIVE){
   var EVID=encodeURIComponent(Q.get('event')),H={'X-API-Key':Q.get('key')};
@@ -401,7 +474,7 @@ if(LIVE){
   fetch(API+'/live/'+EVID+'/badges',{headers:H}).then(function(r){return r.json();}).then(function(j){if(j.data){BADGES=j.data;renderWallLive();}}).catch(function(){});
   fetch(API+'/live/'+EVID+'/hands',{headers:H}).then(function(r){return r.json();}).then(function(j){if(j.data&&j.data.mic){MIC_STREAM=j.data.mic.stream_id;renderWallLive();}}).catch(function(){});
   document.addEventListener('click',function(){renderWallLive();},{once:true}); // un geste débloque le son du micro ouvert
-  startZego('stage',function(m){addNote('VybzzZ',m);});
+  startZego('stage');
 }
 </script>
 

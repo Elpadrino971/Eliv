@@ -52,6 +52,20 @@ svg{display:block}
 .tile__cam::after{content:"";position:absolute;inset:0;background:radial-gradient(90% 70% at 50% 30%,rgba(255,255,255,.10),transparent 70%),linear-gradient(180deg,transparent 40%,rgba(8,18,42,.85))}
 .tile video.camv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1;background:#000}
 .tile.free{opacity:.35}
+/* ── DIRECT : flux de l'artiste en grand, fans sur scène à droite, aucune case vide ── */
+.grid.live{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.grid.live.withfans{grid-template-columns:minmax(0,3fr) minmax(0,1fr)}
+.grid.live.withfans.many{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.fanstrip{display:grid;grid-template-columns:minmax(0,1fr);grid-auto-rows:minmax(0,1fr);gap:12px;min-height:0}
+.many .fanstrip{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tile.main{background:#0B1734}
+.tile.main video.camv{object-fit:contain}
+.wait{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;color:var(--muted)}
+.wait b{font-family:var(--display);font-size:22px;color:var(--ivory);font-weight:700}
+.wait small{font-size:12.5px;color:var(--muted-2);max-width:420px}
+.wait .pulse{width:12px;height:12px;border-radius:50%;background:var(--gold);box-shadow:0 0 14px var(--gold);animation:blink 1.6s infinite}
+.badge.art{background:linear-gradient(180deg,#FFB3C6,#F0679B);color:#2A0816}
+.gift-banner[hidden],.raise[hidden]{display:none}
 .tile__mono{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:64px;color:rgba(255,255,255,.14);z-index:-1}
 .tile.speaking{border-color:rgba(230,199,106,.75);box-shadow:0 0 0 1px rgba(230,199,106,.5),0 0 26px -6px rgba(230,199,106,.55)}
 .tile.onair{border-color:rgba(99,214,166,.8);box-shadow:0 0 0 1px rgba(99,214,166,.5),0 0 26px -6px rgba(99,214,166,.55)}
@@ -160,6 +174,9 @@ svg{display:block}
   .grid-wrap.collapsed{display:none}
   .grid{height:auto;grid-template-rows:none;gap:6px}
   .tile{aspect-ratio:1/1;border-radius:10px}
+  .grid.live{display:flex;flex-direction:column}.tile.main{aspect-ratio:16/10}
+  .fanstrip,.many .fanstrip{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:auto;gap:6px}
+  .wait b{font-size:15px}
   .tile__mono{font-size:26px}
   .name{left:4px;bottom:4px;padding:3px 6px 3px 4px;font-size:10px;gap:3px;max-width:calc(100% - 66px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .name .m{width:11px;height:11px;flex:none}
@@ -187,9 +204,9 @@ svg{display:block}
       <div class="logo"><b>VybzzZ</b><span>LIVE BEGINS HERE</span></div>
       <span class="role">Console · régie</span>
       <button class="wallToggle" id="wallToggle" type="button">Mur ▴</button>
-      <div class="gift-banner"><span class="rose">🌹</span><div><b>Rose ×20</b><small>envoyé par Lyna_973</small></div></div>
+      <div class="gift-banner" id="giftBanner"><span class="rose" id="gbE">🌹</span><div><b id="gbW">Rose ×20</b><small id="gbF">envoyé par Lyna_973</small></div></div>
       <div class="top-right">
-        <div class="pill"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px"><use href="#i-users"/></svg><b>245</b><span class="dot"></span><span class="n">en direct</span></div>
+        <div class="pill"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px"><use href="#i-users"/></svg><b id="viewers">245</b><span class="dot"></span><span class="n">en direct</span></div>
         <button class="icon-btn" aria-label="Plus">···</button>
       </div>
     </header>
@@ -211,7 +228,7 @@ svg{display:block}
       <button class="tab" data-tab="queue">File<span class="q" id="qn2">0</span></button>
       <button class="tab" data-tab="fans">Top fans</button>
       <button class="tab" data-tab="questions">Questions<span class="q" id="qqn">0</span></button>
-      <button class="tab" data-tab="missions">Missions</button>
+      <button class="tab" data-tab="missions" id="missionsTab">Missions</button>
     </div>
     <div class="panelbody">
       <div class="tabpane on" data-pane="chat" style="min-height:0">
@@ -247,15 +264,16 @@ svg{display:block}
 <g id="i-target"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></g>
 <g id="i-x"><path d="M6 6l12 12M18 6L6 18"/></g>
 </defs></svg>
-<script src="https://cdn.jsdelivr.net/npm/zego-express-engine-webrtc/ZegoExpressWebRTC.js"></script>
 <script>
 // ── MODE DIRECT : regie.html?event=<id du concert>&key=<clé API>[&api=https://api.vybzzz.online/api]
 // Sans paramètres : démo (messages / mains simulés). En direct : chat centralisé,
 // cadeaux et billets confirmés arrivent par SSE ; la régie écrit dans le vrai chat.
+// RÈGLE DIRECT : AUCUNE donnée factice — toutes les listes de démo ci-dessous sont
+// vides en direct et les minuteries de simulation ne tournent que si !LIVE.
 var Q=new URLSearchParams(location.search),LIVE=!!(Q.get('event')&&Q.get('key')),API=(Q.get('api')||'https://api.vybzzz.online/api').replace(/\/$/,'');
 // RÈGLE : un seul micro ouvert à la fois sur le mur (c'est un concert). Les fans
 // arrivent micro coupé ; ouvrir un micro coupe tous les autres (voir openMic).
-var GUESTS=[
+var GUESTS=LIVE?[]:[
  {n:'Kay West',mic:0,badge:{t:'Top Supporter',e:'👑'},hue:24},
  {n:'Nesly',mic:0,badge:{t:'Invitée spéciale',e:'⭐'},hue:300},
  {n:'DJ Glad',mic:0,badge:{t:'Meilleur Tippeur',e:'💸'},hue:266},
@@ -271,6 +289,11 @@ function toast(m){var t=document.getElementById('toast');t.textContent=m;t.class
 
 // ── mur + contrôles opérateur ──
 var grid=document.getElementById('grid');
+if(LIVE){ // en direct : compteur réel (0 tant que la salle Zego n'a rien dit), pas de faux bandeau cadeau, pas de missions
+  document.getElementById('viewers').textContent='0';
+  document.getElementById('giftBanner').hidden=true;document.getElementById('gbW').textContent='';document.getElementById('gbF').textContent='';
+  document.getElementById('missionsTab').hidden=true;
+}
 function renderGrid(){
   grid.innerHTML='';
   GUESTS.forEach(function(g,i){
@@ -289,11 +312,11 @@ function renderGrid(){
   grid.querySelectorAll('[data-rm]').forEach(function(b){b.onclick=function(){var g=GUESTS[+b.dataset.rm];GUESTS[+b.dataset.rm]={n:'Libre',mic:0,hue:220,free:1};renderGrid();toast(g.n+' retiré de l\'écran');};});
   updateMicStatus();
 }
-renderGrid();
+if(!LIVE)renderGrid();
 document.getElementById('muteAll').onclick=function(){GUESTS.forEach(function(g){g.mic=0;g.onair=0;});renderGrid();toast('Tous les micros coupés');};
 
 // ── file "lever la main" ──
-var QUEUE=[{n:'Enzo',w:'il y a 20 s'},{n:'Naïma',w:'il y a 1 min'},{n:'Brayan',w:'il y a 2 min'}];
+var QUEUE=LIVE?[]:[{n:'Enzo',w:'il y a 20 s'},{n:'Naïma',w:'il y a 1 min'},{n:'Brayan',w:'il y a 2 min'}];
 function renderQueue(){
   var q=document.getElementById('queue');q.innerHTML='';
   document.getElementById('qn').textContent=QUEUE.length;document.getElementById('qn2').textContent=QUEUE.length;
@@ -302,7 +325,7 @@ function renderQueue(){
   rc.hidden=false;document.getElementById('rName').textContent=QUEUE[0].n;
   QUEUE.forEach(function(r,i){
     var d=document.createElement('div');d.className='req';
-    d.innerHTML='<span class="av" style="background:'+AV[(i+3)%AV.length]+'">'+ini(r.n)+'</span><div><b>'+r.n+'</b><small>✋ a levé la main · '+r.w+'</small></div>'+
+    d.innerHTML='<span class="av" style="background:'+AV[(i+3)%AV.length]+'">'+esc(ini(r.n))+'</span><div><b>'+esc(r.n)+'</b><small>✋ a levé la main · '+esc(r.w)+'</small></div>'+
      '<div class="acts"><button class="give" data-give="'+i+'">🎙️ Donner le micro</button><button class="deny" data-deny="'+i+'">Refuser</button></div>';
     q.appendChild(d);
   });
@@ -328,14 +351,16 @@ var HANDS=['Océane','Steeve','Wendy','Lucas973'];var hi=0;
 if(!LIVE)setInterval(function(){QUEUE.push({n:HANDS[hi%HANDS.length],w:'à l\'instant'});hi++;renderQueue();toast('✋ '+QUEUE[QUEUE.length-1].n+' a levé la main');},21000);
 
 // ── chat ──
-var MSGS=[{w:'Lyna_973',t:'Rose ×20 🌹',time:'20:14',gift:1,c:0},{w:'Kevin',t:'Quel son ! 🔥',time:'20:14',c:2},{w:'Mimi_off',t:'Incroyable ! ❤️',time:'20:14',c:7},
+var MSGS=LIVE?[]:[{w:'Lyna_973',t:'Rose ×20 🌹',time:'20:14',gift:1,c:0},{w:'Kevin',t:'Quel son ! 🔥',time:'20:14',c:2},{w:'Mimi_off',t:'Incroyable ! ❤️',time:'20:14',c:7},
  {w:'Tifany',t:'Vous êtes au top 🙌',time:'20:15',c:4},{w:'Lucas973',t:'Respect 👏',time:'20:15',c:6},{w:'SarahK',t:'On veut la suite ! 🎶',time:'20:15',c:1},{w:'Chris',t:'Big up !',time:'20:15',c:5}];
 var chat=document.getElementById('chat');
 function now(){var d=new Date();return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
-function addMsg(m){var el=document.createElement('div');el.className='msg'+(m.gift?' gift':'');
-  el.innerHTML='<div class="av" style="background:'+AV[m.c%AV.length]+'">'+ini(m.w)+'</div><div><div class="head"><span class="who">'+m.w+'</span><span class="time">'+(m.time||now())+'</span></div><div class="txt">'+m.t+'</div></div>';
-  chat.appendChild(el);chat.scrollTop=chat.scrollHeight;}
-MSGS.forEach(addMsg);
+function chatEmpty(){if(!chat.children.length)chat.innerHTML='<div class="empty" id="chatEmpty">Aucun message pour l\'instant.</div>';}
+function addMsg(m){var e0=document.getElementById('chatEmpty');if(e0)e0.remove();
+  var el=document.createElement('div');el.className='msg'+(m.gift?' gift':'');
+  el.innerHTML='<div class="av" style="background:'+AV[(m.c||0)%AV.length]+'">'+esc(ini(m.w||''))+'</div><div><div class="head"><span class="who">'+esc(m.w)+'</span><span class="time">'+esc(m.time||now())+'</span></div><div class="txt">'+esc(m.t)+'</div></div>';
+  chat.appendChild(el);while(chat.children.length>300)chat.firstChild.remove();chat.scrollTop=chat.scrollHeight;}
+MSGS.forEach(addMsg);chatEmpty();
 var INC=[{w:'Océane',t:'🔥 énorme',c:1},{w:'Brayan',t:'Guadeloupe présente 🇬🇵',c:4},{w:'Naïma',t:'j\'achète le ticket',c:7},{w:'Steeve',t:'la voix 😍',c:2}];var ii=0;
 if(!LIVE)setInterval(function(){addMsg(INC[ii%INC.length]);ii++;},4500);
 function send(){var i=document.getElementById('msgInput'),t=i.value.trim();if(!t)return;i.value='';
@@ -345,16 +370,25 @@ function send(){var i=document.getElementById('msgInput'),t=i.value.trim();if(!t
 document.getElementById('sendBtn').onclick=send;document.getElementById('msgInput').addEventListener('keydown',function(e){if(e.key==='Enter')send();});
 
 // ── fans / missions ──
-var FANS=[['Lyna_973',2410],['DJ Glad',1980],['Kevin',1220],['Mimi_off',960],['Tifany',740],['SarahK',520]];
-var fe=document.getElementById('fans');FANS.forEach(function(f,i){var d=document.createElement('div');d.className='fan'+(i<3?' top'+(i+1):'');
-  d.innerHTML='<span class="rk">'+(i+1)+'</span><span class="av" style="width:30px;height:30px;background:'+AV[i%AV.length]+'">'+ini(f[0])+'</span><span class="nm">'+f[0]+'</span><span class="amt"><span class="coin"></span>'+f[1].toLocaleString('fr-FR')+'</span>';fe.appendChild(d);});
-var MISS=[['🎁','Envoie 5 cœurs','+10 pts',80],['🎟️','Achète ton ticket','+50 pts',0],['⏱️','Reste 10 min','+15 pts',60],['🤝','Invite un ami','+30 pts',33]];
+// Direct : classement réel (GET /live/:event/top-fans = points de cadeaux confirmés), rechargé à chaque cadeau.
+var FANS=LIVE?[]:[['Lyna_973',2410],['DJ Glad',1980],['Kevin',1220],['Mimi_off',960],['Tifany',740],['SarahK',520]];
+var fe=document.getElementById('fans');
+function renderFans(){fe.innerHTML='';
+  if(!FANS.length){fe.innerHTML='<div class="empty">Aucun cadeau reçu pour l\'instant.<br><small class="em">Le classement se remplit avec les cadeaux confirmés.</small></div>';return;}
+  FANS.forEach(function(f,i){var d=document.createElement('div');d.className='fan'+(i<3?' top'+(i+1):'');
+  d.innerHTML='<span class="rk">'+(i+1)+'</span><span class="av" style="width:30px;height:30px;background:'+AV[i%AV.length]+'">'+esc(ini(f[0]))+'</span><span class="nm">'+esc(f[0])+'</span><span class="amt"><span class="coin"></span>'+(+f[1]||0).toLocaleString('fr-FR')+'</span>';fe.appendChild(d);});}
+renderFans();
+var MISS=LIVE?[]:[['🎁','Envoie 5 cœurs','+10 pts',80],['🎟️','Achète ton ticket','+50 pts',0],['⏱️','Reste 10 min','+15 pts',60],['🤝','Invite un ami','+30 pts',33]];
 var me=document.getElementById('missions');MISS.forEach(function(m){var d=document.createElement('div');d.className='mission';
   d.innerHTML='<div class="row"><span class="emo">'+m[0]+'</span><b>'+m[1]+'</b><span class="rw">'+m[2]+'</span></div><div class="bar"><i style="width:'+m[3]+'%"></i></div>';me.appendChild(d);});
 
 // ── divers ──
 document.getElementById('wallToggle').onclick=function(){var w=document.querySelector('.grid-wrap');w.classList.toggle('collapsed');this.textContent=w.classList.contains('collapsed')?'Mur ▾':'Mur ▴';};
-document.getElementById('goalBtn').onclick=function(){toast('🌹 Objectif « 100 roses = un rappel » affiché sur le Stage');};
+document.getElementById('goalBtn').onclick=function(){
+  if(!LIVE){toast('🌹 Objectif « 100 roses = un rappel » affiché sur le Stage');return;}
+  var v=prompt('Objectif du public (nombre de roses pour un rappel) :','100');if(v===null)return;var n=parseInt(v,10);if(isNaN(n)||n<1)return;
+  fetch(API+'/live/'+encodeURIComponent(Q.get('event'))+'/emit',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':Q.get('key')},body:JSON.stringify({type:'goal',title:n+' roses = un rappel 🌹',max:n})})
+    .then(function(r){toast(r.ok?'🌹 Objectif « '+n+' roses » affiché sur le Stage':'Échec (clé / réseau)');}).catch(function(){toast('Échec (réseau)');});};
 document.getElementById('testGift').onclick=function(){
   if(LIVE){fetch(API+'/live/'+encodeURIComponent(Q.get('event'))+'/emit',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':Q.get('key')},body:JSON.stringify({type:'gift',gift:'Rose',user:'Prod VybzzZ (test)',points:100})})
     .then(function(r){toast(r.ok?'Cadeau test envoyé au Stage':'Échec (clé / réseau)');}).catch(function(){toast('Échec (réseau)');});}
@@ -364,7 +398,7 @@ var hearts=document.getElementById('hearts'),EMO=['❤️','🧡','💛','🔥',
 function heart(){var s=document.createElement('span');s.className='fx';s.textContent=EMO[Math.floor(Math.random()*EMO.length)];
   s.style.right=(Math.random()*50)+'px';s.style.fontSize=(20+Math.random()*16)+'px';s.style.setProperty('--dx',((Math.random()*60-30)|0)+'px');
   var d=3.2+Math.random()*1.8;s.style.animationDuration=d+'s';hearts.appendChild(s);setTimeout(function(){s.remove();},d*1000+100);}
-if(!matchMedia('(prefers-reduced-motion:reduce)').matches){setInterval(heart,700);}
+if(!LIVE&&!matchMedia('(prefers-reduced-motion:reduce)').matches){setInterval(heart,700);} // démo seulement : en direct, les cœurs suivent les vrais cadeaux
 
 // ── Compte à rebours de fin de live : la régie prolonge / réduit / termine ──
 var CLOCK={endsAt:null,offset:0};
@@ -387,7 +421,7 @@ if(!LIVE)setClockLocal(new Date(Date.now()+45*60000).toISOString());
 
 // ── Questions du public (Q&A) ──
 // Démo : liste locale. Direct : API /live/:event/questions + événement SSE 'questions_changed'.
-var QUESTIONS=[{id:1,text:'Tu feras une date en Guadeloupe cette année ?',user:'Lyna_973',likes:47,status:'open'},{id:2,text:'C\'est quoi le prochain single ?',user:'Kevin',likes:31,status:'open'},{id:3,text:'Un duo avec Nesly, c\'est possible ?',user:'Maya_Fan',likes:22,status:'open'},{id:4,text:'Tu répètes combien d\'heures par jour ?',user:'Tifany',likes:9,status:'open'}];
+var QUESTIONS=LIVE?[]:[{id:1,text:'Tu feras une date en Guadeloupe cette année ?',user:'Lyna_973',likes:47,status:'open'},{id:2,text:'C\'est quoi le prochain single ?',user:'Kevin',likes:31,status:'open'},{id:3,text:'Un duo avec Nesly, c\'est possible ?',user:'Maya_Fan',likes:22,status:'open'},{id:4,text:'Tu répètes combien d\'heures par jour ?',user:'Tifany',likes:9,status:'open'}];
 var QMIN=3;
 function qAction(id,action){
   if(LIVE){return fetch(API+'/live/'+encodeURIComponent(Q.get('event'))+'/questions/'+id+'/'+action,{method:'POST',headers:{'X-API-Key':Q.get('key')}}).then(function(r){if(!r.ok)toast('Action impossible');});}
@@ -403,14 +437,15 @@ function renderQuestions(){
   host.innerHTML=list.length?'':'<div class="empty">Aucune question pour l\'instant.</div>';
   list.forEach(function(q,i){var d=document.createElement('div');d.className='req qa'+(q.status==='featured'?' feat':'');
     var top=q.status==='featured'?'📺 À l\'écran (choisie)':(i===0&&q.likes>=QMIN?'📺 À l\'écran (la plus likée)':'');
-    d.innerHTML='<div class="lk"><b>'+q.likes+'</b><small>❤️</small></div><div style="min-width:0"><b>'+q.text+'</b><small>— '+q.user+(top?' · <span style="color:var(--gold)">'+top+'</span>':'')+'</small></div>'+
+    d.innerHTML='<div class="lk"><b>'+(+q.likes||0)+'</b><small>❤️</small></div><div style="min-width:0"><b>'+esc(q.text)+'</b><small>— '+esc(q.user)+(top?' · <span style="color:var(--gold)">'+top+'</span>':'')+'</small></div>'+
       '<div class="acts">'+(q.status==='featured'?'<button class="okb" data-q="'+q.id+'" data-a="unfeature">Retirer</button>':'<button class="give" data-q="'+q.id+'" data-a="feature">📺 À l\'écran</button>')+
       '<button class="okb" data-q="'+q.id+'" data-a="answered">✅ Répondu</button><button class="deny" data-q="'+q.id+'" data-a="hide">Masquer</button></div>';
     host.appendChild(d);});
   host.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){qAction(+b.dataset.q,b.dataset.a).then(function(){toast({feature:'Question envoyée au Stage',unfeature:'Retour à la plus likée',answered:'Marquée répondue',hide:'Question masquée'}[b.dataset.a]);});};});
 }
 function loadQuestions(){
-  if(!LIVE){renderQuestions();return;}
+  renderQuestions(); // direct : liste vide tant que l'API n'a pas répondu
+  if(!LIVE)return;
   fetch(API+'/live/'+encodeURIComponent(Q.get('event'))+'/questions',{headers:{'X-API-Key':Q.get('key')}}).then(function(r){return r.json();})
     .then(function(j){QUESTIONS=j.data||[];if(j.min_likes)QMIN=j.min_likes;renderQuestions();}).catch(function(){});
 }
@@ -421,6 +456,18 @@ document.getElementById('qSend').onclick=askQuestion;document.getElementById('qI
 loadQuestions();
 
 // ── Connexion DIRECT : historique du chat + flux SSE (chat, cadeaux, billets) ──
+function giftEmoji(name){var n=String(name||'').toLowerCase();
+  if(/rose/.test(n))return '🌹';if(/feu|flamme|fire/.test(n))return '🔥';if(/diam/.test(n))return '💎';
+  if(/couronne|crown/.test(n))return '👑';if(/fus|rocket/.test(n))return '🚀';if(/ch[âa]teau|castle/.test(n))return '🏰';return '🎁';}
+// Bandeau du haut : le DERNIER vrai cadeau reçu (masqué tant qu'il n'y en a pas).
+function showGiftBanner(what,who){var b=document.getElementById('giftBanner');
+  document.getElementById('gbE').textContent=giftEmoji(what);document.getElementById('gbW').textContent=what;
+  document.getElementById('gbF').textContent='envoyé par '+who;b.hidden=false;clearTimeout(b._t);b._t=setTimeout(function(){b.hidden=true;},15000);}
+var TF_T=null;
+function loadTopFans(){if(!LIVE)return;
+  fetch(API+'/live/'+EV+'/top-fans?limit=10',{headers:H}).then(function(r){return r.json();})
+    .then(function(j){if(Array.isArray(j.data)){FANS=j.data.map(function(f){return [f.name||'Un fan',+f.points||0];});renderFans();}}).catch(function(){});}
+function loadTopFansSoon(){clearTimeout(TF_T);TF_T=setTimeout(loadTopFans,800);}
 if(LIVE){
   document.querySelector('.role').textContent='Console · DIRECT · concert #'+Q.get('event');
   var H={'X-API-Key':Q.get('key')},EV=encodeURIComponent(Q.get('event'));
@@ -429,50 +476,92 @@ if(LIVE){
     .catch(function(){toast('Historique du chat indisponible');});
   var es=new EventSource(API+'/live/'+EV+'/stream?key='+encodeURIComponent(Q.get('key')));
   es.addEventListener('chat',function(e){var d=JSON.parse(e.data);if(d.user!=='Prod VybzzZ')addMsg({w:d.user||'Fan',t:d.text,c:(d.user||'').length});});
-  es.addEventListener('gift',function(e){var d=JSON.parse(e.data);addMsg({w:d.user||'Un fan',t:(d.gift||'Cadeau')+' 🎁 · '+(d.points||0)+' pts',gift:1,c:0});for(var k=0;k<5;k++)setTimeout(heart,k*90);});
+  es.addEventListener('gift',function(e){var d=JSON.parse(e.data),w=d.user||'Un fan',g=d.gift||'Cadeau';
+    addMsg({w:w,t:g+' '+giftEmoji(g)+' · '+(d.points||0)+' pts',gift:1,c:0});showGiftBanner(g,w);loadTopFansSoon();
+    for(var k=0;k<5;k++)setTimeout(heart,k*90);});
   es.addEventListener('ticket',function(e){var d=JSON.parse(e.data);addMsg({w:d.user||'Un fan',t:'a pris son ticket 🎟️',c:3});});
+  es.addEventListener('note',function(e){var d=JSON.parse(e.data);if(d.text)addMsg({w:d.user||'VybzzZ',t:d.text,c:1});});
   es.addEventListener('questions_changed',loadQuestions);
   es.addEventListener('clock',function(e){var d=JSON.parse(e.data);setClockLocal(d.ends_at,d.server_now);if(d.delta_min)toast((d.by||'Régie')+' : '+(d.delta_min>0?'+':'')+d.delta_min+' min');});
   fetch(API+'/live/'+EV+'/clock',{headers:H}).then(function(r){return r.json();}).then(function(j){if(j.data)setClockLocal(j.data.ends_at,j.data.server_now);}).catch(function(){});
+  es.onopen=function(){document.querySelector('.role').textContent='Console · DIRECT · concert #'+Q.get('event');};
   es.onerror=function(){document.querySelector('.role').textContent='Console · DIRECT · reconnexion…';};
 }
 
 // ═══ DIRECT : vraies cams (ZegoCloud) · badges réels · micro unique ═══
+// Mur : le flux de l'ARTISTE (`<concert>_<artist_id>_main`) en grand ; les autres flux
+// publiés dans la salle = fans montés sur scène (main levée accordée), à droite.
+// Aucune case vide : tant que l'artiste ne diffuse pas, « En attente du flux… ».
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
-var SLOTS=[],MIC_STREAM=null,BADGES={},ZG=null;
+var SLOTS=[],MIC_STREAM=null,BADGES={},ZG=null,ARTIST_ID=null,ZSTATUS='Connexion à la salle vidéo…',ROOM_USERS={},ONLINE=null,GEST=false;
+var ARTIST_SOUND=true; // régie : on écoute l'artiste (après un premier geste, règle d'autoplay)
+document.addEventListener('pointerdown',function(){GEST=true;},{once:true,capture:true});
+function soundOk(){return GEST||!!(navigator.userActivation&&navigator.userActivation.hasBeenActive);}
+// SDK web Zego : le fichier UMD (ZegoExpressWebRTC.js) attend des globales absentes du
+// navigateur (long, protobufjs/minimal, zego-express-logger, localforage) et
+// window.ZegoExpressEngine n'existait jamais. On charge la version ESM empaquetée par
+// jsDelivr, une seule fois (Promise du constructeur mise en cache).
+var ZEGO_ESM='https://cdn.jsdelivr.net/npm/zego-express-engine-webrtc@3.12.0/+esm',_zegoP=null;
+function loadZego(){
+  if(typeof window.ZegoExpressEngine==='function')return Promise.resolve(window.ZegoExpressEngine);
+  if(!_zegoP)_zegoP=import(ZEGO_ESM).then(function(m){var C=(m.default&&m.default.ZegoExpressEngine)||m.ZegoExpressEngine;
+      if(typeof C!=='function')throw new Error('SDK vidéo introuvable');window.ZegoExpressEngine=C;return C;})
+    .catch(function(e){_zegoP=null;throw e;});
+  return _zegoP;}
 function badgeFor(uid){uid=String(uid);
   if(BADGES.vip&&String(BADGES.vip.user_id)===uid)return {t:'Invité VIP',e:'⭐'};
   if(BADGES.top_supporter&&String(BADGES.top_supporter.user_id)===uid)return {t:'Top Supporter',e:'👑'};
   if(BADGES.best_tipper&&String(BADGES.best_tipper.user_id)===uid)return {t:'Meilleur Tippeur',e:'💸'};return null;}
 function parseUid(id){var m=String(id).match(/^\d+_(.+?)_main$/);return m?m[1]:String(id);}
-function addStream(st){var uid=parseUid(st.streamID);if(SLOTS.some(function(s){return s.stream_id===st.streamID;}))return;if(SLOTS.length>=9)return;
-  var s={user_id:uid,name:(st.user&&st.user.userName)||('Fan '+uid),stream_id:st.streamID,media:null,video:null};SLOTS.push(s);renderWallLive();
+function isArtist(s){return ARTIST_ID!=null&&String(s.user_id)===ARTIST_ID;}
+function artistSlot(){return SLOTS.find(isArtist)||(ARTIST_ID==null?SLOTS[0]:null)||null;}
+function addStream(st){var uid=parseUid(st.streamID);if(SLOTS.some(function(s){return s.stream_id===st.streamID;}))return;
+  var art=ARTIST_ID!=null&&uid===ARTIST_ID;if(!art&&SLOTS.filter(function(s){return !isArtist(s);}).length>=8)return;
+  var s={user_id:uid,name:(st.user&&st.user.userName)||(art?'Artiste':'Fan '+uid),stream_id:st.streamID,media:null,video:null};SLOTS.push(s);renderWallLive();
   ZG.startPlayingStream(st.streamID).then(function(m){s.media=m;renderWallLive();}).catch(function(){});}
 function removeStream(id){var i=SLOTS.findIndex(function(s){return s.stream_id===id;});if(i<0)return;try{ZG.stopPlayingStream(id);}catch(_){}SLOTS.splice(i,1);renderWallLive();}
+// Spectateurs réels = utilisateurs de la salle Zego, hors écrans web (web_*) et hors artiste.
+function renderViewers(){var fans=0,webs=0,art=0;
+  Object.keys(ROOM_USERS).forEach(function(id){if(/^web_/.test(id))webs++;else if(ARTIST_ID!=null&&id===ARTIST_ID)art++;else fans++;});
+  var n=fans;if(ONLINE!=null)n=Math.max(fans,ONLINE-1-webs-art); // compteur Zego : inclut cet écran
+  var el=document.getElementById('viewers');if(el)el.textContent=Math.max(0,n).toLocaleString('fr-FR');}
+function setZStatus(m){ZSTATUS=m;if(LIVE)renderWallLive();}
 function startZego(role,say){
-  if(!window.ZegoExpressEngine){say('Cams : SDK vidéo non chargé (aperçu ?)');return;}
-  fetch(API+'/live/'+EVID+'/zego-token?role='+role,{headers:H}).then(function(r){return r.json();}).then(function(j){var d=j.data;if(!d)throw new Error(j.message||'jeton');
-    ZG=new ZegoExpressEngine(d.app_id,d.server);
+  var tok=null;setZStatus('Connexion à la salle vidéo…');
+  fetch(API+'/live/'+EVID+'/zego-token?role='+role,{headers:H}).then(function(r){return r.json().catch(function(){return {};});})
+  .then(function(j){var d=j&&j.data;if(!d||!d.app_id)throw new Error((j&&j.message)||'jeton vidéo refusé');
+    tok=d;if(d.artist_id!=null&&d.artist_id!=='')ARTIST_ID=String(d.artist_id);return loadZego();})
+  .then(function(Engine){
+    ZG=new Engine(tok.app_id,tok.server);
     ZG.on('roomStreamUpdate',function(roomID,type,list){(list||[]).forEach(function(st){if(type==='ADD')addStream(st);else removeStream(st.streamID);});});
+    ZG.on('roomUserUpdate',function(roomID,type,list){(list||[]).forEach(function(u){if(!u||u.userID==null)return;if(type==='ADD')ROOM_USERS[String(u.userID)]=u.userName||'';else delete ROOM_USERS[String(u.userID)];});renderViewers();});
+    ZG.on('roomOnlineUserCountUpdate',function(roomID,count){ONLINE=+count||0;renderViewers();});
     ZG.on('soundLevelUpdate',function(levels){(levels||[]).forEach(function(l){var s=SLOTS.find(function(x){return x.stream_id===l.streamID;});if(!s||!s.video||!s.video.parentNode)return;s.video.parentNode.classList.toggle('speaking',l.soundLevel>8&&MIC_STREAM===l.streamID);});});
     try{ZG.setSoundLevelDelegate(true,300);}catch(_){}
-    return ZG.loginRoom(d.room_id,d.token,{userID:d.user_id,userName:d.user_name},{userUpdate:true});
-  }).then(function(){renderWallLive();say('Connecté à la room du concert 🎥');}).catch(function(e){say('Cams indisponibles : '+(e&&e.message?e.message:'Zego'));});
+    return ZG.loginRoom(tok.room_id,tok.token,{userID:tok.user_id,userName:tok.user_name},{userUpdate:true});
+  }).then(function(ok){if(ok===false)throw new Error('connexion à la salle refusée');setZStatus('Connecté à la salle — l\'artiste n\'a pas encore lancé sa caméra.');say('Connecté à la room du concert 🎥');})
+  .catch(function(e){var m=e&&e.message?e.message:'Zego';setZStatus('Vidéo indisponible : '+m);say('Cams indisponibles : '+m);});
 }
 
 function isVip(uid){return !!(BADGES.vip&&String(BADGES.vip.user_id)===String(uid));}
+function camTile(s,main){var t=document.createElement('div');
+  var on=!main&&!!MIC_STREAM&&MIC_STREAM===s.stream_id,b=main?null:badgeFor(s.user_id),vip=!main&&isVip(s.user_id);
+  t.className='tile'+(main?' main':'')+(on?' onair':'');
+  t.innerHTML=(s.media?'':'<div class="tile__mono">'+esc(ini(s.name))+'</div>')+ // l'initiale ne s'affiche que sans vidéo
+    (main?'<div class="badge art"><span>🎤</span>Artiste</div>':(on?'<div class="badge air"><span>🎙️</span>À l\'antenne</div>':(b?'<div class="badge"><span>'+b.e+'</span>'+b.t+'</div>':'')))+
+    '<div class="name"><svg class="m'+(on||main?'':' off')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#'+(on||main?'i-mic':'i-mic-off')+'"/></svg>'+esc(s.name)+'</div>'+
+    (main?'':'<div class="ops"><button class="op" title="'+(on?'Couper le micro':'Donner le micro')+'" data-lmic="'+esc(s.user_id)+'" data-on="'+(on?1:0)+'" data-name="'+esc(s.name)+'"><svg class="icon" viewBox="0 0 24 24"><use href="#'+(on?'i-mic-off':'i-mic')+'"/></svg></button>'+
+    '<button class="op" title="'+(vip?'Retirer le badge Invité VIP':'Donner le badge Invité VIP')+'" data-vip="'+esc(s.user_id)+'" data-name="'+esc(s.name)+'" style="font-size:15px">⭐</button></div>');
+  if(s.media){var v=s.video;if(!v){v=document.createElement('video');v.autoplay=true;v.playsInline=true;v.className='camv';v.srcObject=s.media;s.video=v;}
+    v.muted=!(soundOk()&&(main?ARTIST_SOUND:on));t.prepend(v);if(v.play)v.play().catch(function(){v.muted=true;v.play().catch(function(){});});}
+  return t;}
+function waitTile(){var t=document.createElement('div');t.className='tile main';
+  t.innerHTML='<div class="wait"><span class="pulse"></span><b>En attente du flux de l\'artiste…</b><small>'+esc(ZSTATUS)+'</small></div>';return t;}
 function renderWallLive(){
-  var items=SLOTS.slice().sort(function(a,b){return (badgeFor(b.user_id)?1:0)-(badgeFor(a.user_id)?1:0);});while(items.length<9)items.push(null);
-  grid.innerHTML='';
-  items.slice(0,9).forEach(function(s){var t=document.createElement('div');
-    if(!s){t.className='tile free';t.innerHTML='<div class="tile__mono">·</div>';grid.appendChild(t);return;}
-    var b=badgeFor(s.user_id),on=!!MIC_STREAM&&MIC_STREAM===s.stream_id,vip=isVip(s.user_id);t.className='tile'+(on?' onair':'');
-    t.innerHTML='<div class="tile__mono">'+esc(ini(s.name))+'</div>'+(on?'<div class="badge air"><span>🎙️</span>À l\'antenne</div>':(b?'<div class="badge"><span>'+b.e+'</span>'+b.t+'</div>':''))+
-      '<div class="name"><svg class="m'+(on?'':' off')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#'+(on?'i-mic':'i-mic-off')+'"/></svg>'+esc(s.name)+'</div>'+
-      '<div class="ops"><button class="op" title="'+(on?'Couper le micro':'Donner le micro')+'" data-lmic="'+esc(s.user_id)+'" data-on="'+(on?1:0)+'" data-name="'+esc(s.name)+'"><svg class="icon" viewBox="0 0 24 24"><use href="#'+(on?'i-mic-off':'i-mic')+'"/></svg></button>'+
-      '<button class="op" title="'+(vip?'Retirer le badge Invité VIP':'Donner le badge Invité VIP')+'" data-vip="'+esc(s.user_id)+'" data-name="'+esc(s.name)+'" style="font-size:15px">⭐</button></div>';
-    if(s.media){var v=s.video;if(!v){v=document.createElement('video');v.autoplay=true;v.playsInline=true;v.className='camv';v.srcObject=s.media;s.video=v;}v.muted=!on;t.prepend(v);if(v.play)v.play().catch(function(){});}
-    grid.appendChild(t);});
+  var art=artistSlot(),fans=SLOTS.filter(function(s){return s!==art;}).sort(function(a,b){return (badgeFor(b.user_id)?1:0)-(badgeFor(a.user_id)?1:0);}).slice(0,8);
+  grid.className='grid live'+(fans.length?' withfans':'')+(fans.length>4?' many':'');
+  grid.innerHTML='';grid.appendChild(art?camTile(art,true):waitTile());
+  if(fans.length){var strip=document.createElement('div');strip.className='fanstrip';fans.forEach(function(s){strip.appendChild(camTile(s,false));});grid.appendChild(strip);}
   var m=SLOTS.find(function(s){return MIC_STREAM&&s.stream_id===MIC_STREAM;});
   document.getElementById('micStatus').innerHTML=m?'🎙️ Micro ouvert : <b style="color:var(--gold)">'+esc(m.name)+'</b>':'🔇 Aucun micro ouvert';
   grid.querySelectorAll('[data-lmic]').forEach(function(b){b.onclick=function(){
@@ -483,18 +572,20 @@ function renderWallLive(){
 }
 if(LIVE){
   var EVID=encodeURIComponent(Q.get('event'));
-  GUESTS=[];renderGrid=function(){renderWallLive();};grid.innerHTML='';renderWallLive();
+  GUESTS=[];renderGrid=function(){renderWallLive();};renderWallLive();
   give=function(i){var r=QUEUE[i];if(!r)return Promise.resolve();
     return fetch(API+'/live/'+EVID+'/hands/'+encodeURIComponent(r.user_id)+'/grant',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},H),body:JSON.stringify({name:r.n})}).then(function(x){toast(x.ok?'🎙️ '+r.n+' a la parole':'Échec');});};
   var _rq=renderQueue;renderQueue=function(){_rq();document.querySelectorAll('[data-deny]').forEach(function(b){var i=+b.dataset.deny,r=QUEUE[i];b.onclick=function(){if(r)fetch(API+'/live/'+EVID+'/hands/'+encodeURIComponent(r.user_id)+'/deny',{method:'POST',headers:H}).then(function(){toast(r.n+' : demande refusée');});};});};
   document.getElementById('muteAll').onclick=function(){fetch(API+'/live/'+EVID+'/mic/off',{method:'POST',headers:H}).then(function(){toast('Tous les micros coupés');});};
-  function applyHands(hs){QUEUE=(hs||[]).map(function(h){return {n:h.name,w:'il y a '+Math.max(1,Math.round((Date.now()-h.at)/1000))+' s',user_id:h.user_id};});renderQueue();}
+  var ago=function(at){var s=Math.max(1,Math.round((Date.now()-at)/1000));return s<60?'il y a '+s+' s':'il y a '+Math.round(s/60)+' min';};
+  var applyHands=function(hs){QUEUE=(hs||[]).map(function(h){return {n:h.name||'Un fan',w:ago(h.at||Date.now()),user_id:h.user_id};});renderQueue();};
   es.addEventListener('hands',function(e){applyHands(JSON.parse(e.data).hands);});
   es.addEventListener('mic',function(e){var d=JSON.parse(e.data);MIC_STREAM=d.stream_id||null;renderWallLive();});
   es.addEventListener('badges',function(e){BADGES=JSON.parse(e.data);renderWallLive();});
   fetch(API+'/live/'+EVID+'/hands',{headers:H}).then(function(r){return r.json();}).then(function(j){if(j.data){applyHands(j.data.hands);if(j.data.mic)MIC_STREAM=j.data.mic.stream_id;renderWallLive();}}).catch(function(){});
   fetch(API+'/live/'+EVID+'/badges',{headers:H}).then(function(r){return r.json();}).then(function(j){if(j.data){BADGES=j.data;renderWallLive();}}).catch(function(){});
-  document.addEventListener('click',function(){renderWallLive();},{once:true});
+  document.addEventListener('click',function(){renderWallLive();},{once:true}); // un geste débloque le son
+  loadTopFans();
   startZego('regie',toast);
 }
 </script>
