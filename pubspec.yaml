@@ -114,6 +114,12 @@ flutter_native_splash:
 
 # The following section is specific to Flutter packages.
 flutter:
+  # iOS : on reste sur CocoaPods. Swift Package Manager (activé par défaut
+  # dans les Flutter récents) n'arrive pas à résoudre le paquet RevenueCat
+  # (purchases-hybrid-common) et casse le build.
+  config:
+    enable-swift-package-manager: false
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
