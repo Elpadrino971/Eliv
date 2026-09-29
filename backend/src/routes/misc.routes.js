@@ -210,6 +210,13 @@ router.post('/live/:eventId/recording/start', requireAuth, asyncHandler(async (r
   if (!event) return fail(res, 'Event introuvable.', 404);
   if (event.artist_id !== req.user.id) return fail(res, 'Non autorisé.', 403);
 
+  // Mode « pro » (lot 12) : le Live Stream Mux appartient à la régie vidéo
+  // (créé depuis l'admin, faible latence). Ne pas en créer un 2e ni renvoyer
+  // sa clé à l'app : le relais Zego->Mux entrerait en conflit avec l'encodeur.
+  if (event.live_mode === 'pro') {
+    return res.json({ status: 'success', data: { recording: false, reason: 'pro_mode' } });
+  }
+
   const replayEnabled = event.replay_enabled === null || event.replay_enabled === undefined
     ? true : !!event.replay_enabled;
   if (!replayEnabled) {

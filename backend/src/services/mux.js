@@ -147,13 +147,24 @@ const LIVE_INGEST_URL_RTMP = 'rtmp://global-live.mux.com:5222/app';
  * du flux. Filet de sécurité côté webhook `video.asset.ready` : l'asset est
  * aussi rattaché via `live_stream_id` -> events.mux_live_stream_id.
  */
-function createLiveStream({ passthrough } = {}) {
+/*
+ * `latencyMode` (lot 12) : champ Mux `latency_mode` = 'low' | 'reduced' |
+ * 'standard' (défaut Mux : standard, ~15-30 s de retard). Le mode « pro »
+ * (régie vidéo) passe 'low' (~5 s) pour que le public réagisse presque en
+ * même temps que la salle. Attention : en low/reduced, Mux met le
+ * reconnect_window à 0 par défaut -> on le fixe explicitement à 60 s pour
+ * qu'une micro-coupure réseau de l'encodeur ne termine pas le concert.
+ */
+const LATENCY_MODES = ['low', 'reduced', 'standard'];
+function createLiveStream({ passthrough, latencyMode } = {}) {
   const pt = passthrough ? JSON.stringify(passthrough) : undefined;
+  const latency = LATENCY_MODES.includes(latencyMode) ? latencyMode : undefined;
   return muxFetch('/video/v1/live-streams', {
     method: 'POST',
     body: {
       playback_policy: ['public'],
       reconnect_window: 60,
+      latency_mode: latency, // absent = standard (mode mobile / relais Zego inchangé)
       passthrough: pt, // live stream + asset de replay (recopié par Mux)
       new_asset_settings: {
         playback_policy: ['public'],
@@ -168,6 +179,7 @@ function createLiveStream({ passthrough } = {}) {
   }));
 }
 
+/** Live stream Mux ; `status` = 'active' (flux reçu) | 'idle' | 'disabled'. */
 function getLiveStream(id) {
   return muxFetch(`/video/v1/live-streams/${id}`);
 }
@@ -216,4 +228,5 @@ module.exports = {
   STATIC_RENDITION_RESOLUTION,
   LIVE_INGEST_URL,
   LIVE_INGEST_URL_RTMP,
+  LATENCY_MODES,
 };

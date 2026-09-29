@@ -352,24 +352,71 @@ function openMuxUploadDialog(kind, refId) {
 async function toggleMuxLiveStream(eventId, hasLive) {
   try {
     if (hasLive) {
+      if (!confirm('Arrêter le live stream Mux ?\n\nLe flux et sa clé sont supprimés ; le concert repasse en mode Téléphone (diffusion depuis l\'app).')) return;
       await api('DELETE', `/events/${eventId}/mux/live-stream`);
       toast('Live stream arrêté');
       route();
       return;
     }
     const { data } = await api('POST', `/events/${eventId}/mux/live-stream`);
-    const bg = document.createElement('div');
-    bg.className = 'modal-bg';
-    bg.innerHTML = `<div class="modal"><h3>Live stream Mux créé</h3>
-      <p style="color:var(--muted);font-size:13px;margin-bottom:10px">Colle ces infos dans l'encodeur de la régie (OBS / vMix / Teradek…).</p>
-      <label>URL d'ingest (RTMP)</label><input value="${esc(data.ingest_url)}" readonly onclick="this.select()">
-      <label>Clé de stream (secrète)</label><input value="${esc(data.stream_key)}" readonly onclick="this.select()">
-      <label>Playback ID</label><input value="${esc(data.playback_id)}" readonly onclick="this.select()">
-      <div class="modal-actions"><button class="btn gold cancel">Fermer</button></div></div>`;
-    document.body.appendChild(bg);
-    bg.querySelector('.cancel').onclick = () => { bg.remove(); route(); };
-    bg.onclick = (e) => { if (e.target === bg) { bg.remove(); route(); } };
+    showMuxLiveCreated(data, 'Live stream Mux créé');
   } catch (e) { toast(e.message); }
+}
+// Fenêtre « Live stream Mux créé » (mode pro, lot 12) : URL + clé à coller
+// dans l'encodeur de la régie vidéo, réglages conseillés, copie en un clic.
+function showMuxLiveCreated(data, title) {
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal"><h3>${esc(title)}</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:10px">Mode <b>Pro (régie)</b> : colle ces infos dans l'encodeur de la régie vidéo (OBS / vMix / ATEM / Teradek…). Les fans regardent le flux Mux (faible latence) ; la salle Zego de l'app n'est plus utilisée pour ce concert.</p>
+    <label>URL d'ingest (RTMP)</label><input value="${esc(data.ingest_url)}" readonly onclick="this.select()">
+    <label>Clé de stream (secrète)</label><input value="${esc(data.stream_key)}" readonly onclick="this.select()">
+    <label>Playback ID</label><input value="${esc(data.playback_id)}" readonly onclick="this.select()">
+    <div style="margin-top:12px;padding:10px 12px;border:1px solid var(--line, #22314a);border-radius:10px;font-size:13px;line-height:1.5">
+      <b>Réglages conseillés :</b> 1080p30, 4 500–6 000 kbit/s H.264, AAC 160 kbit/s, image clé 2 s, connexion filaire.</div>
+    <div class="modal-actions"><button class="btn" data-copyingest>📋 Copier URL + clé</button><button class="btn gold cancel">Fermer</button></div></div>`;
+  document.body.appendChild(bg);
+  bg.querySelector('[data-copyingest]').onclick = async () => {
+    const text = `URL : ${data.ingest_url}\nClé : ${data.stream_key}`;
+    try { await navigator.clipboard.writeText(text); toast('URL + clé copiées'); }
+    catch (_) { toast('Copie impossible : sélectionne les champs à la main'); }
+  };
+  bg.querySelector('.cancel').onclick = () => { bg.remove(); route(); };
+  bg.onclick = (e) => { if (e.target === bg) { bg.remove(); route(); } };
+}
+// « 🔑 Nouvelle clé » : supprime le Live Stream Mux puis en recrée un (la clé
+// exposée ne sert plus à rien). L'encodeur doit être reconfiguré.
+async function regenMuxStreamKey(eventId) {
+  if (!confirm('Générer une nouvelle clé de stream ?\n\nL\'ancien flux Mux est supprimé : l\'ancienne clé ne fonctionnera plus et la régie devra coller la nouvelle dans son encodeur. À éviter pendant le direct.')) return;
+  try {
+    await api('DELETE', `/events/${eventId}/mux/live-stream`);
+    const { data } = await api('POST', `/events/${eventId}/mux/live-stream`);
+    showMuxLiveCreated(data, 'Nouvelle clé de stream générée');
+  } catch (e) { toast(e.message); route(); }
+}
+// Mode de diffusion (lot 12) + état du flux Mux reçu (mode pro).
+const MUX_LIVE_STATUS = {}; // event_id -> 'active' | 'idle' | 'disabled' | null
+function liveModeBadge(r) {
+  const pro = r.live_mode === 'pro';
+  return `<span style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;${pro ? 'background:rgba(230,199,106,.16);color:#e6c76a;border:1px solid rgba(230,199,106,.45)' : 'background:rgba(126,166,255,.12);color:#9db8ff;border:1px solid rgba(126,166,255,.35)'}" title="${pro ? 'Régie vidéo -> RTMP -> Mux (faible latence)' : 'L\'artiste diffuse depuis l\'app (salle Zego)'}">${pro ? '🎬 Pro (régie)' : '📱 Téléphone'}</span>`
+    + (pro && r.mux_live_stream_id ? ` <span data-muxstatus="${r.id}" style="white-space:nowrap;font-size:12px">${muxStatusLabel(MUX_LIVE_STATUS[r.id])}</span>` : '');
+}
+function muxStatusLabel(s) {
+  if (s === 'active') return '<b style="color:#63d6a6">● reçu</b>';
+  if (s === 'idle') return '<span style="color:#aeb7c2">○ en attente</span>';
+  if (s === 'disabled') return '<span style="color:#ff8a8a">✕ désactivé</span>';
+  return s === undefined ? '<span style="color:#667">…</span>' : '<span style="color:#667" title="État Mux indisponible">—</span>';
+}
+// Interroge Mux (via l'admin) pour les concerts en mode pro ; met à jour les
+// pastilles déjà affichées. Silencieux en cas d'erreur.
+function refreshMuxLiveStatuses(rows) {
+  (rows || []).filter((r) => r.live_mode === 'pro' && r.mux_live_stream_id).forEach(async (r) => {
+    try {
+      const { data } = await api('GET', `/events/${r.id}/mux/live-status`);
+      MUX_LIVE_STATUS[r.id] = data?.status || null;
+    } catch (_) { MUX_LIVE_STATUS[r.id] = null; }
+    document.querySelectorAll(`[data-muxstatus="${r.id}"]`).forEach((el) => { el.innerHTML = muxStatusLabel(MUX_LIVE_STATUS[r.id]); });
+  });
 }
 
 const view = () => $('view');
@@ -1031,13 +1078,14 @@ async function pageEvents() {
       { label: 'Concert', render: (r) => `<div class="nm">${esc(r.name)}</div>${r.mux_playback_id ? '<div class="em">🎬 vidéo Mux</div>' : ''}` },
       { label: 'Artiste', render: (r) => esc(r.artist || '—') },
       { label: 'Prix', render: priceCell },
-      { label: 'Statut', render: (r) => badge(r.status) },
-      { label: 'Vidéo', render: (r) => `${muxBadge(r.mux_upload_status)}${r.mux_live_stream_id ? '<div class="em">🔴 live en cours</div>' : ''}${r.replay_expires_at ? `<div class="em">replay jusqu'au ${fmtDate(r.replay_expires_at)}</div>` : ''}${r.mux_playback_id ? `<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap"><button class="btn edit" data-replayplay="${r.id}" title="Lire le replay (HLS)">▶ Replay</button><a class="btn" style="text-decoration:none;display:inline-block" href="${esc(r.replay_mp4_url || '')}" target="_blank" rel="noopener" title="Télécharge le replay en MP4. Replay enregistré avant cette version : disponible après le prochain live, ou clique « Préparer le MP4 » (sinon le lien répond 404).">⬇ Replay MP4</a>${r.mux_asset_id ? `<button class="btn" data-replaymp4="${r.id}" title="Demande à Mux la version MP4 d'un replay existant (assets sans rendition)">🎞 Préparer le MP4</button>` : ''}</div>` : ''}` },
+      { label: 'Statut', render: (r) => `${badge(r.status)}<div>${liveModeBadge(r)}</div>` },
+      { label: 'Vidéo', render: (r) => `${muxBadge(r.mux_upload_status)}${r.mux_live_stream_id && r.live_mode !== 'pro' ? '<div class="em">🔴 live en cours</div>' : ''}${r.replay_expires_at ? `<div class="em">replay jusqu'au ${fmtDate(r.replay_expires_at)}</div>` : ''}${r.mux_playback_id ? `<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap"><button class="btn edit" data-replayplay="${r.id}" title="Lire le replay (HLS)">▶ Replay</button><a class="btn" style="text-decoration:none;display:inline-block" href="${esc(r.replay_mp4_url || '')}" target="_blank" rel="noopener" title="Télécharge le replay en MP4. Replay enregistré avant cette version : disponible après le prochain live, ou clique « Préparer le MP4 » (sinon le lien répond 404).">⬇ Replay MP4</a>${r.mux_asset_id ? `<button class="btn" data-replaymp4="${r.id}" title="Demande à Mux la version MP4 d'un replay existant (assets sans rendition)">🎞 Préparer le MP4</button>` : ''}</div>` : ''}` },
       { label: 'Date', render: (r) => fmtDate(r.start_date_time) },
-      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="event:${r.id}">🎬 Upload</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button><button class="btn grant" data-feature="${r.id}">⭐ À la une</button><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn" data-guests="${r.id}">🎤 Invités</button><button class="btn" data-links="${r.id}">🎛 Régie</button><button class="btn" data-stage="${r.id}">🖥 Scène</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="event:${r.id}">🎬 Upload</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button>${r.live_mode === 'pro' && r.mux_live_stream_id ? `<button class="btn" data-muxrekey="${r.id}" title="Supprime le flux Mux et en recrée un : à utiliser si la clé de stream a fuité">🔑 Nouvelle clé</button>` : ''}<button class="btn grant" data-feature="${r.id}">⭐ À la une</button><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn" data-guests="${r.id}">🎤 Invités</button><button class="btn" data-links="${r.id}">🎛 Régie</button><button class="btn" data-stage="${r.id}">🖥 Scène</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
     ],
   });
   renderFeaturedBanner();
+  refreshMuxLiveStatuses(currentRows);
 }
 
 async function feedClipForm(row, { duplicate = false } = {}) {
@@ -2218,6 +2266,8 @@ document.addEventListener('click', (e) => {
   if (evg) { showEventGuests(evg.dataset.guests); return; }
   const ml = e.target.closest('[data-muxlive]');
   if (ml) { const [, id, hasLive] = ml.dataset.muxlive.split(':'); toggleMuxLiveStream(id, hasLive === '1'); return; }
+  const rk = e.target.closest('[data-muxrekey]');
+  if (rk) { regenMuxStreamKey(rk.dataset.muxrekey); return; }
   const rp = e.target.closest('[data-replayplay]');
   if (rp) { const r = currentRows.find((x) => x.id == rp.dataset.replayplay); if (r) openReplayPlayer(r); return; }
   const rm = e.target.closest('[data-replaymp4]');
@@ -2255,12 +2305,16 @@ async function renderLives() {
     return;
   }
   const cards = rows.map((r) => {
-    // Le direct se regarde via la salle Zego (toujours disponible) ; le flux
-    // Mux n'existe que si le relais Zego->Mux est actif (enregistrement).
+    // Mode téléphone : le direct se regarde via la salle Zego (toujours
+    // disponible) ; le flux Mux n'existe que si le relais Zego->Mux est actif.
+    // Mode pro (lot 12) : pas de salle Zego, le direct EST le HLS Mux de la
+    // régie vidéo -> « Regarder » ouvre le lecteur Mux.
+    const pro = r.live_mode === 'pro';
     const watch = `<button class="btn edit" data-watchlive="${r.id}">▶ Regarder (direct)</button>`
-      + (r.mux_live_playback_id ? `<button class="btn" data-watchmux="${r.id}">🎞 Flux Mux</button>` : '');
+      + (!pro && r.mux_live_playback_id ? `<button class="btn" data-watchmux="${r.id}">🎞 Flux Mux</button>` : '');
     return `<div style="padding:14px;margin-bottom:10px;border:1px solid #22314a;border-radius:12px;background:#0d1626">
       <div class="nm" style="font-size:16px">🔴 ${esc(r.name || '—')}</div>
+      <div>${liveModeBadge(r)}</div>
       <div class="em">🎤 ${esc(r.artist || r.artist_email || '—')} · 👥 ${r.buyers || 0} billets · ❤️ ${r.likes_count || 0}</div>
       <div class="em">En direct depuis ${fmtDate(r.start_date_time)}</div>
       <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">${watch}
@@ -2271,8 +2325,16 @@ async function renderLives() {
   }).join('');
   view().innerHTML = head + cards;
   view().querySelectorAll('[data-watchlive]').forEach((b) => {
-    b.onclick = () => { const r = rows.find((x) => x.id == b.dataset.watchlive); if (r) openZegoViewer(r); };
+    b.onclick = () => {
+      const r = rows.find((x) => x.id == b.dataset.watchlive);
+      if (!r) return;
+      if (r.live_mode === 'pro') {
+        if (!r.mux_live_playback_id) { toast('Flux Mux introuvable : recrée le live stream depuis Concerts.'); return; }
+        openLivePlayer(r);
+      } else openZegoViewer(r);
+    };
   });
+  refreshMuxLiveStatuses(rows);
   view().querySelectorAll('[data-watchmux]').forEach((b) => {
     b.onclick = () => { const r = rows.find((x) => x.id == b.dataset.watchmux); if (r) openLivePlayer(r); };
   });
