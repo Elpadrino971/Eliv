@@ -908,7 +908,7 @@ async function pageEvents() {
       { label: 'Statut', render: (r) => badge(r.status) },
       { label: 'Vidéo', render: (r) => `${muxBadge(r.mux_upload_status)}${r.mux_live_stream_id ? '<div class="em">🔴 live en cours</div>' : ''}${r.replay_expires_at ? `<div class="em">replay jusqu'au ${fmtDate(r.replay_expires_at)}</div>` : ''}` },
       { label: 'Date', render: (r) => fmtDate(r.start_date_time) },
-      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="event:${r.id}">🎬 Upload</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button><button class="btn grant" data-feature="${r.id}">⭐ À la une</button><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn" data-guests="${r.id}">🎤 Invités</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="event:${r.id}">🎬 Upload</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button><button class="btn grant" data-feature="${r.id}">⭐ À la une</button><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn" data-guests="${r.id}">🎤 Invités</button><button class="btn" data-links="${r.id}">🎛 Régie</button><button class="btn" data-stage="${r.id}">🖥 Scène</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
     ],
   });
   renderFeaturedBanner();
@@ -2058,6 +2058,10 @@ document.addEventListener('click', (e) => {
   if (fe) { featureEvent(fe.dataset.feature); return; }
   const gt = e.target.closest('[data-gifts]');
   if (gt) { showGiftTickets(gt.dataset.gifts); return; }
+  const lk = e.target.closest('[data-links]');
+  if (lk) { openLiveLink(lk.dataset.links, 'regie_url'); return; }
+  const sg = e.target.closest('[data-stage]');
+  if (sg) { openLiveLink(sg.dataset.stage, 'stage_url'); return; }
   const evg = e.target.closest('[data-guests]');
   if (evg) { showEventGuests(evg.dataset.guests); return; }
   const ml = e.target.closest('[data-muxlive]');
@@ -2073,6 +2077,16 @@ document.addEventListener('click', (e) => {
 
 // ─── Supervision des lives en direct (modération) ───
 let livesTimer = null;
+// Ouvre la console régie ou l'écran de scène d'un concert dans un nouvel
+// onglet (lien complet avec la clé API dédiée, généré côté serveur).
+async function openLiveLink(eventId, field) {
+  try {
+    const r = await api('GET', `/live-links/${eventId}`);
+    const url = r.data && r.data[field];
+    if (!url) throw new Error('Lien indisponible');
+    window.open(url, '_blank', 'noopener');
+  } catch (e) { toast(e.message, true); }
+}
 async function renderLives() {
   let rows = [];
   try { const r = await api('GET', '/live-events'); rows = r.data || []; }
@@ -2093,12 +2107,22 @@ async function renderLives() {
       <div class="nm" style="font-size:16px">🔴 ${esc(r.name || '—')}</div>
       <div class="em">🎤 ${esc(r.artist || r.artist_email || '—')} · 👥 ${r.buyers || 0} billets · ❤️ ${r.likes_count || 0}</div>
       <div class="em">En direct depuis ${fmtDate(r.start_date_time)}</div>
-      <div style="margin-top:8px">${watch}</div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">${watch}
+        <button class="btn" data-links="${r.id}">🎛 Régie</button>
+        <button class="btn" data-stage="${r.id}">🖥 Écran de scène</button>
+        <button class="btn del" data-endlive="${r.id}">⏹ Terminer le live</button></div>
     </div>`;
   }).join('');
   view().innerHTML = head + cards;
   view().querySelectorAll('[data-watchlive]').forEach((b) => {
     b.onclick = () => { const r = rows.find((x) => x.id == b.dataset.watchlive); if (r) openLivePlayer(r); };
+  });
+  view().querySelectorAll('[data-endlive]').forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm('Terminer ce live pour tous les spectateurs ?')) return;
+      try { const r = await api('POST', `/events/${b.dataset.endlive}/end`); toast(r.message || 'Live terminé'); renderLives(); }
+      catch (e) { toast(e.message, true); }
+    };
   });
 }
 async function pageLives() {

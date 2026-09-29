@@ -250,6 +250,40 @@ router.post('/api-keys', requireAdmin, (req, res) => {
   db.prepare('INSERT INTO api_keys (name, prefix, key_hash, active) VALUES (?, ?, ?, 1)').run(name, prefix, sha256(secret));
   res.json({ status: 'success', data: { name, key: secret, prefix } });
 });
+// ─── Régie / Écran de scène : liens prêts à ouvrir depuis l'admin ───
+// Une clé API dédiée est créée à la demande et conservée (en clair, admin
+// seulement) dans settings.regie_api_key pour construire les liens sans avoir
+// à la recopier à chaque live. Révoquer la clé dans « API / Atelier » en
+// régénère une nouvelle au prochain clic.
+const REGIE_SITE_URL = (process.env.SITE_URL || 'https://vybzzz.online').replace(/\/+$/, '');
+function regieApiKey() {
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'regie_api_key'").get();
+  if (row && row.value && db.prepare('SELECT 1 FROM api_keys WHERE key_hash = ? AND active = 1').get(sha256(row.value))) {
+    return row.value;
+  }
+  const secret = 'vybz_' + crypto.randomBytes(24).toString('hex');
+  db.prepare('INSERT INTO api_keys (name, prefix, key_hash, active) VALUES (?, ?, ?, 1)')
+    .run('Régie & écran de scène (admin)', secret.slice(0, 12) + '…', sha256(secret));
+  db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('regie_api_key', secret);
+  return secret;
+}
+router.get('/live-links/:eventId', requireAdmin, (req, res) => {
+  const ev = db.prepare('SELECT id, name, status FROM events WHERE id = ?').get(req.params.eventId);
+  if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  const q = `event=${ev.id}&key=${encodeURIComponent(regieApiKey())}`;
+  return res.json({ status: 'success', data: {
+    event_id: ev.id, name: ev.name, status: ev.status,
+    regie_url: `${REGIE_SITE_URL}/regie.html?${q}`,
+    stage_url: `${REGIE_SITE_URL}/stage.html?${q}`,
+  } });
+});
+// Terminer un live depuis l'admin (artiste injoignable, téléphone coupé…).
+router.post('/events/:id/end', requireAdmin, (req, res) => {
+  const ev = db.prepare('SELECT id, status FROM events WHERE id = ?').get(req.params.id);
+  if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  db.prepare("UPDATE events SET status = 'completed' WHERE id = ? AND status = 'live'").run(ev.id);
+  return res.json({ status: 'success', message: ev.status === 'live' ? 'Live terminé.' : 'Ce concert n’était pas en direct.' });
+});
 router.delete('/api-keys/:id', requireAdmin, (req, res) => {
   db.prepare('UPDATE api_keys SET active = 0 WHERE id = ?').run(req.params.id);
   res.json({ status: 'success' });
