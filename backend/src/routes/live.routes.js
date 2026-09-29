@@ -291,10 +291,15 @@ router.get('/:eventId/zego-token', (req, res) => {
   if (!zegoService.isConfigured()) return res.status(503).json({ status: 'error', message: 'ZegoCloud non configuré (ZEGO_APP_ID / ZEGO_SERVER_SECRET).' });
   const role = req.query.role === 'stage' ? 'stage' : 'regie';
   const userId = 'web_' + role + '_' + req.params.eventId + '_' + Math.random().toString(36).slice(2, 8);
+  // artist_id : l'écran repère le flux de l'artiste (`<concert>_<artist_id>_main`)
+  // pour l'afficher en grand ; les autres flux publiés sont les fans sur scène.
+  let artistId = null;
+  try { const ev = db.prepare('SELECT artist_id FROM events WHERE id = ?').get(req.params.eventId); artistId = ev ? ev.artist_id : null; } catch (_) {}
   try {
     const { token, appId, expiresAt } = zegoService.generateToken04(userId);
     return res.json({ status: 'success', data: {
       app_id: appId, token, expires_at: expiresAt, room_id: String(req.params.eventId),
+      artist_id: artistId != null ? String(artistId) : null,
       user_id: userId, user_name: role === 'stage' ? 'Stage VybzzZ' : 'Régie VybzzZ',
       server: 'wss://webliveroom' + appId + '-api.zegocloud.com/ws',
     } });
@@ -351,6 +356,23 @@ router.post('/:eventId/mic/off', (req, res) => {
   MIC.set(id, null);
   bus.emit(id, { type: 'mic', user_id: null, name: null, stream_id: null });
   return res.json({ status: 'success' });
+});
+
+// ── Top fans du concert (somme des points de cadeaux confirmés) ─────────────
+// GET /api/live/:eventId/top-fans?limit=5  (clé API ou JWT) — alimente l'onglet
+// « Top fans » de la régie et le classement du Stage (aucune donnée inventée).
+router.get('/:eventId/top-fans', optionalAuth, (req, res) => {
+  if (!req.user && !keyOk(req)) return res.status(401).json({ status: 'error', message: 'Connexion ou clé API requise.' });
+  const limit = Math.min(20, Math.max(1, Number(req.query.limit) || 5));
+  const rows = db.prepare(
+    `SELECT a.user_id, SUM(CAST(a.points AS REAL)) points, MIN(a.id) first_id, u.artist_name, u.full_name
+       FROM activities a LEFT JOIN users u ON u.id = a.user_id
+      WHERE a.event_id = ? AND a.type = 'gift' AND a.user_id IS NOT NULL
+      GROUP BY a.user_id ORDER BY points DESC, first_id ASC LIMIT ?`
+  ).all(req.params.eventId, limit);
+  return res.json({ status: 'success', data: rows.map((r) => ({
+    user_id: r.user_id, name: r.artist_name || r.full_name || 'Un fan', points: Math.round(r.points || 0),
+  })) });
 });
 
 // ── Badges du mur (👑 Top Supporter · 💸 Meilleur Tippeur · ⭐ Invité VIP) ──
