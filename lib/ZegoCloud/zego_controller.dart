@@ -38,10 +38,16 @@ class ZegoController extends GetxController {
   String get userId =>
       currentUser.value?.id?.toString() ??
       "user_${DateTime.now().millisecondsSinceEpoch}";
-  String get userName =>
-      currentUser.value?.fullName ??
-      currentUser.value?.artistName ??
-      "User $userId";
+  // Nom affiché par Zego (barre du haut du live) : nom d'artiste (court) en
+  // priorité, nom complet seulement s'il est vide — sinon un nom long pousse
+  // le bouton de fermeture Zego hors de l'écran.
+  String get userName {
+    final artist = currentUser.value?.artistName?.trim();
+    if (artist != null && artist.isNotEmpty) return artist;
+    final full = currentUser.value?.fullName?.trim();
+    if (full != null && full.isNotEmpty) return full;
+    return "User $userId";
+  }
 
   /// À appeler avant d'ouvrir un écran de live (start/join/pré-live) :
   /// récupère un token courte-durée depuis le backend. Retourne false si

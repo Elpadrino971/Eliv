@@ -8,7 +8,6 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_chat_preview.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_side_actions.dart';
-import 'package:artist/ZegoCloud/widgets/live_stream_top_bar.dart';
 import 'package:artist/ZegoCloud/zego_controller.dart';
 import 'package:artist/ZegoCloud/zego_gifts.dart';
 import 'package:flutter/material.dart';
@@ -34,12 +33,17 @@ class _StartStreamState extends State<StartStream> {
   final GlobalKey<HeartAnimationOverlayState> _heartKey =
       GlobalKey<HeartAnimationOverlayState>();
   StreamSubscription? _commandSubscription;
+  // Liste des participants Zego -> compteur de spectateurs en temps réel.
+  StreamSubscription? _userListSubscription;
   Timer? _logTimer;
   bool _isLive = false;
   // Contrôles hôte : masquer tout l'overlay (place à la scène) / couper le chat.
   // Mode « place à la scène » : mémorisé d'un live à l'autre.
   bool _overlayHidden = box.read('host_overlay_hidden') == true;
   bool _chatHidden = false;
+  // Volet d'infos (titre, artiste, stats, promo) : fermé par défaut,
+  // mémorisé d'un live à l'autre.
+  bool _infoOpen = box.read('host_info_open') == true;
   // Compteur de durée du live (démarré quand le live diffuse réellement).
   DateTime? _liveStartedAt;
   Timer? _durationTimer;
@@ -60,11 +64,19 @@ class _StartStreamState extends State<StartStream> {
     _commandSubscription = ZegoUIKit().getInRoomCommandReceivedStream().listen(
       _onInRoomCommandReceived,
     );
+
+    // Compteur de spectateurs : tous les participants de la salle sauf
+    // l'artiste lui-même (l'utilisateur local est inclus dans la liste).
+    _userListSubscription = ZegoUIKit().getUserListStream().listen((users) {
+      final count = users.where((u) => u.id != zegoController.userId).length;
+      zegoController.updateViewerCount(count);
+    });
   }
 
   @override
   void dispose() {
     _commandSubscription?.cancel();
+    _userListSubscription?.cancel();
     _logTimer?.cancel();
     _durationTimer?.cancel();
     // Signale la fin du live -> Mux finalise l'asset de replay.
@@ -210,9 +222,9 @@ class _StartStreamState extends State<StartStream> {
     Get.dialog(
       AlertDialog(
         backgroundColor: midnightSecondary,
-        title: const Text(
-          'Lancer une promo',
-          style: TextStyle(
+        title: Text(
+          'host_promo'.tr,
+          style: const TextStyle(
             color: ivory,
             fontWeight: FontWeight.w700,
             fontSize: 18,
@@ -223,7 +235,10 @@ class _StartStreamState extends State<StartStream> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Réduction', style: TextStyle(color: textMuted, fontSize: 13)),
+              Text(
+                'host_promo_discount'.tr,
+                style: const TextStyle(color: textMuted, fontSize: 13),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -238,7 +253,10 @@ class _StartStreamState extends State<StartStream> {
                     .toList(),
               ),
               const SizedBox(height: 16),
-              Text('Durée', style: TextStyle(color: textMuted, fontSize: 13)),
+              Text(
+                'host_promo_duration'.tr,
+                style: const TextStyle(color: textMuted, fontSize: 13),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -268,15 +286,21 @@ class _StartStreamState extends State<StartStream> {
                 [],
               );
               Get.snackbar(
-                'Promo lancée 🎟️',
-                '-$percent% pendant $minutes min',
+                'host_promo_sent'.tr,
+                'host_promo_sent_desc'.trParams({
+                  'p': '$percent',
+                  'm': '$minutes',
+                }),
                 colorText: ivory,
                 backgroundColor: midnightSecondary,
               );
             },
-            child: const Text(
-              'Lancer',
-              style: TextStyle(color: goldPrimary, fontWeight: FontWeight.bold),
+            child: Text(
+              'host_promo_launch'.tr,
+              style: const TextStyle(
+                color: goldPrimary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -313,6 +337,13 @@ class _StartStreamState extends State<StartStream> {
               ..preview.showPreviewForHost = false
               ..audioVideoViewConfig.useVideoViewAspectFill = true
               ..inRoomMessage.visible = false
+              // Barre Zego du haut allégée : le X (fermer) reste, et seul le
+              // bouton « réduire » subsiste — le compteur et les infos du
+              // concert sont dans notre overlay.
+              ..topMenuBar.showCloseButton = true
+              ..topMenuBar.buttons = const [
+                ZegoLiveStreamingMenuBarButtonName.minimizingButton,
+              ]
               // ── Co-host "sur scène" (les fans lèvent la main -> l'artiste
               // valide) ── Jusqu'à 8 fans montent avec caméra + micro, en grille
               // auto. L'artiste reçoit une demande et accepte/refuse ; rien ne
@@ -358,7 +389,6 @@ class _StartStreamState extends State<StartStream> {
     );
   }
 
-  // Petit bouton rond de contrôle hôte (œil / chat).
   /// Fin du live demandée par l'artiste : confirmation, puis sortie de la
   /// salle Zego. Quitter l'écran déclenche /recording/stop (dispose) qui
   /// passe le concert en « terminé » côté serveur.
@@ -380,6 +410,7 @@ class _StartStreamState extends State<StartStream> {
     );
   }
 
+  // Petit bouton rond de contrôle hôte (infos / chat / œil).
   Widget _hostToggle({
     required IconData icon,
     required bool active,
@@ -405,169 +436,253 @@ class _StartStreamState extends State<StartStream> {
     );
   }
 
+  // Pastille compacte « 🔴 13:55 · 👤 12 » : chrono + spectateurs en direct.
+  Widget _statusPill() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.fiber_manual_record, color: liveRed, size: 12),
+          const SizedBox(width: 6),
+          Text(
+            _liveDuration,
+            style: const TextStyle(
+              color: ivory,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Text('·', style: TextStyle(color: textMuted, fontSize: 14)),
+          const SizedBox(width: 6),
+          const Icon(Icons.person_outline_rounded, color: ivory, size: 15),
+          const SizedBox(width: 3),
+          Obx(
+            () => Text(
+              '${zegoController.viewerCount.value}',
+              style: const TextStyle(
+                color: ivory,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Volet d'infos (sous la rangée de commandes) : titre du concert, nom
+  // d'artiste, stats et bouton « Lancer une promo ».
+  Widget _infoPanel() {
+    final artistName = currentEvent.artist?.artistName ??
+        currentEvent.artist?.fullName ??
+        zegoController.userName;
+    final likes = currentEvent.likesCount ?? 0;
+    final tickets = currentEvent.ticketBuyerIds?.length ??
+        currentEvent.tickets?.length ??
+        0;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            currentEvent.name ?? 'live_event_fallback'.tr,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: ivory,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            artistName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: textMuted, fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          Obx(() {
+            final viewers = 'host_viewers'.trParams({
+              'n': '${zegoController.viewerCount.value}',
+            });
+            final ticketsLabel = 'host_tickets'.trParams({'n': '$tickets'});
+            return Text(
+              '$viewers · $likes ❤️ · $ticketsLabel',
+              style: const TextStyle(color: ivory, fontSize: 13),
+            );
+          }),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: _launchPromo,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: goldPrimary,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.local_offer_rounded,
+                    color: midnightPrimary,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'host_promo'.tr,
+                    style: const TextStyle(
+                      color: midnightPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOverlayUI() {
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Décalage sous la barre du haut de Zego (avatar hôte + compteur +
-          // bouton quitter), sinon notre barre perso la chevauche.
+          // Décalage sous la barre du haut de Zego (avatar hôte + bouton
+          // réduire + quitter), sinon notre rangée la chevauche.
           const SizedBox(height: 54),
 
-          // Barre de contrôles hôte — TOUJOURS visible (permet de réafficher
+          // Rangée de commandes hôte — TOUJOURS visible (permet de réafficher
           // l'overlay après l'avoir masqué), mais très discrète en mode épuré
           // pour ne pas gêner l'artiste.
           Opacity(
             opacity: _overlayHidden ? 0.4 : 1,
             child: Padding(
-            padding: myPadding,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Compteur de durée du live (depuis le début de la diffusion)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+              padding: myPadding,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Chrono + spectateurs (se réduit si la place manque)
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: _statusPill(),
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
+                  Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.fiber_manual_record,
-                        color: liveRed,
-                        size: 12,
+                      // Volet d'infos (inutile en mode épuré)
+                      if (!_overlayHidden)
+                        Tooltip(
+                          message: 'host_info'.tr,
+                          child: _hostToggle(
+                            icon: Icons.info_outline_rounded,
+                            active: _infoOpen,
+                            onTap: () {
+                              setState(() => _infoOpen = !_infoOpen);
+                              box.write('host_info_open', _infoOpen);
+                            },
+                          ),
+                        ),
+                      // Couper / réafficher le chat (inutile en mode épuré)
+                      if (!_overlayHidden)
+                        _hostToggle(
+                          icon: _chatHidden
+                              ? Icons.chat_bubble_outline
+                              : Icons.chat_bubble,
+                          active: !_chatHidden,
+                          onTap: () =>
+                              setState(() => _chatHidden = !_chatHidden),
+                        ),
+                      // Vider l'écran (place à la scène) / réafficher
+                      _hostToggle(
+                        icon: _overlayHidden
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
+                        active: !_overlayHidden,
+                        onTap: () {
+                          setState(() => _overlayHidden = !_overlayHidden);
+                          box.write('host_overlay_hidden', _overlayHidden);
+                        },
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _liveDuration,
-                        style: const TextStyle(
-                          color: ivory,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                      // Terminer le live (le kit Zego n'affiche pas de bouton
+                      // de fermeture fiable pour l'hôte : sans ceci, l'artiste
+                      // est coincé dans son direct).
+                      GestureDetector(
+                        onTap: _confirmEndLive,
+                        child: Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: liveRed,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.stop_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'live_end_btn'.tr,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Terminer le live (le kit Zego n'affiche pas de bouton
-                    // de fermeture fiable pour l'hôte : sans ceci, l'artiste
-                    // est coincé dans son direct).
-                    GestureDetector(
-                      onTap: _confirmEndLive,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: liveRed,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.stop_rounded,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'live_end_btn'.tr,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Couper / réafficher le chat (inutile en mode épuré)
-                    if (!_overlayHidden)
-                    _hostToggle(
-                      icon: _chatHidden
-                          ? Icons.chat_bubble_outline
-                          : Icons.chat_bubble,
-                      active: !_chatHidden,
-                      onTap: () =>
-                          setState(() => _chatHidden = !_chatHidden),
-                    ),
-                    // Vider l'écran (place à la scène) / réafficher
-                    _hostToggle(
-                      icon: _overlayHidden
-                          ? Icons.visibility_off_rounded
-                          : Icons.visibility_rounded,
-                      active: !_overlayHidden,
-                      onTap: () {
-                        setState(() => _overlayHidden = !_overlayHidden);
-                        box.write('host_overlay_hidden', _overlayHidden);
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          ),
-
-          // Tout le reste de l'overlay est masquable (place à la scène).
-          if (!_overlayHidden) ...[
-            // Top Info Bar
-            Padding(
-              padding: myPadding,
-              child: LiveStreamTopBar(event: currentEvent),
-            ),
-
-            // Bouton "Lancer une promo" (hote)
-            Padding(
-              padding: myPadding,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: GestureDetector(
-                  onTap: _launchPromo,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: goldPrimary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.local_offer_rounded,
-                          color: midnightPrimary,
-                          size: 16,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          'Lancer une promo',
-                          style: TextStyle(
-                            color: midnightPrimary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                ],
               ),
             ),
+          ),
 
+          // Volet d'infos : se déplie sous la rangée ; fermé en mode épuré.
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: (_infoOpen && !_overlayHidden)
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    child: _infoPanel(),
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+
+          // Le bas de l'écran est masquable (place à la scène).
+          if (!_overlayHidden) ...[
             const Spacer(),
 
             // Bottom Chat + Actions
