@@ -689,6 +689,39 @@ router.post('/pending-tickets/:id/assign', requireAdmin, (req, res) => {
   }
 });
 
+// ─── Concert « à la une » au lancement de l'app (lot 4) ───
+// Réglage settings.featured_event = { event_id, headline, until }. L'app
+// l'interroge via GET /api/featured-event à chaque lancement : popup sans
+// mise à jour store. GET = réglage courant, POST = mettre à la une,
+// DELETE = retirer.
+router.get('/featured-event', requireAdmin, (req, res) => {
+  const featured = require('../services/featured_event');
+  return res.json({ status: 'success', data: featured.adminView() });
+});
+router.post('/featured-event', requireAdmin, (req, res) => {
+  const featured = require('../services/featured_event');
+  const b = req.body || {};
+  const r = featured.set({ event_id: b.event_id, headline: b.headline, until: b.until });
+  if (!r.ok) return res.status(r.code || 422).json({ status: 'error', message: r.error });
+  console.log(`[à la une] admin #${req.admin.id} : concert #${r.setting.event_id} jusqu'au ${r.setting.until}`);
+  return res.json({ status: 'success', message: `« ${r.event.name} » est à la une jusqu'au ${r.setting.until}.`, data: featured.adminView() });
+});
+router.delete('/featured-event', requireAdmin, (req, res) => {
+  const featured = require('../services/featured_event');
+  const removed = featured.clear();
+  if (removed) console.log(`[à la une] admin #${req.admin.id} : mise en avant retirée`);
+  return res.json({ status: 'success', message: removed ? 'Mise en avant retirée.' : 'Aucune mise en avant en cours.', data: null });
+});
+
+// ─── Places offertes par l'artiste (lecture) : même contrat que
+// GET /api/events/:id/gift-tickets, pour la page Concerts de l'admin.
+router.get('/events/:id/gift-tickets', requireAdmin, (req, res) => {
+  const ev = db.prepare('SELECT id, name FROM events WHERE id = ?').get(Number(req.params.id));
+  if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  const items = eventAccess.listGiftTickets(ev.id);
+  return res.json({ status: 'success', data: { event: { id: ev.id, name: ev.name }, gifted_count: items.length, max: eventAccess.ARTIST_GIFT_MAX, items } });
+});
+
 // ─── Agenda régional (concerts collectés sur des sources publiques) ───
 // Écran de validation : rien n'apparaît avec un halo doré ni avec un prix
 // dans l'application tant que ça n'a pas été validé ici. Le tarif en

@@ -97,7 +97,7 @@ static const String mainIP = 'https://TON-URL.onrender.com'; // backend en ligne
 | Domaine | Endpoints |
 |---|---|
 | **Auth** | `login`, `sign-up`, `social-login`, `verify`, `forget`, `reset-password`, `update-password`, `get-user`, `update-profile`, `delete-account` |
-| **Events** | `events` (filtres status/day/genre), `banner-events`, `featured-artists`, `artist/:id/events`, `buy-ticket`, `user-event-history`, `event-comment`, `event-logs`, `events/update/:id`, `report-event` |
+| **Events** | `events` (filtres status/day/genre), `banner-events`, `featured-artists`, `featured-event` (concert à la une au lancement, piloté depuis l'admin), `artist/:id/events`, `buy-ticket`, `events/:id/gift-ticket` + `events/:id/gift-tickets` (places offertes par l'artiste, quota `ARTIST_GIFT_MAX`, défaut 100), `user-event-history`, `event-comment`, `event-logs`, `events/update/:id`, `report-event` |
 | **Gifts** | `gifts`, `event-gift` |
 | **Follow** | `follow`, `unfollow`, `followers/:id`, `following` |
 | **Divers** | `genres`, `get-abusive-words`, `settings/get-settings`, `settings/get-management`, `subscription/*`, `packages/*`, `get-transactions`, `support/*`, `withdraw/*`, `get-artist-statistics` |

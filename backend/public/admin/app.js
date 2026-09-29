@@ -764,10 +764,71 @@ function attachAiDescriptionButton(bg, kind) {
   };
   textarea.insertAdjacentElement('afterend', btn);
 }
-function pageEvents() {
+// ─── Concert « à la une » au lancement de l'app (popup pilotée d'ici) ───
+function fmtDateTime(d) {
+  if (!d) return '—';
+  const dt = new Date(String(d).replace(' ', 'T'));
+  return isNaN(dt) ? d : dt.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+async function renderFeaturedBanner() {
+  const old = view().querySelector('#featured-banner');
+  if (old) old.remove();
+  let f = null;
+  try { f = (await api('GET', '/featured-event')).data; } catch (e) { return; }
+  const box = document.createElement('div');
+  box.id = 'featured-banner';
+  box.className = 'tcard';
+  box.style.cssText = 'margin-bottom:14px;padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap';
+  if (!f) {
+    box.innerHTML = `<span style="color:var(--muted)">⭐ À la une au lancement : <b>aucun concert</b>. Clique « À la une » sur un concert pour l'afficher en popup à l'ouverture de l'app.</span>`;
+  } else {
+    const name = f.event ? esc(f.event.name) : `concert #${f.event_id} (supprimé)`;
+    const state = f.active ? '' : ' <b style="color:#ff8a8a">(inactive : date dépassée ou concert masqué)</b>';
+    box.innerHTML = `<span style="flex:1">⭐ À la une au lancement : <b style="color:var(--gold)">${name}</b>${f.headline ? ' — « ' + esc(f.headline) + ' »' : ''} jusqu'au <b>${esc(fmtDateTime(f.until))}</b>${state}</span>
+      <button class="btn del" id="featured-remove">Retirer</button>`;
+    box.querySelector('#featured-remove').onclick = async () => {
+      if (!confirm('Retirer la mise en avant au lancement ?')) return;
+      try { const r = await api('DELETE', '/featured-event'); toast(r.message || 'Retirée'); } catch (e) { toast(e.message); }
+      renderFeaturedBanner();
+    };
+  }
+  const first = view().querySelector('.tcard');
+  if (first) view().insertBefore(box, first); else view().appendChild(box);
+}
+async function featureEvent(id) {
+  const r = currentRows.find((x) => x.id == id);
+  const headline = prompt(`Mettre « ${r ? r.name : '#' + id} » à la une au lancement de l'app.\nTitre court affiché dans la popup (optionnel) :`, '');
+  if (headline === null) return;
+  try {
+    const res = await api('POST', '/featured-event', { event_id: Number(id), headline: headline.trim() || null });
+    toast(res.message || 'Mis à la une');
+  } catch (e) { toast(e.message); }
+  renderFeaturedBanner();
+}
+// Places offertes par l'artiste : liste en lecture (GET /admin/events/:id/gift-tickets).
+async function showGiftTickets(id) {
+  let d;
+  try { d = (await api('GET', `/events/${id}/gift-tickets`)).data; } catch (e) { toast(e.message); return; }
+  const STATE = { granted: 'billet créé', pending: 'en attente (compte à vérifier)' };
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal" style="max-width:560px">
+    <h3>🎁 Places offertes — ${esc(d.event?.name || '#' + id)}</h3>
+    <p style="color:var(--muted);font-size:13px;margin:4px 0 10px">${d.gifted_count} / ${d.max} place(s) offerte(s) par l'artiste.</p>
+    ${d.items.length ? `<div style="overflow:auto;max-height:50vh"><table class="tbl"><thead><tr><th>E-mail</th><th>État</th><th>Offerte le</th></tr></thead>
+      <tbody>${d.items.map((it) => `<tr><td>${esc(it.email)}</td><td>${esc(STATE[it.state] || it.state)}</td><td>${esc(fmtDateTime(it.created_at))}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Aucune place offerte pour ce concert.</div>'}
+    <div class="modal-actions"><button class="cancel">Fermer</button></div>
+  </div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  bg.querySelector('.cancel').onclick = close;
+  bg.onclick = (e) => { if (e.target === bg) close(); };
+}
+
+async function pageEvents() {
   EDIT.event = (id) => { const r = currentRows.find((x) => x.id == id); if (r) openEventForm(r); };
   DUP.event = (id) => { const r = currentRows.find((x) => x.id == id); if (r) openEventForm(r, { duplicate: true }); };
-  listPage({
+  await listPage({
     title: 'Concerts', endpoint: '/events', addLabel: '+ Ajouter un concert',
     onAdd: () => openEventForm(null),
     columns: [
@@ -778,9 +839,10 @@ function pageEvents() {
       { label: 'Statut', render: (r) => badge(r.status) },
       { label: 'Vidéo', render: (r) => `${muxBadge(r.mux_upload_status)}${r.mux_live_stream_id ? '<div class="em">🔴 live en cours</div>' : ''}${r.replay_expires_at ? `<div class="em">replay jusqu'au ${fmtDate(r.replay_expires_at)}</div>` : ''}` },
       { label: 'Date', render: (r) => fmtDate(r.start_date_time) },
-      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="event:${r.id}">🎬 Upload</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="event:${r.id}">🎬 Upload</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button><button class="btn grant" data-feature="${r.id}">⭐ À la une</button><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
     ],
   });
+  renderFeaturedBanner();
 }
 
 async function feedClipForm(row, { duplicate = false } = {}) {
@@ -1923,6 +1985,10 @@ document.addEventListener('click', (e) => {
   }
   const mu = e.target.closest('[data-muxupload]');
   if (mu) { const [kind, id] = mu.dataset.muxupload.split(':'); openMuxUploadDialog(kind, id); return; }
+  const fe = e.target.closest('[data-feature]');
+  if (fe) { featureEvent(fe.dataset.feature); return; }
+  const gt = e.target.closest('[data-gifts]');
+  if (gt) { showGiftTickets(gt.dataset.gifts); return; }
   const ml = e.target.closest('[data-muxlive]');
   if (ml) { const [, id, hasLive] = ml.dataset.muxlive.split(':'); toggleMuxLiveStream(id, hasLive === '1'); return; }
   const st = e.target.closest('[data-status]');
