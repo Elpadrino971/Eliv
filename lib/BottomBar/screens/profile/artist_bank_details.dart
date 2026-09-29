@@ -178,7 +178,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
 
                       height(0.01),
                       Text(
-                        'Artist Bio *',
+                        'onb_bio'.tr,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -230,7 +230,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                       ),
                       height(0.01),
                       Text(
-                        'Address *',
+                        'onb_address'.tr,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

@@ -71,7 +71,7 @@ class _BasicInfoState extends State<BasicInfo> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Artist/Band Name *',
+                        'onb_stage_name'.tr,
                         style: TextStyle(
                           color: Color(0xffF4EFE6),
                           fontSize: 14,
@@ -91,7 +91,7 @@ class _BasicInfoState extends State<BasicInfo> {
                       ),
 
                       Text(
-                        'Email *',
+                        'onb_email'.tr,
                         style: TextStyle(
                           color: Color(0xffF4EFE6),
                           fontSize: 14,
@@ -105,7 +105,7 @@ class _BasicInfoState extends State<BasicInfo> {
                         controller: emailController,
                       ),
                       Text(
-                        'Phone Number *',
+                        'onb_phone'.tr,
                         style: TextStyle(
                           color: Color(0xffF4EFE6),
                           fontSize: 14,
@@ -125,7 +125,7 @@ class _BasicInfoState extends State<BasicInfo> {
                       ),
 
                       Text(
-                        'Primary Genre *',
+                        'onb_genre'.tr,
                         style: TextStyle(
                           color: Color(0xffF4EFE6),
                           fontSize: 14,
@@ -144,7 +144,7 @@ class _BasicInfoState extends State<BasicInfo> {
                         },
                       ),
                       Text(
-                        'Performance Experience *',
+                        'onb_experience'.tr,
                         style: TextStyle(
                           color: Color(0xffF4EFE6),
                           fontSize: 14,
@@ -167,7 +167,7 @@ class _BasicInfoState extends State<BasicInfo> {
                       Row(
                         children: [
                           Text(
-                            'Social Media / Website*',
+                            'onb_social'.tr,
                             style: TextStyle(
                               color: Color(0xffF4EFE6),
                               fontSize: 14,
