@@ -37,7 +37,8 @@ class _StartStreamState extends State<StartStream> {
   Timer? _logTimer;
   bool _isLive = false;
   // Contrôles hôte : masquer tout l'overlay (place à la scène) / couper le chat.
-  bool _overlayHidden = false;
+  // Mode « place à la scène » : mémorisé d'un live à l'autre.
+  bool _overlayHidden = box.read('host_overlay_hidden') == true;
   bool _chatHidden = false;
   // Compteur de durée du live (démarré quand le live diffuse réellement).
   DateTime? _liveStartedAt;
@@ -393,8 +394,11 @@ class _StartStreamState extends State<StartStream> {
           const SizedBox(height: 54),
 
           // Barre de contrôles hôte — TOUJOURS visible (permet de réafficher
-          // l'overlay après l'avoir masqué).
-          Padding(
+          // l'overlay après l'avoir masqué), mais très discrète en mode épuré
+          // pour ne pas gêner l'artiste.
+          Opacity(
+            opacity: _overlayHidden ? 0.4 : 1,
+            child: Padding(
             padding: myPadding,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -432,7 +436,8 @@ class _StartStreamState extends State<StartStream> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Couper / réafficher le chat
+                    // Couper / réafficher le chat (inutile en mode épuré)
+                    if (!_overlayHidden)
                     _hostToggle(
                       icon: _chatHidden
                           ? Icons.chat_bubble_outline
@@ -447,13 +452,16 @@ class _StartStreamState extends State<StartStream> {
                           ? Icons.visibility_off_rounded
                           : Icons.visibility_rounded,
                       active: !_overlayHidden,
-                      onTap: () =>
-                          setState(() => _overlayHidden = !_overlayHidden),
+                      onTap: () {
+                        setState(() => _overlayHidden = !_overlayHidden);
+                        box.write('host_overlay_hidden', _overlayHidden);
+                      },
                     ),
                   ],
                 ),
               ],
             ),
+          ),
           ),
 
           // Tout le reste de l'overlay est masquable (place à la scène).
