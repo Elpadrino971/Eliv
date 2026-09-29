@@ -278,6 +278,23 @@ router.get('/live-links/:eventId', requireAdmin, (req, res) => {
     stage_url: `${REGIE_SITE_URL}/stage.html?${q}`,
   } });
 });
+// Jeton Zego pour regarder un live depuis l'admin (spectateur web, sans
+// passer par Mux : le relais Zego -> Mux n'est pas toujours disponible).
+router.get('/events/:id/zego-token', requireAdmin, (req, res) => {
+  const ev = db.prepare('SELECT id, artist_id FROM events WHERE id = ?').get(req.params.id);
+  if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  const zegoService = require('../services/zego');
+  if (!zegoService.isConfigured()) return res.status(503).json({ status: 'error', message: 'ZegoCloud non configuré.' });
+  const userId = 'web_admin_' + ev.id + '_' + crypto.randomBytes(3).toString('hex');
+  try {
+    const { token, appId, expiresAt } = zegoService.generateToken04(userId);
+    return res.json({ status: 'success', data: {
+      app_id: appId, token, expires_at: expiresAt, room_id: String(ev.id), artist_id: ev.artist_id,
+      user_id: userId, user_name: 'Admin VybzzZ',
+      server: 'wss://webliveroom' + appId + '-api.zegocloud.com/ws',
+    } });
+  } catch (e) { return res.status(502).json({ status: 'error', message: 'Erreur Zego : ' + e.message }); }
+});
 // Terminer un live depuis l'admin (artiste injoignable, téléphone coupé…).
 router.post('/events/:id/end', requireAdmin, (req, res) => {
   const ev = db.prepare('SELECT id, status FROM events WHERE id = ?').get(req.params.id);

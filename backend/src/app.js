@@ -27,7 +27,23 @@ app.set('trust proxy', 1);
 // Cross-Origin-Resource-Policy vaut « same-origin », or cette API est faite
 // pour être appelée depuis un AUTRE domaine (vybzzz.online et l'application).
 // Le navigateur bloquait alors les réponses avec ERR_BLOCKED_BY_RESPONSE.
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+// CSP : l'admin charge hls.js et le SDK web ZegoCloud depuis jsDelivr, lit les
+// flux Mux (HLS) et se connecte aux salles Zego (WebSocket) pour superviser un
+// live en direct.
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      'script-src': ["'self'", 'https://cdn.jsdelivr.net'],
+      'connect-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://stream.mux.com', 'https://*.mux.com',
+        'https://*.zegocloud.com', 'wss://*.zegocloud.com', 'https://*.zego.im', 'wss://*.zego.im'],
+      'media-src': ["'self'", 'blob:', 'https://stream.mux.com', 'https://*.mux.com'],
+      'img-src': ["'self'", 'data:', 'blob:', 'https:'],
+      'worker-src': ["'self'", 'blob:'],
+    },
+  },
+}));
 app.use(cors());
 
 // Webhooks Mux/Stripe : montés AVANT express.json() car la vérification de

@@ -2228,10 +2228,10 @@ async function renderLives() {
     return;
   }
   const cards = rows.map((r) => {
-    const canWatch = !!r.mux_live_playback_id;
-    const watch = canWatch
-      ? `<button class="btn edit" data-watchlive="${r.id}">▶ Regarder</button>`
-      : `<span class="em" style="color:#c9a24b">⚠️ Flux vidéo indisponible (relais Zego→Mux à activer)</span>`;
+    // Le direct se regarde via la salle Zego (toujours disponible) ; le flux
+    // Mux n'existe que si le relais Zego->Mux est actif (enregistrement).
+    const watch = `<button class="btn edit" data-watchlive="${r.id}">▶ Regarder (direct)</button>`
+      + (r.mux_live_playback_id ? `<button class="btn" data-watchmux="${r.id}">🎞 Flux Mux</button>` : '');
     return `<div style="padding:14px;margin-bottom:10px;border:1px solid #22314a;border-radius:12px;background:#0d1626">
       <div class="nm" style="font-size:16px">🔴 ${esc(r.name || '—')}</div>
       <div class="em">🎤 ${esc(r.artist || r.artist_email || '—')} · 👥 ${r.buyers || 0} billets · ❤️ ${r.likes_count || 0}</div>
@@ -2244,7 +2244,10 @@ async function renderLives() {
   }).join('');
   view().innerHTML = head + cards;
   view().querySelectorAll('[data-watchlive]').forEach((b) => {
-    b.onclick = () => { const r = rows.find((x) => x.id == b.dataset.watchlive); if (r) openLivePlayer(r); };
+    b.onclick = () => { const r = rows.find((x) => x.id == b.dataset.watchlive); if (r) openZegoViewer(r); };
+  });
+  view().querySelectorAll('[data-watchmux]').forEach((b) => {
+    b.onclick = () => { const r = rows.find((x) => x.id == b.dataset.watchmux); if (r) openLivePlayer(r); };
   });
   view().querySelectorAll('[data-endlive]').forEach((b) => {
     b.onclick = async () => {
@@ -2278,6 +2281,67 @@ function openLivePlayer(row) {
   const close = () => { try { video.pause(); video.removeAttribute('src'); video.load(); } catch (_) {} bg.remove(); };
   bg.querySelector('[data-close]').onclick = close;
   bg.onclick = (e) => { if (e.target === bg) close(); };
+}
+// Supervision d'un live via la salle Zego (SDK web chargé à la volée) : on
+// rejoint la salle en spectateur et on affiche le flux de l'artiste
+// (`<concert>_<artiste>_main`). Ne dépend pas du relais Mux.
+function loadScriptOnce(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = () => reject(new Error('Script non chargé : ' + src));
+    document.head.appendChild(s);
+  });
+}
+async function openZegoViewer(row) {
+  const bg = document.createElement('div');
+  bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:1000';
+  bg.innerHTML = `<div style="background:#0b1220;padding:16px;border-radius:12px;max-width:900px;width:92%">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="color:#fff;font-weight:700">🔴 ${esc(row.name || '')} — ${esc(row.artist || '')}</div>
+        <button class="btn del" data-close>Fermer</button></div>
+      <video autoplay playsinline controls style="width:100%;border-radius:8px;background:#000;max-height:70vh"></video>
+      <div class="em" data-status style="margin-top:8px">Connexion à la salle du concert…</div>
+    </div>`;
+  document.body.appendChild(bg);
+  const video = bg.querySelector('video');
+  const status = bg.querySelector('[data-status]');
+  let zg = null; let playing = null;
+  const close = () => {
+    try { if (zg) { if (playing) zg.stopPlayingStream(playing); zg.logoutRoom(String(row.id)); } } catch (_) {}
+    try { video.pause(); video.srcObject = null; } catch (_) {}
+    bg.remove();
+  };
+  bg.querySelector('[data-close]').onclick = close;
+  bg.onclick = (e) => { if (e.target === bg) close(); };
+  try {
+    await loadScriptOnce('https://cdn.jsdelivr.net/npm/zego-express-engine-webrtc/ZegoExpressWebRTC.js');
+    const r = await api('GET', `/events/${row.id}/zego-token`);
+    const d = r.data;
+    zg = new ZegoExpressEngine(d.app_id, d.server);
+    const wanted = `${row.id}_${d.artist_id}_main`;
+    const attach = async (streamID) => {
+      if (playing) return;
+      playing = streamID;
+      status.textContent = 'Flux de l’artiste reçu · ' + streamID;
+      const media = await zg.startPlayingStream(streamID);
+      video.srcObject = media; video.muted = false;
+      try { await video.play(); } catch (_) { status.textContent += ' · clique sur ▶ pour lancer le son'; }
+    };
+    zg.on('roomStreamUpdate', (roomID, type, list) => {
+      (list || []).forEach((st) => {
+        if (type === 'ADD') {
+          if (st.streamID === wanted || (!playing && /_main$/.test(st.streamID))) attach(st.streamID);
+        } else if (type === 'DELETE' && st.streamID === playing) {
+          playing = null; video.srcObject = null; status.textContent = 'L’artiste a coupé son flux.';
+        }
+      });
+    });
+    await zg.loginRoom(d.room_id, d.token, { userID: d.user_id, userName: d.user_name }, { userUpdate: true });
+    status.textContent = 'Connecté · en attente du flux de l’artiste…';
+  } catch (e) {
+    status.textContent = 'Impossible d’afficher le direct : ' + (e && e.message ? e.message : e);
+  }
 }
 // Lit un flux HLS : natif (Safari) sinon hls.js chargé à la volée (Chrome…).
 function playHls(video, url) {
