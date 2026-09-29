@@ -1127,6 +1127,20 @@ function init() {
   } catch (e) {
     console.warn('[db] seed textes légaux ignoré :', e.message);
   }
+
+  // Nouveaux cadeaux (visuels fournis) : ajoutés une seule fois, seulement si
+  // le catalogue existe déjà et qu'ils n'y sont pas. Modifiables dans l'admin.
+  try {
+    if (db.prepare('SELECT COUNT(*) AS n FROM gifts').get().n > 0) {
+      const has = db.prepare('SELECT 1 FROM gifts WHERE lower(image) = ?');
+      const ins = db.prepare('INSERT INTO gifts (name, image, price, points) VALUES (?, ?, ?, ?)');
+      [['Flamme', 'flamme.png', '3', '30'], ['Fusée', 'fusee.png', '30', '300']].forEach((g) => {
+        if (!has.get(g[1])) ins.run(...g);
+      });
+    }
+  } catch (e) {
+    console.warn('[db] ajout des cadeaux ignoré :', e.message);
+  }
 }
 
 module.exports = { db, init, DB_PATH };

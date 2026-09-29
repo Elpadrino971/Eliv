@@ -94,6 +94,7 @@ const NAV = [
     { id: 'events', label: 'Concerts', ic: '📅' },
     { id: 'feed-clips', label: 'Feeds (Pour toi / Clips)', ic: '🎬' },
     { id: 'packages', label: 'Packages', ic: '📦' },
+    { id: 'gifts', label: 'Cadeaux du live', ic: '🎁' },
     { id: 'subscriptions', label: 'Abonnements', ic: '💳' },
     { id: 'referrals', label: 'Parrainages', ic: '🤝' },
     { id: 'abusive', label: 'Mots interdits', ic: '🚫' },
@@ -1353,6 +1354,32 @@ function pagePackages() {
     onAdd: (reload) => modal({ title: 'Ajouter un package', fields: [{ name: 'name', label: 'Nom' }, { name: 'points', label: 'Points' }, { name: 'price', label: 'Prix ($)' }, { name: 'revenuecat_product_id', label: 'ID produit RevenueCat (IAP)', placeholder: 'ex: vybzz_points_500' }, { name: 'active', label: 'Actif ?', type: 'checkbox', value: true, hint: 'Visible dans l\'app' }], onSave: async (d) => { await api('POST', '/packages', d); toast('Ajouté'); reload(); } }),
   });
 }
+
+function pageGifts() {
+  const giftImg = (r) => r.image
+    ? `<img src="${esc(API_ORIGIN_FOR_GIFTS())}/giftImages/${esc(r.image)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;background:#0b1220">`
+    : '—';
+  const fields = (r) => [
+    { name: 'name', label: 'Nom', value: r?.name },
+    { name: 'points', label: 'Coût en pièces (100 pièces = 1 €)', type: 'number', value: r?.points || '' },
+    { name: 'image', label: 'Visuel (fichier carré, fond sombre)', type: 'file', accept: 'image/*' },
+  ];
+  EDIT.gift = (id) => {
+    const r = currentRows.find((x) => x.id == id); if (!r) return;
+    modal({ title: 'Modifier le cadeau', fields: fields(r), onSave: async (d) => { await api('PUT', '/gifts/' + id, d); toast('Cadeau modifié'); route(); } });
+  };
+  listPage({
+    title: 'Cadeaux du live', endpoint: '/gifts', addLabel: '+ Ajouter un cadeau', columns: [
+      { label: 'Visuel', render: giftImg },
+      { label: 'Nom', render: (r) => esc(r.name) },
+      { label: 'Pièces', render: (r) => '🪙 ' + esc(r.points) },
+      { label: 'Valeur', render: (r) => (Number(r.points || 0) / 100).toFixed(2).replace('.', ',') + ' €' },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="gift:${r.id}">Modifier</button><button class="btn del" data-del="/gifts/${r.id}">Supprimer</button>` },
+    ],
+    onAdd: (reload) => modal({ title: 'Ajouter un cadeau', fields: fields(null), onSave: async (d) => { await api('POST', '/gifts', d); toast('Cadeau ajouté'); reload(); } }),
+  });
+}
+function API_ORIGIN_FOR_GIFTS() { return location.origin; }
 
 function subForm(row, { duplicate = false } = {}) {
   modal({
@@ -2914,7 +2941,7 @@ function staffForm(u) {
 
 const ROUTES = {
   dashboard: pageDashboard, lives: pageLives, users: pageUsers, geo: pageGeo, genres: pageGenres, 'user-genres': pageUserGenres,
-  events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, subscriptions: pageSubscriptions, referrals: pageReferrals,
+  events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, gifts: pageGifts, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, support: pageSupport, agenda: pageAgenda, campaign: pageCampaign, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
   splash: pageSplash, legal: pageLegal, challenge: pageChallenge, merch: pageMerch, audience: pageAudience, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,

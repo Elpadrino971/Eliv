@@ -73,9 +73,11 @@ function seedReference() {
   [
     ['Rose', 'rose.png', '1', '10'],
     ['Coeur', 'coeur.png', '2', '20'],
+    ['Flamme', 'flamme.png', '3', '30'],
     ['Étoile', 'etoile.png', '5', '50'],
     ['Diamant', 'diamant.png', '10', '100'],
     ['Couronne', 'couronne.png', '20', '200'],
+    ['Fusée', 'fusee.png', '30', '300'],
     ['Château', 'chateau.png', '50', '500'],
   ].forEach((g) => insGift.run(...g));
 

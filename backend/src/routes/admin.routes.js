@@ -697,6 +697,42 @@ router.delete('/packages/:id', requireAdmin, (req, res) => {
   return res.json({ status: 'success', message: 'Package supprimé.' });
 });
 
+// ─── Cadeaux (catalogue du live) ───
+// L'image est enregistrée sous /giftImages ; on ne garde que le nom de fichier
+// (l'app construit l'URL avec giftImageIP).
+function giftImageName(req) {
+  const url = saveUpload(req, ['image', 'photo'], 'gifts', 'giftImages');
+  return url ? url.split('/').pop() : null;
+}
+router.get('/gifts', requireAdmin, (req, res) => {
+  const rows = db.prepare('SELECT * FROM gifts ORDER BY CAST(points AS REAL), id').all();
+  return res.json({ status: 'success', data: rows });
+});
+router.post('/gifts', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  if (!b.name) return res.status(422).json({ status: 'error', message: 'Nom requis.' });
+  const pts = parseInt(b.points, 10);
+  if (!Number.isFinite(pts) || pts <= 0) return res.status(422).json({ status: 'error', message: 'Points : nombre entier positif.' });
+  const image = giftImageName(req) || b.image || null;
+  db.prepare('INSERT INTO gifts (name, image, price, points) VALUES (?, ?, ?, ?)').run(b.name, image, String(pts / 10), String(pts));
+  return res.json({ status: 'success', message: 'Cadeau ajouté.' });
+});
+router.put('/gifts/:id', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const g = db.prepare('SELECT * FROM gifts WHERE id = ?').get(req.params.id);
+  if (!g) return res.status(404).json({ status: 'error', message: 'Cadeau introuvable.' });
+  const pts = b.points !== undefined && b.points !== '' ? parseInt(b.points, 10) : parseInt(g.points, 10);
+  if (!Number.isFinite(pts) || pts <= 0) return res.status(422).json({ status: 'error', message: 'Points : nombre entier positif.' });
+  const image = giftImageName(req) || (b.image ? String(b.image).split('/').pop() : g.image);
+  db.prepare("UPDATE gifts SET name = ?, image = ?, points = ?, price = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(b.name || g.name, image, String(pts), String(pts / 10), g.id);
+  return res.json({ status: 'success', message: 'Cadeau modifié.' });
+});
+router.delete('/gifts/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM gifts WHERE id = ?').run(req.params.id);
+  return res.json({ status: 'success', message: 'Cadeau supprimé.' });
+});
+
 // ─── Subscriptions ───
 router.get('/subscriptions', requireAdmin, (req, res) => {
   return res.json({ status: 'success', data: db.prepare('SELECT * FROM subscriptions ORDER BY id').all() });
