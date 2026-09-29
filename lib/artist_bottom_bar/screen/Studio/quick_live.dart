@@ -33,6 +33,7 @@ Future<void> openQuickLive() async {
   final event = await artistController.createQuickLive(title: title.trim());
   if (event == null) return;
 
+  if (!await ensureLivePermissions()) return;
   await Get.to(() => StartStream(event: event));
 
   // Fin du live. StartStream.dispose() appelle déjà /recording/stop, qui

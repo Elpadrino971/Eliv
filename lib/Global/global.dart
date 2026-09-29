@@ -12,6 +12,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 
 Rx<UserModel> userModel = UserModel().obs;
@@ -415,4 +416,27 @@ String priceLabel(String? ticketPrice) {
   final p = double.tryParse(ticketPrice ?? '') ?? 0;
   if (p <= 0) return 'common_free'.tr;
   return '$ticketPrice €';
+}
+
+
+/// Caméra + micro demandés AVANT d'ouvrir l'écran de live, avec les fenêtres
+/// système habituelles. Sans ça, le kit Zego lance sa propre demande au
+/// démarrage du direct, parfois alors que le micro est déjà autorisé.
+/// Renvoie true si les deux sont accordés ; sinon explique et propose les
+/// réglages, et renvoie false (le live n'est pas ouvert).
+Future<bool> ensureLivePermissions() async {
+  final statuses = await [Permission.camera, Permission.microphone].request();
+  final cam = statuses[Permission.camera] ?? PermissionStatus.denied;
+  final mic = statuses[Permission.microphone] ?? PermissionStatus.denied;
+  if (cam.isGranted && mic.isGranted) return true;
+  final blocked = cam.isPermanentlyDenied || mic.isPermanentlyDenied;
+  await myAlertDialog(
+    title: 'live_perm_title'.tr,
+    content: 'live_perm_msg'.tr,
+    onTap: () {
+      Get.back();
+      if (blocked) openAppSettings();
+    },
+  );
+  return false;
 }

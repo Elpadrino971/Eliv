@@ -340,6 +340,9 @@ class _ArtistEventsScreenState extends State<ArtistEventsScreen> {
                                               );
                                               return;
                                             }
+                                            if (!await ensureLivePermissions()) {
+                                              return;
+                                            }
                                             await Get.to(
                                               () => StartStream(event: event),
                                             );
