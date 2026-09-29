@@ -44,6 +44,11 @@
 .dw-price{margin:0 0 18px;font-size:1.05rem}
 .dw-price b{color:var(--gold);font-family:"Sora",sans-serif;font-size:1.3rem}
 .dw-cad{display:inline-block;margin-left:6px;color:var(--muted);font-size:.8rem}
+/* Tarification dynamique : ligne d'urgence sous le prix (« Passe à 6,99 € dans 5 h 12 ») */
+.dw-next{margin:-10px 0 16px;color:#FF9F6E;font-weight:600;font-size:.92rem}
+.dw-next b{color:#FFB98A}
+.ticket .dw-next{margin:8px 0 0;font-size:.85rem}
+.dw-ended .dw-next{display:none}
 .ticket__cad{margin-top:6px;color:var(--muted);font-size:.8rem}
 /* Rappel « Réserver » collé en bas (mobile) */
 /* #id : la règle body>* de styles.css (position:relative, z-index:2) doit être battue. */
@@ -162,6 +167,7 @@
       <p class="dw-when">Nuit du samedi 3 au dimanche 4 octobre · <b>23h50</b> Antilles · Montréal · <b>05h50</b> Paris</p>
       <p class="dw-local" id="localTime"></p>
       <p class="dw-price">Accès live dès <b class="js-price">4,99 €</b> <span class="dw-cad">≈ 7,50 $ CA · facturé en euros</span></p>
+      <p class="dw-next js-next" id="dwNext" hidden aria-live="polite"></p>
       <div class="dw-ctas">
         <a href="#roue" class="btn btn--gold btn--lg"><span>Tente de gagner ta place</span></a>
         <a href="#billet" class="btn btn--outline btn--lg"><span>Réserver · <span class="js-price">4,99 €</span></span></a>
@@ -216,6 +222,7 @@
     <div>
       <div class="ticket__price"><span class="js-price">4,99 €</span><small>la place</small></div>
       <div class="ticket__cad">≈ 7,50 $ CA · facturé en euros</div>
+      <p class="dw-next js-next" hidden></p>
       <ul>
         <li>Le live complet, en direct, depuis ton téléphone.</li>
         <li>Paiement par carte, sur iPhone comme sur Android.</li>
@@ -333,9 +340,32 @@
   }
 
   function fmtPrice(p){ var n=parseFloat(p); return isFinite(n)?n.toFixed(2).replace('.',',')+' €':'4,99 €'; }
+  // ── Tarification dynamique : « Passe à 6,99 € dans 5 h 12 » sous le prix ──
+  // L'API renvoie next_price / next_price_at (prochain palier). Compte à
+  // rebours rafraîchi chaque minute ; « dans X j Y h » au-delà de 24 h ;
+  // au passage du palier, on recharge le statut (nouveau prix, palier suivant).
+  function fmtDelay(ms){
+    var m=Math.max(0,Math.round(ms/6e4)), d=Math.floor(m/1440), h=Math.floor(m/60)%24, mi=m%60;
+    if(d>=1) return d+' j '+h+' h';
+    if(h>=1) return h+' h '+(mi<10?'0':'')+mi;
+    return Math.max(1,mi)+' min';
+  }
+  var reloadedFor=null;
+  function renderNext(){
+    var els=document.querySelectorAll('.js-next'); if(!els.length) return;
+    var at=(state&&state.next_price!=null&&state.next_price_at)?Date.parse(state.next_price_at):NaN;
+    var show=isFinite(at)&&at>Date.now();
+    [].forEach.call(els,function(el){
+      el.hidden=!show;
+      if(show) el.innerHTML='Passe à <b>'+esc(fmtPrice(state.next_price))+'</b> dans '+esc(fmtDelay(at-Date.now()));
+    });
+    if(isFinite(at)&&!show&&reloadedFor!==state.next_price_at){ reloadedFor=state.next_price_at; loadStatus(); }
+  }
+  setInterval(renderNext,60000);
   function applyStatus(s){
     state=s;
     if(s.price!=null) [].forEach.call(document.querySelectorAll('.js-price,.js-price-short'),function(el){ el.textContent=fmtPrice(s.price); });
+    renderNext();
     $('wheelLeft').innerHTML=s.wheel_open?('Places offertes restantes : <b>'+s.remaining+'</b> / '+s.places):'La roue est fermée : le live commence bientôt.';
     if(!s.wheel_open||s.remaining<=0){ $('wBtn').disabled=true; if(s.wheel_open) $('wheelLeft').innerHTML='Les 100 places offertes sont parties. Réserve ton accès juste en dessous.'; }
     // Billetterie : tant que l'API dit « fermée » (événement pas encore relié),
