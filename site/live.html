@@ -49,6 +49,18 @@ main{flex:1;width:100%;max-width:1120px;margin:0 auto;padding:0 16px 40px}
 .wm[hidden]{display:none}
 .fs{position:absolute;right:12px;top:12px;z-index:3;width:40px;height:40px;border-radius:10px;border:0;background:rgba(7,12,24,.6);color:var(--ivory);font-size:18px;cursor:pointer;display:grid;place-items:center}
 .fs[hidden]{display:none}
+.tv{position:absolute;right:60px;top:12px;z-index:3;height:40px;padding:0 12px;border-radius:10px;border:0;background:rgba(7,12,24,.6);color:var(--ivory);font-weight:600;font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.tv svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tv[hidden]{display:none}
+.tv:focus-visible,.fs:focus-visible{outline:2px solid var(--ivory);outline-offset:2px}
+.sheet{position:fixed;inset:0;z-index:50;display:grid;place-items:end center;background:rgba(3,6,14,.6)}
+.sheet[hidden]{display:none}
+.sheet__box{width:min(520px,100%);background:var(--panel);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));display:grid;gap:12px;max-height:88vh;overflow:auto}
+@media (min-width:700px){.sheet{place-items:center}.sheet__box{border-radius:20px}}
+.sheet__box h2{font-family:Sora,sans-serif;font-size:1.15rem}
+.sheet__box ol{padding-left:20px;display:grid;gap:8px;color:var(--ivory)}
+.sheet__box li b{color:var(--gold)}
+.sheet__alt{border-top:1px solid var(--line);padding-top:12px}
 .stage:fullscreen{border-radius:0;aspect-ratio:auto;width:100vw;height:100vh}
 .stage:-webkit-full-screen{border-radius:0;aspect-ratio:auto;width:100vw;height:100vh}
 .legal{margin-top:26px;font-size:.78rem;color:var(--muted);line-height:1.6;max-width:80ch}
@@ -115,6 +127,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
         <video id="video" playsinline controls hidden controlslist="nodownload nofullscreen noplaybackrate noremoteplayback" disablepictureinpicture disableremoteplayback x-webkit-airplay="deny"></video>
         <div class="wm" id="wm" hidden aria-hidden="true"></div>
         <button class="fs" id="fsBtn" type="button" hidden aria-label="Plein écran">⛶</button>
+        <button class="tv" id="tvBtn" type="button" hidden aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Sur la TV</button>
         <span class="badge" id="liveBadge" hidden>EN DIRECT</span>
         <button class="sound" id="soundBtn" type="button" hidden>🔊 Activer le son</button>
         <div class="overlay" id="overlay"><div><div class="spinner"></div><p id="overlayText">Chargement du concert…</p></div></div>
@@ -179,6 +192,16 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
   </div>
   <p class="legal">Ce concert est protégé. L'enregistrement, la capture et la rediffusion, même partielle, sont interdits (articles L.335-2 et L.335-4 du Code de la propriété intellectuelle) et engagent la responsabilité de leur auteur. Chaque diffusion est marquée au nom de la place qui la regarde.</p>
 </main>
+
+<div class="sheet" id="tvSheet" hidden role="dialog" aria-modal="true" aria-labelledby="tvTitle">
+  <div class="sheet__box">
+    <h2 id="tvTitle">Regarder sur ta TV</h2>
+    <p class="small" style="font-size:.9rem">Affiche cette page sur ta TV ou un autre écran : le concert garde son image et son son, en direct.</p>
+    <ol id="tvSteps"></ol>
+    <div class="sheet__alt small" id="tvAlt"></div>
+    <button class="btn btn-gold" id="tvClose" type="button">J'ai compris</button>
+  </div>
+</div>
 
 <script src="vendor/hls.min.js"></script>
 <script>
@@ -279,7 +302,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
     clearTimeout(retryTimer);
     if(hls){try{hls.destroy();}catch(e){} hls=null;}
     var v=$('video'); try{v.pause();}catch(e){} v.removeAttribute('src'); v.load&&v.load(); v.hidden=true;
-    $('liveBadge').hidden=true; $('soundBtn').hidden=true; $('fsBtn').hidden=true; playing=null;
+    $('liveBadge').hidden=true; $('soundBtn').hidden=true; $('fsBtn').hidden=true; $('tvBtn').hidden=true; playing=null;
     watermark(false);
   }
   // Filigrane : e-mail masqué + numéro de place, déplacé régulièrement. Une
@@ -306,6 +329,43 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
     else if(v.webkitEnterFullscreen) v.webkitEnterFullscreen(); // iPhone : plein écran natif uniquement
   });
   $('video').addEventListener('contextmenu',function(e){ e.preventDefault(); });
+
+  // ── Sur la TV ──
+  // La diffusion directe (AirPlay / Chromecast) enverrait le flux à la TV, qui
+  // le demanderait sans passer par vybzzz.online : la protection du flux la
+  // refuse. On passe donc par la recopie de l'écran, qui garde la protection
+  // et le filigrane. Les étapes dépendent de l'appareil.
+  function tvGuide(){
+    var ua=navigator.userAgent, iOS=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1),
+        android=/Android/.test(ua), mac=/Macintosh/.test(ua)&&!iOS, chromeLike=/Chrome|Chromium|Edg\//.test(ua)&&!/OPR/.test(ua);
+    var steps, alt='';
+    if(iOS){
+      steps=['Ouvre le <b>Centre de contrôle</b> (glisse du coin en haut à droite vers le bas).','Touche <b>Recopie de l\'écran</b> (deux rectangles).','Choisis ton <b>Apple TV</b> ou ta TV compatible AirPlay.','Reviens ici et touche <b>⛶</b> pour le plein écran.'];
+      alt='Pas d\'Apple TV ? Un adaptateur HDMI (Lightning ou USB-C) branché sur la TV marche aussi.';
+    } else if(android){
+      steps=['Fais glisser le haut de l\'écran vers le bas (réglages rapides).','Touche <b>Smart View</b>, <b>Diffuser</b> ou <b>Caster l\'écran</b> (le nom dépend du téléphone).','Choisis ta TV ou ton Chromecast.','Reviens ici et touche <b>⛶</b> pour le plein écran.'];
+      alt='Tu ne trouves pas le bouton ? Ouvre les <b>Paramètres</b> et cherche « Diffuser » ou « Smart View ».';
+    } else if(chromeLike){
+      steps=['Ouvre le menu <b>⋮</b> de Chrome, en haut à droite.','Choisis <b>Caster…</b> (parfois dans « Enregistrer et partager »).','Choisis ta TV ou ton Chromecast.','Mets la vidéo en plein écran avec <b>⛶</b>.'];
+      alt='Ordinateur branché sur la TV en HDMI ? Glisse cette fenêtre sur l\'écran de la TV, puis <b>⛶</b>.';
+    } else if(mac){
+      steps=['Ouvre le <b>Centre de contrôle</b> du Mac (en haut à droite).','Choisis <b>Recopie de l\'écran</b>, puis ton Apple TV ou ta TV AirPlay.','Mets la vidéo en plein écran avec <b>⛶</b>.'];
+      alt='Ordinateur branché sur la TV en HDMI ? Glisse cette fenêtre sur l\'écran de la TV, puis <b>⛶</b>.';
+    } else {
+      steps=['Branche ton ordinateur sur la TV avec un câble <b>HDMI</b>.','Glisse cette fenêtre sur l\'écran de la TV.','Mets la vidéo en plein écran avec <b>⛶</b>.'];
+      alt='Avec Chrome, le menu <b>⋮ → Caster…</b> envoie aussi cette page vers un Chromecast.';
+    }
+    $('tvSteps').innerHTML=steps.map(function(x){return '<li>'+x+'</li>';}).join('');
+    $('tvAlt').innerHTML=alt;
+  }
+  function tvOpen(on){
+    $('tvSheet').hidden=!on;
+    if(on){ tvGuide(); $('tvClose').focus(); track('tv_help'); } else $('tvBtn').focus();
+  }
+  $('tvBtn').addEventListener('click',function(){ tvOpen(true); });
+  $('tvClose').addEventListener('click',function(){ tvOpen(false); });
+  $('tvSheet').addEventListener('click',function(e){ if(e.target===this) tvOpen(false); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!$('tvSheet').hidden) tvOpen(false); });
   function tryPlay(v){
     v.muted=false;
     var p=v.play();
@@ -318,7 +378,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
   }
   function play(url,isLive,media){
     stopPlayer(); playing=media||url;
-    var v=$('video'); v.hidden=false; $('fsBtn').hidden=false; watermark(true);
+    var v=$('video'); v.hidden=false; $('fsBtn').hidden=false; $('tvBtn').hidden=false; watermark(true);
     overlay(isLive?'Connexion au direct…':'Chargement du replay…',true);
     $('liveBadge').hidden=!isLive;
     function ready(){ overlay(null); tryPlay(v); }

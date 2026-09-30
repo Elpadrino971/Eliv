@@ -64,7 +64,7 @@
     { href: "index.html#roles",      key: "nav_deal",   id: "_deal" },
     { href: "academie.html",         key: "nav_academy", id: "academie" },
     { href: "faq.html",              key: "nav_faq",    id: "faq" },
-    { href: "challenge.html",        key: "nav_challenge", id: "challenge" },
+    // Live Challenge reporté : lien retiré du menu (remettre à la reprise).
   ];
 
   function renderHeader() {

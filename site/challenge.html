@@ -86,8 +86,15 @@
 @media(max-width:900px){.chal-hero__grid{grid-template-columns:1fr}.chal-hero__flyer{max-width:420px;margin:0 auto}.prizes,.steps,.rules-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.prizes,.steps,.rules-grid,.chal-form .row{grid-template-columns:1fr}.chal-hero{padding-top:98px}.chal-dates{font-size:.92rem;padding:10px 14px}.countdown div{min-width:64px}}
 </style>
+<style>
+/* Live Challenge REPORTÉ : inscriptions fermées, seul le hero reste, avec l'annonce. */
+.chal-paused .chal-hero__cta,.chal-paused #countdown,.chal-paused .chal-dates,.chal-paused .chal-pitch{display:none!important}
+.chal-paused section:not(.chal-hero){display:none!important}
+.chal-pause{margin:0 0 22px;padding:16px 18px;border-radius:14px;border:1px solid rgba(230,199,106,.5);background:rgba(230,199,106,.08);color:#F4EFE3;line-height:1.6;max-width:56ch}
+.chal-pause b{color:var(--gold)}
+</style>
 </head>
-<body data-page="challenge" class="chal">
+<body data-page="challenge" class="chal chal-paused">
 <div class="grain" aria-hidden="true"></div>
 <div class="cursor" id="cursor"></div><div class="cursor-dot" id="cursorDot"></div>
 <div class="scroll-progress" id="scrollProgress"></div>
@@ -99,9 +106,10 @@
       <span class="eyebrow">Concours artistes · 5 semaines</span>
       <h1>VybzzZ<span>Live Challenge</span></h1>
       <p class="tag">Monte sur scène. Fais ton live. Gagne.</p>
+      <div class="chal-pause" role="status"><b>Le Live Challenge est reporté.</b> Les inscriptions sont fermées pour l'instant. On annonce les nouvelles dates très vite : en attendant, télécharge VybzzZ et prépare tes lives.</div>
       <div class="chal-dates">📅 Du <b>20 septembre</b> au <b>24 octobre 2026</b></div>
       <div class="countdown" id="countdown" aria-live="polite"></div>
-      <p style="color:var(--muted);max-width:56ch;margin:0 0 22px">Inscris-toi, récupère ton lien personnel, ramène ta communauté, publie et fais tes lives. Ton talent mérite plus qu'un algorithme : ici, c'est l'activité réelle qui fait monter au classement.</p>
+      <p class="chal-pitch" style="color:var(--muted);max-width:56ch;margin:0 0 22px">Inscris-toi, récupère ton lien personnel, ramène ta communauté, publie et fais tes lives. Ton talent mérite plus qu'un algorithme : ici, c'est l'activité réelle qui fait monter au classement.</p>
       <div class="chal-hero__cta">
         <a href="#inscription" class="btn btn--gold btn--lg magnetic" data-cursor="hover"><span>Inscris-toi et lance ton challenge</span></a>
         <a href="#gagner" class="btn btn--outline" data-cursor="hover">Comment on gagne ?</a>

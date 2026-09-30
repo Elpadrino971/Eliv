@@ -5,6 +5,13 @@ const { fail } = require('../helpers');
 const ch = require('../services/challenge');
 
 const router = express.Router();
+
+// Live Challenge REPORTÉ : inscription des artistes au concours fermée tant
+// que CHALLENGE_OPEN=1 n'est pas posé dans .vybzzz.env. Les liens
+// d'invitation /c/<nom> et la pré-inscription des fans restent ouverts :
+// ils amènent des fans vers l'app et l'artiste, challenge ou pas.
+const PAUSED = process.env.CHALLENGE_OPEN !== '1';
+const PAUSED_MESSAGE = 'Le Live Challenge est reporté : les inscriptions sont fermées pour l\'instant. Les nouvelles dates arrivent bientôt.';
 const ipOf = (req) => (req.headers['x-forwarded-for'] || req.ip || '').toString().split(',')[0].trim();
 
 // Config publique (dates, pondérations, lots) -> compte à rebours + page
@@ -12,6 +19,7 @@ router.get('/config', (req, res) => res.json({ status: 'success', data: ch.publi
 
 // Inscription d'un artiste -> code + lien personnel
 router.post('/register', (req, res) => {
+  if (PAUSED) return fail(res, PAUSED_MESSAGE, 423);
   try {
     const b = req.body || {};
     const r = ch.registerArtist({ ...b, ip: ipOf(req) });

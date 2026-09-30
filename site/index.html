@@ -202,6 +202,12 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
 .show__note{margin-top:16px;font-size:.78rem;color:var(--muted);line-height:1.5}.show__note a{color:var(--gold)}
 .hero__note{margin-top:10px!important;font-size:.62rem!important;letter-spacing:.14em!important;opacity:.6}
 /* Indicateurs bas */
+.hero-sound{position:absolute;right:24px;bottom:96px;z-index:6;width:48px;height:48px;border-radius:50%;border:1px solid rgba(244,239,227,.35);background:rgba(10,18,38,.55);color:#F4EFE3;display:grid;place-items:center;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:background .2s,transform .2s}
+.hero-sound:hover{transform:scale(1.06)}
+.hero-sound[aria-pressed="true"]{background:var(--gold);color:#0A1226;border-color:transparent}
+.hero-sound:focus-visible{outline:2px solid #F4EFE3;outline-offset:3px}
+.hero-sound svg{width:22px;height:22px;fill:currentColor}
+@media(max-width:700px){.hero-sound{right:16px;bottom:18px;width:44px;height:44px}}
 .scroll-hint{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:5;
   font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);opacity:.8}
 .scroll-hint::after{content:"";display:block;width:1px;height:34px;margin:10px auto 0;
@@ -556,7 +562,7 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
   <span class="pillnav__brand">Vybzz<span class="dot">Z</span></span>
   <div class="pillnav__links">
     <a href="feed.html" data-t="t1">Feed</a><a href="store.html" data-t="t2">Boutique</a><a href="#roles" data-t="t3">Le deal</a>
-    <a href="#academy" data-t="t4">Maîtrise la scène</a><a href="faq.html" data-t="t5">FAQ</a><a href="challenge.html" style="color:var(--gold)" data-t="t6">Challenge</a>
+    <a href="#academy" data-t="t4">Maîtrise la scène</a><a href="faq.html" data-t="t5">FAQ</a>
     <a href="dj-wilson.html" style="color:var(--gold)" data-t="t201" data-until="2026-10-04T08:00:00Z">DJ Wilson · Live</a>
   </div>
   <select class="langsel" id="langSel" aria-label="Langue"></select>
@@ -574,7 +580,6 @@ body.mode-concours .pillnav__cta,body.mode-concours .corner-cta{background:var(-
     <span class="menu__brand">Vybzz<span class="dot">Z</span></span>
     <nav class="menu__main">
       <a href="dj-wilson.html" class="menu__hot" data-t="t202" data-until="2026-10-04T08:00:00Z">DJ Wilson · Live <small>3 → 4 oct · 100 places à gagner</small></a>
-      <a href="challenge.html" class="menu__hot" data-t="t9">Live Challenge <small>20 sept → 24 oct · 1er prix iPhone Pro</small></a>
       <a href="feed.html" data-t="t10">Feed & Clips</a>
       <a href="store.html" data-t="t11">Boutique</a>
       <a href="#roles" data-menu-close data-t="t12">Le deal</a>
@@ -658,6 +663,7 @@ vyUntil();
     </div>
 
     <div class="scroll-hint" id="scrollHint">Défile</div>
+    <button class="hero-sound" id="heroSound" type="button" aria-pressed="false" aria-label="Activer le son"></button>
   </div>
 </section>
 
@@ -733,12 +739,7 @@ vyUntil();
 <a href="artist.html" class="corner-cta" data-t="t45">Postuler</a>
 
 
-<!-- Bandeau Live Challenge -->
-<a href="challenge.html" class="chalband reveal" aria-label="VybzzZ Live Challenge, du 20 septembre au 24 octobre 2026">
-  <span class="chalband__tag" data-t="t46">Live Challenge</span>
-  <span class="chalband__txt"><b>Du 20 septembre au 24 octobre</b> · 1er prix : nouvel iPhone Pro · Inscris-toi, récupère ton lien, ramène ta commu, fais tes lives.</span>
-  <span class="chalband__cta" data-t="t47">Participer →</span>
-</a>
+<!-- Bandeau Live Challenge : retiré tant que le challenge est reporté -->
 
 <!-- C'est quoi VybzzZ : 2 vidéos explicatives (son au clic) -->
 <section class="section" id="cest-quoi">
@@ -1119,7 +1120,10 @@ vyUntil();
   (function(){
     var start=Date.parse('2026-09-18T00:00:00+02:00'), end=Date.parse('2026-10-24T23:59:59+02:00'), now=Date.now();
     var q=new URLSearchParams(location.search).get('mode'); // ?mode=concours / ?mode=normal pour forcer (tests)
-    var on = q==='concours' ? true : q==='normal' ? false : (now>=start && now<=end);
+    // Live Challenge REPORTÉ : le mode concours ne s'active plus tout seul
+    // (repasser CHALLENGE_PAUSED à false à la reprise ; ?mode=concours pour tester).
+    var CHALLENGE_PAUSED=true;
+    var on = q==='concours' ? true : q==='normal' ? false : (!CHALLENGE_PAUSED && now>=start && now<=end);
     if(!on) return;
     document.body.classList.add('mode-concours');
     var d=document.querySelector('.ch1__default'), c=document.querySelector('.ch1__concours');
@@ -1157,7 +1161,10 @@ vyUntil();
       chaps[i].style.transform='translateY('+((1-tx[i])*26)+'px)';
     }
     if(hint) hint.style.opacity=(1-clamp(seg,0,1)).toFixed(2);
+    // Son du hero : seule la vidéo la plus visible est audible.
+    if(heroSoundOn){ var top=op.indexOf(Math.max.apply(null,op)); heroVids.forEach(function(v,j){ v.muted=(j!==top); }); }
   }
+  var heroSoundOn=false;
   // ── Boutons son (concert + clip) ──
   var ICON_MUTE='<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16 9l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
   var ICON_ON='<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/><path d="M19 5l-1.4 1.4A7.5 7.5 0 0 1 20 12a7.5 7.5 0 0 1-2.4 5.6L19 19a9.5 9.5 0 0 0 0-14z" opacity=".85"/></svg>';
@@ -1179,6 +1186,29 @@ vyUntil();
     });
     btn.innerHTML=ICON_MUTE; // état initial : muet
   });
+  // Bouton son de la vidéo d'accueil : muette par défaut (lecture auto),
+  // le visiteur active ou coupe le son d'un geste.
+  (function(){
+    var btn=document.getElementById('heroSound'); if(!btn) return;
+    function paint(){ btn.innerHTML=heroSoundOn?ICON_ON:ICON_MUTE; btn.setAttribute('aria-pressed',String(heroSoundOn)); btn.setAttribute('aria-label',heroSoundOn?'Couper le son':'Activer le son'); }
+    btn.addEventListener('click',function(){
+      heroSoundOn=!heroSoundOn;
+      if(heroSoundOn){
+        document.querySelectorAll('video').forEach(function(o){ if(heroVids.indexOf(o)<0) o.muted=true; });
+        document.querySelectorAll('.sound-btn').forEach(function(b){ b.innerHTML=ICON_MUTE; b.setAttribute('aria-label','Activer le son'); });
+        render();
+        heroVids.forEach(function(v){ if(!v.muted) v.play().catch(function(){}); });
+      } else {
+        heroVids.forEach(function(v){ v.muted=true; });
+      }
+      paint();
+    });
+    // Hors du hero, on coupe : pas de son fantôme en lisant le reste de la page.
+    if('IntersectionObserver' in window){
+      new IntersectionObserver(function(es){ if(!es[0].isIntersecting && heroSoundOn){ heroSoundOn=false; heroVids.forEach(function(v){ v.muted=true; }); paint(); } },{threshold:0}).observe(document.getElementById('scrollhero'));
+    }
+    paint();
+  })();
 
   // ── Vidéos explicatives : lecture AVEC son au clic + plein écran ──
   document.querySelectorAll('.exp').forEach(function(exp){
