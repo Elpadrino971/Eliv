@@ -8,6 +8,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/Global/point_packs.dart';
 import 'package:artist/Global/mux.dart';
 import 'package:artist/Global/orientation_helper.dart';
+import 'package:artist/Global/screen_guard.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_chat_preview.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_side_actions.dart';
@@ -107,6 +108,8 @@ class _ProLiveScreenState extends State<ProLiveScreen>
   @override
   void initState() {
     super.initState();
+    // Concert : captures / enregistrements d'écran noirs (voir screen_guard.dart).
+    protectScreen(true);
     refreshPurchasablePointPacks();
     currentEvent = widget.event;
     WidgetsBinding.instance.addObserver(this);
@@ -129,6 +132,7 @@ class _ProLiveScreenState extends State<ProLiveScreen>
 
   @override
   void dispose() {
+    protectScreen(false);
     _disposed = true;
     WidgetsBinding.instance.removeObserver(this);
     _retryTimer?.cancel();
@@ -475,7 +479,7 @@ class _ProLiveScreenState extends State<ProLiveScreen>
   @override
   Widget build(BuildContext context) {
     final double keyboard = MediaQuery.viewInsetsOf(context).bottom;
-    return Scaffold(
+    return CaptureShield(child: Scaffold(
       backgroundColor: blackColor,
       // Le clavier ne redimensionne pas la vidéo : seul l'overlay remonte.
       resizeToAvoidBottomInset: false,
@@ -492,7 +496,7 @@ class _ProLiveScreenState extends State<ProLiveScreen>
             _buildOverlayUI(keyboard),
         ],
       ),
-    );
+    ));
   }
 
   Widget _videoLayer() {

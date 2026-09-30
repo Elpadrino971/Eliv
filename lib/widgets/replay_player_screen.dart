@@ -6,6 +6,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/Global/mux.dart';
 import 'package:artist/Global/orientation_helper.dart';
 import 'package:artist/Global/point_packs.dart';
+import 'package:artist/Global/screen_guard.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/ZegoCloud/zego_gifts.dart';
 import 'package:artist/widgets/cast_button.dart';
@@ -96,6 +97,8 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen>
   @override
   void initState() {
     super.initState();
+    // Concert : captures / enregistrements d'écran noirs (voir screen_guard.dart).
+    if (widget.event != null) protectScreen(true);
     WidgetsBinding.instance.addObserver(this);
     // Ouverture d'une NOUVELLE vidéo alors qu'un mini-lecteur flotte encore :
     // on ferme l'ancien pour ne jamais avoir deux vidéos qui jouent en même
@@ -244,6 +247,7 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen>
 
   @override
   void dispose() {
+    if (widget.event != null) protectScreen(false);
     WidgetsBinding.instance.removeObserver(this);
     _watchTimer?.cancel();
     _autoNextTimer?.cancel();
@@ -380,10 +384,10 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen>
   Widget build(BuildContext context) {
     final c = _controller;
     final hasEvent = widget.event?.id != null;
-    return Scaffold(
+    return CaptureShield(child: Scaffold(
       backgroundColor: blackColor,
       body: _playerBody(c, hasEvent),
-    );
+    ));
   }
 
   Widget _playerBody(VideoPlayerController? c, bool hasEvent) {

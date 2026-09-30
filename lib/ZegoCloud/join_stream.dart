@@ -9,6 +9,7 @@ import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Global/point_packs.dart';
+import 'package:artist/Global/screen_guard.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_chat_preview.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_side_actions.dart';
@@ -83,6 +84,8 @@ class _JoinStreamState extends State<JoinStream> {
   @override
   void initState() {
     super.initState();
+    // Concert : captures / enregistrements d'écran noirs (voir screen_guard.dart).
+    protectScreen(true);
     refreshPurchasablePointPacks();
     // Assigné en synchrone AVANT tout appel async (fetchZegoToken attend un
     // aller-retour réseau) : sinon build() s'exécute avec currentEvent
@@ -98,6 +101,7 @@ class _JoinStreamState extends State<JoinStream> {
 
   @override
   void dispose() {
+    protectScreen(false);
     commentController.dispose();
     _commandSubscription?.cancel();
     _promoTimer?.cancel();
@@ -244,7 +248,7 @@ class _JoinStreamState extends State<JoinStream> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return CaptureShield(child: Scaffold(
       // Le clavier ne doit pas redimensionner le fond (vidéo Zego plein écran)
       // sinon l'overlay du live déborde (overflow) quand on ouvre le chat.
       resizeToAvoidBottomInset: false,
@@ -284,7 +288,7 @@ class _JoinStreamState extends State<JoinStream> {
         ],
         );
       }),
-    );
+    ));
   }
 
   ZegoUIKitPrebuiltLiveStreamingConfig _buildZegoConfig() {
