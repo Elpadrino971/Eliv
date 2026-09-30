@@ -34,16 +34,16 @@ main{flex:1;width:100%;max-width:1120px;margin:0 auto;padding:0 16px 40px}
 .stage video{position:absolute;inset:0;width:100%;height:100%;background:#000}
 .stage .poster{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(18px) brightness(.45);transform:scale(1.1)}
 .stage .poster-img{position:absolute;inset:0;margin:auto;max-width:100%;max-height:100%;object-fit:contain}
-.overlay{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;background:linear-gradient(180deg,rgba(7,12,24,.25),rgba(7,12,24,.75))}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;background:rgba(7,12,24,.72);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 .overlay[hidden]{display:none}
-.overlay p{color:var(--ivory);max-width:34ch;margin:0 auto}
+.overlay p{color:var(--ivory);max-width:30ch;margin:0 auto;font-weight:600;font-size:clamp(.95rem,2.2vw,1.1rem);text-wrap:balance}
 .spinner{width:34px;height:34px;border-radius:50%;border:3px solid rgba(244,239,227,.2);border-top-color:var(--gold);animation:spin 1s linear infinite;margin:0 auto 12px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .badge{position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:6px;background:var(--live);color:#fff;font-weight:700;font-size:.72rem;letter-spacing:.08em;padding:5px 10px;border-radius:999px;z-index:2}
 .badge::before{content:"";width:7px;height:7px;border-radius:50%;background:#fff;animation:pulse 1.4s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.35}}
 .badge[hidden]{display:none}
-.sound{position:absolute;right:12px;bottom:56px;z-index:3;display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--navy);border:0;border-radius:999px;padding:10px 16px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px -10px rgba(0,0,0,.8)}
+.sound{position:absolute;left:12px;bottom:52px;z-index:3;display:inline-flex;align-items:center;gap:6px;background:var(--gold);color:var(--navy);border:0;border-radius:999px;padding:7px 12px;font-weight:700;font-size:.85rem;cursor:pointer;box-shadow:0 10px 30px -10px rgba(0,0,0,.8)}
 .sound[hidden]{display:none}
 .wm{position:absolute;z-index:2;pointer-events:none;user-select:none;-webkit-user-select:none;font:600 clamp(10px,1.6vw,14px)/1.2 Inter,system-ui,sans-serif;color:rgba(244,239,227,.38);text-shadow:0 1px 2px rgba(0,0,0,.6);transition:top 1.2s var(--ease),left 1.2s var(--ease);white-space:nowrap}
 .wm[hidden]{display:none}
@@ -125,7 +125,6 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
         <div class="meta" id="meta"></div>
         <div class="count" id="count" hidden></div>
       </div>
-      <p class="legal">Ce concert est protégé. L'enregistrement, la capture et la rediffusion, même partielle, sont interdits (articles L.335-2 et L.335-4 du Code de la propriété intellectuelle) et engagent la responsabilité de leur auteur. Chaque diffusion est marquée au nom de la place qui la regarde.</p>
     </section>
 
     <aside id="side">
@@ -178,6 +177,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
       </div>
     </aside>
   </div>
+  <p class="legal">Ce concert est protégé. L'enregistrement, la capture et la rediffusion, même partielle, sont interdits (articles L.335-2 et L.335-4 du Code de la propriété intellectuelle) et engagent la responsabilité de leur auteur. Chaque diffusion est marquée au nom de la place qui la regarde.</p>
 </main>
 
 <script src="vendor/hls.min.js"></script>
@@ -378,7 +378,13 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
     if(!token) return Promise.resolve();
     return post('/watch/stream',{event_id:EVENT,token:token,device:DEVICE}).then(function(d){
       if(d.status==='success'){ applyStream(d.data); return; }
-      if(d.code==='too_many_devices'||d.code==='unavailable'){ stopPlayer(); overlay(esc(d.message),false); return; }
+      if(d.code==='too_many_devices'||d.code==='unavailable'){
+        stopPlayer(); overlay(esc(d.message),false);
+        $('gate').hidden=true; $('access').hidden=false;
+        $('accessTitle').textContent=d.code==='unavailable'?'Lecture momentanément indisponible':'Place déjà ouverte ailleurs';
+        $('accessText').textContent=d.code==='unavailable'?'Tu peux regarder le concert dans l\'application VybzzZ avec ton adresse e-mail.':'Une place se regarde sur 2 écrans en même temps au plus. Ferme la page sur un autre appareil : celle-ci reprend toute seule dans la minute.';
+        return;
+      }
       if(d.code==='bad_token'||d.code==='no_access'){
         store(KEY,null); token=null; clearInterval(pollTimer);
         return loadEvent().then(function(){
