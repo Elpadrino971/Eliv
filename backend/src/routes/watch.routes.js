@@ -15,7 +15,7 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../db');
-const { compare } = require('../auth');
+const { compare, requireAuth } = require('../auth');
 const { isGeoBlocked, serializeEvent } = require('../helpers');
 const geo = require('../services/geo');
 const access = require('../services/event_access');
@@ -132,6 +132,23 @@ router.post('/free', async (req, res) => {
   // l'attend pas pour ouvrir le live.
   mailWatchLink(e, event, webWatch.issue(e, event.id, 'web_free_email'), false);
   return ok(res, { token, event_id: event.id, email: access.maskEmail(e) });
+});
+
+// Compte déjà connecté sur l'app web (/web/) : clé d'accès sans ressaisir
+// l'e-mail. Même règle que /login : place (app ou site), concert gratuit,
+// artiste du concert ou admin.
+router.post('/token', requireAuth, (req, res) => {
+  const event = eventById((req.body || {}).event_id);
+  if (!event) return fail(res, 'Concert introuvable.', 404);
+  const user = req.user;
+  const e = access.normEmail(user.email);
+  const allowed = webWatch.isFree(event)
+    || (e && access.hasAccess(e, event.id))
+    || !!db.prepare("SELECT 1 FROM tickets WHERE event_id = ? AND user_id = ? AND COALESCE(status, 'active') <> 'refunded'").get(event.id, user.id)
+    || Number(user.id) === Number(event.artist_id)
+    || user.role === 'admin';
+  if (!allowed || !e) return fail(res, 'Pas encore de place pour ce concert.', 403, { code: 'no_access' });
+  return ok(res, { token: webWatch.issue(e, event.id, 'web_account'), event_id: event.id, email: access.maskEmail(e) });
 });
 
 // Billet acheté dans l'app : on se connecte avec son compte VybzzZ.

@@ -53,6 +53,19 @@ main{flex:1;width:100%;max-width:1120px;margin:0 auto;padding:0 16px 40px}
 .tv svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tv[hidden]{display:none}
 .tv:focus-visible,.fs:focus-visible{outline:2px solid var(--ivory);outline-offset:2px}
+.chat{display:grid;gap:10px}
+.chat__list{list-style:none;display:grid;gap:8px;max-height:340px;overflow-y:auto;padding-right:4px;overscroll-behavior:contain}
+.chat__list li{font-size:.92rem;line-height:1.4;word-wrap:break-word}
+.chat__list b{color:var(--gold);font-weight:600;margin-right:6px}
+.chat__list .gift{color:var(--ivory)}
+.chat__empty{color:var(--muted);font-size:.88rem}
+.chat form{display:flex;gap:8px}
+.chat input{flex:1;padding:11px 12px}
+.chat .btn{width:auto;padding:11px 14px}
+.hearts{position:absolute;right:12px;bottom:96px;z-index:3;width:44px;height:44px;border-radius:50%;border:0;background:rgba(7,12,24,.6);color:#FF4D6D;font-size:20px;cursor:pointer;display:grid;place-items:center}
+.hearts[hidden]{display:none}
+.heart-fly{position:absolute;right:22px;bottom:140px;z-index:3;pointer-events:none;font-size:22px;animation:fly 1.8s ease-out forwards}
+@keyframes fly{0%{transform:translate(0,0) scale(.6);opacity:0}15%{opacity:1}100%{transform:translate(var(--dx,-20px),-180px) scale(1.2);opacity:0}}
 .sheet{position:fixed;inset:0;z-index:50;display:grid;place-items:end center;background:rgba(3,6,14,.6)}
 .sheet[hidden]{display:none}
 .sheet__box{width:min(520px,100%);background:var(--panel);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));display:grid;gap:12px;max-height:88vh;overflow:auto}
@@ -114,7 +127,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
 </head>
 <body>
 <header class="top">
-  <a class="logo" href="/">VYBZZ<span>Z</span></a>
+  <a class="logo" href="web/" aria-label="VybzzZ, retour aux concerts">VYBZZ<span>Z</span></a>
   <div class="who" id="who"></div>
 </header>
 
@@ -127,6 +140,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
         <video id="video" playsinline controls hidden controlslist="nodownload nofullscreen noplaybackrate noremoteplayback" disablepictureinpicture disableremoteplayback x-webkit-airplay="deny"></video>
         <div class="wm" id="wm" hidden aria-hidden="true"></div>
         <button class="fs" id="fsBtn" type="button" hidden aria-label="Plein écran">⛶</button>
+        <button class="hearts" id="heartBtn" type="button" hidden aria-label="Envoyer un cœur">♥</button>
         <button class="tv" id="tvBtn" type="button" hidden aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Sur la TV</button>
         <span class="badge" id="liveBadge" hidden>EN DIRECT</span>
         <button class="sound" id="soundBtn" type="button" hidden>🔊 Activer le son</button>
@@ -187,6 +201,19 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
         <p id="accessText"></p>
         <div class="app-row"><span class="small">Aussi dans l'application :</span><a href="app.html">Télécharger VybzzZ</a></div>
         <button class="link" id="logoutBtn" type="button">Ce n'est pas moi</button>
+      </div>
+
+      <!-- Chat du live : le même que dans l'application -->
+      <div class="card chat" id="chat" hidden>
+        <h2>Chat du live</h2>
+        <ul class="chat__list" id="chatList" aria-live="polite"><li class="chat__empty">Les messages des fans s'affichent ici.</li></ul>
+        <form id="chatForm" novalidate hidden>
+          <label for="chatInput" class="small" style="position:absolute;left:-9999px">Ton message</label>
+          <input id="chatInput" maxlength="200" autocomplete="off" placeholder="Écris un message…" />
+          <button class="btn btn-gold" type="submit">Envoyer</button>
+        </form>
+        <p class="small" id="chatLogin" hidden><a class="link" id="chatLoginLink" href="#">Connecte-toi</a> pour écrire dans le chat.</p>
+        <div class="msg" id="chatMsg" role="alert"></div>
       </div>
     </aside>
   </div>
@@ -302,7 +329,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
     clearTimeout(retryTimer);
     if(hls){try{hls.destroy();}catch(e){} hls=null;}
     var v=$('video'); try{v.pause();}catch(e){} v.removeAttribute('src'); v.load&&v.load(); v.hidden=true;
-    $('liveBadge').hidden=true; $('soundBtn').hidden=true; $('fsBtn').hidden=true; $('tvBtn').hidden=true; playing=null;
+    $('liveBadge').hidden=true; $('soundBtn').hidden=true; $('fsBtn').hidden=true; $('tvBtn').hidden=true; $('heartBtn').hidden=true; playing=null;
     watermark(false);
   }
   // Filigrane : e-mail masqué + numéro de place, déplacé régulièrement. Une
@@ -378,7 +405,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
   }
   function play(url,isLive,media){
     stopPlayer(); playing=media||url;
-    var v=$('video'); v.hidden=false; $('fsBtn').hidden=false; $('tvBtn').hidden=false; watermark(true);
+    var v=$('video'); v.hidden=false; $('fsBtn').hidden=false; $('tvBtn').hidden=false; $('heartBtn').hidden=!isLive; watermark(true);
     overlay(isLive?'Connexion au direct…':'Chargement du replay…',true);
     $('liveBadge').hidden=!isLive;
     function ready(){ overlay(null); tryPlay(v); }
@@ -414,6 +441,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
     $('gate').hidden=true; $('access').hidden=false;
     $('who').textContent=d.email?'Place de '+d.email:'';
     wmText=d.email?(d.email+' · place n°'+d.seat):'';
+    if(d.state==='ended') chatStart(false); else if($('chat').hidden) chatStart(true);
     if(d.state==='live'){
       countdown(false);
       $('accessTitle').textContent='Tu es au concert';
@@ -468,6 +496,62 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
       stopPlayer(); overlay(esc(d.message||'Lecture impossible.'),false);
     }).catch(function(){ fetching=false; clearTimeout(retryTimer); retryTimer=setTimeout(fetchUrl,5000); });
   }
+  // ── Compte VybzzZ (app web) : même jeton que /web/ ──
+  function jwt(){ return read('vy_jwt'); }
+  function me(){ try{return JSON.parse(read('vy_user')||'null');}catch(e){return null;} }
+  function authed(path,body){
+    return fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt()},body:JSON.stringify(body),credentials:'omit'})
+      .then(function(r){return r.json().then(function(d){d._code=r.status;return d;});});
+  }
+
+  // ── Chat (mêmes messages que l'application : /event-logs, /event-comment) ──
+  var chatTimer=null, chatSeen='';
+  function chatRender(list){
+    var items=(list||[]).filter(function(a){return a.type==='comment'||a.type==='gift';}).slice(0,60).reverse();
+    var sig=items.map(function(a){return a.id;}).join(',');
+    if(sig===chatSeen) return; chatSeen=sig;
+    var ul=$('chatList'), atBottom=ul.scrollHeight-ul.scrollTop-ul.clientHeight<40;
+    ul.innerHTML=items.length?items.map(function(a){
+      var u=a.user_info||{}, n=u.artist_name||u.full_name||'Fan';
+      return a.type==='gift'?'<li class="gift">🎁 <b>'+esc(n)+'</b>'+esc(a.description||'a envoyé un cadeau')+'</li>':'<li><b>'+esc(n)+'</b>'+esc(a.description)+'</li>';
+    }).join(''):'<li class="chat__empty">Sois le premier à écrire.</li>';
+    if(atBottom||!chatSeen) ul.scrollTop=ul.scrollHeight;
+  }
+  function chatPoll(){
+    fetch(API+'/event-logs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({event_id:EVENT}),credentials:'omit'})
+      .then(function(r){return r.json();}).then(function(d){ chatRender(d.activity||d.data||[]); }).catch(function(){});
+  }
+  function chatStart(on){
+    clearInterval(chatTimer);
+    $('chat').hidden=!on; if(!on) return;
+    var logged=!!jwt();
+    $('chatForm').hidden=!logged; $('chatLogin').hidden=logged;
+    $('chatLoginLink').href='web/#/login?next='+encodeURIComponent('/live.html?e='+EVENT);
+    chatPoll(); chatTimer=setInterval(chatPoll,6000);
+  }
+  $('chatForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var inp=$('chatInput'), txt=inp.value.trim(), m=$('chatMsg'); m.textContent='';
+    if(!txt) return;
+    var btn=this.querySelector('button'); btn.disabled=true;
+    authed('/event-comment',{event_id:EVENT,comment:txt}).then(function(d){
+      btn.disabled=false;
+      if(d.status==='success'){ inp.value=''; chatSeen=''; chatRender(d.activity||[]); return; }
+      if(d._code===401){ $('chatForm').hidden=true; $('chatLogin').hidden=false; return; }
+      m.textContent=d.message||'Message non envoyé.';
+    }).catch(function(){ btn.disabled=false; m.textContent='Réseau indisponible, réessaie.'; });
+  });
+
+  // ── Cœurs ──
+  var liked=false;
+  $('heartBtn').addEventListener('click',function(){
+    var h=document.createElement('span'); h.className='heart-fly'; h.textContent='♥';
+    h.style.color=['#FF4D6D','#E6C76A','#FF8FA3'][Math.floor(Math.random()*3)];
+    h.style.setProperty('--dx',(Math.random()*60-50)+'px');
+    $('stage').appendChild(h); setTimeout(function(){h.remove();},1900);
+    if(!liked&&jwt()){ liked=true; authed('/event/'+EVENT+'/like',{liked:'true'}).catch(function(){}); }
+  });
+
   function start(t){
     token=t; store(KEY,t); cleanUrl();
     $('payNotice').innerHTML='';
@@ -555,7 +639,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
   });
 
   $('logoutBtn').addEventListener('click',function(){
-    store(KEY,null); token=null; clearInterval(pollTimer); stopPlayer(); showGate();
+    store(KEY,null); token=null; clearInterval(pollTimer); stopPlayer(); chatStart(false); showGate();
   });
 
   // ── Démarrage ──
@@ -568,6 +652,14 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
     if(sid){ claim(sid,0); return; }
     var t=k||read(KEY);
     if(t){ start(t); return; }
+    // Connecté sur l'app web : la place du compte ouvre le live directement.
+    if(jwt()){
+      return authed('/watch/token',{event_id:EVENT}).then(function(d){
+        if(d.status==='success'){ start(d.data.token); return; }
+        showGate();
+        var u=me(); if(u&&u.email){ $('buyEmail').value=u.email; $('mailEmail').value=u.email; }
+      }).catch(function(){ showGate(); });
+    }
     showGate();
     if(paid==='annule'){ $('payNotice').innerHTML='<div class="notice warn">Paiement annulé, rien n\'a été débité. Tu peux réessayer quand tu veux.</div>'; cleanUrl(); }
   }).catch(function(){

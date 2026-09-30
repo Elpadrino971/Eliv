@@ -59,6 +59,8 @@
   const NAV = [
     // Concert à la une : retiré automatiquement après la date (until, ISO UTC).
     { href: "dj-wilson.html",        key: "nav_djwilson", id: "dj-wilson", until: "2026-10-04T08:00:00Z", hot: true },
+    // L'application dans le navigateur : concerts, clips, billets.
+    { href: "web/",                  key: "nav_web",    id: "web", hot: true },
     { href: "feed.html",             key: "nav_feed",   id: "feed" },
     { href: "store.html",            key: "nav_store",  id: "store" },
     { href: "index.html#roles",      key: "nav_deal",   id: "_deal" },

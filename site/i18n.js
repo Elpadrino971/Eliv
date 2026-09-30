@@ -1588,6 +1588,8 @@ window.I18N.ru = {
   };
   Object.keys(FIX).forEach(function (l) { if (window.I18N[l]) Object.assign(window.I18N[l], FIX[l]); });
   Object.keys(window.I18N).forEach(function (l) { window.I18N[l].nav_challenge = 'Challenge'; });
+  var WEB = { fr: 'Regarder', en: 'Watch', es: 'Ver', it: 'Guarda', de: 'Ansehen', pt: 'Assistir', zh: '观看', ko: '시청', ja: '視聴', ar: 'شاهد', hi: 'देखें', ru: 'Смотреть' };
+  Object.keys(window.I18N).forEach(function (l) { window.I18N[l].nav_web = WEB[l] || WEB.en; });
   var DL = { fr: "Télécharger l'appli", en: 'Get the app', es: 'Descargar la app', it: "Scarica l'app", de: 'App laden', pt: 'Baixar o app', zh: '下载应用', ko: '앱 다운로드', ja: 'アプリを入手', ar: 'حمّل التطبيق', hi: 'ऐप डाउनलोड करें', ru: 'Скачать приложение' };
   Object.keys(window.I18N).forEach(function (l) { window.I18N[l].nav_download = DL[l] || DL.en; });
   // Barre mobile « Télécharger l'appli » : bouton « Ouvrir ».
