@@ -71,7 +71,14 @@ async function hasActiveSubscription(userId, productId) {
  * comptes testeurs) sont écartés : ils ne correspondent à aucun encaissement
  * et ne doivent jamais créditer un wallet artiste.
  */
-async function nonSubscriptionPurchases(userId, productId, { includeSandbox = process.env.NODE_ENV !== 'production' } = {}) {
+// RC_ALLOW_SANDBOX=1 : accepte les achats sandbox même en production (tests
+// TestFlight / revue Apple avant lancement). À RETIRER avant un concert payant.
+const ALLOW_SANDBOX = process.env.RC_ALLOW_SANDBOX === '1';
+if (ALLOW_SANDBOX && process.env.NODE_ENV === 'production') {
+  console.warn('[revenuecat] ⚠️  RC_ALLOW_SANDBOX=1 : les achats sandbox (non encaissés) sont acceptés en production.');
+}
+
+async function nonSubscriptionPurchases(userId, productId, { includeSandbox = ALLOW_SANDBOX || process.env.NODE_ENV !== 'production' } = {}) {
   if (!userId || !productId) return [];
   const sub = await _getSubscriber(userId);
   const ns = sub.non_subscriptions || {};
@@ -80,6 +87,7 @@ async function nonSubscriptionPurchases(userId, productId, { includeSandbox = pr
 }
 
 module.exports = {
+  ALLOW_SANDBOX,
   isConfigured,
   hasActiveSubscription,
   nonSubscriptionPurchases,

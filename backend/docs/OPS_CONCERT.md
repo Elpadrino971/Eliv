@@ -72,3 +72,17 @@ Change ensuite le mot de passe de l'admin depuis la console (`/admin`, profil) s
    Un lot de fans derrière la même IP mobile n'est plus bloqué collectivement.
 6. Après le live : nouvelle sauvegarde, vérifier `/api/artist/revenue-transactions` de l'artiste
    (billets app + site confondus).
+
+
+## Tests d'achat avant lancement (sandbox Apple / Play)
+
+En production, les achats sandbox (TestFlight, comptes testeurs, builds de
+développement) sont refusés : aucun argent n'est encaissé. Pour tester le
+parcours d'achat sur un vrai téléphone avant le lancement, ajouter dans
+`.vybzzz.env` :
+
+    RC_ALLOW_SANDBOX=1
+
+puis redémarrer le conteneur. **Retirer la ligne (et redémarrer) avant tout
+concert payant réel** : sinon un testeur obtient un vrai billet et l'artiste
+une part sur une vente fictive.

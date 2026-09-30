@@ -171,7 +171,7 @@ router.post('/', (req, res) => {
 
   // Achats sandbox (TestFlight, testeurs Play) : aucun argent encaissé -> en
   // production on accuse réception sans rien créditer (points, abonnement).
-  if (process.env.NODE_ENV === 'production' && String(event.environment || '').toUpperCase() === 'SANDBOX') {
+  if (process.env.NODE_ENV === 'production' && process.env.RC_ALLOW_SANDBOX !== '1' && String(event.environment || '').toUpperCase() === 'SANDBOX') {
     return res.json({ received: true, ignored: 'sandbox' });
   }
 
