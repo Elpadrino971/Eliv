@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'dart:convert';
 
 import 'package:artist/BottomBar/screens/homeScreen/future_screen.dart';
@@ -216,12 +217,12 @@ class FeaturedEventSheet extends StatelessWidget {
     );
   }
 
-  Widget _cover() {
+  Widget _cover({BoxFit fit = BoxFit.cover}) {
     final url = _coverUrl;
     if (url == null) return _fallbackCover();
     return CachedNetworkImage(
       imageUrl: url,
-      fit: BoxFit.cover,
+      fit: fit,
       placeholder: (_, __) => const ColoredBox(color: cardDeep),
       errorWidget: (_, __, ___) => _fallbackCover(),
     );
@@ -310,7 +311,7 @@ class FeaturedEventSheet extends StatelessWidget {
         ? ''
         : '${AppDate.fullDate(start)} · ${AppDate.time(start)}';
     final artist = _artistName;
-    final coverHeight = Get.height * 0.34;
+    final coverHeight = Get.height * 0.40;
 
     return SafeArea(
       child: Center(
@@ -336,42 +337,48 @@ class FeaturedEventSheet extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── Couverture + badge + fermeture
+                      // ── Affiche en entier (souvent une affiche avec du
+                      // texte : jamais recadrée ni recouverte d'un titre).
                       SizedBox(
                         height: coverHeight,
                         width: Get.width,
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            _cover(),
-                            const DecoratedBox(
-                              decoration: BoxDecoration(gradient: kImageOverlay),
-                            ),
-                            Positioned(
-                              top: 14,
-                              left: 14,
-                              right: 60,
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: _badge(),
+                            // Fond : la même image floutée, pour remplir les
+                            // bords quand l'affiche n'a pas le même format.
+                            ImageFiltered(
+                              imageFilter: ui.ImageFilter.blur(
+                                sigmaX: 18,
+                                sigmaY: 18,
                               ),
+                              child: _cover(),
                             ),
+                            const ColoredBox(color: Color(0x66000000)),
+                            _cover(fit: BoxFit.contain),
                             Positioned(top: 10, right: 10, child: _closeButton()),
-                            Positioned(
-                              left: 16,
-                              right: 16,
-                              bottom: 14,
-                              child: Text(
-                                event.name ?? '',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontFamily: AppFonts.heading,
-                                  color: ivory,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w700,
-                                  height: 1.15,
-                                ),
+                          ],
+                        ),
+                      ),
+
+                      // ── Badge + titre sous l'affiche
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _badge(),
+                            const SizedBox(height: 10),
+                            Text(
+                              event.name ?? '',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontFamily: AppFonts.heading,
+                                color: ivory,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                                height: 1.15,
                               ),
                             ),
                           ],

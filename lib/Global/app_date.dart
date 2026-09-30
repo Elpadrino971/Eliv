@@ -26,14 +26,18 @@ class AppDate {
     return DateFormat(pattern, _locale()).format(dt.toLocal());
   }
 
-  /// "Sat, Jul 26" (localise)
-  static String dayDate(DateTime? dt) => format(dt, 'EEE, MMM dd');
+  static bool get _en => _locale() == 'en';
 
-  /// "MMM dd, yyyy" (localise)
-  static String fullDate(DateTime? dt) => format(dt, 'MMM dd, yyyy');
+  /// "Sat, Jul 26" en anglais, "sam. 26 juil." ailleurs (ordre jour-mois).
+  static String dayDate(DateTime? dt) =>
+      format(dt, _en ? 'EEE, MMM d' : 'EEE d MMM');
 
-  /// "8:00 PM" (heure locale du spectateur)
-  static String time(DateTime? dt) => format(dt, 'h:mm a');
+  /// "Sun, Oct 4, 2026" en anglais, "dim. 4 oct. 2026" ailleurs.
+  static String fullDate(DateTime? dt) =>
+      format(dt, _en ? 'EEE, MMM d, yyyy' : 'EEE d MMM yyyy');
+
+  /// "8:00 PM" en anglais, "20:00" ailleurs (heure locale du spectateur).
+  static String time(DateTime? dt) => format(dt, _en ? 'h:mm a' : 'HH:mm');
 
   /// Decalage GMT du fuseau du spectateur, ex: "GMT+2" / "GMT-3".
   static String gmtLabel([DateTime? dt]) {

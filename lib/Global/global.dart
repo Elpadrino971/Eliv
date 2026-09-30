@@ -415,7 +415,12 @@ Future myShare({required String message}) async {
 String priceLabel(String? ticketPrice) {
   final p = double.tryParse(ticketPrice ?? '') ?? 0;
   if (p <= 0) return 'common_free'.tr;
-  return '$ticketPrice €';
+  final lang = Get.locale?.languageCode ?? 'en';
+  final txt = p.toStringAsFixed(2);
+  // « 4,99 € » en français et dans les langues à virgule décimale.
+  return lang == 'en' || lang == 'zh' || lang == 'ja' || lang == 'ko' || lang == 'hi'
+      ? '$txt €'
+      : '${txt.replaceAll('.', ',')} €';
 }
 
 
