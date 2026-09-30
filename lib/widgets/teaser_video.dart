@@ -75,6 +75,10 @@ class TeaserVideo extends StatefulWidget {
 /// dernier arrivé devient l'actif, le précédent est mis en pause et libéré.
 /// Quand l'actif disparaît (dispose, hors écran), le candidat précédent
 /// reprend.
+/// Son des teasers : coupé par défaut, réglage partagé par tous les teasers
+/// de la session (le fan qui active le son l'entend sur le teaser suivant).
+final ValueNotifier<bool> teaserMuted = ValueNotifier<bool>(true);
+
 abstract final class _TeaserRegistry {
   static final List<_TeaserVideoState> _candidates = <_TeaserVideoState>[];
   static _TeaserVideoState? _active;
@@ -149,6 +153,7 @@ class _TeaserVideoState extends State<TeaserVideo>
   @override
   void initState() {
     super.initState();
+    teaserMuted.addListener(_onMuteChanged);
     WidgetsBinding.instance.addObserver(this);
     _foreground = _isForeground(WidgetsBinding.instance.lifecycleState);
     // URL inutilisable (ex. simple nom de fichier) : directement le secours,
@@ -205,8 +210,14 @@ class _TeaserVideoState extends State<TeaserVideo>
     }
   }
 
+  void _onMuteChanged() {
+    _controller?.setVolume(teaserMuted.value ? 0 : 1);
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    teaserMuted.removeListener(_onMuteChanged);
     WidgetsBinding.instance.removeObserver(this);
     _detachScrollables();
     _release();
@@ -311,7 +322,7 @@ class _TeaserVideoState extends State<TeaserVideo>
     _firstFrame = false;
     controller.addListener(_onControllerValue);
     controller.setLooping(true);
-    controller.setVolume(0);
+    controller.setVolume(teaserMuted.value ? 0 : 1);
     controller
         .initialize()
         .then((_) {
@@ -319,7 +330,7 @@ class _TeaserVideoState extends State<TeaserVideo>
           if (!mounted || !identical(_controller, controller)) return;
           controller
             ..setLooping(true)
-            ..setVolume(0)
+            ..setVolume(teaserMuted.value ? 0 : 1)
             ..play();
           setState(() {});
         })
@@ -419,6 +430,31 @@ class _TeaserVideoState extends State<TeaserVideo>
             duration: _fade,
             curve: Curves.easeIn,
             child: _video(controller!),
+          ),
+        // Son : coupé par défaut, un tap pour l'activer / le couper.
+        if (showVideo)
+          Positioned(
+            right: 10,
+            bottom: 10,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => teaserMuted.value = !teaserMuted.value,
+              child: Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Icon(
+                  teaserMuted.value
+                      ? Icons.volume_off_rounded
+                      : Icons.volume_up_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
           ),
       ],
     );
