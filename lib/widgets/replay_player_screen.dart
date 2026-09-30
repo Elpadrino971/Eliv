@@ -5,7 +5,9 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Global/mux.dart';
 import 'package:artist/Global/orientation_helper.dart';
+import 'package:artist/Global/point_packs.dart';
 import 'package:artist/Models/event_model.dart';
+import 'package:artist/ZegoCloud/zego_gifts.dart';
 import 'package:artist/widgets/cast_button.dart';
 import 'package:artist/widgets/mini_player.dart';
 import 'package:flutter/material.dart';
@@ -323,6 +325,10 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen>
     );
   }
 
+  // Même feuille de cadeaux que dans le live (solde, visuels, coût en pièces,
+  // confirmation, recharge) : l'ancienne grille affichait une icône générique,
+  // des prix en euros et envoyait sans vérifier le solde. Pas de salle Zego
+  // ici : le cadeau passe uniquement par le serveur.
   void _openTips() async {
     final event = widget.event;
     if (event?.id == null) return;
@@ -331,71 +337,14 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen>
       await controller.getGifts();
     }
     if (!mounted) return;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: midnightSecondary,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+    Get.bottomSheet(
+      ZegoGifts(
+        eventId: '${event!.id}',
+        broadcastToZego: false,
+        onGiftSent: (_) {},
       ),
-      builder: (_) => GetBuilder<EventController>(
-        builder: (c) {
-          final gifts = c.gifts.value.data ?? [];
-          return Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('replay_send_tip'.tr,
-                    style: const TextStyle(color: ivory, fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 14),
-                if (gifts.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Center(child: CircularProgressIndicator(color: goldPrimary)),
-                  )
-                else
-                  GridView.count(
-                    crossAxisCount: 4,
-                    shrinkWrap: true,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: gifts.map((g) {
-                      return GestureDetector(
-                        onTap: () async {
-                          Get.back();
-                          await controller.sendGift(eventId: '${event!.id}', giftId: '${g.id}');
-                          Get.snackbar('replay_tip_thanks'.tr, 'Pourboire "${g.name}" envoyé 🎁',
-                              backgroundColor: cardDeep, colorText: ivory);
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: cardDeep,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: goldSecondary.withValues(alpha: 0.3)),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.card_giftcard_rounded, color: goldPrimary, size: 26),
-                              const SizedBox(height: 4),
-                              Text(g.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: ivory, fontSize: 11)),
-                              Text('${g.price ?? '0'} €',
-                                  style: const TextStyle(color: textMuted, fontSize: 10)),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                const SizedBox(height: 10),
-              ],
-            ),
-          );
-        },
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
 
@@ -522,13 +471,23 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen>
                       onTap: _toggleLike,
                     ),
                     const SizedBox(height: 16),
-                    _actionButton(
-                      icon: Icons.card_giftcard_rounded,
-                      color: goldPrimary,
-                      label: 'Tips',
-                      onTap: _openTips,
+                    // Masqué si le fan n'a pas de pièces et ne peut pas en
+                    // acheter (cf. point_packs.dart).
+                    Obx(
+                      () => canSendGifts
+                          ? Column(
+                              children: [
+                                _actionButton(
+                                  icon: Icons.card_giftcard_rounded,
+                                  color: goldPrimary,
+                                  label: 'art_gift'.tr,
+                                  onTap: _openTips,
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
                     ),
-                    const SizedBox(height: 16),
                     _actionButton(
                       icon: Icons.ios_share_rounded,
                       label: 'common_share'.tr,
