@@ -613,7 +613,7 @@ Code App Store : `hi` · Code Google Play : `hi-IN`
 ```
 **Mots-clés (App Store)**
 ```
-कॉन्सर्ट,लाइव,संगीत,टिकट,डीजे,शो,live,music,dj
+कॉन्सर्ट,लाइव,संगीत,टिकट,live,concert,music,dj,show
 ```
 **Nouveautés 1.2.0**
 ```
