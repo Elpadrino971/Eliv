@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const { db } = require('../db');
 const agenda = require('../services/agenda_bizouk');
 const { runAgendaSync } = require('../jobs/agendaSync');
-const { platformCounters, payoutCountdown, asyncHandler } = require('../helpers');
+const { platformCounters, payoutCountdown, asyncHandler, profileUrl } = require('../helpers');
 const { hash, compare, SECRET, sha256 } = require('../auth');
 const crypto = require('crypto');
 const { saveUpload, saveClipVideo } = require('../uploads');
@@ -1514,6 +1514,216 @@ router.put('/feed-clips/:id', requireAdmin, async (req, res) => {
 router.delete('/feed-clips/:id', requireAdmin, (req, res) => {
   db.prepare('DELETE FROM feed_clips WHERE id = ?').run(req.params.id);
   return res.json({ status: 'success', message: 'Clip supprimé.' });
+});
+
+// ─── Feed clips : actions GROUPÉES, légende inline, médias PAR ARTISTE ───
+// Besoin des collaborateurs : ne garder que le contenu d'un artiste (DJ Wilson
+// au lancement), chaque clip avec une légende, et pouvoir supprimer /
+// rattacher / légender vite depuis l'admin. Toutes ces routes sont réservées
+// au super-admin (requireAdmin, module non délégable).
+const FEED_VALUES = ['for_you', 'clips'];
+const CLIP_TITLE_MAX = 120;
+const parseClipIds = (v) => (Array.isArray(v)
+  ? [...new Set(v.map(Number).filter((n) => Number.isInteger(n) && n > 0))]
+  : []);
+// Légende : chaîne nettoyée (null si vide). Renvoie { error } si trop longue.
+function cleanClipTitle(raw) {
+  const t = String(raw ?? '').replace(/\s+/g, ' ').trim();
+  if (t.length > CLIP_TITLE_MAX) return { error: `Légende trop longue (max ${CLIP_TITLE_MAX} caractères).` };
+  return { title: t || null };
+}
+// Accepte un Playback ID Mux nu, ou une URL Mux complète
+// (https://stream.mux.com/<id>.m3u8, https://image.mux.com/<id>/thumbnail.jpg).
+function extractMuxPlaybackId(raw) {
+  const s = String(raw ?? '').trim();
+  if (!s) return null;
+  const m = s.match(/^https?:\/\/(?:stream|image)\.mux\.com\/([A-Za-z0-9]+)(?:[./?].*)?$/i);
+  if (m) return m[1];
+  return /^[A-Za-z0-9]{8,}$/.test(s) ? s : null;
+}
+
+// Modifie plusieurs clips d'un coup. Corps : { ids, user_id?, feed?, active? }
+// → seuls les champs PRÉSENTS sont écrits (user_id: null = détacher).
+router.post('/feed-clips/bulk-update', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const ids = parseClipIds(b.ids);
+  if (!ids.length) return res.status(400).json({ status: 'error', message: 'Aucun clip sélectionné.' });
+  const sets = [];
+  const vals = [];
+  if ('user_id' in b) {
+    if (b.user_id === null || b.user_id === '' || b.user_id === undefined) {
+      sets.push('user_id = NULL');
+    } else {
+      const uid = Number(b.user_id);
+      if (!Number.isInteger(uid) || uid <= 0) return res.status(422).json({ status: 'error', message: 'user_id invalide.' });
+      if (!db.prepare('SELECT id FROM users WHERE id = ?').get(uid)) return res.status(404).json({ status: 'error', message: 'Artiste introuvable.' });
+      sets.push('user_id = ?'); vals.push(uid);
+    }
+  }
+  if ('feed' in b) {
+    if (!FEED_VALUES.includes(b.feed)) return res.status(422).json({ status: 'error', message: "feed doit valoir 'for_you' ou 'clips'." });
+    sets.push('feed = ?'); vals.push(b.feed);
+  }
+  if ('active' in b) { sets.push('active = ?'); vals.push(truthy(b.active) ? 1 : 0); }
+  if (!sets.length) return res.status(400).json({ status: 'error', message: 'Rien à modifier (user_id, feed ou active attendu).' });
+  const info = db.prepare(`UPDATE feed_clips SET ${sets.join(', ')} WHERE id IN (${ids.map(() => '?').join(',')})`).run(...vals, ...ids);
+  return res.json({ status: 'success', message: `${info.changes} clip(s) modifié(s).`, data: { count: info.changes } });
+});
+
+// Supprime plusieurs clips d'un coup. Corps : { ids }.
+router.post('/feed-clips/bulk-delete', requireAdmin, (req, res) => {
+  const ids = parseClipIds(req.body?.ids);
+  if (!ids.length) return res.status(400).json({ status: 'error', message: 'Aucun clip sélectionné.' });
+  const info = db.prepare(`DELETE FROM feed_clips WHERE id IN (${ids.map(() => '?').join(',')})`).run(...ids);
+  return res.json({ status: 'success', message: `${info.changes} clip(s) supprimé(s).`, data: { count: info.changes } });
+});
+
+// Légende seule (édition inline depuis la liste / la page artiste). Corps : { title }.
+router.put('/feed-clips/:id/title', requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(422).json({ status: 'error', message: 'Identifiant invalide.' });
+  const { title, error } = cleanClipTitle(req.body?.title);
+  if (error) return res.status(422).json({ status: 'error', message: error });
+  const info = db.prepare('UPDATE feed_clips SET title = ? WHERE id = ?').run(title, id);
+  if (!info.changes) return res.status(404).json({ status: 'error', message: 'Clip introuvable.' });
+  return res.json({ status: 'success', message: 'Légende enregistrée.', data: { id, title } });
+});
+
+// ─── Médias d'un artiste : ses clips (tous feeds) + ses concerts ───
+const artistRowForMedia = (id) => {
+  const u = db.prepare('SELECT id, artist_name, full_name, email, profile_image, artist_profile, is_artist FROM users WHERE id = ?').get(id);
+  if (!u) return null;
+  const img = u.artist_profile || u.profile_image;
+  return { id: u.id, name: u.artist_name || u.full_name || u.email, image: img ? profileUrl(img) : null, is_artist: !!u.is_artist };
+};
+const clipThumb = (pid) => (pid ? `https://image.mux.com/${pid}/thumbnail.webp?width=240&fit_mode=smartcrop` : null);
+router.get('/artists/:id/media', requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(422).json({ status: 'error', message: 'Identifiant invalide.' });
+  const artist = artistRowForMedia(id);
+  if (!artist) return res.status(404).json({ status: 'error', message: 'Artiste introuvable.' });
+  const clips = db.prepare(
+    `SELECT id, feed, title, mux_playback_id, video_url, active, upload_status, position, created_at
+     FROM feed_clips WHERE user_id = ? ORDER BY id DESC`
+  ).all(id).map((c) => ({
+    id: c.id, feed: c.feed === 'clips' ? 'clips' : 'for_you', title: c.title,
+    mux_playback_id: c.mux_playback_id,
+    video_url: c.mux_playback_id ? `https://stream.mux.com/${c.mux_playback_id}.m3u8` : c.video_url,
+    thumbnail: clipThumb(c.mux_playback_id),
+    active: !!c.active, upload_status: c.upload_status, position: c.position, created_at: c.created_at,
+  }));
+  const events = db.prepare(
+    'SELECT id, name, status, start_date_time FROM events WHERE artist_id = ? ORDER BY start_date_time DESC'
+  ).all(id);
+  return res.json({ status: 'success', data: { artist, clips, events } });
+});
+
+// Ajout GROUPÉ de vidéos à un artiste. Corps : { items: [{ mux_playback_id?
+// | video_url?, title, feed }] }. Chaque item : un Playback ID Mux OU une URL
+// https (URL Mux → ID extrait ; autre URL → video_url). Clips actifs tout de
+// suite (contenu ajouté par l'admin = pré-approuvé), rangés à la suite du feed.
+router.post('/artists/:id/media', requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(422).json({ status: 'error', message: 'Identifiant invalide.' });
+  if (!artistRowForMedia(id)) return res.status(404).json({ status: 'error', message: 'Artiste introuvable.' });
+  const items = Array.isArray(req.body?.items) ? req.body.items : [];
+  if (!items.length) return res.status(400).json({ status: 'error', message: 'Aucune vidéo à ajouter.' });
+  if (items.length > 200) return res.status(422).json({ status: 'error', message: '200 vidéos maximum par envoi.' });
+
+  const prepared = [];
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i] || {};
+    const line = `Ligne ${i + 1} : `;
+    const feed = it.feed === undefined ? 'for_you' : it.feed;
+    if (!FEED_VALUES.includes(feed)) return res.status(422).json({ status: 'error', message: `${line}feed doit valoir 'for_you' ou 'clips'.` });
+    const { title, error } = cleanClipTitle(it.title);
+    if (error) return res.status(422).json({ status: 'error', message: line + error });
+    if (!title) return res.status(422).json({ status: 'error', message: `${line}légende obligatoire.` });
+    let pid = null;
+    let url = null;
+    if (it.mux_playback_id) {
+      pid = extractMuxPlaybackId(it.mux_playback_id);
+      if (!pid) return res.status(422).json({ status: 'error', message: `${line}Playback ID Mux invalide.` });
+    } else if (it.video_url) {
+      const raw = String(it.video_url).trim();
+      pid = extractMuxPlaybackId(raw);
+      if (!pid) {
+        if (!/^https:\/\/\S+$/i.test(raw)) return res.status(422).json({ status: 'error', message: `${line}URL invalide (https attendu).` });
+        url = raw;
+      }
+    } else {
+      return res.status(422).json({ status: 'error', message: `${line}Playback ID Mux ou URL requis.` });
+    }
+    prepared.push({ feed, title, pid, url });
+  }
+
+  // Anti-doublon : un Playback ID déjà présent (quel que soit le feed) est ignoré.
+  const existing = new Set(
+    db.prepare("SELECT mux_playback_id FROM feed_clips WHERE mux_playback_id IS NOT NULL AND mux_playback_id <> ''").all().map((r) => r.mux_playback_id)
+  );
+  const seen = new Set();
+  const fresh = [];
+  const skipped = [];
+  for (const p of prepared) {
+    if (p.pid && (existing.has(p.pid) || seen.has(p.pid))) { skipped.push(p.pid); continue; }
+    if (p.pid) seen.add(p.pid);
+    fresh.push(p);
+  }
+  const maxPosStmt = db.prepare('SELECT COALESCE(MAX(position), -1) mp FROM feed_clips WHERE feed = ?');
+  const insert = db.prepare(
+    `INSERT INTO feed_clips (feed, title, video_url, mux_playback_id, position, active, user_id, upload_status)
+     VALUES (?, ?, ?, ?, ?, 1, ?, ?)`
+  );
+  const inserted = db.transaction((list) => {
+    const pos = {};
+    const out = [];
+    for (const p of list) {
+      if (!(p.feed in pos)) pos[p.feed] = maxPosStmt.get(p.feed).mp;
+      pos[p.feed] += 1;
+      const info = insert.run(p.feed, p.title, p.url, p.pid, pos[p.feed], id, p.pid ? 'ready' : null);
+      out.push(Number(info.lastInsertRowid));
+    }
+    return out;
+  })(fresh);
+  return res.json({
+    status: 'success',
+    message: `${inserted.length} vidéo(s) ajoutée(s)${skipped.length ? `, ${skipped.length} doublon(s) ignoré(s)` : ''}.`,
+    data: { ids: inserted, count: inserted.length, skipped },
+  });
+});
+
+// Upload direct Mux pour un artiste : crée la ligne (active=1, légende, feed,
+// upload_status='waiting') et renvoie l'URL sur laquelle l'admin PUT le
+// fichier. Le webhook video.asset.ready (passthrough kind:'clip') remplit
+// ensuite mux_playback_id. Corps : { title, feed }.
+router.post('/artists/:id/media/upload-direct', requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(422).json({ status: 'error', message: 'Identifiant invalide.' });
+  if (!artistRowForMedia(id)) return res.status(404).json({ status: 'error', message: 'Artiste introuvable.' });
+  if (!mux.isConfigured()) {
+    return res.status(503).json({ status: 'error', message: 'Mux non configuré côté serveur (MUX_TOKEN_ID/MUX_TOKEN_SECRET manquants).' });
+  }
+  const b = req.body || {};
+  const feed = b.feed === undefined ? 'for_you' : b.feed;
+  if (!FEED_VALUES.includes(feed)) return res.status(422).json({ status: 'error', message: "feed doit valoir 'for_you' ou 'clips'." });
+  const { title, error } = cleanClipTitle(b.title);
+  if (error) return res.status(422).json({ status: 'error', message: error });
+  if (!title) return res.status(422).json({ status: 'error', message: 'Légende obligatoire.' });
+  const maxPos = db.prepare('SELECT COALESCE(MAX(position), -1) mp FROM feed_clips WHERE feed = ?').get(feed).mp;
+  const info = db.prepare(
+    "INSERT INTO feed_clips (feed, title, position, active, user_id, upload_status) VALUES (?, ?, ?, 1, ?, 'waiting')"
+  ).run(feed, title, maxPos + 1, id);
+  const clipId = Number(info.lastInsertRowid);
+  mux.createDirectUpload({ passthrough: { kind: 'clip', id: clipId } })
+    .then(({ uploadId, uploadUrl }) => {
+      db.prepare('UPDATE feed_clips SET mux_upload_id = ? WHERE id = ?').run(uploadId, clipId);
+      return res.json({ status: 'success', data: { upload_url: uploadUrl, upload_id: uploadId, clip_id: clipId } });
+    })
+    .catch((e) => {
+      db.prepare('DELETE FROM feed_clips WHERE id = ?').run(clipId);
+      console.error('[admin] artist media upload-direct', e.message);
+      return res.status(502).json({ status: 'error', message: `Erreur Mux : ${e.message}` });
+    });
 });
 
 // ─── Graphiques + Objectifs (Dashboard) ───

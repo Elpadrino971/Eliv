@@ -659,7 +659,9 @@ router.get('/feed-clips', optionalAuth, (req, res) => {
   // Le contenu d'un compte bloqué ne doit plus apparaître pour celui qui l'a bloqué.
   const blocked = blockedIdsFor(req.user?.id);
   const rowsRaw = db
-    .prepare(`SELECT * FROM feed_clips WHERE feed = ? AND active = 1${
+    // Un clip actif dont la vidéo est encore en traitement Mux (upload admin
+    // pré-approuvé, mux_playback_id vide) n'est pas servi tant qu'il n'est pas prêt.
+    .prepare(`SELECT * FROM feed_clips WHERE feed = ? AND active = 1 AND (COALESCE(mux_playback_id,'') <> '' OR COALESCE(video_url,'') <> '')${
       blocked.length ? ` AND (user_id IS NULL OR user_id NOT IN (${blocked.map(() => '?').join(',')}))` : ''}`)
     .all(feed, ...blocked);
 
@@ -735,7 +737,7 @@ router.get('/artist/:id/clips', (req, res) => {
   const artistId = req.params.id;
   const feedFilter = req.query.feed === 'clips' ? 'clips'
     : req.query.feed === 'for_you' ? 'for_you' : null;
-  let sql = 'SELECT * FROM feed_clips WHERE user_id = ? AND active = 1';
+  let sql = "SELECT * FROM feed_clips WHERE user_id = ? AND active = 1 AND (COALESCE(mux_playback_id,'') <> '' OR COALESCE(video_url,'') <> '')";
   const params = [artistId];
   if (feedFilter) { sql += ' AND feed = ?'; params.push(feedFilter); }
   sql += ' ORDER BY position ASC, id DESC';

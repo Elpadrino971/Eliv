@@ -301,6 +301,15 @@ function modal({ title, fields, onSave, wide, afterRender }) {
   };
 }
 
+// Miniatures Mux (image.mux.com) : si l'image n'existe pas (ID de test, asset
+// pas encore traité, playback signé), on la masque proprement. Écouteur GLOBAL
+// en phase de capture : les handlers inline (onerror="…") sont bloqués par la
+// CSP du serveur (script-src-attr 'none').
+document.addEventListener('error', (e) => {
+  const t = e.target;
+  if (t && t.tagName === 'IMG' && t.classList.contains('thumb-fallback')) t.style.display = 'none';
+}, true);
+
 async function confirmDelete(fn) {
   if (!confirm('Confirmer la suppression ?')) return;
   try { await fn(); } catch (e) { toast(e.message); }
@@ -576,7 +585,7 @@ async function pageUsers() {
     { label: 'Adresse', render: (r) => esc(r.address || 'N/A') },
     { label: 'Statut', render: (r) => badge(r.status) },
     { label: 'Date', render: (r) => fmtDate(r.created_at) },
-    { label: 'Action', render: (r) => `<button class="btn edit" data-edit="user:${r.id}">Modifier</button><button class="btn status" data-status="${r.id}">Statut</button><button class="btn grant" data-grantsub="${r.id}">Abonner</button><button class="btn del" data-del="/users/${r.id}">Supprimer</button>` },
+    { label: 'Action', render: (r) => `${r.is_artist ? `<a class="btn grant" href="#artist-media?id=${r.id}" style="text-decoration:none;display:inline-block" title="Vidéos de l\'artiste : ajouter en masse avec légendes, supprimer, rattacher">🎬 Médias</a>` : ''}<button class="btn edit" data-edit="user:${r.id}">Modifier</button><button class="btn status" data-status="${r.id}">Statut</button><button class="btn grant" data-grantsub="${r.id}">Abonner</button><button class="btn del" data-del="/users/${r.id}">Supprimer</button>` },
   ];
   view().innerHTML = `<div class="head-row"><h1 class="page-title">Utilisateurs</h1><button class="add-btn" id="adduser">+ Ajouter</button></div>
     <div class="tabs">
@@ -1112,7 +1121,7 @@ async function pageEvents() {
     columns: [
       { label: '#', render: (r) => r.id },
       { label: 'Concert', render: (r) => `<div class="nm">${esc(r.name)}</div>${r.mux_playback_id ? '<div class="em">🎬 replay Mux</div>' : ''}` },
-      { label: 'Artiste', render: (r) => esc(r.artist || '—') },
+      { label: 'Artiste', render: (r) => r.artist_id ? `<a href="#artist-media?id=${r.artist_id}" style="color:#7ab8ff;text-decoration:none;font-weight:600" title="Ouvrir la page médias de l'artiste">${esc(r.artist || ('artiste #' + r.artist_id))}</a>` : esc(r.artist || '—') },
       { label: 'Prix', render: priceCell },
       { label: 'Statut', render: (r) => `${badge(r.status)}<div>${liveModeBadge(r)}</div>` },
       { label: 'Vidéo', render: (r) => `${r.teaser_playback_id ? `<div style="margin-bottom:4px;display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span class="badge active" title="Bande-annonce publique affichée sur l'accueil et le popup À la une">Teaser ✓</span><button class="btn del" data-teaserdel="${r.id}">Retirer le teaser</button></div>` : ''}${!r.teaser_playback_id && r.mux_playback_id && !['completed', 'ended'].includes(r.status) ? `<div style="margin-bottom:4px"><button class="btn" data-replay2teaser="${r.id}" title="La vidéo envoyée comme replay est en fait la bande-annonce : la déplacer vers le teaser public">↪ C'est un teaser</button></div>` : ''}${muxBadge(r.mux_upload_status)}${r.mux_live_stream_id && r.live_mode !== 'pro' ? '<div class="em">🔴 live en cours</div>' : ''}${r.replay_expires_at ? `<div class="em">replay jusqu'au ${fmtDate(r.replay_expires_at)}</div>` : ''}${r.mux_playback_id ? `<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap"><button class="btn edit" data-replayplay="${r.id}" title="Lire le replay (HLS)">▶ Replay</button><a class="btn" style="text-decoration:none;display:inline-block" href="${esc(r.replay_mp4_url || '')}" target="_blank" rel="noopener" title="Télécharge le replay en MP4. Replay enregistré avant cette version : disponible après le prochain live, ou clique « Préparer le MP4 » (sinon le lien répond 404).">⬇ Replay MP4</a>${r.mux_asset_id ? `<button class="btn" data-replaymp4="${r.id}" title="Demande à Mux la version MP4 d'un replay existant (assets sans rendition)">🎞 Préparer le MP4</button>` : ''}</div>` : ''}` },
@@ -1289,12 +1298,70 @@ EcO013Q00m3BON019ydIrEUd3YaAES4J9nx02arl7U862P4" style="width:100%;background:va
     if (ok) setTimeout(() => { close(); pageFeedClips(); }, 900);
   };
 }
+// ─── Légende (titre) d'un clip : édition EN LIGNE ───
+// Clic sur la légende → champ de saisie ; Entrée ou perte de focus enregistre
+// (PUT /feed-clips/:id/title), Échap annule. Partagé entre la liste des feeds
+// et la page médias d'un artiste.
+function feedBadgeHtml(f) {
+  return f === 'clips'
+    ? '<span class="badge" style="background:rgba(230,199,106,.18);color:var(--gold);font-weight:700">🟨 Clips</span>'
+    : '<span class="badge" style="background:rgba(90,160,255,.18);color:#7ab8ff;font-weight:700">🟦 Pour toi</span>';
+}
+function captionCell(r) {
+  const has = !!(r.title && String(r.title).trim());
+  return `<span class="cap-edit${has ? '' : ' cap-empty'}" data-capid="${r.id}" title="Clique pour modifier la légende">${has ? esc(r.title) : '✎ Sans légende'}</span>`;
+}
+function bindCaptionEditing(host, onSaved) {
+  if (!host || host.dataset.capBound) return;
+  host.dataset.capBound = '1';
+  host.addEventListener('click', (e) => {
+    const span = e.target.closest('.cap-edit');
+    if (!span) return;
+    e.preventDefault();
+    const id = Number(span.dataset.capid);
+    const orig = span.classList.contains('cap-empty') ? '' : span.textContent;
+    const input = document.createElement('input');
+    input.type = 'text'; input.className = 'cap-input'; input.value = orig; input.maxLength = 120;
+    input.placeholder = 'Légende du clip…';
+    span.replaceWith(input);
+    input.focus(); input.select();
+    let done = false;
+    const restore = (title) => {
+      const s = document.createElement('span');
+      s.className = 'cap-edit' + (title ? '' : ' cap-empty');
+      s.dataset.capid = id; s.title = 'Clique pour modifier la légende';
+      s.textContent = title || '✎ Sans légende';
+      if (input.parentNode) input.replaceWith(s);
+    };
+    const save = async () => {
+      if (done) return; done = true;
+      const title = input.value.trim();
+      if (title === orig) { restore(orig); return; }
+      try {
+        await api('PUT', `/feed-clips/${id}/title`, { title });
+        toast('Légende enregistrée');
+        restore(title);
+        onSaved?.(id, title);
+      } catch (err) { toast(err.message); restore(orig); }
+    };
+    input.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') { ev.preventDefault(); save(); }
+      else if (ev.key === 'Escape') { done = true; restore(orig); }
+    });
+    input.addEventListener('blur', save);
+  });
+}
+// Légende proposée à partir d'un nom de fichier ("dj_wilson-teaser_01.mp4" → "dj wilson teaser 01").
+function captionFromFilename(name) {
+  return String(name || '').replace(/\.[^.]+$/, '').replace(/[_\-.]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+}
+
 function pageFeedClips() {
   EDIT.feedclip = (id) => { const r = currentRows.find((x) => x.id == id); if (r) feedClipForm(r); };
   DUP.feedclip = (id) => { const r = currentRows.find((x) => x.id == id); if (r) feedClipForm(r, { duplicate: true }); };
-  const feedBadge = (f) => f === 'clips'
-    ? '<span class="badge" style="background:rgba(230,199,106,.18);color:var(--gold);font-weight:700">🟨 Clips</span>'
-    : '<span class="badge" style="background:rgba(90,160,255,.18);color:#7ab8ff;font-weight:700">🟦 Pour toi</span>';
+  const feedBadge = feedBadgeHtml;
+  // Sélection groupée : conservée d'une page à l'autre du tableau (Set d'ids).
+  const selected = new Set();
   // Miniature : Mux génère une image du clip → on l'affiche pour repérer
   // le contenu d'un coup d'œil. Format adapté (paysage pour un clip, portrait
   // pour un short). Repli sur une icône si pas de Mux (fichier uploadé).
@@ -1307,17 +1374,19 @@ function pageFeedClips() {
       // PUBLIC valide (ID de test, playback "signed", vidéo pas encore traitée),
       // l'image renvoie 404/403 -> onerror affiche un placeholder ▶ propre au
       // lieu de l'icône "image cassée".
-      return `<div style="position:relative;width:${w}px;height:${h}px">${phBox(w, h)}<img src="https://image.mux.com/${r.mux_playback_id}/thumbnail.jpg?width=${w * 2}&height=${h * 2}&fit_mode=smartcrop" onerror="this.style.display='none'" style="position:absolute;inset:0;width:${w}px;height:${h}px;object-fit:cover;border-radius:6px" loading="lazy"></div>`;
+      return `<div style="position:relative;width:${w}px;height:${h}px">${phBox(w, h)}<img src="https://image.mux.com/${r.mux_playback_id}/thumbnail.jpg?width=${w * 2}&height=${h * 2}&fit_mode=smartcrop" class="thumb-fallback" style="position:absolute;inset:0;width:${w}px;height:${h}px;object-fit:cover;border-radius:6px" loading="lazy"></div>`;
     }
     return phBox(45, 80);
   };
   const columns = [
-    { label: '✓', render: (r) => r.active ? '' : `<input type="checkbox" class="chk-clip" data-id="${r.id}" style="width:18px;height:18px;cursor:pointer">` },
+    { label: '☐', render: (r) => `<input type="checkbox" class="chk-clip" data-id="${r.id}" ${selected.has(r.id) ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer">` },
     { label: '#', render: (r) => r.id },
     { label: 'Aperçu', render: (r) => thumb(r) },
     { label: 'Feed', render: (r) => feedBadge(r.feed) },
-    { label: 'Titre', render: (r) => esc(r.title || '—') },
-    { label: 'Soumis par', render: (r) => r.user_id ? esc(r.submitted_by || ('user #' + r.user_id)) : '<span style="color:var(--muted)">Admin (officiel)</span>' },
+    { label: 'Légende', render: (r) => captionCell(r) },
+    { label: 'Artiste', render: (r) => r.user_id
+      ? `<a href="#artist-media?id=${r.user_id}" style="color:#7ab8ff;text-decoration:none;font-weight:600" title="Ouvrir la page médias de l'artiste">🎬 ${esc(r.submitted_by || ('user #' + r.user_id))}</a>`
+      : '<span style="color:#ff8a87" title="Clip non rattaché : coche-le et utilise « Rattacher à l\'artiste »">⚠ Sans artiste</span>' },
     { label: 'Source', render: (r) => `${r.mux_playback_id ? '🎬 Mux' : (r.video_url ? '📁 Fichier' : '—')}${muxBadge(r.upload_status)}${r.expires_at ? `<div class="em">expire le ${fmtDate(r.expires_at)}</div>` : ''}` },
     { label: 'Ordre', render: (r) => r.position ?? 0 },
     { label: 'Statut', render: (r) => badge(r.active ? 'active' : 'pending') },
@@ -1325,13 +1394,23 @@ function pageFeedClips() {
   ];
   (async () => {
     view().innerHTML = '<div class="empty">Chargement…</div>';
-    const { data } = await api('GET', '/feed-clips');
+    // Liste des artistes (menu « Rattacher à l'artiste… ») chargée en parallèle.
+    const [{ data }, artistsRes] = await Promise.all([
+      api('GET', '/feed-clips'),
+      api('GET', '/artists-list').catch(() => ({ data: [] })),
+    ]);
     currentRows = data || [];
+    const artists = artistsRes.data || [];
     // Compte des concerts : chargé EN ARRIÈRE-PLAN (l'appel /events est lourd).
     // On n'attend plus dessus -> la page s'affiche tout de suite ('—' puis MAJ).
     const concertCount = '<span id="concert-count">…</span>';
     const isClips = (r) => r.feed === 'clips';
-    const counts = { all: currentRows.length, for_you: currentRows.filter((r) => !isClips(r)).length, clips: currentRows.filter(isClips).length };
+    const noCaption = (r) => !(r.title && String(r.title).trim());
+    const noArtist = (r) => !r.user_id;
+    const counts = {
+      all: currentRows.length, for_you: currentRows.filter((r) => !isClips(r)).length, clips: currentRows.filter(isClips).length,
+      nocap: currentRows.filter(noCaption).length, noartist: currentRows.filter(noArtist).length,
+    };
     // Les 3 surfaces de contenu de l'app, expliquées côte à côte. Cliquer sur
     // « Pour toi » / « Clips » filtre le tableau ; « Concerts » ouvre la page dédiée.
     const card = (accent, emoji, title, desc, count, action) => `
@@ -1342,45 +1421,74 @@ function pageFeedClips() {
         </div>
         <div class="em" style="margin-top:4px;line-height:1.35">${desc}</div>
       </div>`;
+    const artistOpts = ['<option value="">— Rattacher à l\'artiste… —</option>']
+      .concat(artists.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`))
+      .concat(['<option value="__none">(Détacher : aucun artiste)</option>']).join('');
     view().innerHTML = `<div class="head-row"><h1 class="page-title">Les 3 feeds de l'app</h1><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="dedupebtn">🧹 Supprimer les doublons</button><button class="add-btn" id="bulkupbtn" style="background:#7ab8ff">⬆︎ Upload multiple</button><button class="add-btn" id="addbtn">+ Ajouter un clip</button></div></div>
-      <p class="em" style="margin:-6px 0 14px">Cette page gère les <b>shorts</b> (Pour toi & Clips). Les <b>Concerts</b> ont leur propre écran — cliquez sur la carte pour y aller.</p>
+      <p class="em" style="margin:-6px 0 14px">Cette page gère les <b>shorts</b> (Pour toi & Clips). Les <b>Concerts</b> ont leur propre écran — clique sur la carte pour y aller. Pour ajouter plusieurs vidéos à un artiste avec leurs légendes, ouvre sa page <b>🎬 Médias</b> (colonne Artiste, ou page Utilisateurs).</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin:0 0 18px">
         ${card('#7ab8ff', '🟦', 'Shorts (Pour toi)', 'Contenu court vertical/portrait : actu, promo, teasers.', counts.for_you, 'data-ft-card="for_you"')}
         ${card('#e6c76a', '🟨', 'Clips', 'Clips musicaux des artistes — format paysage 16:9.', counts.clips, 'data-ft-card="clips"')}
         ${card('#ff6b6b', '🎬', 'Concerts', 'Lives & replays payants. Section séparée →', concertCount, 'data-goto="events"')}
       </div>
-      <div style="display:flex;gap:8px;margin:0 0 12px;align-items:center">
+      <div style="display:flex;gap:8px;margin:0 0 12px;align-items:center;flex-wrap:wrap">
         <span class="em" style="margin-right:2px">Filtrer les shorts :</span>
         ${[['all', 'Tous', counts.all], ['for_you', '🟦 Pour toi', counts.for_you], ['clips', '🟨 Clips', counts.clips]].map(([v, l, c]) => `<button class="btn" data-ft="${v}" style="padding:8px 14px">${l} <span class="em">(${c})</span></button>`).join('')}
+        <span class="em" style="margin:0 2px 0 10px">Problèmes :</span>
+        <button class="btn filter-chip" data-ff="nocap" style="padding:8px 14px" title="Clips dont la légende est vide">✎ Sans légende <span class="em">(${counts.nocap})</span></button>
+        <button class="btn filter-chip" data-ff="noartist" style="padding:8px 14px" title="Clips non rattachés à un artiste">⚠ Sans artiste <span class="em">(${counts.noartist})</span></button>
       </div>
-      <div id="bulkbar" style="display:flex;gap:10px;align-items:center;margin:0 0 12px;flex-wrap:wrap">
-        <button class="btn" id="selectAllPending" style="padding:8px 14px">☑︎ Tout sélectionner (en attente)</button>
-        <button class="btn gold" id="bulkApprove" disabled style="padding:8px 14px;opacity:.5">✅ Valider la sélection (<span id="bulkCount">0</span>)</button>
-        <span class="em">Coche les vidéos à publier, puis valide-les toutes d'un coup.</span>
+      <div id="bulkbar" class="bulkbar">
+        <button class="btn" id="chkAll" title="Coche / décoche tous les clips de la vue filtrée (toutes pages)">☑︎ Tout cocher</button>
+        <span class="em"><b id="bulkCount" style="color:var(--gold)">0</b> sélectionné(s)</span>
+        <span style="width:1px;height:22px;background:var(--line)"></span>
+        <button class="btn del" id="bulkDelete" disabled>🗑 Supprimer (<span class="bc">0</span>)</button>
+        <span style="display:flex;gap:6px;align-items:center"><select id="bulkArtist">${artistOpts}</select><button class="btn grant" id="bulkAttach" disabled>Rattacher</button></span>
+        <button class="btn" id="bulkFeedFy" disabled title="Déplacer la sélection dans le feed Pour toi">→ 🟦 Pour toi</button>
+        <button class="btn" id="bulkFeedClips" disabled title="Déplacer la sélection dans le feed Clips">→ 🟨 Clips</button>
+        <button class="btn status" id="bulkOff" disabled>Désactiver</button>
+        <button class="btn gold" id="bulkOn" disabled>✅ Activer</button>
       </div>
       ${tableShellInner(columns)}`;
-    const rowsFor = (t) => t === 'all' ? currentRows : (t === 'clips' ? currentRows.filter(isClips) : currentRows.filter((r) => !isClips(r)));
-    // Barre de validation groupée : met à jour le compteur + l'état du bouton.
+    view().querySelector('.tcard-top .left').textContent = 'Afficher 20 entrées';
+    const filters = { tab: 'all', nocap: false, noartist: false };
+    const rowsFor = () => currentRows.filter((r) =>
+      (filters.tab === 'all' || (filters.tab === 'clips' ? isClips(r) : !isClips(r)))
+      && (!filters.nocap || noCaption(r))
+      && (!filters.noartist || noArtist(r)));
+    // Barre d'actions groupées : compteur + état des boutons.
     const refreshBulk = () => {
-      const sel = [...view().querySelectorAll('.chk-clip')].filter((c) => c.checked);
-      const cnt = view().querySelector('#bulkCount');
-      const btn = view().querySelector('#bulkApprove');
-      if (cnt) cnt.textContent = sel.length;
-      if (btn) { btn.disabled = sel.length === 0; btn.style.opacity = sel.length ? '1' : '.5'; }
+      const n = selected.size;
+      view().querySelector('#bulkCount').textContent = n;
+      view().querySelectorAll('#bulkbar .bc').forEach((el) => { el.textContent = n; });
+      ['bulkDelete', 'bulkAttach', 'bulkFeedFy', 'bulkFeedClips', 'bulkOff', 'bulkOn'].forEach((id) => {
+        const b = view().querySelector('#' + id); if (b) b.disabled = n === 0;
+      });
     };
-    const applyTab = (t) => {
-      mountTable(view().querySelector('.tcard'), { columns, rows: rowsFor(t) });
-      view().querySelectorAll('.chk-clip').forEach((c) => c.onchange = refreshBulk);
+    const tcard = view().querySelector('.tcard');
+    const applyFilters = () => {
+      mountTable(tcard, { columns, rows: rowsFor(), perPage: 20 });
       refreshBulk();
       view().querySelectorAll('[data-ft]').forEach((b) => {
-        const on = b.dataset.ft === t;
+        const on = b.dataset.ft === filters.tab;
         b.style.background = on ? 'var(--gold)' : '';
         b.style.color = on ? '#1a1206' : '';
         b.style.fontWeight = on ? '700' : '';
       });
+      view().querySelectorAll('[data-ff]').forEach((b) => b.classList.toggle('on', !!filters[b.dataset.ff]));
     };
-    view().querySelectorAll('[data-ft]').forEach((b) => b.onclick = () => applyTab(b.dataset.ft));
-    view().querySelectorAll('[data-ft-card]').forEach((c) => c.onclick = () => applyTab(c.dataset.ftCard));
+    // Cases à cocher : délégué sur le tableau (les lignes sont re-rendues à chaque page).
+    tcard.addEventListener('change', (e) => {
+      const c = e.target.closest('.chk-clip');
+      if (!c) return;
+      const id = Number(c.dataset.id);
+      if (c.checked) selected.add(id); else selected.delete(id);
+      refreshBulk();
+    });
+    bindCaptionEditing(tcard, (id, title) => { const row = currentRows.find((x) => x.id === id); if (row) row.title = title; });
+    view().querySelectorAll('[data-ft]').forEach((b) => b.onclick = () => { filters.tab = b.dataset.ft; applyFilters(); });
+    view().querySelectorAll('[data-ff]').forEach((b) => b.onclick = () => { filters[b.dataset.ff] = !filters[b.dataset.ff]; applyFilters(); });
+    view().querySelectorAll('[data-ft-card]').forEach((c) => c.onclick = () => { filters.tab = c.dataset.ftCard; applyFilters(); });
     view().querySelectorAll('[data-goto]').forEach((c) => c.onclick = () => { location.hash = c.dataset.goto; });
     view().querySelector('#addbtn').onclick = () => feedClipForm(null);
     view().querySelector('#bulkupbtn').onclick = () => bulkUploadDialog();
@@ -1392,24 +1500,42 @@ function pageFeedClips() {
         pageFeedClips();
       } catch (e) { toast(e.message); }
     };
-    // Tout cocher / tout décocher les clips EN ATTENTE de la vue courante.
-    view().querySelector('#selectAllPending').onclick = () => {
-      const checks = [...view().querySelectorAll('.chk-clip')];
-      const allOn = checks.length && checks.every((c) => c.checked);
-      checks.forEach((c) => { c.checked = !allOn; });
+    // Tout cocher / tout décocher : porte sur TOUTE la vue filtrée (pas
+    // seulement la page affichée), pour vider 70 clips en un clic.
+    view().querySelector('#chkAll').onclick = () => {
+      const rows = rowsFor();
+      const allOn = rows.length && rows.every((r) => selected.has(r.id));
+      rows.forEach((r) => { if (allOn) selected.delete(r.id); else selected.add(r.id); });
+      tcard.querySelectorAll('.chk-clip').forEach((c) => { c.checked = selected.has(Number(c.dataset.id)); });
       refreshBulk();
     };
-    // Valider la sélection en une seule requête.
-    view().querySelector('#bulkApprove').onclick = async () => {
-      const ids = [...view().querySelectorAll('.chk-clip')].filter((c) => c.checked).map((c) => Number(c.dataset.id));
+    // Actions groupées : une seule requête, puis rechargement de la page.
+    const runBulk = async (fn, okMsg) => {
+      const ids = [...selected];
       if (!ids.length) return;
       try {
-        await api('POST', '/feed-clips/approve-batch', { ids });
-        toast(`${ids.length} vidéo(s) validée(s)`);
+        const r = await fn(ids);
+        toast(okMsg(r?.data?.count ?? ids.length));
+        selected.clear();
         pageFeedClips();
       } catch (e) { toast(e.message); }
     };
-    applyTab('all');
+    view().querySelector('#bulkDelete').onclick = () => {
+      if (!confirm(`Supprimer ${selected.size} clip(s) ? Cette action est définitive.`)) return;
+      runBulk((ids) => api('POST', '/feed-clips/bulk-delete', { ids }), (n) => `${n} clip(s) supprimé(s)`);
+    };
+    view().querySelector('#bulkAttach').onclick = () => {
+      const v = view().querySelector('#bulkArtist').value;
+      if (!v) { toast('Choisis un artiste dans la liste'); return; }
+      const user_id = v === '__none' ? null : Number(v);
+      const name = v === '__none' ? 'aucun artiste' : (artists.find((a) => String(a.id) === v)?.name || 'l\'artiste');
+      runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, user_id }), (n) => `${n} clip(s) rattaché(s) à ${name}`);
+    };
+    view().querySelector('#bulkFeedFy').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, feed: 'for_you' }), (n) => `${n} clip(s) déplacé(s) vers Pour toi`);
+    view().querySelector('#bulkFeedClips').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, feed: 'clips' }), (n) => `${n} clip(s) déplacé(s) vers Clips`);
+    view().querySelector('#bulkOff').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, active: false }), (n) => `${n} clip(s) désactivé(s)`);
+    view().querySelector('#bulkOn').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, active: true }), (n) => `${n} clip(s) activé(s)`);
+    applyFilters();
     // Compteur concerts en arrière-plan : ne bloque plus l'affichage de la page.
     api('GET', '/events').then((ev) => {
       const el = document.getElementById('concert-count');
@@ -3041,9 +3167,239 @@ function staffForm(u) {
   });
 }
 
+// ─── Médias d'un artiste (#artist-media?id=…) ───
+// Page ouverte depuis Utilisateurs (bouton 🎬 Médias), Concerts (nom de
+// l'artiste) ou la colonne Artiste des feeds. Permet d'ajouter PLUSIEURS
+// vidéos d'un coup à cet artiste, chacune avec sa légende (une ligne = « ID
+// Mux ou URL | légende », ou un dépôt de fichiers), puis de gérer sa grille.
+// Une ligne du textarea → { mux_playback_id | video_url, title }.
+function parseMediaLines(text) {
+  return String(text || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => {
+    const i = l.indexOf('|');
+    const src = (i >= 0 ? l.slice(0, i) : l).trim();
+    const title = (i >= 0 ? l.slice(i + 1) : '').replace(/\s+/g, ' ').trim();
+    const item = { title };
+    if (/^https?:\/\//i.test(src)) item.video_url = src; else item.mux_playback_id = src;
+    return item;
+  });
+}
+async function pageArtistMedia() {
+  const id = Number(new URLSearchParams(location.hash.split('?')[1] || '').get('id'));
+  if (!id) { view().innerHTML = '<div class="empty">Aucun artiste précisé. <a href="#users">← Retour aux utilisateurs</a></div>'; return; }
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  let data;
+  try { ({ data } = await api('GET', `/artists/${id}/media`)); }
+  catch (e) { view().innerHTML = `<div class="empty">${esc(e.message)} — <a href="#users">← Retour aux utilisateurs</a></div>`; return; }
+  const { artist, clips, events } = data;
+  currentRows = clips;
+  const selected = new Set();
+  const reload = () => pageArtistMedia();
+  const av = artist.image
+    ? `<div class="av" style="width:60px;height:60px"><img src="${esc(artist.image)}" alt=""></div>`
+    : `<div class="av" style="width:60px;height:60px;font-size:20px">${esc(initials(artist.name, ''))}</div>`;
+  const feedSelect = (idAttr) => `<select id="${idAttr}" style="background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:8px;padding:9px 10px;font-size:13.5px"><option value="for_you">🟦 Pour toi (short vertical)</option><option value="clips">🟨 Clips (paysage 16:9)</option></select>`;
+  const cardHtml = (c) => `
+    <div class="media-card${c.active ? '' : ' inactive'}${c.feed === 'clips' ? ' land' : ''}${selected.has(c.id) ? ' selected' : ''}" data-cid="${c.id}">
+      <div class="mc-thumb">▶${c.thumbnail ? `<img class="thumb-fallback" src="${esc(c.thumbnail)}" loading="lazy" alt="">` : ''}
+        <input type="checkbox" class="chk-clip" data-id="${c.id}" ${selected.has(c.id) ? 'checked' : ''}>
+        <span class="mc-feed">${feedBadgeHtml(c.feed)}</span>
+        ${c.upload_status === 'waiting' ? '<span class="mc-wait">' + muxBadge('waiting') + '</span>' : (c.upload_status === 'errored' ? '<span class="mc-wait">' + muxBadge('errored') + '</span>' : '')}
+      </div>
+      <div class="mc-body">
+        ${captionCell(c)}
+        <div class="em">#${c.id} · ${fmtDate(c.created_at)}${c.active ? '' : ' · <span style="color:var(--amber)">désactivé</span>'}</div>
+        <div class="mc-actions">
+          ${c.video_url ? `<a class="btn" href="${esc(c.video_url)}" target="_blank" rel="noopener" style="text-decoration:none" title="Ouvrir la vidéo">▶</a>` : ''}
+          <button class="btn status" data-toggle="${c.id}" data-active="${c.active ? 1 : 0}">${c.active ? 'Désactiver' : 'Activer'}</button>
+          <button class="btn del" data-rm="${c.id}">Supprimer</button>
+        </div>
+      </div>
+    </div>`;
+  const evBadge = (ev) => `<span class="badge" style="margin:0 6px 6px 0">${esc(ev.name)} · ${esc(STATUS_FR[(ev.status || '').toLowerCase()] || ev.status || '—')} · ${fmtDate(ev.start_date_time)}</span>`;
+  view().innerHTML = `
+    <div class="head-row" style="align-items:flex-start;flex-wrap:wrap;gap:12px">
+      <div class="uinfo" style="gap:14px">${av}<div>
+        <h1 class="page-title" style="margin:0 0 4px">🎬 ${esc(artist.name)}</h1>
+        <div class="em"><b>${clips.length}</b> vidéo(s) · <b>${events.length}</b> concert(s)${artist.is_artist ? '' : ' · <span style="color:var(--amber)">compte non marqué « artiste »</span>'}</div>
+        <div class="em" style="margin-top:4px"><a href="#users">← Utilisateurs</a> · <a href="#feed-clips">Tous les feeds</a> · <a href="#events">Concerts</a></div>
+      </div></div>
+    </div>
+    ${events.length ? `<div style="margin:-6px 0 16px">${events.slice(0, 8).map(evBadge).join('')}${events.length > 8 ? `<span class="em">+${events.length - 8}</span>` : ''}</div>` : ''}
+
+    <div class="tcard" style="margin-bottom:18px">
+      <h3 style="color:var(--gold);margin-bottom:4px">➕ Ajouter des vidéos à ${esc(artist.name)}</h3>
+      <p class="em" style="margin-bottom:14px">Les vidéos ajoutées ici sont rattachées à l'artiste et publiées tout de suite. <b>La légende est obligatoire</b> : c'est le texte affiché sous la vidéo dans l'app.</p>
+      <div class="am-panel">
+        <div>
+          <b style="font-size:14px">A · Par ID Mux ou URL</b>
+          <p class="em" style="margin:4px 0 8px">Une vidéo par ligne : <b>ID Mux ou URL</b>, puis « <b>|</b> », puis la <b>légende</b>.</p>
+          <textarea id="am-lines" class="am-textarea" rows="7" placeholder="abc123DEF456 | DJ Wilson – Anniversaire teaser
+https://stream.mux.com/xyz789.m3u8 | DJ Wilson – Live à Pointe-à-Pitre"></textarea>
+          <div id="am-parse" class="em" style="margin:6px 0 10px">0 vidéo</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${feedSelect('am-feed')}<button class="btn gold" id="am-add" disabled>Ajouter tout (<span id="am-count">0</span>)</button></div>
+        </div>
+        <div>
+          <b style="font-size:14px">B · Déposer des fichiers vidéo</b>
+          <p class="em" style="margin:4px 0 8px">Chaque fichier part directement vers Mux (jamais stocké chez nous). La légende est pré-remplie depuis le nom du fichier : corrige-la avant l'envoi.</p>
+          <div class="dropzone" id="am-drop">🎞 Déposer des vidéos ici (mp4/mov)<br><span class="em">ou clique pour choisir des fichiers</span><input type="file" id="am-files" accept="video/mp4,video/quicktime,video/*" multiple hidden></div>
+          <div id="am-filelist" style="margin-top:10px;max-height:240px;overflow:auto"></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">${feedSelect('am-feed2')}<button class="btn gold" id="am-send" disabled>Envoyer (<span id="am-sendcount">0</span>)</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bulkbar">
+      <button class="btn" id="am-chkall">☑︎ Tout cocher</button>
+      <span class="em"><b id="am-selcount" style="color:var(--gold)">0</b> sélectionné(s)</span>
+      <span style="width:1px;height:22px;background:var(--line)"></span>
+      <button class="btn del" id="am-bulkdel" disabled>🗑 Supprimer (<span class="bc">0</span>)</button>
+      <button class="btn" id="am-bulkfy" disabled>→ 🟦 Pour toi</button>
+      <button class="btn" id="am-bulkclips" disabled>→ 🟨 Clips</button>
+      <button class="btn status" id="am-bulkoff" disabled>Désactiver</button>
+      <button class="btn gold" id="am-bulkon" disabled>✅ Activer</button>
+    </div>
+    ${clips.length ? `<div class="media-grid" id="am-grid">${clips.map(cardHtml).join('')}</div>` : '<div class="tcard"><div class="empty" id="am-grid">Aucune vidéo pour cet artiste : ajoute-en ci-dessus.</div></div>'}`;
+
+  // ── A · lignes « source | légende » ──
+  const lines = view().querySelector('#am-lines');
+  const parseInfo = view().querySelector('#am-parse');
+  const addBtn = view().querySelector('#am-add');
+  const refreshParse = () => {
+    const items = parseMediaLines(lines.value);
+    const missing = items.filter((it) => !it.title).length;
+    const tooLong = items.filter((it) => it.title.length > 120).length;
+    view().querySelector('#am-count').textContent = items.length;
+    parseInfo.innerHTML = items.length
+      ? `${items.length} vidéo(s)${missing ? ` · <span style="color:#ff8a87">${missing} sans légende (obligatoire — ajoute « | légende »)</span>` : ''}${tooLong ? ` · <span style="color:#ff8a87">${tooLong} légende(s) trop longue(s) (120 max)</span>` : ''}`
+      : '0 vidéo';
+    addBtn.disabled = !items.length || missing > 0 || tooLong > 0;
+  };
+  lines.oninput = refreshParse;
+  refreshParse();
+  addBtn.onclick = async () => {
+    const feed = view().querySelector('#am-feed').value;
+    const items = parseMediaLines(lines.value).map((it) => ({ ...it, feed }));
+    if (!items.length) return;
+    addBtn.disabled = true;
+    try {
+      const r = await api('POST', `/artists/${id}/media`, { items });
+      toast(r.message || `${r.data?.count ?? items.length} vidéo(s) ajoutée(s)`);
+      reload();
+    } catch (e) { toast(e.message); addBtn.disabled = false; }
+  };
+
+  // ── B · dépôt de fichiers → légende éditable → upload direct Mux ──
+  const drop = view().querySelector('#am-drop');
+  const filesInput = view().querySelector('#am-files');
+  const fileList = view().querySelector('#am-filelist');
+  const sendBtn = view().querySelector('#am-send');
+  const pending = [];
+  const renderFiles = () => {
+    fileList.innerHTML = pending.map((p, i) => `
+      <div class="am-file" data-i="${i}">
+        <span class="em" style="width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0" title="${esc(p.file.name)}">${esc(p.file.name)}</span>
+        <input type="text" class="am-cap" data-i="${i}" value="${esc(p.title)}" maxlength="120" placeholder="Légende (obligatoire)">
+        <div class="am-bar"><i id="am-bar-${i}"></i></div>
+        <span class="em am-pct" id="am-pct-${i}" style="width:40px;text-align:right">${p.state || ''}</span>
+        <button class="btn" data-x="${i}" title="Retirer">✕</button>
+      </div>`).join('');
+    view().querySelector('#am-sendcount').textContent = pending.length;
+    sendBtn.disabled = !pending.length;
+  };
+  const addFiles = (fs) => {
+    [...fs].filter((f) => /^video\//.test(f.type) || /\.(mp4|mov|m4v|webm)$/i.test(f.name)).forEach((f) => pending.push({ file: f, title: captionFromFilename(f.name) }));
+    renderFiles();
+  };
+  drop.onclick = (e) => { if (e.target !== filesInput) filesInput.click(); };
+  filesInput.onchange = () => { addFiles(filesInput.files); filesInput.value = ''; };
+  ['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', (e) => addFiles(e.dataTransfer?.files || []));
+  fileList.addEventListener('input', (e) => { const c = e.target.closest('.am-cap'); if (c) pending[Number(c.dataset.i)].title = c.value; });
+  fileList.addEventListener('click', (e) => { const x = e.target.closest('[data-x]'); if (x) { pending.splice(Number(x.dataset.x), 1); renderFiles(); } });
+  sendBtn.onclick = async () => {
+    if (!pending.length) return;
+    const missing = pending.findIndex((p) => !p.title.trim());
+    if (missing >= 0) { toast(`Légende manquante pour « ${pending[missing].file.name} »`); fileList.querySelector(`.am-cap[data-i="${missing}"]`)?.focus(); return; }
+    const feed = view().querySelector('#am-feed2').value;
+    sendBtn.disabled = true;
+    fileList.querySelectorAll('.am-cap,[data-x]').forEach((el) => { el.disabled = true; });
+    let ok = 0, fail = 0;
+    for (let i = 0; i < pending.length; i++) {
+      const p = pending[i];
+      const bar = view().querySelector(`#am-bar-${i}`);
+      const pct = view().querySelector(`#am-pct-${i}`);
+      try {
+        const { data: up } = await api('POST', `/artists/${id}/media/upload-direct`, { title: p.title.trim(), feed });
+        await muxDirectUpload(up.upload_url, p.file, (v) => { if (bar) bar.style.width = v + '%'; if (pct) pct.textContent = v + '%'; });
+        if (pct) { pct.textContent = '✓'; pct.style.color = 'var(--gold)'; }
+        ok++;
+      } catch (e) {
+        if (pct) { pct.textContent = '✗'; pct.style.color = '#ff6b6b'; pct.title = e.message; }
+        toast(e.message);
+        fail++;
+      }
+    }
+    toast(`${ok} vidéo(s) envoyée(s)${fail ? `, ${fail} échec(s)` : ''}${ok ? ' — traitement Mux en cours' : ''}`);
+    if (ok) setTimeout(reload, 900); else { sendBtn.disabled = false; fileList.querySelectorAll('.am-cap,[data-x]').forEach((el) => { el.disabled = false; }); }
+  };
+
+  // ── Grille : sélection, légende inline, activer/désactiver, supprimer ──
+  const grid = view().querySelector('#am-grid');
+  const refreshSel = () => {
+    const n = selected.size;
+    view().querySelector('#am-selcount').textContent = n;
+    view().querySelectorAll('.bulkbar .bc').forEach((el) => { el.textContent = n; });
+    ['am-bulkdel', 'am-bulkfy', 'am-bulkclips', 'am-bulkoff', 'am-bulkon'].forEach((b) => { view().querySelector('#' + b).disabled = n === 0; });
+    grid.querySelectorAll('.media-card').forEach((c) => c.classList.toggle('selected', selected.has(Number(c.dataset.cid))));
+  };
+  grid.addEventListener('change', (e) => {
+    const c = e.target.closest('.chk-clip');
+    if (!c) return;
+    if (c.checked) selected.add(Number(c.dataset.id)); else selected.delete(Number(c.dataset.id));
+    refreshSel();
+  });
+  bindCaptionEditing(grid, (cid, title) => { const row = clips.find((x) => x.id === cid); if (row) row.title = title; });
+  grid.addEventListener('click', async (e) => {
+    const t = e.target.closest('[data-toggle]');
+    if (t) {
+      const active = t.dataset.active !== '1';
+      try { await api('POST', '/feed-clips/bulk-update', { ids: [Number(t.dataset.toggle)], active }); toast(active ? 'Clip activé' : 'Clip désactivé'); reload(); }
+      catch (err) { toast(err.message); }
+      return;
+    }
+    const rm = e.target.closest('[data-rm]');
+    if (rm) {
+      if (!confirm('Supprimer cette vidéo ? Cette action est définitive.')) return;
+      try { await api('POST', '/feed-clips/bulk-delete', { ids: [Number(rm.dataset.rm)] }); toast('Vidéo supprimée'); reload(); }
+      catch (err) { toast(err.message); }
+    }
+  });
+  view().querySelector('#am-chkall').onclick = () => {
+    const allOn = clips.length && clips.every((c) => selected.has(c.id));
+    clips.forEach((c) => { if (allOn) selected.delete(c.id); else selected.add(c.id); });
+    grid.querySelectorAll('.chk-clip').forEach((c) => { c.checked = selected.has(Number(c.dataset.id)); });
+    refreshSel();
+  };
+  const runBulk = async (fn, okMsg) => {
+    const ids = [...selected];
+    if (!ids.length) return;
+    try { const r = await fn(ids); toast(okMsg(r?.data?.count ?? ids.length)); reload(); } catch (e) { toast(e.message); }
+  };
+  view().querySelector('#am-bulkdel').onclick = () => {
+    if (!confirm(`Supprimer ${selected.size} vidéo(s) de ${artist.name} ? Cette action est définitive.`)) return;
+    runBulk((ids) => api('POST', '/feed-clips/bulk-delete', { ids }), (n) => `${n} vidéo(s) supprimée(s)`);
+  };
+  view().querySelector('#am-bulkfy').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, feed: 'for_you' }), (n) => `${n} vidéo(s) déplacée(s) vers Pour toi`);
+  view().querySelector('#am-bulkclips').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, feed: 'clips' }), (n) => `${n} vidéo(s) déplacée(s) vers Clips`);
+  view().querySelector('#am-bulkoff').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, active: false }), (n) => `${n} vidéo(s) désactivée(s)`);
+  view().querySelector('#am-bulkon').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, active: true }), (n) => `${n} vidéo(s) activée(s)`);
+  refreshSel();
+}
+
 const ROUTES = {
   dashboard: pageDashboard, lives: pageLives, users: pageUsers, geo: pageGeo, genres: pageGenres, 'user-genres': pageUserGenres,
-  events: pageEvents, 'feed-clips': pageFeedClips, packages: pagePackages, gifts: pageGifts, subscriptions: pageSubscriptions, referrals: pageReferrals,
+  events: pageEvents, 'feed-clips': pageFeedClips, 'artist-media': pageArtistMedia, packages: pagePackages, gifts: pageGifts, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
   reports: pageReports, support: pageSupport, agenda: pageAgenda, campaign: pageCampaign, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
   splash: pageSplash, legal: pageLegal, challenge: pageChallenge, merch: pageMerch, audience: pageAudience, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
