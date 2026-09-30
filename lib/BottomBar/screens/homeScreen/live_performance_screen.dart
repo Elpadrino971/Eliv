@@ -6,7 +6,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/Global/live_router.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

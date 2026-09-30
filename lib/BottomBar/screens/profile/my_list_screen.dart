@@ -2,7 +2,7 @@ import 'package:artist/BottomBar/screens/LiveScreen/artist_detail.dart';
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/widgets/image_widget.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

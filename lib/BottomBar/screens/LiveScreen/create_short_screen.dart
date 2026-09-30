@@ -6,7 +6,7 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Global/guest_gate.dart';
 import 'package:artist/services/api_services.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

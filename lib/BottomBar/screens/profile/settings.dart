@@ -18,7 +18,7 @@ import 'package:artist/BottomBar/screens/profile/manage_subscription_screen.dart
 import 'package:artist/BottomBar/screens/profile/idea_box_screen.dart';
 import 'package:artist/BottomBar/screens/profile/contant_page.dart';
 import 'package:artist/BottomBar/screens/profile/Support/all_support_chats.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:artist/BottomBar/screens/profile/blocked_accounts_screen.dart';
 import 'package:flutter/material.dart';

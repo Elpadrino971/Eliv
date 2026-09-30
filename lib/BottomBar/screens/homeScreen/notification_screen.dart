@@ -1,5 +1,5 @@
 import 'package:artist/widgets/empty_state.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
