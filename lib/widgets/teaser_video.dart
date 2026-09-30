@@ -46,7 +46,12 @@ class TeaserVideo extends StatefulWidget {
     this.poster,
     this.fit = BoxFit.contain,
     this.fallback,
+    this.priority = 1,
   });
+
+  /// Priorité quand plusieurs teasers sont à l'écran : le plus prioritaire
+  /// joue (2 = « À la une » en haut de l'accueil / popup, 1 = les autres).
+  final int priority;
 
   /// URL HLS du teaser (https://stream.mux.com/<id>.m3u8).
   final String url;
@@ -97,7 +102,10 @@ abstract final class _TeaserRegistry {
   static void _elect() {
     _electionScheduled = false;
     _candidates.removeWhere((s) => !s.mounted);
-    final next = _candidates.isEmpty ? null : _candidates.last;
+    _TeaserVideoState? next;
+    for (final c in _candidates) {
+      if (next == null || c.widget.priority >= next.widget.priority) next = c;
+    }
     if (identical(next, _active)) return;
     final previous = _active;
     _active = next;
@@ -252,11 +260,10 @@ class _TeaserVideoState extends State<TeaserVideo>
     if (box is! RenderBox || !box.attached || !box.hasSize) return false;
     final size = box.size;
     if (size.isEmpty || _screen.isEmpty) return false;
-    final rect = box.localToGlobal(Offset.zero) & size;
-    final visible = rect.intersect(Offset.zero & _screen);
-    if (visible.width <= 0 || visible.height <= 0) return false;
-    final ratio = (visible.width * visible.height) / (size.width * size.height);
-    return ratio >= 0.5;
+    // Il suffit d'être posé à l'écran : on ne calcule plus un pourcentage de
+    // visibilité (trop fragile selon les listes / popups qui englobent le
+    // widget). La priorité du registre départage les teasers.
+    return true;
   }
 
   void _syncWanting() {

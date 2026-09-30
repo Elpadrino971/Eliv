@@ -134,6 +134,7 @@ List<Widget> _featuredVisualLayers(
         poster: poster ?? featuredCoverUrl(event),
         fit: BoxFit.contain,
         fallback: cover(fit: BoxFit.contain),
+        priority: 2,
       ),
   ];
 }
