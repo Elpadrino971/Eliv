@@ -141,6 +141,24 @@ function genReferralCode(name) {
   return `${base}${Math.floor(1000 + Math.random() * 9000)}`;
 }
 
+// Comptes restés bloqués sur l'écran du code (avant l'inscription sans
+// code) : validés au démarrage, sauf s'ils attendent une place (roue, billet
+// du site), qui exige toujours la vérification de l'e-mail. Idempotent.
+setImmediate(() => {
+  try {
+    const stuck = db.prepare("SELECT id, email FROM users WHERE COALESCE(is_verified, 0) = 0 AND COALESCE(registration_type, 'email') = 'email'").all();
+    let n = 0;
+    for (const u of stuck) {
+      if (u.email && hasPendingForEmail(u.email)) continue;
+      db.prepare("UPDATE users SET is_verified = 1, updated_at = datetime('now') WHERE id = ?").run(u.id);
+      n++;
+    }
+    if (n) console.log(`[inscription] ${n} compte(s) bloqué(s) sur le code e-mail : validés`);
+  } catch (e) {
+    console.error('[inscription] validation des comptes bloqués :', e.message);
+  }
+});
+
 // POST /api/sign-up
 // Pas de garde e-mail ici : l'inscription doit toujours marcher (le compte
 // est actif d'emblée) ; seul l'envoi du code dépend du service e-mail.
@@ -156,12 +174,19 @@ router.post('/sign-up', (req, res) => {
 
   const isArtist = b.role === 'artist' || b.is_artist === '1' || b.is_artist === 1;
   const otp = newOtp();
+  // Inscription SANS code : le compte est actif tout de suite. Les codes
+  // e-mail bloquaient les inscriptions (e-mails non reçus, saisie des six
+  // cases défaillante sur Android). Seule exception : une place (roue,
+  // billet acheté sur le site) attend déjà cet e-mail -> la vérification
+  // reste exigée, sinon n'importe qui la récupérerait en s'inscrivant avec
+  // l'adresse de l'acheteur.
+  const pendingPlaces = hasPendingForEmail(email);
   const info = db
     .prepare(
       `INSERT INTO users (email, password, full_name, artist_name, phone_number, role, is_artist,
-        registration_type, otp_code, otp_expires_at, referral_code)
+        registration_type, otp_code, otp_expires_at, referral_code, is_verified)
        VALUES (@email, @password, @full_name, @artist_name, @phone_number, @role, @is_artist,
-        @registration_type, @otp_code, @otp_expires_at, @referral_code)`
+        @registration_type, @otp_code, @otp_expires_at, @referral_code, @is_verified)`
     )
     .run({
       email,
@@ -175,6 +200,7 @@ router.post('/sign-up', (req, res) => {
       otp_code: otp,
       otp_expires_at: otpExpiryIso(),
       referral_code: genReferralCode(b.full_name || b.artist_name),
+      is_verified: pendingPlaces ? 0 : 1,
     });
 
   // Candidature artiste approuvée par l'admin avant même l'inscription
@@ -191,9 +217,12 @@ router.post('/sign-up', (req, res) => {
   }
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
+  if (user.is_verified) {
+    try { challenge.onVerifiedUser(user); } catch (_) { /* challenge suspendu ou absent */ }
+  }
   // Lot 2D : des places attendent cet e-mail -> l'app sait qu'il faut
   // vérifier le compte pour les récupérer.
-  const extra = { requires_verification: hasPendingForEmail(email) };
+  const extra = { requires_verification: pendingPlaces };
   if (emailService.isConfigured()) {
     emailService.sendOtpEmail(email, otp)
       .catch((e) => console.error(`[email] OTP sign-up (${maskEmail(email)}) :`, e.message));
@@ -313,18 +342,37 @@ router.post('/social-login', asyncHandler(async (req, res) => {
 // Le compte est résolu par l'e-mail du body, ou par le token si l'appelant
 // est authentifié. Plus jamais par un `user_id` libre du body : il permettait
 // de viser le compte de quelqu'un d'autre.
-router.post('/verify', requireEmailService, optionalAuth, (req, res) => {
+router.post('/verify', optionalAuth, (req, res) => {
   const b = req.body || {};
   const email = String(b.email || '').trim().toLowerCase();
+  const code = b.otp_code ?? b.otp;
   const user = req.user
     ? req.user
     : (email ? db.prepare('SELECT * FROM users WHERE email = ?').get(email) : null);
   if (!user) return fail(res, 'User not found.', 404);
+
   if (user.is_verified) {
-    consumeOtp(user.id);
+    // Compte actif dès l'inscription : l'ancienne app affiche encore l'écran
+    // du code juste après, avec le jeton du compte qu'elle vient de créer.
+    // Ce jeton suffit, quoi qu'ait saisi la personne.
+    if (req.user && Number(req.user.id) === Number(user.id)) {
+      consumeOtp(user.id);
+      return authResponse(res, user, 'Verified.');
+    }
+    // Sans jeton (mot de passe oublié), il faut le BON code. Avant, un compte
+    // déjà vérifié renvoyait une session à quiconque donnait son e-mail.
+    // Le code n'est pas consommé ici : /reset-password en a encore besoin.
+    const err = checkOtp(user, code);
+    if (err) {
+      return fail(res, user.otp_code ? err : 'Ce compte est déjà actif : connecte-toi avec ton e-mail et ton mot de passe.', 422);
+    }
     return authResponse(res, user, 'Verified.');
   }
-  const err = checkOtp(user, b.otp_code ?? b.otp);
+
+  if (IS_PROD && !emailService.isConfigured()) {
+    return res.status(503).json({ status: 'error', message: 'Service e-mail indisponible.' });
+  }
+  const err = checkOtp(user, code);
   if (err) return fail(res, err, 422);
   db.prepare("UPDATE users SET is_verified = 1, otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0, updated_at = datetime('now') WHERE id = ?").run(user.id);
   const fresh = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
