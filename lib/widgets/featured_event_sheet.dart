@@ -9,6 +9,7 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/my_button.dart';
+import 'package:artist/widgets/teaser_video.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -94,6 +95,47 @@ String? featuredCoverUrl(Event event) {
   if (cover.isEmpty) return null;
   if (cover.startsWith('http')) return cover;
   return '${APIs.eventImageIP}/$cover';
+}
+
+/// Couches visuelles « À la une » (popup et carte hero), à empiler dans un
+/// Stack `fit: StackFit.expand` : fond flouté (miniature du teaser, sinon
+/// l'affiche) + voile sombre + teaser vidéo muet en boucle quand le concert
+/// en a un, sinon l'affiche entière (jamais recadrée). [cover] construit la
+/// couche image (affiche ou dégradé de secours).
+List<Widget> _featuredVisualLayers(
+  Event event,
+  Widget Function({BoxFit fit}) cover,
+) {
+  final teaser = teaserUrlOf(event);
+  final poster = teaser == null ? null : teaserPosterOf(event);
+  final Widget blurSource = poster == null
+      ? cover()
+      : CachedNetworkImage(
+          imageUrl: poster,
+          fit: BoxFit.cover,
+          // Flouté : une petite image suffit.
+          memCacheWidth: 360,
+          placeholder: (_, __) => cover(),
+          errorWidget: (_, __, ___) => cover(),
+        );
+  return [
+    // Fond : image floutée, pour remplir les bords quand l'affiche ou la
+    // vidéo n'a pas le même format que la zone.
+    ImageFiltered(
+      imageFilter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+      child: blurSource,
+    ),
+    const ColoredBox(color: Color(0x66000000)),
+    if (teaser == null)
+      cover(fit: BoxFit.contain)
+    else
+      TeaserVideo(
+        url: teaser,
+        poster: poster ?? featuredCoverUrl(event),
+        fit: BoxFit.contain,
+        fallback: cover(fit: BoxFit.contain),
+      ),
+  ];
 }
 
 Future<FeaturedEvent?> _fetchFeaturedEvent() async {
@@ -345,17 +387,9 @@ class FeaturedEventSheet extends StatelessWidget {
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            // Fond : la même image floutée, pour remplir les
-                            // bords quand l'affiche n'a pas le même format.
-                            ImageFiltered(
-                              imageFilter: ui.ImageFilter.blur(
-                                sigmaX: 18,
-                                sigmaY: 18,
-                              ),
-                              child: _cover(),
-                            ),
-                            const ColoredBox(color: Color(0x66000000)),
-                            _cover(fit: BoxFit.contain),
+                            // Fond flouté + affiche entière, ou teaser vidéo
+                            // (muet, en boucle) quand le concert en a un.
+                            ..._featuredVisualLayers(event, _cover),
                             Positioned(top: 10, right: 10, child: _closeButton()),
                           ],
                         ),
@@ -670,14 +704,7 @@ class FeaturedEventCard extends StatelessWidget {
             width: double.infinity,
             child: Stack(
               fit: StackFit.expand,
-              children: [
-                ImageFiltered(
-                  imageFilter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                  child: _cover(),
-                ),
-                const ColoredBox(color: Color(0x66000000)),
-                _cover(fit: BoxFit.contain),
-              ],
+              children: _featuredVisualLayers(event, _cover),
             ),
           ),
           Padding(

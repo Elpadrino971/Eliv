@@ -5,8 +5,8 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:video_player/video_player.dart';
 import 'package:artist/Global/app_date.dart';
+import 'package:artist/widgets/teaser_video.dart';
 
 class HomeBannerCard extends StatefulWidget {
   const HomeBannerCard({super.key, required this.event});
@@ -16,15 +16,7 @@ class HomeBannerCard extends StatefulWidget {
   State<HomeBannerCard> createState() => _HomeBannerCardState();
 }
 
-class _HomeBannerCardState extends State<HomeBannerCard>
-    with WidgetsBindingObserver {
-  VideoPlayerController? _videoController;
-
-  // Teaser libéré au passage en arrière-plan (décodeur + tampons HLS) et
-  // recréé au retour : l'app suspendue reste légère. Un seul teaser vit à la
-  // fois (PageView.builder : seule la bannière visible est construite).
-  bool _releasedInBackground = false;
-
+class _HomeBannerCardState extends State<HomeBannerCard> {
   Event get event => widget.event;
 
   bool get _isLive =>
@@ -33,68 +25,15 @@ class _HomeBannerCardState extends State<HomeBannerCard>
       DateTime.now().isAfter(event.startDateTime!) &&
       DateTime.now().isBefore(event.endDateTime!);
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _initVideo();
-  }
-
-  void _initVideo() {
-    final reel = event.videoReel;
-    if (reel == null || reel.isEmpty) return;
-    final controller = VideoPlayerController.networkUrl(Uri.parse(reel));
-    controller
-        .initialize()
-        .then((_) {
-          // Widget démonté ou lecteur remplacé/libéré entre-temps : ne pas
-          // toucher à un lecteur déjà disposé.
-          if (!mounted || _videoController != controller) return;
-          controller
-            ..setLooping(true)
-            ..setVolume(0)
-            ..play();
-          setState(() {});
-        })
-        .catchError((_) {
-          // Flux video indisponible : le visuel de couverture reste affiche.
-        });
-    _videoController = controller;
-  }
-
-  void _releaseVideo() {
-    _videoController?.dispose();
-    _videoController = null;
-  }
-
-  @override
-  void didUpdateWidget(covariant HomeBannerCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.event.videoReel != widget.event.videoReel) {
-      _releaseVideo();
-      _initVideo();
-    }
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      if (_videoController == null) return;
-      _releaseVideo();
-      _releasedInBackground = true;
-      if (mounted) setState(() {});
-    } else if (state == AppLifecycleState.resumed && _releasedInBackground) {
-      _releasedInBackground = false;
-      _initVideo();
-      if (mounted) setState(() {});
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _releaseVideo();
-    super.dispose();
+  /// Vidéo jouée par-dessus la couverture : le teaser court (`teaser_url`)
+  /// en priorité, sinon le reel du concert (`video_reel`) comme avant.
+  /// Lecture muette en boucle, libérée en arrière-plan / hors écran, un seul
+  /// teaser actif à la fois dans l'app (voir [TeaserVideo]).
+  String? get _videoUrl {
+    final teaser = teaserUrlOf(event);
+    if (teaser != null) return teaser;
+    final reel = (event.videoReel ?? '').trim();
+    return reel.isEmpty ? null : reel;
   }
 
   /// 12800 -> "12.8K"
@@ -120,7 +59,7 @@ class _HomeBannerCardState extends State<HomeBannerCard>
 
   @override
   Widget build(BuildContext context) {
-    final videoReady = _videoController?.value.isInitialized ?? false;
+    final videoUrl = _videoUrl;
     return SizedBox(
       width: Get.width,
       height: Get.height * 0.46,
@@ -131,21 +70,17 @@ class _HomeBannerCardState extends State<HomeBannerCard>
           Positioned.fill(child: _coverImage()),
 
           // ── Video de teaser (Mux) : fondu enchaine par-dessus la photo
-          // des qu'elle est prete, pour eviter un changement brusque.
-          if (_videoController != null)
+          // des qu'elle est prete, pour eviter un changement brusque. En cas
+          // d'echec, rien par-dessus : la photo de couverture reste visible.
+          if (videoUrl != null)
             Positioned.fill(
-              child: AnimatedOpacity(
-                opacity: videoReady ? 1 : 0,
-                duration: const Duration(milliseconds: 450),
-                curve: Curves.easeIn,
-                child: FittedBox(
-                  fit: BoxFit.cover,
-                  child: SizedBox(
-                    width: _videoController!.value.size.width,
-                    height: _videoController!.value.size.height,
-                    child: VideoPlayer(_videoController!),
-                  ),
-                ),
+              child: TeaserVideo(
+                url: videoUrl,
+                poster: teaserUrlOf(event) == null
+                    ? null
+                    : teaserPosterOf(event),
+                fit: BoxFit.cover,
+                fallback: const SizedBox.shrink(),
               ),
             ),
 
