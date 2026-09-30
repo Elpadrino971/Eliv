@@ -14,4 +14,5 @@
   <url><loc>https://vybzzz.online/challenge-reglement.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
   <url><loc>https://vybzzz.online/app.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://vybzzz.online/academie.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://vybzzz.online/supprimer-compte.html</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
 </urlset>
