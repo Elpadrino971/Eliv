@@ -170,7 +170,7 @@ router.post('/sign-up', (req, res) => {
   if (pwErr) return fail(res, pwErr, 422, { password: [pwErr] });
 
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-  if (existing) return fail(res, 'Validation error', 422, { email: ['The email has already been taken.'] });
+  if (existing) return fail(res, 'Un compte existe déjà avec cet e-mail. Connecte-toi, ou utilise « Mot de passe oublié ».', 422, { email: ['Un compte existe déjà avec cet e-mail.'] });
 
   const isArtist = b.role === 'artist' || b.is_artist === '1' || b.is_artist === 1;
   const otp = newOtp();
@@ -223,13 +223,15 @@ router.post('/sign-up', (req, res) => {
   // Lot 2D : des places attendent cet e-mail -> l'app sait qu'il faut
   // vérifier le compte pour les récupérer.
   const extra = { requires_verification: pendingPlaces };
-  if (emailService.isConfigured()) {
+  // Le code n'est envoyé QUE si une place attend cet e-mail : un compte actif
+  // d'emblée recevait quand même un « code de vérification » sans objet.
+  if (pendingPlaces && emailService.isConfigured()) {
     emailService.sendOtpEmail(email, otp)
       .catch((e) => console.error(`[email] OTP sign-up (${maskEmail(email)}) :`, e.message));
-    return authResponse(res, user, 'Account created. Check your email for the verification code.', extra);
+    return authResponse(res, user, 'Compte créé. Entre le code reçu par e-mail pour récupérer ta place.', extra);
   }
-  if (IS_PROD) return authResponse(res, user, 'Account created.', extra);
-  return authResponse(res, user, 'Account created. Verify with OTP 1234 (demo).', extra);
+  if (pendingPlaces && !IS_PROD) return authResponse(res, user, 'Compte créé. Code de démo : 1234.', extra);
+  return authResponse(res, user, 'Compte créé. Bienvenue sur VybzzZ !', extra);
 });
 
 // POST /api/login

@@ -436,6 +436,7 @@
     setTab('account'); document.title = 'Confirmer mon e-mail · VybzzZ';
     var next = nextFrom(q), u = S.user || {};
     if (!S.token) { location.hash = '#/login'; return; }
+    if (u.is_verified) { go(next); return; } // compte déjà actif : rien à confirmer
     authForm({
       title: 'Confirme ton e-mail', lead: 'On a envoyé un code à <b>' + esc(u.email || 'ton adresse') + '</b>. Tu peux aussi cliquer sur le lien de l\'e-mail.', cta: 'Valider',
       fields: '<label for="vCode">Code reçu par e-mail</label><input id="vCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required>',
