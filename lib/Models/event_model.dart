@@ -50,6 +50,12 @@ class Event {
   final int? genreId;
   final String? description;
   final String? videoReel;
+  /// Teaser vidéo court (15–60 s) en HLS Mux
+  /// (`https://stream.mux.com/<id>.m3u8`), joué muet en boucle à l'accueil et
+  /// dans le popup « À la une ». Nullable : `null` quand aucun teaser.
+  final String? teaserUrl;
+  /// Miniature du teaser (JPG/WEBP), affichée avant la première image vidéo.
+  final String? teaserPoster;
   final int? isPrivate;
   final int? hasLiveChat;
   final int? capacityLimit;
@@ -90,6 +96,8 @@ class Event {
     this.genreId,
     this.description,
     this.videoReel,
+    this.teaserUrl,
+    this.teaserPoster,
     this.isPrivate,
     this.hasLiveChat,
     this.capacityLimit,
@@ -127,6 +135,8 @@ class Event {
     int? genreId,
     String? description,
     String? videoReel,
+    String? teaserUrl,
+    String? teaserPoster,
     int? isPrivate,
     int? hasLiveChat,
     int? capacityLimit,
@@ -159,6 +169,8 @@ class Event {
     genreId: genreId ?? this.genreId,
     description: description ?? this.description,
     videoReel: videoReel ?? this.videoReel,
+    teaserUrl: teaserUrl ?? this.teaserUrl,
+    teaserPoster: teaserPoster ?? this.teaserPoster,
     isPrivate: isPrivate ?? this.isPrivate,
     hasLiveChat: hasLiveChat ?? this.hasLiveChat,
     capacityLimit: capacityLimit ?? this.capacityLimit,
@@ -197,6 +209,8 @@ class Event {
     genreId: json["genre_id"],
     description: json["description"],
     videoReel: json["video_reel"],
+    teaserUrl: json["teaser_url"]?.toString(),
+    teaserPoster: json["teaser_poster"]?.toString(),
     isPrivate: json["is_private"],
     hasLiveChat: json["has_live_chat"],
     capacityLimit: json["capacity_limit"],
@@ -254,6 +268,8 @@ class Event {
     "genre_id": genreId,
     "description": description,
     "video_reel": videoReel,
+    "teaser_url": teaserUrl,
+    "teaser_poster": teaserPoster,
     "is_private": isPrivate,
     "has_live_chat": hasLiveChat,
     "capacity_limit": capacityLimit,
