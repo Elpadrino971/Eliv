@@ -10,6 +10,7 @@ import 'package:artist/ZegoCloud/widgets/live_stream_chat_preview.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_side_actions.dart';
 import 'package:artist/ZegoCloud/zego_controller.dart';
 import 'package:artist/ZegoCloud/zego_gifts.dart';
+import 'package:artist/ZegoCloud/zego_text_fix.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zego_uikit_prebuilt_live_streaming/zego_uikit_prebuilt_live_streaming.dart';
@@ -332,7 +333,8 @@ class _StartStreamState extends State<StartStream> {
         return Stack(
         children: [
           // ── Zego Live Streaming Background ──────────────────────────
-          ZegoUIKitPrebuiltLiveStreaming(
+          ZegoTextFix(
+            child: ZegoUIKitPrebuiltLiveStreaming(
             appID: zegoController.zegoAppId.value,
             token: zegoToken,
             userID: zegoController.userId,
@@ -385,6 +387,7 @@ class _StartStreamState extends State<StartStream> {
               ),
             ),
           ),
+          ),
 
           // ── Animations Layer ─────────────────────────────────────────
           // Zoom caméra : couche transparente entre le rendu Zego et nos
@@ -396,11 +399,15 @@ class _StartStreamState extends State<StartStream> {
               onScaleUpdate: _onPinch,
             ),
           ),
+          IgnorePointer(child: HeartAnimationOverlay(key: _heartKey)),
+
+          // ── Custom Overlay UI ────────────────────────────────────────
+          if (_isLive) _buildOverlayUI(),
+
+          // Niveau de zoom au centre de l'écran et AU-DESSUS des boutons : en
+          // haut, il passait derrière le bouton du chat.
           if (_zoomHint)
-            Positioned(
-              top: 130,
-              left: 0,
-              right: 0,
+            Positioned.fill(
               child: IgnorePointer(
                 child: Center(
                   child: Container(
@@ -424,11 +431,6 @@ class _StartStreamState extends State<StartStream> {
                 ),
               ),
             ),
-
-          IgnorePointer(child: HeartAnimationOverlay(key: _heartKey)),
-
-          // ── Custom Overlay UI ────────────────────────────────────────
-          if (_isLive) _buildOverlayUI(),
         ],
         );
       }),

@@ -4,6 +4,7 @@ import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/point_packs.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/Models/gift_model.dart';
 import 'package:artist/Models/user_model.dart';
@@ -88,6 +89,9 @@ class _ZegoGiftsState extends State<ZegoGifts> {
               ),
             ),
           ),
+          // Pas de pack achetable sur ce store -> pas de bouton « Recharger »
+          // qui mènerait à une page vide (cf. point_packs.dart).
+          if (canTopUpPoints)
           TextButton(
             onPressed: () {
               Get.back(); // ferme la feuille : le live reste en dessous

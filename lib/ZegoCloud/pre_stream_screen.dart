@@ -14,6 +14,7 @@ import 'package:artist/ZegoCloud/widgets/live_stream_side_actions.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_top_bar.dart';
 import 'package:artist/ZegoCloud/zego_controller.dart';
 import 'package:artist/ZegoCloud/zego_gifts.dart';
+import 'package:artist/ZegoCloud/zego_text_fix.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zego_uikit_prebuilt_live_streaming/zego_uikit_prebuilt_live_streaming.dart';
@@ -229,7 +230,8 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
         return Stack(
         children: [
           // ── Zego Live Streaming Background ──────────────────────────
-          ZegoUIKitPrebuiltLiveStreaming(
+          ZegoTextFix(
+            child: ZegoUIKitPrebuiltLiveStreaming(
             appID: zegoController.zegoAppId.value,
             token: zegoToken,
             userID: zegoController.userId,
@@ -243,6 +245,7 @@ class _PreStreamScreenState extends State<PreStreamScreen> {
                 },
               ),
             ),
+          ),
           ),
 
           // ── Animations Layer ─────────────────────────────────────────

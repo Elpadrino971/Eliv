@@ -8,12 +8,14 @@ import 'package:artist/BottomBar/screens/homeScreen/check_out_screen.dart';
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/point_packs.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_chat_preview.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_side_actions.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_top_bar.dart';
 import 'package:artist/ZegoCloud/zego_controller.dart';
 import 'package:artist/ZegoCloud/zego_gifts.dart';
+import 'package:artist/ZegoCloud/zego_text_fix.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zego_uikit_prebuilt_live_streaming/zego_uikit_prebuilt_live_streaming.dart';
@@ -81,6 +83,7 @@ class _JoinStreamState extends State<JoinStream> {
   @override
   void initState() {
     super.initState();
+    refreshPurchasablePointPacks();
     // Assigné en synchrone AVANT tout appel async (fetchZegoToken attend un
     // aller-retour réseau) : sinon build() s'exécute avec currentEvent
     // encore non initialisé -> LateInitializationError au premier rendu.
@@ -255,7 +258,8 @@ class _JoinStreamState extends State<JoinStream> {
         return Stack(
         children: [
           // ── Zego Live Streaming Background ──────────────────────────
-          ZegoUIKitPrebuiltLiveStreaming(
+          ZegoTextFix(
+            child: ZegoUIKitPrebuiltLiveStreaming(
             appID: zegoController.zegoAppId.value,
             token: zegoToken,
             userID: zegoController.userId,
@@ -269,6 +273,7 @@ class _JoinStreamState extends State<JoinStream> {
                 },
               ),
             ),
+          ),
           ),
 
           // ── Animations Layer ─────────────────────────────────────────

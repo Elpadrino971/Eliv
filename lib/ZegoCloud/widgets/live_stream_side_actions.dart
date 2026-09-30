@@ -1,4 +1,5 @@
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/point_packs.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/artist_bottom_bar/screen/Events/artist_live_event_chat.dart';
 import 'package:artist/artist_bottom_bar/screen/Events/stats_screen.dart';
@@ -50,13 +51,22 @@ class LiveStreamSideActions extends StatelessWidget {
           child: Image.asset('assets/chat_icon.png', width: 50),
         ),
         height(0.02),
-        fromArtist
-            ? SizedBox()
-            : GestureDetector(
-                onTap: onGiftTap,
-                child: Image.asset('assets/gift_icon.png', width: 50),
-              ),
-        fromArtist ? SizedBox() : height(0.02),
+        // Cadeau masqué si le fan n'a pas de points et ne peut pas en acheter
+        // (aucun pack en ligne sur le store) : sinon on ouvre une feuille où
+        // rien n'est offrable (cf. point_packs.dart).
+        Obx(
+          () => fromArtist || !canSendGifts
+              ? const SizedBox()
+              : Column(
+                  children: [
+                    GestureDetector(
+                      onTap: onGiftTap,
+                      child: Image.asset('assets/gift_icon.png', width: 50),
+                    ),
+                    height(0.02),
+                  ],
+                ),
+        ),
 
         !fromArtist
             ? SizedBox()

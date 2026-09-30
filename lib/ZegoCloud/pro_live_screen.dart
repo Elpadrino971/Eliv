@@ -5,6 +5,7 @@ import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/point_packs.dart';
 import 'package:artist/Global/mux.dart';
 import 'package:artist/Global/orientation_helper.dart';
 import 'package:artist/Models/event_model.dart';
@@ -106,6 +107,7 @@ class _ProLiveScreenState extends State<ProLiveScreen>
   @override
   void initState() {
     super.initState();
+    refreshPurchasablePointPacks();
     currentEvent = widget.event;
     WidgetsBinding.instance.addObserver(this);
     // Jamais deux vidéos en même temps : on ferme un mini-lecteur éventuel.

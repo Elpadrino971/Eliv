@@ -7,6 +7,7 @@ import 'package:artist/Controllers/auth_controller.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/point_packs.dart';
 import 'package:artist/artist_bottom_bar/screen/Studio/artist_withdraw.dart';
 import 'package:artist/widgets/widget.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +25,8 @@ class _UserWalletState extends State<UserWallet> {
 
   Future<void> myInitMethod() async {
     await authController.getPackages();
+    await refreshPurchasablePointPacks();
+    if (mounted) setState(() {});
   }
 
   @override
@@ -138,6 +141,10 @@ class _UserWalletState extends State<UserWallet> {
               ),
               height(0.03),
 
+              // Recharge : uniquement les packs réellement achetables sur le
+              // store (cf. point_packs.dart). Aucun disponible -> section masquée
+              // plutôt qu'une grille de packs qui répondent « introuvable ».
+              if (canTopUpPoints) ...[
               // Section Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -163,7 +170,14 @@ class _UserWalletState extends State<UserWallet> {
 
               // Grid
               Obx(() {
-                final packages = authController.packages.value.list ?? [];
+                final available = purchasablePointPacks.toSet();
+                final packages = (authController.packages.value.list ?? [])
+                    .where(
+                      (p) => available.contains(
+                        (p.revenuecatProductId ?? '').trim(),
+                      ),
+                    )
+                    .toList();
                 if (packages.isEmpty) {
                   return Center(child: Text('empty_no_packages'.tr));
                 }
@@ -238,6 +252,7 @@ class _UserWalletState extends State<UserWallet> {
                   },
                 );
               }),
+              ],
               height(0.01),
 
               // Bannière « Boutique de points » retirée. Elle menait à
