@@ -84,8 +84,12 @@ function createStaticRendition(assetId, resolution = STATIC_RENDITION_RESOLUTION
   });
 }
 
-/** Crée une Direct Upload : le client PUT le fichier sur data.url. */
-function createDirectUpload({ passthrough, corsOrigin = '*' } = {}) {
+/**
+ * Crée une Direct Upload : le client PUT le fichier sur data.url.
+ * `staticRenditions: false` (teaser d'accueil, lot 13) : pas de MP4
+ * téléchargeable, seul le HLS public est utile (et Mux ne facture rien de plus).
+ */
+function createDirectUpload({ passthrough, corsOrigin = '*', staticRenditions = true } = {}) {
   return muxFetch('/video/v1/uploads', {
     method: 'POST',
     body: {
@@ -93,7 +97,8 @@ function createDirectUpload({ passthrough, corsOrigin = '*' } = {}) {
       new_asset_settings: {
         playback_policy: ['public'],
         passthrough: passthrough ? JSON.stringify(passthrough) : undefined,
-        static_renditions: STATIC_RENDITIONS, // replay MP4 téléchargeable
+        // replay MP4 téléchargeable (absent = aucune rendition, défaut Mux)
+        static_renditions: staticRenditions ? STATIC_RENDITIONS : undefined,
       },
     },
   }).then((data) => ({ uploadId: data.id, uploadUrl: data.url }));

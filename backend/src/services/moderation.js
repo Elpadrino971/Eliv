@@ -165,6 +165,10 @@ function applyBlockAction(targetType, targetId, decision) {
           "UPDATE events SET mux_upload_status = 'blocked', replay_expires_at = datetime('now') WHERE id = ?"
         ).run(targetId);
         break;
+      case 'teaser': // teaser d'accueil (lot 13) : on cesse de le diffuser (l'asset
+        // reste référencé -> supprimé chez Mux au remplacement / « Retirer le teaser »)
+        db.prepare('UPDATE events SET teaser_playback_id = NULL WHERE id = ?').run(targetId);
+        break;
       case 'clip': // clip feed : on le retire de la diffusion
         db.prepare('UPDATE feed_clips SET active = 0 WHERE id = ?').run(targetId);
         break;

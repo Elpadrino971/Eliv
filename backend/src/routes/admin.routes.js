@@ -425,7 +425,8 @@ router.get('/events', requireAdmin, (req, res) => {
             e.is_banner, e.tz_offset_minutes, e.mux_upload_status, e.mux_asset_id,
             e.replay_expires_at, e.replay_enabled, e.replay_duration_days,
             e.geo_mode, e.geo_countries, e.geo_block_until, e.price_schedule,
-            e.mux_live_stream_id, COALESCE(e.live_mode, 'mobile') AS live_mode, u.artist_name AS artist
+            e.mux_live_stream_id, COALESCE(e.live_mode, 'mobile') AS live_mode,
+            e.teaser_playback_id, u.artist_name AS artist
      FROM events e LEFT JOIN users u ON u.id = e.artist_id
      ORDER BY e.id DESC`
   ).all().map((e) => {
@@ -615,7 +616,11 @@ router.post('/mux/direct-upload', requireAdmin, (req, res) => {
     return res.status(503).json({ status: 'error', message: 'Mux non configuré côté serveur (MUX_TOKEN_ID/MUX_TOKEN_SECRET manquants).' });
   }
   const b = req.body || {};
-  const kind = b.kind === 'clip' ? 'clip' : 'event';
+  // 'event' = REPLAY du concert (mux_playback_id / video_reel, masqué aux
+  // non-acheteurs d'un concert payant) ; 'teaser' (lot 13) = bande-annonce
+  // courte PUBLIQUE de l'accueil (teaser_playback_id, jamais masquée) ;
+  // 'clip' = clip du feed.
+  const kind = ['clip', 'teaser'].includes(b.kind) ? b.kind : 'event';
 
   let refId = Number(b.ref_id) || null;
   if (kind === 'clip' && !refId) {
@@ -631,10 +636,18 @@ router.post('/mux/direct-upload', requireAdmin, (req, res) => {
   if (!refId) {
     return res.status(422).json({ status: 'error', message: 'ref_id requis (event ou clip existant).' });
   }
+  if (kind === 'teaser' && !db.prepare('SELECT id FROM events WHERE id = ?').get(refId)) {
+    return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  }
 
-  mux.createDirectUpload({ passthrough: { kind, id: refId } })
+  // Teaser : pas de MP4 téléchargeable (static_renditions), HLS public seul.
+  mux.createDirectUpload({ passthrough: { kind, id: refId }, staticRenditions: kind !== 'teaser' })
     .then(({ uploadId, uploadUrl }) => {
-      if (kind === 'event') {
+      if (kind === 'teaser') {
+        // Rien à marquer en base : le statut d'upload du concert
+        // (mux_upload_status) décrit le REPLAY, pas le teaser. Le webhook
+        // video.asset.ready remplira teaser_playback_id / teaser_asset_id.
+      } else if (kind === 'event') {
         db.prepare("UPDATE events SET mux_upload_id = ?, mux_upload_status = 'waiting' WHERE id = ?").run(uploadId, refId);
       } else {
         db.prepare("UPDATE feed_clips SET mux_upload_id = ?, upload_status = 'waiting' WHERE id = ?").run(uploadId, refId);
@@ -645,6 +658,81 @@ router.post('/mux/direct-upload', requireAdmin, (req, res) => {
       console.error('[mux direct-upload]', e.message);
       return res.status(502).json({ status: 'error', message: `Erreur Mux : ${e.message}` });
     });
+});
+
+// ─── Teaser d'accueil (lot 13) : retrait ───
+// Vide teaser_playback_id / teaser_asset_id (l'app n'affiche plus la vidéo) et
+// supprime l'asset côté Mux en best effort (arrête la facturation stockage).
+// Un échec Mux est journalisé mais n'empêche pas le retrait.
+router.delete('/events/:id/teaser', requireAdmin, asyncHandler(async (req, res) => {
+  const ev = db.prepare('SELECT id, teaser_playback_id, teaser_asset_id FROM events WHERE id = ?').get(req.params.id);
+  if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  db.prepare('UPDATE events SET teaser_playback_id = NULL, teaser_asset_id = NULL WHERE id = ?').run(ev.id);
+  let assetDeleted = false;
+  if (ev.teaser_asset_id && mux.isConfigured()) {
+    try {
+      await mux.deleteAsset(ev.teaser_asset_id);
+      assetDeleted = true;
+    } catch (e) {
+      console.error(`[admin] suppression asset teaser event #${ev.id}:`, e.message);
+    }
+  }
+  return res.json({
+    status: 'success',
+    message: ev.teaser_playback_id || ev.teaser_asset_id ? 'Teaser retiré.' : 'Aucun teaser sur ce concert.',
+    data: { id: ev.id, teaser_playback_id: null, teaser_url: null, asset_deleted: assetDeleted },
+  });
+}));
+
+// ─── Teaser d'accueil (lot 13) : rattrapage « c'était un teaser » ───
+// Avant le lot 13, le seul bouton d'upload d'un concert remplissait le REPLAY
+// (mux_playback_id / mux_asset_id / video_reel), masqué aux non-acheteurs d'un
+// concert payant. Une bande-annonce envoyée par là est déplacée ici vers
+// teaser_playback_id / teaser_asset_id, et les champs replay sont vidés.
+// Refusé (409) sur un concert terminé (c'est alors un vrai replay), sans vidéo
+// Mux, ou dont la vidéo a été bloquée par la modération.
+router.post('/events/:id/replay-to-teaser', requireAdmin, (req, res) => {
+  const ev = db.prepare(
+    `SELECT id, status, mux_playback_id, mux_asset_id, mux_live_playback_id, mux_upload_status,
+            video_reel, teaser_asset_id
+       FROM events WHERE id = ?`
+  ).get(req.params.id);
+  if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  if (['completed', 'ended'].includes(ev.status)) {
+    return res.status(409).json({ status: 'error', message: 'Concert terminé : cette vidéo est le replay, elle ne peut pas devenir le teaser.' });
+  }
+  if (!ev.mux_playback_id) {
+    return res.status(409).json({ status: 'error', message: 'Aucune vidéo Mux (replay) à convertir sur ce concert.' });
+  }
+  if (ev.mux_upload_status === 'blocked') {
+    return res.status(409).json({ status: 'error', message: 'Vidéo bloquée par la modération : impossible d\'en faire le teaser.' });
+  }
+  const isMuxUrl = typeof ev.video_reel === 'string' && /(^|\/\/)stream\.mux\.com\//i.test(ev.video_reel);
+  db.prepare(
+    `UPDATE events SET teaser_playback_id = ?, teaser_asset_id = ?,
+        mux_playback_id = NULL, mux_asset_id = NULL, mux_upload_id = NULL, mux_upload_status = NULL,
+        replay_expires_at = NULL,
+        mux_live_playback_id = CASE WHEN mux_live_playback_id = ? THEN NULL ELSE mux_live_playback_id END,
+        video_reel = CASE WHEN ? THEN NULL ELSE video_reel END
+      WHERE id = ?`
+  ).run(ev.mux_playback_id, ev.mux_asset_id || null, ev.mux_playback_id, isMuxUrl ? 1 : 0, ev.id);
+  // Un teaser précédent (autre asset) est remplacé : suppression Mux best effort.
+  if (ev.teaser_asset_id && ev.teaser_asset_id !== ev.mux_asset_id && mux.isConfigured()) {
+    mux.deleteAsset(ev.teaser_asset_id)
+      .catch((e) => console.error(`[admin] replay-to-teaser : suppression ancien teaser event #${ev.id}:`, e.message));
+  }
+  return res.json({
+    status: 'success',
+    message: 'Vidéo déplacée vers le teaser (accueil). Le replay du concert est vide.',
+    data: {
+      id: ev.id,
+      teaser_playback_id: ev.mux_playback_id,
+      teaser_asset_id: ev.mux_asset_id || null,
+      teaser_url: muxHls(ev.mux_playback_id),
+      mux_playback_id: null,
+      video_reel: isMuxUrl ? null : ev.video_reel,
+    },
+  });
 });
 
 // ─── Mux : Live Stream (mode "Concert PRO" — régie -> encodeur -> Mux) ───

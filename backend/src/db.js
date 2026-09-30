@@ -898,6 +898,12 @@ function init() {
     // {"hours_before":48,"price":"6.99"},{"hours_before":0,"price":"9.99"}].
     // NULL/[] = prix fixe (ticket_price). Voir services/pricing.js.
     "ALTER TABLE events ADD COLUMN price_schedule TEXT",
+    // Teaser d'accueil (lot 13) : bande-annonce courte PUBLIQUE, distincte du
+    // replay (mux_playback_id/video_reel, masqués aux non-acheteurs d'un
+    // concert payant). Uploadée depuis l'admin (Direct Upload Mux kind
+    // 'teaser') ; serializeEvent expose teaser_url / teaser_poster.
+    "ALTER TABLE events ADD COLUMN teaser_playback_id TEXT",
+    "ALTER TABLE events ADD COLUMN teaser_asset_id TEXT",
     "ALTER TABLE feed_clips ADD COLUMN mux_asset_id TEXT",
     "ALTER TABLE feed_clips ADD COLUMN mux_upload_id TEXT",
     "ALTER TABLE feed_clips ADD COLUMN upload_status TEXT",
