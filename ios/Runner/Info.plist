@@ -31,6 +31,21 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>fr</string>
+		<string>en</string>
+		<string>es</string>
+		<string>it</string>
+		<string>de</string>
+		<string>pt</string>
+		<string>zh-Hans</string>
+		<string>ko</string>
+		<string>ja</string>
+		<string>ar</string>
+		<string>hi</string>
+		<string>ru</string>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
