@@ -38,6 +38,13 @@ class _StartStreamState extends State<StartStream> {
   Timer? _logTimer;
   bool _isLive = false;
   // Contrôles hôte : masquer tout l'overlay (place à la scène) / couper le chat.
+  // Zoom caméra (pincer à deux doigts) pour faire des gros plans.
+  double _zoom = 1.0;
+  double _zoomStart = 1.0;
+  double _maxZoom = 0; // 0 = pas encore lu
+  bool _zoomHint = false;
+  Timer? _zoomHintTimer;
+
   // Mode « place à la scène » : mémorisé d'un live à l'autre.
   bool _overlayHidden = box.read('host_overlay_hidden') == true;
   bool _chatHidden = false;
@@ -78,6 +85,7 @@ class _StartStreamState extends State<StartStream> {
     _commandSubscription?.cancel();
     _userListSubscription?.cancel();
     _logTimer?.cancel();
+    _zoomHintTimer?.cancel();
     _durationTimer?.cancel();
     // Signale la fin du live -> Mux finalise l'asset de replay.
     zegoController.stopRecording(widget.event.id.toString());
@@ -379,6 +387,44 @@ class _StartStreamState extends State<StartStream> {
           ),
 
           // ── Animations Layer ─────────────────────────────────────────
+          // Zoom caméra : couche transparente entre le rendu Zego et nos
+          // boutons ; seul le pincement à deux doigts est capté.
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onScaleStart: (_) => _zoomStart = _zoom,
+              onScaleUpdate: _onPinch,
+            ),
+          ),
+          if (_zoomHint)
+            Positioned(
+              top: 130,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${_zoom.toStringAsFixed(1)}×',
+                      style: const TextStyle(
+                        color: ivory,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
           IgnorePointer(child: HeartAnimationOverlay(key: _heartKey)),
 
           // ── Custom Overlay UI ────────────────────────────────────────
@@ -387,6 +433,37 @@ class _StartStreamState extends State<StartStream> {
         );
       }),
     );
+  }
+
+  void _onPinch(ScaleUpdateDetails d) {
+    if (d.pointerCount < 2) return;
+    _setZoom(_zoomStart * d.scale);
+  }
+
+  Future<void> _setZoom(double wanted) async {
+    if (_maxZoom <= 0) {
+      try {
+        _maxZoom = await ZegoExpressEngine.instance.getCameraMaxZoomFactor();
+      } catch (e) {
+        myPrint('zoom max: $e');
+        _maxZoom = 4;
+      }
+      if (_maxZoom < 1) _maxZoom = 1;
+    }
+    final z = wanted.clamp(1.0, _maxZoom > 8 ? 8.0 : _maxZoom);
+    if ((z - _zoom).abs() < 0.02) return;
+    _zoom = z;
+    try {
+      await ZegoExpressEngine.instance.setCameraZoomFactor(z);
+    } catch (e) {
+      myPrint('zoom: $e');
+    }
+    if (!mounted) return;
+    setState(() => _zoomHint = true);
+    _zoomHintTimer?.cancel();
+    _zoomHintTimer = Timer(const Duration(milliseconds: 1200), () {
+      if (mounted) setState(() => _zoomHint = false);
+    });
   }
 
   /// Fin du live demandée par l'artiste : confirmation, puis sortie de la
