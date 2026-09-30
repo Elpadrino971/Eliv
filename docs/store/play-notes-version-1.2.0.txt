@@ -1,0 +1,105 @@
+<fr-FR>
+• Live instantané : un titre et c'est parti
+• Concerts gratuits accessibles en un geste
+• Grands événements à la une, avec teaser vidéo
+• Zoom pendant les lives, nouveaux cadeaux
+• Inscription simplifiée et nombreuses corrections
+</fr-FR>
+<en-US>
+• Instant live: add a title and go
+• Free concerts in one tap
+• Featured events with video teasers
+• Zoom during lives, new gifts
+• Simpler sign-up and many fixes
+</en-US>
+<es-ES>
+• Directo instantáneo: pon un título y listo
+• Conciertos gratuitos con un toque
+• Grandes eventos destacados, con tráiler en vídeo
+• Zoom durante los directos, nuevos regalos
+• Registro más sencillo y muchas correcciones
+</es-ES>
+<it-IT>
+• Live istantaneo: un titolo e si parte
+• Concerti gratuiti con un tocco
+• Grandi eventi in evidenza, con teaser video
+• Zoom durante i live, nuovi regali
+• Registrazione più semplice e tante correzioni
+</it-IT>
+<de-DE>
+• Sofort live: Titel eingeben und los
+• Kostenlose Konzerte mit einem Tipp
+• Top-Events mit Video-Teaser
+• Zoom während Livestreams, neue Geschenke
+• Einfachere Registrierung und viele Korrekturen
+</de-DE>
+<pt-BR>
+• Live instantânea: coloque um título e pronto
+• Shows gratuitos com um toque
+• Grandes eventos em destaque, com teaser em vídeo
+• Zoom durante as lives, novos presentes
+• Cadastro mais simples e várias correções
+</pt-BR>
+<zh-CN>
+• 即时直播：输入标题即可开播
+• 免费演唱会一键预订
+• 首页推荐重磅活动，附预告视频
+• 直播中可缩放画面，新增礼物
+• 注册更简单，修复多项问题
+</zh-CN>
+<ko-KR>
+• 즉시 라이브: 제목만 입력하면 시작
+• 무료 콘서트를 한 번의 탭으로
+• 주요 이벤트 추천과 티저 영상
+• 라이브 중 확대/축소, 새로운 선물
+• 더 간편한 가입과 다양한 오류 수정
+</ko-KR>
+<ja-JP>
+• インスタントライブ：タイトルを入れるだけで配信開始
+• 無料コンサートをワンタップで
+• 注目イベントをティーザー動画付きで紹介
+• ライブ中のズーム、新しいギフト
+• 登録がより簡単に、多数の修正
+</ja-JP>
+<ar>
+• بث فوري: أضف عنوانًا وابدأ
+• حفلات مجانية بلمسة واحدة
+• أبرز الفعاليات مع فيديو تشويقي
+• التكبير أثناء البث وهدايا جديدة
+• تسجيل أبسط والعديد من الإصلاحات
+</ar>
+<hi-IN>
+• इंस्टेंट लाइव: बस टाइटल लिखें और शुरू करें
+• फ़्री कॉन्सर्ट एक टैप में
+• टीज़र वीडियो के साथ ख़ास इवेंट
+• लाइव के दौरान ज़ूम, नए गिफ़्ट
+• आसान साइन-अप और कई सुधार
+</hi-IN>
+<ru-RU>
+• Мгновенный эфир: введи название и начинай
+• Бесплатные концерты в одно касание
+• Главные события с видеотизером
+• Зум во время эфира, новые подарки
+• Упрощённая регистрация и множество исправлений
+</ru-RU>
+<en-GB>
+• Instant live: add a title and go
+• Free concerts in one tap
+• Featured events with video teasers
+• Zoom during lives, new gifts
+• Simpler sign-up and many fixes
+</en-GB>
+<pt-PT>
+• Live instantânea: coloque um título e pronto
+• Shows gratuitos com um toque
+• Grandes eventos em destaque, com teaser em vídeo
+• Zoom durante as lives, novos presentes
+• Cadastro mais simples e várias correções
+</pt-PT>
+<es-419>
+• Directo instantáneo: pon un título y listo
+• Conciertos gratuitos con un toque
+• Grandes eventos destacados, con tráiler en vídeo
+• Zoom durante los directos, nuevos regalos
+• Registro más sencillo y muchas correcciones
+</es-419>
