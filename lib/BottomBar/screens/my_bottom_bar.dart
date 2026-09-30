@@ -8,6 +8,7 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/BottomBar/screens/Disscover/disscover_screen.dart';
 import 'package:artist/BottomBar/screens/my_tIckets/my_tickets_screen.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/guest_gate.dart';
 import 'package:artist/services/push_notification.dart';
 import 'package:artist/services/share_receiver.dart';
 import 'package:flutter/material.dart';
@@ -81,12 +82,30 @@ class _MyBottomBarState extends State<MyBottomBar> {
   final themeController = Get.put(ThemeController());
 
   int? currentIndex;
+  // Billets et Profil : réservés aux comptes. Un visiteur voit une invitation
+  // à se connecter ; l'onglet se remplit dès la connexion (Obx sur userModel).
   List screenList = [
     HomeScreen(),
     DisscoverScreen(),
     VybzLiveScreen(),
-    MyTicketsScreen(),
-    Profile(),
+    Obx(
+      () => isGuest
+          ? GuestTabPlaceholder(
+              icon: Icons.confirmation_number_outlined,
+              title: 'guest_tickets_title'.tr,
+              text: 'guest_tickets_text'.tr,
+            )
+          : MyTicketsScreen(),
+    ),
+    Obx(
+      () => isGuest
+          ? GuestTabPlaceholder(
+              icon: Icons.person_outline_rounded,
+              title: 'guest_profile_title'.tr,
+              text: 'guest_profile_text'.tr,
+            )
+          : Profile(),
+    ),
   ];
 
   Future myInitMethod() async {

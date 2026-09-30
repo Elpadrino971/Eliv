@@ -8,6 +8,7 @@ import 'package:artist/Auth/login_failed_sheet.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
+import 'package:artist/Global/guest_gate.dart';
 import 'package:artist/Models/banks_model.dart';
 import 'package:artist/Models/follow_model.dart';
 import 'package:artist/Models/genre_model.dart';
@@ -59,6 +60,13 @@ class AuthController extends GetxController {
         box.write('user', userModel.value.toJson());
         final id = userModel.value.user?.id;
         if (id != null) unawaited(SubscriptionController.syncIdentity(id));
+        // Compte demandé par une action (mode visiteur) : on revient sur
+        // l'écran d'origine, l'action reprend.
+        if (hasPendingAccountGate) {
+          Get.back(); // ferme le loader
+          completeAccountGate();
+          return;
+        }
         // Après connexion : direct sur le Live + Feed (index 2), comme à l'ouverture.
         Get.offAll(() => MyBottomBar(index: 2));
         unawaited(showFeaturedEventIfAny());
@@ -109,6 +117,7 @@ class AuthController extends GetxController {
         if (id != null) unawaited(SubscriptionController.syncIdentity(id));
         update();
         Get.back();
+        if (completeAccountGate()) return; // mode visiteur : retour à l'action
         // Après connexion : direct sur le Live + Feed (index 2), comme à l'ouverture.
         Get.offAll(() => MyBottomBar(index: 2));
         unawaited(showFeaturedEventIfAny());
@@ -171,8 +180,11 @@ class AuthController extends GetxController {
         box.write('user', userModel.value.toJson());
         final id = userModel.value.user?.id;
         if (id != null) unawaited(SubscriptionController.syncIdentity(id));
-        Get.offAll(() => MyBottomBar(index: 2));
-        unawaited(showFeaturedEventIfAny());
+        // Mode visiteur : retour sur l'écran qui a demandé le compte.
+        if (!completeAccountGate()) {
+          Get.offAll(() => MyBottomBar(index: 2));
+          unawaited(showFeaturedEventIfAny());
+        }
         Get.snackbar(
           'signup_welcome_title'.tr,
           'signup_welcome_msg'.tr,
@@ -219,6 +231,7 @@ class AuthController extends GetxController {
               if (id != null) {
                 unawaited(SubscriptionController.syncIdentity(id));
               }
+              if (completeAccountGate()) return;
               Get.offAll(() => MyBottomBar(index: 2));
               unawaited(showFeaturedEventIfAny());
             }
@@ -427,6 +440,8 @@ class AuthController extends GetxController {
   }
 
   Future<void> getUserModel() async {
+    // Visiteur : rien à charger (sinon « User not found » à chaque accueil).
+    if (isGuest) return;
     response.typeSetter = 'post';
     response.urlSetter = APIs.getUserAPI;
     response.bodySetter = {'id': '${userModel.value.user?.id ?? ''}'};
@@ -461,7 +476,7 @@ class AuthController extends GetxController {
     response.urlSetter = APIs.purchasePackageAPI;
     response.bodySetter = {
       'package_id': packageId,
-      "user_id": "${userModel.value.user?.id ?? 1}",
+      "user_id": "${userModel.value.user?.id ?? 0}",
     };
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
@@ -486,7 +501,7 @@ class AuthController extends GetxController {
     response.urlSetter = APIs.getTransactionAPI;
     response.bodySetter = {
       "role": key ?? "points",
-      "user_id": "${userModel.value.user?.id ?? 1}",
+      "user_id": "${userModel.value.user?.id ?? 0}",
     };
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
@@ -505,7 +520,7 @@ class AuthController extends GetxController {
   Future<void> getFollowingArtists() async {
     response.typeSetter = 'post';
     response.urlSetter = APIs.getFollowingArtistsAPI;
-    response.bodySetter = {"user_id": "${userModel.value.user?.id ?? 1}"};
+    response.bodySetter = {"user_id": "${userModel.value.user?.id ?? 0}"};
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
         followingArtists.value = followModelFromJson(value, 'following');
@@ -527,7 +542,7 @@ class AuthController extends GetxController {
     response.typeSetter = 'post';
     response.urlSetter = APIs.addBankAPI;
     response.bodySetter = {
-      "user_id": "${userModel.value.user?.id ?? 1}",
+      "user_id": "${userModel.value.user?.id ?? 0}",
       "bank_name": bankName,
       "account_number": accountNumber,
       "account_name": accountHolderName,
@@ -553,7 +568,7 @@ class AuthController extends GetxController {
   Future<void> getBank() async {
     response.typeSetter = 'post';
     response.urlSetter = APIs.getBankAPI;
-    response.bodySetter = {"user_id": "${userModel.value.user?.id ?? 1}"};
+    response.bodySetter = {"user_id": "${userModel.value.user?.id ?? 0}"};
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
         banks.value = banksModelFromJson(value);
@@ -593,7 +608,7 @@ class AuthController extends GetxController {
     response.typeSetter = 'post';
     response.urlSetter = APIs.withdrawAPI;
     response.bodySetter = {
-      "user_id": "${userModel.value.user?.id ?? 1}",
+      "user_id": "${userModel.value.user?.id ?? 0}",
       "bank_id": bankId,
       "amount": amount,
     };
@@ -657,14 +672,14 @@ class AuthController extends GetxController {
     myLoadingDialog();
     await _clearLocalSession();
     await Future.delayed(const Duration(seconds: 1));
-    Get.offAll(() => LoginScreen());
+    Get.offAll(() => MyBottomBar(index: 2)); // visiteur : on reste dans l'app
   }
 
   Future<void> deleteAccount() async {
     myLoadingDialog();
     response.typeSetter = 'post';
     response.urlSetter = APIs.deleteAccountAPI;
-    response.bodySetter = {"id": "${userModel.value.user?.id ?? 1}"};
+    response.bodySetter = {"id": "${userModel.value.user?.id ?? 0}"};
     final value = await response.hitAPI();
     if (value.split(' ').first != 'error') {
       // Même purge qu'à la déconnexion : sans elle, l'app rouvrait sur le
@@ -674,7 +689,7 @@ class AuthController extends GetxController {
       mySuccessDialog(
         subtitle: 'msg_account_deleted'.tr,
         ontap: () {
-          Get.offAll(() => LoginScreen());
+          Get.offAll(() => MyBottomBar(index: 2)); // visiteur : on reste dans l'app
         },
       );
     } else {

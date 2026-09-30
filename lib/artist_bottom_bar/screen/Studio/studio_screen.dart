@@ -22,11 +22,11 @@ class _StudioScreenState extends State<StudioScreen> {
 
   Future<void> myInitMethod() async {
     await artistController.getArtistData(
-      artistId: '${userModel.value.user?.id ?? 1}',
+      artistId: '${userModel.value.user?.id ?? 0}',
     );
     await artistController.getGenres();
     await artistController.getArtistEvents(
-      artistId: '${userModel.value.user?.id ?? 1}',
+      artistId: '${userModel.value.user?.id ?? 0}',
     );
   }
 
@@ -92,7 +92,7 @@ class _StudioScreenState extends State<StudioScreen> {
                       onTap: () async {
                         await Get.to(() => ArtistCreateEvent());
                         await artistController.getArtistEvents(
-                          artistId: '${userModel.value.user?.id ?? 1}',
+                          artistId: '${userModel.value.user?.id ?? 0}',
                         );
                       },
                       child: Get.isDarkMode

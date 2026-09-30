@@ -992,7 +992,7 @@ class _LivePreviewCardState extends State<_LivePreviewCard>
 
   bool get _hasAccess {
     final owns = (widget.event.ticketBuyerIds ?? [])
-        .contains(userModel.value.user?.id ?? 1);
+        .contains(userModel.value.user?.id ?? 0);
     final price = double.tryParse(widget.event.ticketPrice ?? '') ?? 0;
     return owns || price <= 0;
   }

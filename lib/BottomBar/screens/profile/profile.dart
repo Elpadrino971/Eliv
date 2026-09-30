@@ -57,7 +57,7 @@ class _ProfileState extends State<Profile> {
     await authController.getSettings();
     // Charge MON propre contenu (vidéos, concerts, abonnés) pour la grille du
     // profil — même pipeline que la fiche artiste, sur mon id.
-    final myId = '${userModel.value.user?.id ?? 1}';
+    final myId = '${userModel.value.user?.id ?? 0}';
     unawaited(eventController.getArtistClips(artistId: myId));
     unawaited(eventController.getArtistEvents(artistId: myId));
     unawaited(eventController.getArtistFollowers(artistId: myId));

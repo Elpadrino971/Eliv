@@ -74,7 +74,7 @@ int? readLastTab() {
 /// Vrai si un utilisateur est connecté ET que l'app a été utilisée il y a
 /// moins de [softRelaunchWindow] : le splash interactif est alors sauté.
 bool canSoftRelaunch() {
-  if (box.read('user') == null) return false;
+  // Visiteur compris (mode sans compte) : même retour direct après une pause.
   final raw = box.read(lastActiveAtKey);
   final ms = raw is int ? raw : int.tryParse('${raw ?? ''}');
   if (ms == null) return false;

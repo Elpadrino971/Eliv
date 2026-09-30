@@ -4,6 +4,7 @@ import 'package:artist/Controllers/controller.dart';
 import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/guest_gate.dart';
 import 'package:artist/Global/live_router.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
@@ -117,6 +118,9 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   /// Tunnel d'achat. Un loader est ouvert pendant toute la séquence et
   /// TOUJOURS refermé par [_finishGrant] ou dans les branches d'échec.
   Future<void> _startPurchase() async {
+    // Compte AVANT le paiement : sans compte, /buy-ticket refuse et la place
+    // payée ne serait rattachée à personne.
+    if (!await requireAccount(reason: 'guest_reason_ticket'.tr)) return;
     final eventController = Get.find<EventController>();
     final eventId = widget.event.id.toString();
     myLoadingDialog();
@@ -177,6 +181,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
   /// « J'ai déjà payé » : ré-attache le billet SANS repasser par le store.
   Future<void> _recoverTicket() async {
+    if (!await requireAccount(reason: 'guest_reason_ticket'.tr)) return;
     final eventController = Get.find<EventController>();
     myLoadingDialog();
     final updated = await eventController.buyTicketWithRetry(

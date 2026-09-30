@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
-import 'package:artist/Auth/login_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/api.dart';
@@ -118,11 +117,8 @@ class _SpalashScreenState extends State<SpalashScreen>
   /// session / fermé aujourd'hui).
   void _softEnter() {
     if (!mounted) return;
-    if (!_restoreSession()) {
-      // Session disparue entre-temps : parcours normal.
-      Get.offAll(() => LoginScreen());
-      return;
-    }
+    // Avec ou sans compte (mode visiteur) : retour direct sur le dernier onglet.
+    _restoreSession();
     Get.offAll(() => MyBottomBar(index: readLastTab() ?? 2));
     unawaited(showFeaturedEventIfAny());
   }
@@ -361,14 +357,15 @@ class _SpalashScreenState extends State<SpalashScreen>
     HapticFeedback.heavyImpact();
     await _flashController.forward();
     if (!mounted) return;
-    final hasUser = _restoreSession();
-    // Ouverture directe sur le Live + Feed (VybzLiveScreen = index 2) au lieu de
-    // l'Accueil : l'utilisateur tombe tout de suite dans "Pour toi / En direct /
-    // Clips". Le X de cet écran ramène à l'Accueil (MyBottomBar index 0).
-    Get.offAll(() => hasUser ? MyBottomBar(index: 2) : LoginScreen());
-    // Popup « À la une » (utilisateur connecté uniquement, non bloquant,
-    // silencieux en cas d'échec réseau).
-    if (hasUser) unawaited(showFeaturedEventIfAny());
+    _restoreSession();
+    // Ouverture directe sur le Live + Feed (VybzLiveScreen = index 2), AVEC OU
+    // SANS compte : un visiteur regarde tout de suite ; le compte n'est
+    // demandé qu'au moment d'une action (voir guest_gate.dart). Exiger un
+    // compte dès l'ouverture faisait fuir les gens. Le X de cet écran ramène à
+    // l'Accueil (MyBottomBar index 0).
+    Get.offAll(() => MyBottomBar(index: 2));
+    // Popup « À la une » (non bloquant, silencieux en cas d'échec réseau).
+    unawaited(showFeaturedEventIfAny());
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/guest_gate.dart';
 import 'package:artist/Global/live_router.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/Models/user_model.dart';
@@ -119,6 +120,7 @@ Future<void> showLiveJoinSheet(User artist) async {
   final priceLabel = price <= 0 ? 'Gratuit' : '${price.toStringAsFixed(2)} €';
 
   Future<void> join() async {
+    if (!await requireAccount(reason: 'guest_reason_live'.tr)) return;
     myLoadingDialog();
     final fetched = await eventCtrl.getEventById(liveId.toString());
     Get.back(); // ferme le loader

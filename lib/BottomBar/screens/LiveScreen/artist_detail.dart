@@ -1,6 +1,7 @@
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/guest_gate.dart';
 import 'package:artist/Models/user_model.dart';
 import 'package:artist/widgets/bio_links.dart';
 import 'package:artist/BottomBar/screens/LiveScreen/artist_clips_grid.dart';
@@ -140,6 +141,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   }
 
   Future<void> _toggleFollow() async {
+    if (!await requireAccount(reason: 'guest_reason_follow'.tr)) return;
     eventController.isLoading.value = true;
     eventController.update();
     try {
@@ -344,9 +346,16 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                           ? Icons.playlist_add_check_rounded
                           : Icons.playlist_add_rounded,
                       label: saved ? 'common_in_my_list'.tr : 'common_my_list'.tr,
-                      onTap: () => eventController.toggleSaveArtist(
-                        artistId: '${widget.artist?.id ?? 1}',
-                      ),
+                      onTap: () async {
+                        if (!await requireAccount(
+                          reason: 'guest_reason_follow'.tr,
+                        )) {
+                          return;
+                        }
+                        eventController.toggleSaveArtist(
+                          artistId: '${widget.artist?.id ?? 0}',
+                        );
+                      },
                     );
                   }),
                 ],

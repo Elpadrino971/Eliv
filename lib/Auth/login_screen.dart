@@ -33,7 +33,11 @@ void _showGoogleUnavailable() {
 }
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.closable = false});
+
+  /// Ouvert depuis le mode visiteur (voir guest_gate.dart) : une croix
+  /// permet de revenir à ce qu'on regardait.
+  final bool closable;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -262,6 +266,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         MyButton(
                           label: 'auth_create_account'.tr,
                           onTap: () => Get.to(() => CreateAcount(
+                                closable: widget.closable,
                                 initialEmail: emailController.text.trim(),
                               )),
                           buttonColor: Colors.transparent,
@@ -447,6 +452,16 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+          if (widget.closable)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 6,
+              left: 8,
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded, color: ivory),
+                tooltip: 'guest_later'.tr,
+                onPressed: () => Get.back(),
+              ),
+            ),
         ],
       ),
     );

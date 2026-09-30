@@ -10,7 +10,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class CreateAcount extends StatefulWidget {
-  const CreateAcount({super.key, this.initialEmail});
+  const CreateAcount({super.key, this.initialEmail, this.closable = false});
+
+  /// Ouvert depuis le mode visiteur (voir guest_gate.dart) : croix de retour.
+  final bool closable;
 
   /// Email saisi sur l'écran de connexion, repris ici pour ne pas le retaper.
   final String? initialEmail;
@@ -34,6 +37,16 @@ class _CreateAcountState extends State<CreateAcount> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: widget.closable
+          ? AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.close_rounded, color: ivory),
+                onPressed: () => Get.back(),
+              ),
+            )
+          : null,
       body: Container(
         padding: myPadding,
         child: Form(
@@ -250,7 +263,7 @@ class _CreateAcountState extends State<CreateAcount> {
 
             GestureDetector(
               onTap: () {
-                Get.to(() => LoginScreen());
+                Get.to(() => LoginScreen(closable: widget.closable));
               },
               child: Text(
                 'auth_sign_in'.tr,

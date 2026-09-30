@@ -48,7 +48,7 @@ class _FutureScreenState extends State<FutureScreen> {
   }
 
   bool get _hasTicket =>
-      (event.ticketBuyerIds ?? []).contains(userModel.value.user?.id ?? 1);
+      (event.ticketBuyerIds ?? []).contains(userModel.value.user?.id ?? 0);
 
   /// Bouton circulaire "glass" premium (bleu nuit + contour or).
   Widget _glassButton({required VoidCallback onTap, required Widget child}) {
@@ -571,7 +571,7 @@ class _FutureScreenState extends State<FutureScreen> {
                       event = event.copyWith(
                         ticketBuyerIds: [
                           ...(event.ticketBuyerIds ?? []),
-                          userModel.value.user?.id ?? 1,
+                          userModel.value.user?.id ?? 0,
                         ],
                       );
                     }

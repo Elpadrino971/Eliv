@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/guest_gate.dart';
 import 'package:artist/Global/mux.dart';
 import 'package:artist/Models/abusive_words_model.dart';
 import 'package:artist/Models/artist_clips_model.dart';
@@ -504,7 +505,7 @@ class EventController extends GetxController {
     response.typeSetter = 'post';
     response.urlSetter = APIs.followArtistAPI;
     response.bodySetter = {
-      "user_id": "${userModel.value.user?.id ?? 1}",
+      "user_id": "${userModel.value.user?.id ?? 0}",
       "artist_id": artistId,
     };
     await response.hitAPI().then((value) {
@@ -520,7 +521,7 @@ class EventController extends GetxController {
     response.typeSetter = 'post';
     response.urlSetter = APIs.unfollowArtistAPI;
     response.bodySetter = {
-      "user_id": "${userModel.value.user?.id ?? 1}",
+      "user_id": "${userModel.value.user?.id ?? 0}",
       "artist_id": artistId,
     };
     await response.hitAPI().then((value) {
@@ -574,7 +575,7 @@ class EventController extends GetxController {
     final countryCode = Get.deviceLocale?.countryCode ?? '';
     response.bodySetter = {
       "event_id": eventId,
-      "user_id": "${userModel.value.user?.id ?? 1}",
+      "user_id": "${userModel.value.user?.id ?? 0}",
       "country_code": countryCode,
     };
     try {
@@ -677,13 +678,16 @@ class EventController extends GetxController {
       buyTicketWithRetry(eventId, retry: retry);
 
   Future<void> getUserJoinedEvents() async {
+    // Visiteur : pas de billets (l'ancien repli « user_id 1 » renvoyait les
+    // billets d'un autre compte).
+    if (isGuest) return;
     // Pas d'update() ici : appelé depuis initState, un rebuild synchrone
     // déclencherait « setState() called during build ». Le drapeau est lu
     // au prochain build ; l'update() du finally suit un await (sans risque).
     isLoadingJoinedEvents = true;
     response.typeSetter = 'post';
     response.urlSetter = APIs.userEventHistoryAPI;
-    response.bodySetter = {"user_id": "${userModel.value.user?.id ?? 1}"};
+    response.bodySetter = {"user_id": "${userModel.value.user?.id ?? 0}"};
     try {
       await response.hitAPI().then((value) {
         if (value.split(' ').first != 'error') {
@@ -703,7 +707,7 @@ class EventController extends GetxController {
     int? count;
     response.typeSetter = 'post';
     response.urlSetter = APIs.likeEventAPI(eventId);
-    response.bodySetter = {'liked': '$liked', 'user_id': '${userModel.value.user?.id ?? 1}'};
+    response.bodySetter = {'liked': '$liked', 'user_id': '${userModel.value.user?.id ?? 0}'};
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
         count = jsonDecode(value)['likes_count'];
@@ -724,7 +728,7 @@ class EventController extends GetxController {
     response.urlSetter = APIs.eventCommentAPI;
     response.bodySetter = {
       "event_id": eventId,
-      "user_id": '${userModel.value.user?.id ?? 1}',
+      "user_id": '${userModel.value.user?.id ?? 0}',
       "comment": comment,
     };
     await response.hitAPI().then((value) {
@@ -785,7 +789,7 @@ class EventController extends GetxController {
   Future<void> getEventHistory() async {
     response.typeSetter = 'post';
     response.urlSetter = APIs.eventHistoryAPI;
-    response.bodySetter = {'user_id': '${userModel.value.user?.id ?? 1}'};
+    response.bodySetter = {'user_id': '${userModel.value.user?.id ?? 0}'};
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
         eventHistory.value = eventModelFromJson(value, 'list');
@@ -822,7 +826,7 @@ class EventController extends GetxController {
     response.urlSetter = APIs.sendGiftAPI;
     response.bodySetter = {
       "event_id": eventId,
-      "user_id": '${userModel.value.user?.id ?? 1}',
+      "user_id": '${userModel.value.user?.id ?? 0}',
       "gift_id": giftId,
     };
     await response.hitAPI().then((value) {
@@ -881,7 +885,7 @@ class EventController extends GetxController {
     response.urlSetter = APIs.reportEventAPI;
     response.bodySetter = {
       "event_id": eventId,
-      "user_id": '${userModel.value.user?.id ?? 1}',
+      "user_id": '${userModel.value.user?.id ?? 0}',
       "reason": reason,
       "description": description,
     };

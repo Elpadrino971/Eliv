@@ -177,7 +177,7 @@ class ArtistController extends GetxController {
   Future<void> getEventStatsByUserId() async {
     response.typeSetter = 'post';
     response.urlSetter = APIs.getEventStatsByUserIdAPI;
-    response.bodySetter = {'user_id': '${userModel.value.user?.id ?? 1}'};
+    response.bodySetter = {'user_id': '${userModel.value.user?.id ?? 0}'};
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
         eventStats.value = eventModelFromJson(value, 'list');

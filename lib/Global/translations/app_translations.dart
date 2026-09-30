@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import 'zone_common.dart';
+import 'zone_guest.dart';
 import 'zone_home_tickets.dart';
 import 'zone_live.dart';
 import 'zone_studio_extra.dart';
@@ -20,6 +21,7 @@ class AppTranslations extends Translations {
   static const List<Map<String, Map<String, String>>> _zones = [
     commonTranslations,
     liveTranslations,
+    guestTranslations,
     homeTicketsTranslations,
     studioExtraTranslations,
   ];

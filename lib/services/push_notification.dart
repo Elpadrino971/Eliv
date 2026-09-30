@@ -66,14 +66,16 @@ class PushNotificationSystem {
       messaging.subscribeToTopic("vybzzz");
       messaging.subscribeToTopic("users");
       messaging.subscribeToTopic("artist");
-      messaging.subscribeToTopic("00${userModel.value.user?.id}");
+      final uid = userModel.value.user?.id;
+      if (uid != null) messaging.subscribeToTopic("00$uid"); // visiteur : pas de sujet perso
 
       return registrationToken!;
     } catch (e) {
       messaging.subscribeToTopic("vybzzz");
       messaging.subscribeToTopic("users");
       messaging.subscribeToTopic("artist");
-      messaging.subscribeToTopic("00${userModel.value.user?.id}");
+      final uid = userModel.value.user?.id;
+      if (uid != null) messaging.subscribeToTopic("00$uid"); // visiteur : pas de sujet perso
       return '';
     }
   }

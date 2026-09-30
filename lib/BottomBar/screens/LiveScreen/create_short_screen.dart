@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/guest_gate.dart';
 import 'package:artist/services/api_services.dart';
 import 'package:artist/widgets/my_appBar.dart';
 import 'package:artist/widgets/my_button.dart';
@@ -39,6 +40,14 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
   @override
   void initState() {
     super.initState();
+    // Publier un clip demande un compte (mode visiteur) : sinon on referme.
+    if (isGuest) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!await requireAccount(reason: 'guest_reason_clip'.tr) && mounted) {
+          Get.back();
+        }
+      });
+    }
     // Pré-remplissage depuis un partage entrant (galerie / autre app).
     if (widget.sharedVideoPath != null && widget.sharedVideoPath!.isNotEmpty) {
       _video = XFile(widget.sharedVideoPath!);

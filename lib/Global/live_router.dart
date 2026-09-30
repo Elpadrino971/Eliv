@@ -1,6 +1,7 @@
 import 'package:artist/BottomBar/screens/homeScreen/check_out_screen.dart';
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/guest_gate.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/ZegoCloud/join_stream.dart';
 import 'package:artist/ZegoCloud/pre_stream_screen.dart';
@@ -47,6 +48,12 @@ bool hasPlayableReplay(Event event) {
 ///
 /// Renvoie le Future de navigation pour que l'appelant puisse `await`.
 Future<dynamic>? joinLive(Event event) {
+  // Mode visiteur : le live (salle Zego, billet, chat) a besoin d'un compte.
+  // On le demande ici, point de passage unique, puis on reprend.
+  if (isGuest) {
+    return requireAccount(reason: 'guest_reason_live'.tr)
+        .then((ok) => ok ? joinLive(event) : null);
+  }
   if (event.status == 'live' && event.isProLive) {
     return _joinProLive(event);
   }
@@ -107,6 +114,10 @@ Future<dynamic> _joinProLive(Event event) async {
 /// pro qui patiente jusqu'à ce que la régie envoie l'image. Sinon :
 /// [PreStreamScreen] (comportement historique).
 Future<dynamic>? openWaitingRoom(Event event) {
+  if (isGuest) {
+    return requireAccount(reason: 'guest_reason_live'.tr)
+        .then((ok) => ok ? openWaitingRoom(event) : null);
+  }
   if (event.isProLive) return _joinProLive(event);
   return Get.to(() => PreStreamScreen(event: event));
 }

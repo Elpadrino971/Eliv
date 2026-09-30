@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/guest_gate.dart';
 import 'package:artist/Global/mux.dart';
 import 'package:artist/Global/orientation_helper.dart';
 import 'package:artist/Global/point_packs.dart';
@@ -310,9 +311,11 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen>
     return d.inHours > 0 ? '${d.inHours}:$m:$s' : '$m:$s';
   }
 
-  void _toggleLike() {
+  void _toggleLike() async {
     final event = widget.event;
     if (event?.id == null) return;
+    if (!await requireAccount(reason: 'guest_reason_chat'.tr)) return;
+    if (!mounted) return;
     setState(() {
       _liked = !_liked;
       _likes += _liked ? 1 : -1;
@@ -336,6 +339,7 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen>
   void _openTips() async {
     final event = widget.event;
     if (event?.id == null) return;
+    if (!await requireAccount(reason: 'guest_reason_gift'.tr)) return;
     final controller = Get.find<EventController>();
     if ((controller.gifts.value.data ?? []).isEmpty) {
       await controller.getGifts();
