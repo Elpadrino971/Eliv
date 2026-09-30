@@ -241,6 +241,7 @@ function serializeEvent(row, { currentUserId = null } = {}) {
   const rawLive = row.mux_live_playback_id || null;
   const hasReplay = !!(rawPlayback || isMuxUrl(rawReel));
   const videoReel = rawReel && isMuxUrl(rawReel) && !canWatch ? null : rawReel;
+  const teaserPlaybackId = row.teaser_playback_id || null;
 
   // ─── Tarification dynamique (lot 9) ───
   // `ticket_price` = prix EFFECTIF à cet instant (chaîne « 6.99 ») : l'app en
@@ -285,6 +286,10 @@ function serializeEvent(row, { currentUserId = null } = {}) {
     replay_enabled: replayEnabled,
     replay_duration_days: replayWindowDays,
     teaser_enabled: !!row.teaser_enabled,
+    // Teaser d'accueil (lot 13) : bande-annonce Mux PUBLIQUE (accueil + popup
+    // « À la une »), JAMAIS masquée — contrairement au replay ci-dessus.
+    teaser_url: teaserPlaybackId ? `https://stream.mux.com/${teaserPlaybackId}.m3u8` : null,
+    teaser_poster: teaserPlaybackId ? `https://image.mux.com/${teaserPlaybackId}/thumbnail.webp?width=720&time=1` : null,
     teaser_duration: row.teaser_duration,
     created_at: row.created_at,
     updated_at: row.updated_at,

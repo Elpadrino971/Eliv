@@ -324,10 +324,25 @@ function muxBadge(status) {
   const [cls, label] = map[status] || [];
   return cls ? `<span class="badge ${cls}">${esc(label)}</span>` : '';
 }
+// kind : 'event' = REPLAY du concert (réservé aux acheteurs d'un concert
+// payant) ; 'teaser' (lot 13) = bande-annonce PUBLIQUE de l'accueil ; 'clip'.
+const MUX_UPLOAD_COPY = {
+  teaser: {
+    title: 'Teaser du concert (accueil)',
+    help: 'Vidéo courte (15–60 s), verticale 9:16 ou 4:5 idéalement, affichée en boucle sans son sur l\'accueil et le popup À la une. Publique : visible par tous, même sans billet. Remplace le teaser précédent.',
+    done: 'Envoyé ! Traitement Mux en cours (moins d\'une minute pour un teaser). Rafraîchis la liste ensuite.',
+  },
+  event: {
+    title: 'Replay (vidéo du concert)',
+    help: 'Enregistrement complet du concert : réservé aux acheteurs d\'un concert payant. Pour une bande-annonce publique, utilise « 🎞 Teaser (accueil) ».',
+  },
+};
 function openMuxUploadDialog(kind, refId) {
+  const copy = MUX_UPLOAD_COPY[kind] || {};
   const bg = document.createElement('div');
   bg.className = 'modal-bg';
-  bg.innerHTML = `<div class="modal"><h3>Uploader la vidéo vers Mux</h3>
+  bg.innerHTML = `<div class="modal"><h3>${esc(copy.title || 'Uploader la vidéo vers Mux')}</h3>
+    ${copy.help ? `<p style="font-size:13px;margin-bottom:8px;line-height:1.5">${esc(copy.help)}</p>` : ''}
     <p style="color:var(--muted);font-size:13px;margin-bottom:10px">Le fichier part directement vers Mux (jamais stocké sur notre serveur). Pour un concert long, laisse l'onglet ouvert le temps de l'envoi.</p>
     <label>Fichier vidéo</label><input type="file" id="muxfile" accept="video/*">
     <div id="muxprogress" style="margin-top:14px;color:var(--muted);font-size:13px">En attente du fichier…</div>
@@ -343,11 +358,32 @@ function openMuxUploadDialog(kind, refId) {
       prog.textContent = 'Préparation de l\'upload…';
       const { data } = await api('POST', '/mux/direct-upload', { kind, ref_id: refId });
       await muxDirectUpload(data.upload_url, file, (pct) => { prog.textContent = `Envoi en cours… ${pct}%`; });
-      prog.textContent = 'Envoyé ! Traitement Mux en cours (quelques minutes pour un concert). Rafraîchis la liste ensuite.';
-      toast('Vidéo envoyée à Mux — traitement en cours');
+      prog.textContent = copy.done || 'Envoyé ! Traitement Mux en cours (quelques minutes pour un concert). Rafraîchis la liste ensuite.';
+      toast(kind === 'teaser' ? 'Teaser envoyé à Mux — traitement en cours' : 'Vidéo envoyée à Mux — traitement en cours');
       route();
     } catch (e) { prog.textContent = ''; toast(e.message); }
   };
+}
+// « Retirer le teaser » (lot 13) : l'accueil n'affiche plus la bande-annonce,
+// l'asset Mux est supprimé (best effort côté serveur). Le replay est intact.
+async function removeEventTeaser(eventId) {
+  if (!confirm('Retirer le teaser de ce concert ?\n\nLa vidéo disparaît de l\'accueil et du popup À la une. Le replay n\'est pas touché.')) return;
+  try {
+    await api('DELETE', `/events/${eventId}/teaser`);
+    toast('Teaser retiré');
+    route();
+  } catch (e) { toast(e.message); }
+}
+// « ↪ C'est un teaser » (lot 13) : une bande-annonce envoyée avant le lot 13
+// via l'ancien bouton d'upload est tombée dans le REPLAY (masqué aux
+// non-acheteurs) -> on la déplace vers le teaser public.
+async function convertReplayToTeaser(eventId) {
+  if (!confirm('Cette vidéo est-elle le teaser (bande-annonce) et non le replay du concert ?\n\nElle sera déplacée vers le teaser public (accueil + popup À la une) et le replay du concert sera vidé.')) return;
+  try {
+    await api('POST', `/events/${eventId}/replay-to-teaser`);
+    toast('Vidéo déplacée vers le teaser');
+    route();
+  } catch (e) { toast(e.message); }
 }
 async function toggleMuxLiveStream(eventId, hasLive) {
   try {
@@ -757,7 +793,7 @@ async function openEventForm(row, { duplicate = false } = {}) {
       { name: 'price_schedule', label: 'Tarification dynamique (optionnel) — le prix monte à l\'approche du concert', type: 'hidden', value: JSON.stringify(Array.isArray(row?.price_schedule) ? row.price_schedule : []) },
       { name: 'start_date_time', label: 'Date/heure LOCALE du lieu (calendrier)', type: 'datetime', value: row ? utcToLocalDisplay(row.start_date_time, row.tz_offset_minutes) : '' },
       { name: 'tz_offset_minutes', label: 'Fuseau horaire du lieu', type: 'select', value: row?.tz_offset_minutes ?? '0', options: TZ_OFFSETS },
-      { name: 'mux_playback_id', label: 'Vidéo — Mux Playback ID', value: row?.mux_playback_id, placeholder: 'colle l\'ID Mux (ou laisse vide)' },
+      { name: 'mux_playback_id', label: 'Vidéo — Mux Playback ID (replay)', value: row?.mux_playback_id, placeholder: 'colle l\'ID Mux (ou laisse vide)' },
       { name: 'cover', label: 'Image de couverture (fichier)', type: 'file', accept: 'image/*' },
       { name: 'cover_image', label: 'Ou nom de fichier / URL', value: row?.cover_image },
       { name: 'description', label: 'Description', type: 'textarea', value: row?.description },
@@ -1075,13 +1111,13 @@ async function pageEvents() {
     onAdd: () => openEventForm(null),
     columns: [
       { label: '#', render: (r) => r.id },
-      { label: 'Concert', render: (r) => `<div class="nm">${esc(r.name)}</div>${r.mux_playback_id ? '<div class="em">🎬 vidéo Mux</div>' : ''}` },
+      { label: 'Concert', render: (r) => `<div class="nm">${esc(r.name)}</div>${r.mux_playback_id ? '<div class="em">🎬 replay Mux</div>' : ''}` },
       { label: 'Artiste', render: (r) => esc(r.artist || '—') },
       { label: 'Prix', render: priceCell },
       { label: 'Statut', render: (r) => `${badge(r.status)}<div>${liveModeBadge(r)}</div>` },
-      { label: 'Vidéo', render: (r) => `${muxBadge(r.mux_upload_status)}${r.mux_live_stream_id && r.live_mode !== 'pro' ? '<div class="em">🔴 live en cours</div>' : ''}${r.replay_expires_at ? `<div class="em">replay jusqu'au ${fmtDate(r.replay_expires_at)}</div>` : ''}${r.mux_playback_id ? `<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap"><button class="btn edit" data-replayplay="${r.id}" title="Lire le replay (HLS)">▶ Replay</button><a class="btn" style="text-decoration:none;display:inline-block" href="${esc(r.replay_mp4_url || '')}" target="_blank" rel="noopener" title="Télécharge le replay en MP4. Replay enregistré avant cette version : disponible après le prochain live, ou clique « Préparer le MP4 » (sinon le lien répond 404).">⬇ Replay MP4</a>${r.mux_asset_id ? `<button class="btn" data-replaymp4="${r.id}" title="Demande à Mux la version MP4 d'un replay existant (assets sans rendition)">🎞 Préparer le MP4</button>` : ''}</div>` : ''}` },
+      { label: 'Vidéo', render: (r) => `${r.teaser_playback_id ? `<div style="margin-bottom:4px;display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span class="badge active" title="Bande-annonce publique affichée sur l'accueil et le popup À la une">Teaser ✓</span><button class="btn del" data-teaserdel="${r.id}">Retirer le teaser</button></div>` : ''}${!r.teaser_playback_id && r.mux_playback_id && !['completed', 'ended'].includes(r.status) ? `<div style="margin-bottom:4px"><button class="btn" data-replay2teaser="${r.id}" title="La vidéo envoyée comme replay est en fait la bande-annonce : la déplacer vers le teaser public">↪ C'est un teaser</button></div>` : ''}${muxBadge(r.mux_upload_status)}${r.mux_live_stream_id && r.live_mode !== 'pro' ? '<div class="em">🔴 live en cours</div>' : ''}${r.replay_expires_at ? `<div class="em">replay jusqu'au ${fmtDate(r.replay_expires_at)}</div>` : ''}${r.mux_playback_id ? `<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap"><button class="btn edit" data-replayplay="${r.id}" title="Lire le replay (HLS)">▶ Replay</button><a class="btn" style="text-decoration:none;display:inline-block" href="${esc(r.replay_mp4_url || '')}" target="_blank" rel="noopener" title="Télécharge le replay en MP4. Replay enregistré avant cette version : disponible après le prochain live, ou clique « Préparer le MP4 » (sinon le lien répond 404).">⬇ Replay MP4</a>${r.mux_asset_id ? `<button class="btn" data-replaymp4="${r.id}" title="Demande à Mux la version MP4 d'un replay existant (assets sans rendition)">🎞 Préparer le MP4</button>` : ''}</div>` : ''}` },
       { label: 'Date', render: (r) => fmtDate(r.start_date_time) },
-      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="event:${r.id}">🎬 Upload</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button>${r.live_mode === 'pro' && r.mux_live_stream_id ? `<button class="btn" data-muxrekey="${r.id}" title="Supprime le flux Mux et en recrée un : à utiliser si la clé de stream a fuité">🔑 Nouvelle clé</button>` : ''}<button class="btn grant" data-feature="${r.id}">⭐ À la une</button><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn" data-guests="${r.id}">🎤 Invités</button><button class="btn" data-links="${r.id}">🎛 Régie</button><button class="btn" data-stage="${r.id}">🖥 Scène</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="teaser:${r.id}" title="Bande-annonce courte publique (accueil + popup À la une)">🎞 Teaser (accueil)</button><button class="btn grant" data-muxupload="event:${r.id}" title="Enregistrement du concert, réservé aux acheteurs d'un concert payant">🎬 Replay (vidéo du concert)</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button>${r.live_mode === 'pro' && r.mux_live_stream_id ? `<button class="btn" data-muxrekey="${r.id}" title="Supprime le flux Mux et en recrée un : à utiliser si la clé de stream a fuité">🔑 Nouvelle clé</button>` : ''}<button class="btn grant" data-feature="${r.id}">⭐ À la une</button><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn" data-guests="${r.id}">🎤 Invités</button><button class="btn" data-links="${r.id}">🎛 Régie</button><button class="btn" data-stage="${r.id}">🖥 Scène</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
     ],
   });
   renderFeaturedBanner();
@@ -2266,6 +2302,10 @@ document.addEventListener('click', (e) => {
   if (evg) { showEventGuests(evg.dataset.guests); return; }
   const ml = e.target.closest('[data-muxlive]');
   if (ml) { const [, id, hasLive] = ml.dataset.muxlive.split(':'); toggleMuxLiveStream(id, hasLive === '1'); return; }
+  const r2t = e.target.closest('[data-replay2teaser]');
+  if (r2t) { convertReplayToTeaser(r2t.dataset.replay2teaser); return; }
+  const td = e.target.closest('[data-teaserdel]');
+  if (td) { removeEventTeaser(td.dataset.teaserdel); return; }
   const rk = e.target.closest('[data-muxrekey]');
   if (rk) { regenMuxStreamKey(rk.dataset.muxrekey); return; }
   const rp = e.target.closest('[data-replayplay]');

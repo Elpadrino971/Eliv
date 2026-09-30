@@ -63,6 +63,26 @@ router.post('/', (req, res) => {
       const playbackId = (obj.playback_ids || []).find((p) => p.policy === 'public')?.id
         || obj.playback_ids?.[0]?.id || null;
 
+      // Teaser d'accueil (lot 13) : bande-annonce PUBLIQUE, rangée à part du
+      // replay (ne touche ni mux_playback_id ni video_reel ni replay_expires_at).
+      // L'ancien asset teaser éventuel est supprimé chez Mux en best effort.
+      if (passthrough?.kind === 'teaser' && passthrough.id) {
+        const prev = db.prepare('SELECT id, teaser_asset_id FROM events WHERE id = ?').get(passthrough.id);
+        if (!prev) {
+          console.warn(`[mux webhook] teaser pour event #${passthrough.id} introuvable, asset ${obj.id} ignoré`);
+        } else {
+          db.prepare('UPDATE events SET teaser_playback_id = ?, teaser_asset_id = ? WHERE id = ?')
+            .run(playbackId, obj.id, prev.id);
+          if (prev.teaser_asset_id && prev.teaser_asset_id !== obj.id && mux.isConfigured()) {
+            mux.deleteAsset(prev.teaser_asset_id)
+              .then(() => console.log(`[mux webhook] ancien teaser ${prev.teaser_asset_id} (event #${prev.id}) supprimé`))
+              .catch((e) => console.error(`[mux webhook] suppression ancien teaser event #${prev.id}:`, e.message));
+          }
+          moderation.moderateVideo({ url: muxHls(playbackId), targetType: 'teaser', targetId: prev.id });
+        }
+        return res.json({ status: 'success' });
+      }
+
       // Rattachement du replay à l'event : par passthrough (nominal) ou, en
       // secours, via le live_stream_id que Mux fournit sur les assets issus
       // d'un live -> robuste même si le passthrough de l'asset venait à manquer.
@@ -106,6 +126,9 @@ router.post('/', (req, res) => {
         db.prepare("UPDATE events SET mux_upload_status = 'errored' WHERE id = ?").run(passthrough.id);
       } else if (passthrough?.kind === 'clip' && passthrough.id) {
         db.prepare("UPDATE feed_clips SET upload_status = 'errored' WHERE id = ?").run(passthrough.id);
+      } else if (passthrough?.kind === 'teaser' && passthrough.id) {
+        // Teaser en échec : l'ancien teaser (s'il y en a un) reste en place.
+        console.warn(`[mux webhook] teaser event #${passthrough.id} : encodage Mux en échec`);
       }
     } else if (type === 'video.live_stream.active') {
       db.prepare("UPDATE events SET status = 'live' WHERE mux_live_stream_id = ?").run(obj.id);
