@@ -512,12 +512,12 @@ class FeaturedEventCard extends StatelessWidget {
     );
   }
 
-  Widget _cover() {
+  Widget _cover({BoxFit fit = BoxFit.cover}) {
     final url = featuredCoverUrl(event);
     if (url == null) return _fallbackCover();
     return CachedNetworkImage(
       imageUrl: url,
-      fit: BoxFit.cover,
+      fit: fit,
       placeholder: (_, __) => const ColoredBox(color: cardDeep),
       errorWidget: (_, __, ___) => _fallbackCover(),
     );
@@ -649,9 +649,11 @@ class FeaturedEventCard extends StatelessWidget {
 
   Widget _buildHero() {
     final artist = _artistName;
+    // L'affiche (souvent un visuel avec du texte, format portrait) est montrée
+    // EN ENTIER sur un fond flouté ; les infos passent dessous, jamais
+    // par-dessus le texte de l'affiche.
     return Container(
       width: double.infinity,
-      height: Get.height * 0.42,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: cardDeep,
@@ -659,27 +661,33 @@ class FeaturedEventCard extends StatelessWidget {
         border: Border.all(color: goldSecondary.withValues(alpha: 0.35)),
         boxShadow: kCardShadow,
       ),
-      child: Stack(
-        fit: StackFit.expand,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _cover(),
-          const DecoratedBox(
-            decoration: BoxDecoration(gradient: kImageOverlay),
+          SizedBox(
+            height: Get.height * 0.36,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ImageFiltered(
+                  imageFilter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: _cover(),
+                ),
+                const ColoredBox(color: Color(0x66000000)),
+                _cover(fit: BoxFit.contain),
+              ],
+            ),
           ),
-          Positioned(
-            top: 14,
-            left: 14,
-            right: 14,
-            child: Align(alignment: Alignment.centerLeft, child: _badge()),
-          ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _badge(),
+                const SizedBox(height: 10),
                 if (artist.isNotEmpty) ...[
                   Text(
                     artist.toUpperCase(),
@@ -702,13 +710,13 @@ class FeaturedEventCard extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: AppFonts.heading,
                     color: ivory,
-                    fontSize: 26,
+                    fontSize: 22,
                     fontWeight: FontWeight.w700,
-                    height: 1.1,
+                    height: 1.15,
                   ),
                 ),
                 if (_dateLabel.isNotEmpty) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   _dateRow(),
                 ],
                 const SizedBox(height: 14),

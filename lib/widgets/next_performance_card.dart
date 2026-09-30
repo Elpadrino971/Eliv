@@ -163,9 +163,9 @@ class _NextPerformanceCardState extends State<NextPerformanceCard> {
                             borderRadius: BorderRadius.circular(30),
                             border: Border.all(color: goldSecondary, width: 1.2),
                           ),
-                          child: const Text(
-                            'GET TICKET',
-                            style: TextStyle(
+                          child: Text(
+                            'home_get_tickets'.tr.toUpperCase(),
+                            style: const TextStyle(
                               fontFamily: AppFonts.ui,
                               color: goldPrimary,
                               fontWeight: FontWeight.w700,
