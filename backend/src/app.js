@@ -104,6 +104,8 @@ app.use(
     '/api/verify-link',
     '/api/challenge/register',
     '/api/challenge/join',
+    // Connexion sur live.html (billet acheté dans l'app) : même protection.
+    '/api/watch/login',
   ],
   authIpCeiling,
   authLimiter,
@@ -115,7 +117,7 @@ app.use('/api/admin/login', rateLimit({
 }));
 // Roue de la fortune et billetterie web : un tirage par e-mail côté serveur,
 // mais on freine aussi les rafales automatisées (20 / 15 min par IP).
-app.use(['/api/wheel/:slug/spin', '/api/tickets/web-checkout'], rateLimit({
+app.use(['/api/wheel/:slug/spin', '/api/tickets/web-checkout', '/api/watch/claim', '/api/watch/free', '/api/watch/resend'], rateLimit({
   windowMs: WINDOW_15_MIN, max: 20, keyGenerator: ipOf,
   standardHeaders: true, legacyHeaders: false, message: LIMIT_MESSAGE,
 }));
@@ -336,6 +338,8 @@ app.use('/api', authRoutes);
 app.use('/api', eventRoutes);
 app.use('/api', miscRoutes);
 app.use('/api', require('./routes/campaign.routes'));
+// Regarder un concert depuis le site, sans l'app (live.html).
+app.use('/api/watch', require('./routes/watch.routes'));
 
 // Webhook RevenueCat : pas de signature HMAC (juste un header Authorization
 // fixe), donc pas besoin de corps brut -> monté normalement après express.json().

@@ -86,3 +86,47 @@ parcours d'achat sur un vrai téléphone avant le lancement, ajouter dans
 puis redémarrer le conteneur. **Retirer la ligne (et redémarrer) avant tout
 concert payant réel** : sinon un testeur obtient un vrai billet et l'artiste
 une part sur une vente fictive.
+
+
+## Regarder le live sur le site (live.html)
+
+Un fan qui paie sur le site (Stripe), ou réserve un concert gratuit, regarde
+tout de suite sur `https://vybzzz.online/live.html?e=<id du concert>`, sans
+application. Il reçoit aussi son lien par e-mail. Un billet acheté dans l'app
+s'ouvre aussi sur le site (« J'ai déjà ma place » → « Compte VybzzZ »).
+
+**Protection du flux (obligatoire avant d'ouvrir la lecture web) :**
+
+1. Dans Mux : *Settings → Signing Keys → Generate new key* (environnement de
+   production). Mux affiche un **Key ID** et une **clé privée encodée en
+   base64** (une seule fois : la copier tout de suite).
+2. Dans `.vybzzz.env` :
+
+       MUX_SIGNING_KEY_ID=<Key ID>
+       MUX_SIGNING_KEY_PRIVATE=<clé privée base64, sur une seule ligne>
+
+3. Redémarrer le conteneur.
+
+Sans ces deux variables, la lecture web est **refusée** (message « regarde
+dans l'application ») : le site ne reçoit jamais l'identifiant public du flux.
+`WATCH_ALLOW_PUBLIC=1` lève ce refus : réservé aux tests, jamais en production.
+
+Ce que fait la protection :
+- le navigateur ne reçoit qu'une URL **signée qui expire** (4 h pour un
+  direct, 3 h pour un replay), jamais écrite dans la page ;
+- l'URL ne se lit **que depuis vybzzz.online** (restriction Mux sur le
+  domaine, créée automatiquement à la première lecture) : copiée dans VLC,
+  un autre site ou envoyée à quelqu'un, elle ne marche pas ;
+- une place s'ouvre sur **2 écrans à la fois** au plus (`WATCH_MAX_DEVICES`) ;
+- chaque image porte un **filigrane** (e-mail masqué + n° de place) qui se
+  déplace : une capture qui circule dit de quelle place elle vient
+  (`SELECT email FROM web_watch_tokens WHERE id = <n° de place>`) ;
+- une place remboursée coupe l'accès dans les 20 s.
+
+Limite : aucune technique web n'empêche de filmer l'écran avec un autre
+appareil. Seule une protection DRM (Widevine / FairPlay) rend les captures
+noires sur une partie des appareils ; elle se négocie avec Mux.
+
+**Mode téléphone** : le site lit le relais Zego → Mux, créé seulement si le
+replay est activé sur le concert (réglage par défaut). Replay désactivé =
+pas de lecture sur le site pour ce concert.

@@ -217,7 +217,54 @@ function verifyWebhookSignature(rawBody, signatureHeader, secret, { now = Date.n
   }
 }
 
+// ─── Lecture signée (site web) ────────────────────────────────────────────
+// Les ID de lecture « public » se lisent sans contrôle : qui a l'ID a le
+// flux. Pour le site, chaque flux reçoit en plus un ID « signed », illisible
+// sans un jeton JWT signé par NOTRE clé (MUX_SIGNING_KEY_ID +
+// MUX_SIGNING_KEY_PRIVATE, créés dans Mux : Settings > Signing Keys). Le jeton
+// expire, et porte une restriction de lecture (domaine vybzzz.online
+// uniquement) : un lien copié ne marche ni ailleurs, ni après expiration.
+const jwt = require('jsonwebtoken');
+const MUX_SIGNING_KEY_ID = process.env.MUX_SIGNING_KEY_ID;
+const MUX_SIGNING_KEY_PRIVATE = process.env.MUX_SIGNING_KEY_PRIVATE;
+
+function isSigningConfigured() {
+  return Boolean(MUX_SIGNING_KEY_ID && MUX_SIGNING_KEY_PRIVATE);
+}
+
+// Mux fournit la clé privée encodée en base64 ; on accepte aussi un PEM brut.
+function signingKeyPem() {
+  const raw = String(MUX_SIGNING_KEY_PRIVATE || '').trim();
+  return raw.includes('BEGIN') ? raw.replace(/\\n/g, '\n') : Buffer.from(raw, 'base64').toString('utf8');
+}
+
+/** Jeton de lecture vidéo pour un ID « signed » (aud 'v'), valable ttlSeconds. */
+function signPlaybackToken(playbackId, { ttlSeconds = 4 * 3600, restrictionId } = {}) {
+  const claims = { sub: playbackId, aud: 'v', exp: Math.floor(Date.now() / 1000) + ttlSeconds };
+  if (restrictionId) claims.playback_restriction_id = restrictionId;
+  return jwt.sign(claims, signingKeyPem(), { algorithm: 'RS256', keyid: MUX_SIGNING_KEY_ID });
+}
+
+/** Ajoute un ID de lecture « signed » à un live stream ou un asset existant. */
+function addSignedPlaybackId(kind, id) {
+  const path = kind === 'asset' ? 'assets' : 'live-streams';
+  return muxFetch(`/video/v1/${path}/${id}/playback-ids`, { method: 'POST', body: { policy: 'signed' } })
+    .then((d) => d.id);
+}
+
+/** Restriction de lecture : uniquement depuis ces domaines (en-tête Referer). */
+function createPlaybackRestriction(domains) {
+  return muxFetch('/video/v1/playback-restrictions', {
+    method: 'POST',
+    body: { referrer: { allowed_domains: domains, allow_no_referrer: false } },
+  }).then((d) => d.id);
+}
+
 module.exports = {
+  isSigningConfigured,
+  signPlaybackToken,
+  addSignedPlaybackId,
+  createPlaybackRestriction,
   isConfigured,
   createDirectUpload,
   createAssetFromUrl,

@@ -16,10 +16,17 @@ const stripeService = require('./stripe');
 const access = require('./event_access');
 const email = require('./email');
 const pricing = require('./pricing');
+const webWatch = require('./web_watch');
 
 const SITE_URL = (process.env.SITE_URL || 'https://vybzzz.online').replace(/\/+$/, '');
 
-async function createCheckout({ eventId, rawEmail, campaign, page }) {
+/**
+ * @param {object} o
+ * @param {'page'|'live'} [o.returnTo] 'live' : retour sur live.html, qui
+ *   échange la session contre l'accès et lance le concert aussitôt. Sinon
+ *   retour sur la page de campagne (`page`), qui fait de même dans #billet.
+ */
+async function createCheckout({ eventId, rawEmail, campaign, page, returnTo }) {
   if (!stripeService.isConfigured()) return { error: 'Paiement par carte indisponible pour le moment.', code: 503 };
   const event = db.prepare('SELECT id, name, ticket_price, price_schedule, start_date_time FROM events WHERE id = ?').get(eventId);
   if (!event) return { error: 'Concert introuvable.', code: 404 };
@@ -33,6 +40,10 @@ async function createCheckout({ eventId, rawEmail, campaign, page }) {
   const amountCents = Math.round((parseFloat(pricing.effectivePrice(event).price) || 0) * 100);
   if (amountCents < 50) return { error: 'Ce concert est gratuit : rejoins-le directement dans l’app.', code: 422 };
 
+  // {CHECKOUT_SESSION_ID} : remplacé par Stripe. La page de retour l'échange
+  // contre une clé d'accès (POST /api/watch/claim) : le fan regarde tout de
+  // suite, sans attendre le webhook ni installer l'app.
+  const live = `${SITE_URL}/live.html?e=${event.id}`;
   const back = `${SITE_URL}/${page || 'index.html'}`;
   const session = await stripeService.createTicketCheckout({
     eventId: event.id,
@@ -40,24 +51,15 @@ async function createCheckout({ eventId, rawEmail, campaign, page }) {
     amountCents,
     email: e,
     campaign,
-    successUrl: `${back}?paiement=ok#billet`,
-    cancelUrl: `${back}?paiement=annule#billet`,
+    successUrl: returnTo === 'live'
+      ? `${live}&session_id={CHECKOUT_SESSION_ID}`
+      : `${back}?paiement=ok&session_id={CHECKOUT_SESSION_ID}#billet`,
+    cancelUrl: returnTo === 'live' ? `${live}&paiement=annule` : `${back}?paiement=annule#billet`,
   });
   db.prepare(
     `INSERT INTO web_ticket_orders (event_id, email, amount, stripe_session_id, status, campaign) VALUES (?, ?, ?, ?, 'pending', ?)`
   ).run(event.id, e, (amountCents / 100).toFixed(2), session.id, campaign || null);
   return { url: session.url };
-}
-
-function confirmationHtml(eventName) {
-  return `<!doctype html><html lang="fr"><body style="margin:0;background:#0A1226;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#F4EFE3">
-<div style="max-width:520px;margin:0 auto;padding:36px 26px;text-align:center">
-  <div style="font-weight:800;letter-spacing:.12em;font-size:18px">Vybzz<span style="color:#E6C76A">Z</span></div>
-  <h1 style="font-size:24px;margin:28px 0 10px">Ta place est réservée</h1>
-  <p style="color:#B9C0D0;line-height:1.6;margin:0 0 24px">${eventName}, en direct sur VybzzZ.</p>
-  <p style="color:#B9C0D0;line-height:1.6;margin:0 0 26px">Pour rejoindre le live, ouvre l'application VybzzZ et connecte-toi <b style="color:#F4EFE3">avec cette même adresse e-mail</b>. Pas encore de compte ? Crée-le avec cette adresse : ta place y sera automatiquement.</p>
-  <a href="${SITE_URL}/app.html" style="display:inline-block;background:#E6C76A;color:#0A1226;text-decoration:none;font-weight:700;padding:15px 28px;border-radius:12px">Télécharger l'application</a>
-</div></body></html>`;
 }
 
 /**
@@ -99,7 +101,10 @@ async function handlePaid(session) {
   if (!r.replay) {
     const ev = db.prepare('SELECT name FROM events WHERE id = ?').get(eventId);
     try {
-      await email.sendEmail({ to: e, subject: 'Ta place pour le live est réservée', html: confirmationHtml(ev?.name || 'Ton concert'), kind: 'ticket_web' });
+      // Lien « Regarder le live » avec sa propre clé : le fan retrouve le
+      // concert depuis n'importe quel appareil, sans compte.
+      const url = webWatch.watchUrl(eventId, webWatch.issue(e, eventId, 'stripe_email'));
+      await email.sendEmail({ to: e, subject: 'Ta place pour le live est réservée', html: webWatch.watchEmailHtml(ev?.name, url, { paid: true }), kind: 'ticket_web' });
     } catch (err) {
       console.error('[billetterie] e-mail de confirmation non envoyé :', err.message);
     }

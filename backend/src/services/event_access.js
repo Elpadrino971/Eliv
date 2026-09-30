@@ -282,7 +282,7 @@ function insertTicket(userId, eventId, { pricePaid = 0, storeFeeRate = 0, source
     `INSERT INTO tickets (event_id, user_id, price_paid, receipt_number, status, commission_rate, artist_share, rc_transaction_id, source)
      VALUES (?, ?, ?, ?, 'active', ?, ?, ?, ?)`
   ).run(eventId, userId, gross.toFixed(2), genReceipt(), rate, artistShare, `${source}:${ref}`, source);
-  const ACTIVITY_LABEL = { wheel: 'won a ticket', artist_gift: 'received a ticket offered by the artist' };
+  const ACTIVITY_LABEL = { wheel: 'won a ticket', artist_gift: 'received a ticket offered by the artist', web_free: 'reserved a free spot on the website' };
   db.prepare(
     `INSERT INTO activities (user_id, event_id, type, description) VALUES (?, ?, 'ticket', ?)`
   ).run(userId, eventId, ACTIVITY_LABEL[source] || 'bought a ticket on the website');

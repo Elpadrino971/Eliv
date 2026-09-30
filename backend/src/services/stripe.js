@@ -92,8 +92,14 @@ async function findSessionByPaymentIntent(paymentIntentId) {
   return r && r.data && r.data[0] ? r.data[0] : null;
 }
 
+/** Session Checkout par son identifiant (retour du fan sur le site, avant le webhook). */
+function retrieveCheckoutSession(sessionId) {
+  return client().checkout.sessions.retrieve(sessionId);
+}
+
 module.exports = {
   isConfigured,
+  retrieveCheckoutSession,
   createSubscriptionCheckout,
   createTicketCheckout,
   constructWebhookEvent,

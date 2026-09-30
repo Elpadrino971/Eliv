@@ -216,7 +216,7 @@ function grantOne(c, spinId) {
   if (!row || !eventId) return { granted: false, account: !!access.findUserByEmail(row?.email) };
   const r = access.grantByEmail({ email: row.email, eventId, pricePaid: 0, source: 'wheel', ref: row.id });
   db.prepare("UPDATE wheel_spins SET status = 'granted', granted_at = COALESCE(granted_at, datetime('now')) WHERE id = ?").run(row.id);
-  return { granted: true, account: r.status !== 'pending' };
+  return { granted: true, account: r.status !== 'pending', eventId };
 }
 
 /** Admin : attribue toutes les places confirmées (utile une fois le concert relié). */

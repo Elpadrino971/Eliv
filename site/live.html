@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#070C18" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="referrer" content="strict-origin" />
+<title>Live VybzzZ</title>
+<meta name="description" content="Regarde le concert en direct sur VybzzZ, depuis ton navigateur." />
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png"><link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+<script>if(location.hostname==='www.vybzzz.online'){location.replace('https://vybzzz.online'+location.pathname+location.search)}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --night:#070C18;--navy:#0A1226;--panel:#101A33;--line:rgba(230,199,106,.18);
+  --gold:#E6C76A;--gold-deep:#C8A85E;--ivory:#F4EFE3;--muted:#A9B1C4;--live:#E23B4E;--ok:#41D67E;
+  --radius:18px;--ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--night);color:var(--ivory)}
+body{font-family:Inter,system-ui,-apple-system,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+a{color:inherit}
+button,input{font:inherit}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;padding-top:max(14px,env(safe-area-inset-top))}
+.logo{font-family:Sora,sans-serif;font-weight:800;letter-spacing:.14em;text-decoration:none;font-size:1rem}
+.logo span{color:var(--gold)}
+.who{font-size:.8rem;color:var(--muted);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60vw}
+main{flex:1;width:100%;max-width:1120px;margin:0 auto;padding:0 16px 40px}
+
+/* Scène : lecteur ou affiche, toujours 16:9 */
+.stage{position:relative;width:100%;aspect-ratio:16/9;border-radius:var(--radius);overflow:hidden;background:#000;box-shadow:0 30px 80px -30px rgba(0,0,0,.9),0 0 0 1px var(--line)}
+.stage video{position:absolute;inset:0;width:100%;height:100%;background:#000}
+.stage .poster{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(18px) brightness(.45);transform:scale(1.1)}
+.stage .poster-img{position:absolute;inset:0;margin:auto;max-width:100%;max-height:100%;object-fit:contain}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;background:linear-gradient(180deg,rgba(7,12,24,.25),rgba(7,12,24,.75))}
+.overlay[hidden]{display:none}
+.overlay p{color:var(--ivory);max-width:34ch;margin:0 auto}
+.spinner{width:34px;height:34px;border-radius:50%;border:3px solid rgba(244,239,227,.2);border-top-color:var(--gold);animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.badge{position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:6px;background:var(--live);color:#fff;font-weight:700;font-size:.72rem;letter-spacing:.08em;padding:5px 10px;border-radius:999px;z-index:2}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:#fff;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.badge[hidden]{display:none}
+.sound{position:absolute;right:12px;bottom:56px;z-index:3;display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--navy);border:0;border-radius:999px;padding:10px 16px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px -10px rgba(0,0,0,.8)}
+.sound[hidden]{display:none}
+.wm{position:absolute;z-index:2;pointer-events:none;user-select:none;-webkit-user-select:none;font:600 clamp(10px,1.6vw,14px)/1.2 Inter,system-ui,sans-serif;color:rgba(244,239,227,.38);text-shadow:0 1px 2px rgba(0,0,0,.6);transition:top 1.2s var(--ease),left 1.2s var(--ease);white-space:nowrap}
+.wm[hidden]{display:none}
+.fs{position:absolute;right:12px;top:12px;z-index:3;width:40px;height:40px;border-radius:10px;border:0;background:rgba(7,12,24,.6);color:var(--ivory);font-size:18px;cursor:pointer;display:grid;place-items:center}
+.fs[hidden]{display:none}
+.stage:fullscreen{border-radius:0;aspect-ratio:auto;width:100vw;height:100vh}
+.stage:-webkit-full-screen{border-radius:0;aspect-ratio:auto;width:100vw;height:100vh}
+.legal{margin-top:26px;font-size:.78rem;color:var(--muted);line-height:1.6;max-width:80ch}
+
+/* Infos + actions */
+.info{display:grid;gap:6px;margin:18px 2px 0}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600}
+h1{font-family:Sora,sans-serif;font-weight:800;font-size:clamp(1.35rem,3.4vw,2rem);line-height:1.15;text-wrap:balance}
+.meta{color:var(--muted);font-size:.95rem}
+.count{display:flex;gap:10px;margin-top:10px;font-variant-numeric:tabular-nums}
+.count div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-width:62px;text-align:center}
+.count b{display:block;font-family:Sora,sans-serif;font-size:1.3rem}
+.count small{color:var(--muted);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase}
+
+.card{margin-top:22px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;display:grid;gap:14px}
+.card h2{font-family:Sora,sans-serif;font-size:1.15rem}
+.card p{color:var(--muted);font-size:.95rem}
+.price{font-family:Sora,sans-serif;font-weight:800;color:var(--gold);font-size:1.6rem;line-height:1}
+.next{color:var(--muted);font-size:.85rem}
+form{display:grid;gap:10px}
+label{font-size:.85rem;color:var(--muted)}
+input{width:100%;background:var(--night);color:var(--ivory);border:1px solid rgba(244,239,227,.18);border-radius:12px;padding:13px 14px;font-size:1rem}
+input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transparent}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:12px;padding:15px 18px;font-weight:700;font-size:1rem;cursor:pointer;text-decoration:none;transition:transform .15s var(--ease),opacity .15s}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn:focus-visible,.link:focus-visible,.sound:focus-visible{outline:2px solid var(--ivory);outline-offset:2px}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-ghost{background:transparent;color:var(--ivory);border:1px solid rgba(244,239,227,.22)}
+.msg{font-size:.9rem;color:#FFB4BC;min-height:0}
+.msg.ok{color:var(--ok)}
+.msg:empty{display:none}
+.link{background:none;border:0;color:var(--gold);text-decoration:underline;cursor:pointer;padding:0;font-size:.92rem;justify-self:start}
+.sep{height:1px;background:var(--line);margin:4px 0}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button{flex:1;min-width:140px;background:transparent;border:1px solid rgba(244,239,227,.22);color:var(--ivory);border-radius:10px;padding:10px;cursor:pointer;font-weight:600;font-size:.88rem}
+.tabs button[aria-selected="true"]{background:rgba(230,199,106,.12);border-color:var(--gold);color:var(--gold)}
+.notice{border-radius:12px;padding:12px 14px;background:rgba(65,214,126,.1);border:1px solid rgba(65,214,126,.35);color:var(--ivory);font-size:.92rem}
+.notice.warn{background:rgba(226,59,78,.1);border-color:rgba(226,59,78,.4)}
+.small{font-size:.82rem;color:var(--muted)}
+.app-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.app-row a{color:var(--gold);font-weight:600;font-size:.9rem}
+[hidden]{display:none!important}
+@media (min-width:880px){
+  .layout{display:grid;grid-template-columns:1.6fr 1fr;gap:26px;align-items:start}
+  .layout .card{margin-top:0}
+  .info{margin-top:18px}
+}
+@media (prefers-reduced-motion:reduce){.spinner,.badge::before{animation:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="/">VYBZZ<span>Z</span></a>
+  <div class="who" id="who"></div>
+</header>
+
+<main>
+  <div class="layout">
+    <section>
+      <div class="stage" id="stage">
+        <div class="poster" id="posterBg"></div>
+        <img class="poster-img" id="posterImg" alt="" hidden />
+        <video id="video" playsinline controls hidden controlslist="nodownload nofullscreen noplaybackrate noremoteplayback" disablepictureinpicture disableremoteplayback x-webkit-airplay="deny"></video>
+        <div class="wm" id="wm" hidden aria-hidden="true"></div>
+        <button class="fs" id="fsBtn" type="button" hidden aria-label="Plein écran">⛶</button>
+        <span class="badge" id="liveBadge" hidden>EN DIRECT</span>
+        <button class="sound" id="soundBtn" type="button" hidden>🔊 Activer le son</button>
+        <div class="overlay" id="overlay"><div><div class="spinner"></div><p id="overlayText">Chargement du concert…</p></div></div>
+      </div>
+      <div class="info">
+        <span class="eyebrow" id="eyebrow">Concert en direct</span>
+        <h1 id="title">VybzzZ Live</h1>
+        <div class="meta" id="meta"></div>
+        <div class="count" id="count" hidden></div>
+      </div>
+      <p class="legal">Ce concert est protégé. L'enregistrement, la capture et la rediffusion, même partielle, sont interdits (articles L.335-2 et L.335-4 du Code de la propriété intellectuelle) et engagent la responsabilité de leur auteur. Chaque diffusion est marquée au nom de la place qui la regarde.</p>
+    </section>
+
+    <aside id="side">
+      <!-- Accès : affiché tant que le fan n'a pas sa clé -->
+      <div class="card" id="gate" hidden>
+        <div id="payNotice"></div>
+        <div id="buyBlock">
+          <h2 id="gateTitle">Prends ta place</h2>
+          <p id="gateText">Paiement sécurisé par carte. Tu regardes le concert juste après, ici même, sans application.</p>
+          <div style="display:flex;align-items:baseline;gap:10px;margin:6px 0 2px"><span class="price" id="price"></span><span class="next" id="next"></span></div>
+          <form id="buyForm" novalidate>
+            <label for="buyEmail">Ton adresse e-mail</label>
+            <input id="buyEmail" type="email" autocomplete="email" inputmode="email" placeholder="toi@exemple.com" required />
+            <button class="btn btn-gold" id="buyBtn" type="submit">Prendre ma place</button>
+            <div class="msg" id="buyMsg" role="alert"></div>
+            <p class="small">Ton lien d'accès t'est aussi envoyé par e-mail, pour regarder depuis un autre appareil.</p>
+          </form>
+        </div>
+        <div class="sep"></div>
+        <button class="link" id="haveBtn" type="button" aria-expanded="false">J'ai déjà ma place</button>
+        <div id="haveBlock" hidden>
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" id="tabMail" aria-selected="true">Recevoir mon lien</button>
+            <button type="button" role="tab" id="tabLogin" aria-selected="false">Compte VybzzZ</button>
+          </div>
+          <form id="mailForm" novalidate style="margin-top:12px">
+            <label for="mailEmail">L'adresse utilisée pour ta place</label>
+            <input id="mailEmail" type="email" autocomplete="email" inputmode="email" placeholder="toi@exemple.com" required />
+            <button class="btn btn-ghost" id="mailBtn" type="submit">M'envoyer mon lien</button>
+            <div class="msg" id="mailMsg" role="alert"></div>
+          </form>
+          <form id="loginForm" novalidate style="margin-top:12px" hidden>
+            <label for="loginEmail">E-mail de ton compte VybzzZ</label>
+            <input id="loginEmail" type="email" autocomplete="username" inputmode="email" required />
+            <label for="loginPw">Mot de passe</label>
+            <input id="loginPw" type="password" autocomplete="current-password" required />
+            <button class="btn btn-ghost" id="loginBtn" type="submit">Regarder avec mon compte</button>
+            <div class="msg" id="loginMsg" role="alert"></div>
+            <p class="small">Pour une place achetée dans l'application VybzzZ.</p>
+          </form>
+        </div>
+      </div>
+
+      <!-- Accès OK -->
+      <div class="card" id="access" hidden>
+        <h2 id="accessTitle">Ta place est réservée</h2>
+        <p id="accessText"></p>
+        <div class="app-row"><span class="small">Aussi dans l'application :</span><a href="app.html">Télécharger VybzzZ</a></div>
+        <button class="link" id="logoutBtn" type="button">Ce n'est pas moi</button>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script src="vendor/hls.min.js"></script>
+<script>
+(function(){
+  var API='https://api.vybzzz.online/api';
+  var $=function(id){return document.getElementById(id);};
+  var q=new URLSearchParams(location.search);
+  var EVENT=parseInt(q.get('e'),10);
+  var KEY='vy_watch_'+EVENT;
+  var ev=null, token=null, pollTimer=null, countTimer=null, hls=null, playing=null, retryTimer=null, wmTimer=null;
+  // Identifiant de cet écran (une place = 2 écrans en même temps au plus).
+  var DEVICE=(function(){ var k='vy_device', d=null; try{d=sessionStorage.getItem(k);}catch(e){}
+    if(!d){ var a=new Uint8Array(12); (window.crypto||window.msCrypto).getRandomValues(a); d=Array.prototype.map.call(a,function(x){return ('0'+x.toString(16)).slice(-2);}).join(''); try{sessionStorage.setItem(k,d);}catch(e){} }
+    return d; })();
+
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});}
+  function store(k,v){try{ if(v==null) localStorage.removeItem(k); else localStorage.setItem(k,v);}catch(e){}}
+  function read(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  function track(n){ if(window.vyTrack) window.vyTrack(n); }
+  function post(path,body){
+    return fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),credentials:'omit'})
+      .then(function(r){return r.json().then(function(d){d._code=r.status;return d;});});
+  }
+  function fmtPrice(p){var n=parseFloat(p);return isFinite(n)?n.toFixed(2).replace('.',',')+' €':'';}
+  function when(iso){
+    var d=new Date(String(iso||'').replace(' ','T')); if(isNaN(d)) return '';
+    try{return d.toLocaleString('fr-FR',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});}catch(e){return d.toString();}
+  }
+  function overlay(text,spin){
+    var o=$('overlay'); if(text==null){o.hidden=true;return;}
+    o.hidden=false; o.firstElementChild.innerHTML=(spin?'<div class="spinner"></div>':'')+'<p>'+text+'</p>';
+  }
+  function poster(url){
+    if(!url) return;
+    $('posterBg').style.backgroundImage='url("'+String(url).replace(/"/g,'%22')+'")';
+    var im=$('posterImg'); im.src=url; im.hidden=false;
+  }
+
+  // Nettoie l'URL : la clé et l'identifiant de paiement ne restent pas dans
+  // la barre d'adresse (capture d'écran, partage, historique).
+  function cleanUrl(){
+    if(!history.replaceState) return;
+    history.replaceState(null,'',location.pathname+'?e='+EVENT);
+  }
+
+  function renderEvent(d){
+    ev=d;
+    document.title=(d.name||'Live')+' · VybzzZ';
+    $('title').textContent=d.name||'Concert';
+    $('meta').textContent=[d.artist,when(d.start_date_time)].filter(Boolean).join(' · ');
+    poster(d.cover_image);
+    $('eyebrow').textContent=d.state==='live'?'En direct maintenant':d.state==='ended'?'Concert terminé':'Concert en direct';
+    if(d.is_free){
+      $('gateTitle').textContent='Réserve ta place gratuite';
+      $('gateText').textContent='Concert gratuit : ton adresse e-mail suffit, et tu regardes juste après, ici même.';
+      $('price').textContent='Gratuit'; $('next').textContent='';
+      $('buyBtn').textContent='Réserver ma place gratuite';
+      $('haveBtn').hidden=true;
+    } else {
+      $('price').textContent=fmtPrice(d.price);
+      $('buyBtn').textContent='Prendre ma place · '+fmtPrice(d.price);
+      var at=d.next_price_at?Date.parse(d.next_price_at):NaN;
+      $('next').textContent=(d.next_price!=null&&isFinite(at)&&at>Date.now())?'puis '+fmtPrice(d.next_price):'';
+    }
+  }
+
+  function showGate(){
+    $('gate').hidden=false; $('access').hidden=true; $('who').textContent='';
+    stopPlayer(); clearInterval(pollTimer);
+    if(!ev) return;
+    if(ev.state==='ended'){
+      $('buyBlock').hidden=true; $('haveBtn').hidden=false;
+      overlay('Ce concert est terminé.',false);
+      return;
+    }
+    overlay(ev.state==='live'?'Le concert a commencé : prends ta place pour le rejoindre.':'Prends ta place pour regarder le concert ici, en direct.',false);
+    countdown(ev.state!=='live');
+  }
+
+  function countdown(on){
+    clearInterval(countTimer);
+    var el=$('count');
+    if(!on||!ev){el.hidden=true;return;}
+    var start=Date.parse(String(ev.start_date_time||'').replace(' ','T'));
+    if(!isFinite(start)){el.hidden=true;return;}
+    function tick(){
+      var ms=start-Date.now();
+      if(ms<=0){el.hidden=true;clearInterval(countTimer);return;}
+      var d=Math.floor(ms/864e5),h=Math.floor(ms/36e5)%24,m=Math.floor(ms/6e4)%60,s=Math.floor(ms/1e3)%60;
+      el.hidden=false;
+      el.innerHTML=(d?[[d,'jours']]:[]).concat([[h,'h'],[m,'min'],[s,'s']]).map(function(x){return '<div><b>'+String(x[0]).padStart(2,'0')+'</b><small>'+x[1]+'</small></div>';}).join('');
+    }
+    tick(); countTimer=setInterval(tick,1000);
+  }
+
+  // ── Lecture ──
+  function stopPlayer(){
+    clearTimeout(retryTimer);
+    if(hls){try{hls.destroy();}catch(e){} hls=null;}
+    var v=$('video'); try{v.pause();}catch(e){} v.removeAttribute('src'); v.load&&v.load(); v.hidden=true;
+    $('liveBadge').hidden=true; $('soundBtn').hidden=true; $('fsBtn').hidden=true; playing=null;
+    watermark(false);
+  }
+  // Filigrane : e-mail masqué + numéro de place, déplacé régulièrement. Une
+  // capture qui circule dit de quelle place elle vient.
+  var wmText='';
+  function watermark(on){
+    clearInterval(wmTimer); var w=$('wm');
+    if(!on||!wmText){ w.hidden=true; return; }
+    w.textContent=wmText; w.hidden=false;
+    function move(){
+      // Toujours entièrement dans l'image, quelle que soit la largeur.
+      var st=$('stage'), room=Math.max(0,st.clientWidth-w.offsetWidth-16), hRoom=Math.max(0,st.clientHeight-w.offsetHeight-60);
+      w.style.left=(8+Math.random()*room)+'px'; w.style.top=(56+Math.random()*Math.max(0,hRoom-48))+'px';
+    }
+    move(); wmTimer=setInterval(move,25000);
+  }
+  $('fsBtn').addEventListener('click',function(){
+    var st=$('stage'), v=$('video');
+    var fsEl=document.fullscreenElement||document.webkitFullscreenElement;
+    if(fsEl){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); return; }
+    // Plein écran de la SCÈNE (vidéo + filigrane), pas de la vidéo seule.
+    if(st.requestFullscreen) st.requestFullscreen().catch(function(){});
+    else if(st.webkitRequestFullscreen) st.webkitRequestFullscreen();
+    else if(v.webkitEnterFullscreen) v.webkitEnterFullscreen(); // iPhone : plein écran natif uniquement
+  });
+  $('video').addEventListener('contextmenu',function(e){ e.preventDefault(); });
+  function tryPlay(v){
+    v.muted=false;
+    var p=v.play();
+    if(p&&p.catch) p.catch(function(){
+      // Lecture auto avec le son refusée par le navigateur : on démarre en
+      // muet et on propose le son d'un geste.
+      v.muted=true; v.play().catch(function(){});
+      $('soundBtn').hidden=false;
+    });
+  }
+  function play(url,isLive,media){
+    stopPlayer(); playing=media||url;
+    var v=$('video'); v.hidden=false; $('fsBtn').hidden=false; watermark(true);
+    overlay(isLive?'Connexion au direct…':'Chargement du replay…',true);
+    $('liveBadge').hidden=!isLive;
+    function ready(){ overlay(null); tryPlay(v); }
+    function retry(){
+      // Flux pas encore disponible (l'artiste se connecte) ou lien expiré :
+      // on redemande une URL fraîche au serveur.
+      overlay('L\'image arrive, reste sur cette page…',true);
+      playing=null; clearTimeout(retryTimer);
+      retryTimer=setTimeout(function(){ fetchUrl(); },5000);
+    }
+    if(window.Hls&&window.Hls.isSupported()){
+      hls=new window.Hls({lowLatencyMode:true,liveSyncDurationCount:3,manifestLoadingMaxRetry:2});
+      hls.on(window.Hls.Events.MANIFEST_PARSED,ready);
+      hls.on(window.Hls.Events.ERROR,function(_,data){
+        if(!data.fatal) return;
+        if(data.type===window.Hls.ErrorTypes.MEDIA_ERROR){ try{hls.recoverMediaError();return;}catch(e){} }
+        retry();
+      });
+      hls.loadSource(url); hls.attachMedia(v);
+    } else if(v.canPlayType('application/vnd.apple.mpegurl')){
+      v.src=url;
+      v.addEventListener('loadedmetadata',ready,{once:true});
+      v.addEventListener('error',retry,{once:true});
+    } else {
+      overlay('Ce navigateur ne sait pas lire le direct. Essaie avec Chrome, Safari ou l\'application VybzzZ.',false);
+    }
+  }
+  $('soundBtn').addEventListener('click',function(){ var v=$('video'); v.muted=false; v.volume=1; v.play().catch(function(){}); this.hidden=true; });
+
+  // ── Accès : la clé ouvre le flux ──
+  function applyStream(d){
+    renderEvent(d);
+    $('gate').hidden=true; $('access').hidden=false;
+    $('who').textContent=d.email?'Place de '+d.email:'';
+    wmText=d.email?(d.email+' · place n°'+d.seat):'';
+    if(d.state==='live'){
+      countdown(false);
+      $('accessTitle').textContent='Tu es au concert';
+      $('accessText').textContent='Le son ne démarre pas ? Touche « Activer le son » sur la vidéo. Plein écran avec le bouton ⛶ en haut à droite.';
+      if(d.media==='live'){ if(playing!=='live') fetchUrl(); }
+      else { stopPlayer(); overlay('L\'artiste se connecte, le direct démarre dans un instant…',true); }
+    } else if(d.state==='ended'){
+      countdown(false);
+      $('accessTitle').textContent='Merci d\'être venu';
+      if(d.media==='replay'){ $('accessText').textContent='Le replay est disponible : regarde-le quand tu veux.'; if(playing!=='replay') fetchUrl(); }
+      else { stopPlayer(); $('accessText').textContent='Le concert est terminé. Le replay arrive bientôt, ici et dans l\'application.'; overlay('Le concert est terminé.',false); }
+    } else {
+      stopPlayer();
+      $('accessTitle').textContent='Ta place est réservée';
+      $('accessText').textContent='Garde cette page ouverte : le concert se lance tout seul dès que l\'artiste est en direct.';
+      overlay('Le concert n\'a pas encore commencé.',false);
+      countdown(true);
+    }
+  }
+
+  function check(){
+    if(!token) return Promise.resolve();
+    return post('/watch/stream',{event_id:EVENT,token:token,device:DEVICE}).then(function(d){
+      if(d.status==='success'){ applyStream(d.data); return; }
+      if(d.code==='too_many_devices'||d.code==='unavailable'){ stopPlayer(); overlay(esc(d.message),false); return; }
+      if(d.code==='bad_token'||d.code==='no_access'){
+        store(KEY,null); token=null; clearInterval(pollTimer);
+        return loadEvent().then(function(){
+          showGate();
+          $('payNotice').innerHTML='<div class="notice warn">'+esc(d.message)+'</div>';
+        });
+      }
+      if(d._code===451){ stopPlayer(); overlay(esc(d.message),false); clearInterval(pollTimer); }
+    }).catch(function(){ /* réseau : on garde l'état, le prochain passage réessaie */ });
+  }
+  // URL signée (expire) demandée une seule fois au lancement, puis après une
+  // coupure : jamais écrite dans la page, jamais stockée.
+  var fetching=false;
+  function fetchUrl(){
+    if(fetching||!token) return; fetching=true;
+    post('/watch/stream',{event_id:EVENT,token:token,device:DEVICE,want_url:true}).then(function(d){
+      fetching=false;
+      if(d.status==='success'&&d.data.url){ play(d.data.url,d.data.media==='live',d.data.media); return; }
+      if(d.status==='success'){ applyStream(d.data); return; }
+      if(d.code==='retry'){ clearTimeout(retryTimer); retryTimer=setTimeout(fetchUrl,5000); overlay(esc(d.message),true); return; }
+      stopPlayer(); overlay(esc(d.message||'Lecture impossible.'),false);
+    }).catch(function(){ fetching=false; clearTimeout(retryTimer); retryTimer=setTimeout(fetchUrl,5000); });
+  }
+  function start(t){
+    token=t; store(KEY,t); cleanUrl();
+    $('payNotice').innerHTML='';
+    clearInterval(pollTimer);
+    check();
+    // L'état (en attente -> direct -> terminé) est relu toutes les 20 s.
+    pollTimer=setInterval(check,20000);
+  }
+
+  function loadEvent(){
+    return fetch(API+'/watch/event/'+EVENT,{cache:'no-store',credentials:'omit'}).then(function(r){return r.json();}).then(function(d){
+      if(d.status!=='success') throw new Error(d.message||'introuvable');
+      renderEvent(d.data); return d.data;
+    });
+  }
+
+  // Retour de Stripe : la session payée est échangée contre la clé. Le
+  // webhook peut ne pas être encore passé : on réessaie quelques secondes.
+  function claim(sid,attempt){
+    overlay('Paiement reçu, on prépare ta place…',true);
+    return post('/watch/claim',{session_id:sid}).then(function(d){
+      if(d.status==='success'){ track('ticket_paid'); start(d.data.token); return; }
+      if(d.code==='pending'&&attempt<12){ setTimeout(function(){claim(sid,attempt+1);},2500); return; }
+      showGate();
+      $('payNotice').innerHTML='<div class="notice warn">'+esc(d.message||'Paiement introuvable.')+' Si tu as été débité, utilise « J\'ai déjà ma place » : ton lien t\'attend aussi par e-mail.</div>';
+    }).catch(function(){ if(attempt<12) setTimeout(function(){claim(sid,attempt+1);},2500); });
+  }
+
+  // ── Formulaires ──
+  function busy(btn,on,label){ btn.disabled=on; if(label) btn.textContent=label; }
+  var validEmail=function(e){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);};
+
+  $('buyForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var email=$('buyEmail').value.trim(), btn=$('buyBtn'), label=btn.textContent; $('buyMsg').textContent='';
+    if(!validEmail(email)){ $('buyMsg').textContent='Entre une adresse e-mail valide.'; return; }
+    busy(btn,true,'Un instant…');
+    if(ev&&ev.is_free){
+      post('/watch/free',{event_id:EVENT,email:email}).then(function(d){
+        if(d.status==='success'){ track('free_reserved_web'); start(d.data.token); return; }
+        $('buyMsg').textContent=d.message||'Erreur, réessaie.'; busy(btn,false,label);
+      }).catch(function(){ $('buyMsg').textContent='Réseau indisponible, réessaie.'; busy(btn,false,label); });
+      return;
+    }
+    post('/tickets/web-checkout',{event_id:EVENT,email:email,from:'live'}).then(function(d){
+      if(d.status==='success'&&d.data&&d.data.url){ track('ticket_checkout'); location.href=d.data.url; return; }
+      $('buyMsg').textContent=d.message||'Erreur, réessaie.'; busy(btn,false,label);
+      if(d._code===409&&/déjà/.test(d.message||'')){ openHave(); $('mailEmail').value=email; }
+    }).catch(function(){ $('buyMsg').textContent='Réseau indisponible, réessaie.'; busy(btn,false,label); });
+  });
+
+  function openHave(){ $('haveBlock').hidden=false; $('haveBtn').setAttribute('aria-expanded','true'); }
+  $('haveBtn').addEventListener('click',function(){
+    var open=$('haveBlock').hidden; $('haveBlock').hidden=!open; this.setAttribute('aria-expanded',String(open));
+  });
+  function tab(login){
+    $('tabMail').setAttribute('aria-selected',String(!login)); $('tabLogin').setAttribute('aria-selected',String(login));
+    $('mailForm').hidden=login; $('loginForm').hidden=!login;
+  }
+  $('tabMail').addEventListener('click',function(){tab(false);});
+  $('tabLogin').addEventListener('click',function(){tab(true);});
+
+  $('mailForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var email=$('mailEmail').value.trim(), btn=$('mailBtn'), m=$('mailMsg'); m.className='msg'; m.textContent='';
+    if(!validEmail(email)){ m.textContent='Entre une adresse e-mail valide.'; return; }
+    busy(btn,true);
+    post('/watch/resend',{event_id:EVENT,email:email}).then(function(d){
+      busy(btn,false);
+      if(d.status==='success'){ m.className='msg ok'; m.textContent='Si une place existe avec cette adresse, ton lien vient de partir. Pense aux indésirables.'; }
+      else m.textContent=d.message||'Erreur, réessaie.';
+    }).catch(function(){ busy(btn,false); m.textContent='Réseau indisponible, réessaie.'; });
+  });
+
+  $('loginForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var email=$('loginEmail').value.trim(), pw=$('loginPw').value, btn=$('loginBtn'), m=$('loginMsg'); m.textContent='';
+    if(!validEmail(email)||!pw){ m.textContent='Entre ton e-mail et ton mot de passe.'; return; }
+    busy(btn,true);
+    post('/watch/login',{event_id:EVENT,email:email,password:pw}).then(function(d){
+      busy(btn,false);
+      if(d.status==='success'){ $('loginPw').value=''; start(d.data.token); return; }
+      m.textContent=d.message||'Erreur, réessaie.';
+    }).catch(function(){ busy(btn,false); m.textContent='Réseau indisponible, réessaie.'; });
+  });
+
+  $('logoutBtn').addEventListener('click',function(){
+    store(KEY,null); token=null; clearInterval(pollTimer); stopPlayer(); showGate();
+  });
+
+  // ── Démarrage ──
+  if(!EVENT||EVENT<1){
+    overlay('Ce lien ne mène à aucun concert. <a href="/" style="color:var(--gold)">Voir les concerts</a>',false);
+    return;
+  }
+  var sid=q.get('session_id'), k=q.get('k'), paid=q.get('paiement');
+  loadEvent().then(function(){
+    if(sid){ claim(sid,0); return; }
+    var t=k||read(KEY);
+    if(t){ start(t); return; }
+    showGate();
+    if(paid==='annule'){ $('payNotice').innerHTML='<div class="notice warn">Paiement annulé, rien n\'a été débité. Tu peux réessayer quand tu veux.</div>'; cleanUrl(); }
+  }).catch(function(){
+    overlay('Concert introuvable. <a href="/" style="color:var(--gold)">Voir les concerts</a>',false);
+  });
+})();
+</script>
+<script src="vy.js?v=d7c3196c" defer></script>
+</body>
+</html>
