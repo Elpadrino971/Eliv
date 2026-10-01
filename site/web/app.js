@@ -88,11 +88,14 @@
   }
   function skeletonRow(n) { var h = ''; for (var i = 0; i < (n || 4); i++) h += '<div class="skel" style="height:330px"></div>'; return '<div class="row">' + h + '</div>'; }
 
+  // Passerelle pour les écrans chargés à la demande (studio.js).
+  window.VyWeb = { API: API, api: api, S: S, esc: esc, toast: toast, avatar: avatar, artistName: artistName, price: price, view: $view, needLogin: needLogin, setTab: setTab, renderTop: renderTop };
+
   // ── Barre du haut / onglets ───────────────────────────────────────────────
   function renderTop() {
     var u = S.user, el = document.getElementById('topRight');
     if (u && S.token) {
-      el.innerHTML = '<a class="pill" href="#/account" aria-label="Mon compte">' +
+      el.innerHTML = (u.is_artist ? '<a class="pill pill--live" href="#/studio">\uD83C\uDF99 Live</a>' : '') + '<a class="pill" href="#/account" aria-label="Mon compte">' +
         (u.profile_image ? '<img class="avatar" src="' + esc(u.profile_image) + '" alt="">' : '<span class="avatar">' + esc(initials(artistName(u))) + '</span>') +
         '<span class="hide-sm">' + esc((u.full_name || u.artist_name || 'Mon compte').split(' ')[0]) + '</span></a>';
     } else {
@@ -360,13 +363,28 @@
         '<div class="list sec">' +
         '<a class="item" href="#/tickets"><div class="item__body"><div class="item__title">Mes billets</div><div class="muted small">Tes concerts et replays</div></div>›</a>' +
         '<div class="item"><div class="item__body"><div class="item__title">Mes points</div><div class="muted small">' + esc(u.points != null ? u.points : '0') + ' points pour les cadeaux en live</div></div></div>' +
-        (u.is_artist ? '<div class="item"><div class="item__body"><div class="item__title">Studio artiste</div><div class="muted small">Live instantané, création de concert et revenus arrivent sur le web. En attendant, utilise l\'application.</div></div></div>' : '') +
+        (u.is_artist ? '<a class="item item--gold" href="#/studio"><div class="item__body"><div class="item__title">\uD83C\uDF99 Lancer un live</div><div class="small">Diffuse depuis ton navigateur : webcam, micro, un titre et c\'est parti.</div></div>›</a>' : '') +
         '<a class="item" href="../app.html"><div class="item__body"><div class="item__title">Télécharger l\'application</div><div class="muted small">Le même compte, sur iPhone et Android</div></div>›</a>' +
         '</div><div class="sec"><button class="btn btn-ghost" id="logout">Me déconnecter</button></div>';
       document.getElementById('logout').onclick = function () { S.clear(); renderTop(); toast('Tu es déconnecté'); location.hash = '#/'; };
     }
     paint(u);
     if (u.id) api('/get-user', { body: { id: u.id } }).then(function (d) { if (d && d.data) { S.set(null, d.data); renderTop(); if (location.hash.indexOf('#/account') === 0) paint(d.data); } });
+  }
+
+  // Studio artiste : l'écran vit dans studio.js, chargé seulement ici.
+  var studioLoading;
+  function viewStudio() {
+    setTab('studio'); document.title = 'Studio · VybzzZ';
+    if (window.VyStudio) return window.VyStudio.render();
+    $view.innerHTML = '<div class="empty">Chargement du studio…</div>';
+    if (!studioLoading) {
+      studioLoading = new Promise(function (ok, ko) {
+        var sc = document.createElement('script'); sc.src = 'studio.js?v=1'; sc.onload = ok; sc.onerror = ko; document.head.appendChild(sc);
+      });
+    }
+    studioLoading.then(function () { if (location.hash.indexOf('#/studio') === 0 && window.VyStudio) window.VyStudio.render(); })
+      .catch(function () { studioLoading = null; if (location.hash.indexOf('#/studio') === 0) $view.innerHTML = '<div class="empty">Impossible de charger le studio. Vérifie ta connexion puis <a class="link" href="#/studio" onclick="location.reload();return false">réessaie</a>.</div>'; });
   }
 
   // Retour après connexion : un écran de l'app web (#/…) ou la page du live
@@ -482,6 +500,8 @@
     var q = new URLSearchParams(qi >= 0 ? h.slice(qi + 1) : '');
     var parts = path.split('/').filter(Boolean);
     if (parts[0] !== 'feed') stopFeed();
+    // Un live est en cours : on ne quitte le studio qu'avec l'accord de l'artiste.
+    if (parts[0] !== 'studio' && window.VyStudio && !window.VyStudio.leave()) { history.replaceState(null, '', '#/studio'); return; }
     window.scrollTo(0, 0);
     switch (parts[0]) {
       case undefined: return viewHome();
@@ -490,6 +510,7 @@
       case 'artist': return viewArtist(parts[1]);
       case 'tickets': return viewTickets();
       case 'account': return viewAccount();
+      case 'studio': return viewStudio();
       case 'login': return viewLogin(q);
       case 'signup': return viewSignup(q);
       case 'verify': return viewVerify(q);
