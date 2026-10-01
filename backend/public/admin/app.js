@@ -1044,6 +1044,46 @@ async function showGiftTickets(id) {
   bg.onclick = (e) => { if (e.target === bg) close(); };
 }
 
+// Liens d'invitation : places gratuites que l'artiste distribue lui-même
+// (GET/POST /admin/events/:id/invites, voir services/invites.js).
+async function showInvites(id) {
+  let d;
+  try { d = (await api('GET', `/events/${id}/invites`)).data; } catch (e) { toast(e.message); return; }
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  const render = () => {
+    bg.innerHTML = `<div class="modal" style="max-width:640px">
+    <h3>🔗 Liens d'invitation — ${esc(d.event?.name || '#' + id)}</h3>
+    <p style="color:var(--muted);font-size:13px;margin:4px 0 12px">Un lien = N places gratuites. L'artiste l'envoie à qui il veut (WhatsApp, SMS, mail) : chaque invité entre son e-mail sur la page du live et sa place est réservée. Il regarde sur le site ou dans l'app avec la même adresse.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px">
+      <label style="flex:1;min-width:160px">Nom du lien (pour toi)<input id="iv-label" placeholder="ex. Famille et amis" maxlength="60"></label>
+      <label style="width:110px">Places<input id="iv-max" type="number" min="1" max="5000" value="50"></label>
+      <button class="btn grant" id="iv-create">Créer le lien</button>
+    </div>
+    ${d.invites.length ? `<div style="overflow:auto;max-height:46vh"><table class="tbl"><thead><tr><th>Lien</th><th>Places</th><th>État</th><th></th></tr></thead><tbody>
+      ${d.invites.map((it) => `<tr>
+        <td><b>${esc(it.label || it.code)}</b><br><code style="font-size:12px;user-select:all">${esc(it.url)}</code></td>
+        <td>${it.used} / ${it.max_uses}</td>
+        <td>${it.disabled ? '<span style="color:var(--danger,#e55)">désactivé</span>' : it.used >= it.max_uses ? 'complet' : 'actif'}</td>
+        <td style="white-space:nowrap"><button class="btn" data-copy="${esc(it.url)}">Copier</button> <button class="btn" data-wa="${encodeURIComponent(`🎁 ${d.event?.name || 'Concert'} : ta place est offerte ! Clique, entre ton e-mail, et c'est réservé : ${it.url}`)}">WhatsApp</button> <button class="btn" data-uses="${it.id}">Qui ?</button> <button class="btn ${it.disabled ? 'grant' : 'del'}" data-toggle="${it.id}" data-enable="${it.disabled ? 1 : 0}">${it.disabled ? 'Réactiver' : 'Désactiver'}</button></td>
+      </tr>`).join('')}</tbody></table></div>` : '<div class="empty">Aucun lien pour ce concert. Crée-en un ci-dessus.</div>'}
+    <div class="modal-actions"><button class="cancel">Fermer</button></div>
+  </div>`;
+    bg.querySelector('.cancel').onclick = () => bg.remove();
+    bg.querySelector('#iv-create').onclick = async () => {
+      const label = bg.querySelector('#iv-label').value.trim(), max_uses = Number(bg.querySelector('#iv-max').value) || 50;
+      try { const r = await api('POST', `/events/${id}/invites`, { label, max_uses }); toast(r.message); d = (await api('GET', `/events/${id}/invites`)).data; render(); } catch (e) { toast(e.message || 'Échec'); }
+    };
+    bg.querySelectorAll('[data-copy]').forEach((b) => { b.onclick = () => { navigator.clipboard.writeText(b.dataset.copy).then(() => toast('Lien copié')); }; });
+    bg.querySelectorAll('[data-wa]').forEach((b) => { b.onclick = () => window.open('https://wa.me/?text=' + b.dataset.wa, '_blank', 'noopener'); });
+    bg.querySelectorAll('[data-toggle]').forEach((b) => { b.onclick = async () => { try { const r = await api('POST', `/invites/${b.dataset.toggle}/disable`, { enable: b.dataset.enable === '1' }); toast(r.message); d = (await api('GET', `/events/${id}/invites`)).data; render(); } catch (e) { toast(e.message || 'Échec'); } }; });
+    bg.querySelectorAll('[data-uses]').forEach((b) => { b.onclick = async () => { try { const r = (await api('GET', `/invites/${b.dataset.uses}/uses`)).data; alert(r.uses.length ? r.uses.map((u) => `${u.email} — ${fmtDateTime(u.created_at)}`).join('\n') : 'Personne n\'a encore utilisé ce lien.'); } catch (e) { toast(e.message || 'Échec'); } }; });
+  };
+  render();
+  document.body.appendChild(bg);
+  bg.onclick = (e) => { if (e.target === bg) bg.remove(); };
+}
+
 // Artistes invités + partage de la part artiste (GET/PUT /admin/events/:id/guests).
 async function showEventGuests(id) {
   let d, artists;
@@ -1126,7 +1166,7 @@ async function pageEvents() {
       { label: 'Statut', render: (r) => `${badge(r.status)}<div>${liveModeBadge(r)}</div>` },
       { label: 'Vidéo', render: (r) => `${r.teaser_playback_id ? `<div style="margin-bottom:4px;display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span class="badge active" title="Bande-annonce publique affichée sur l'accueil et le popup À la une">Teaser ✓</span><button class="btn del" data-teaserdel="${r.id}">Retirer le teaser</button></div>` : ''}${!r.teaser_playback_id && r.mux_playback_id && !['completed', 'ended'].includes(r.status) ? `<div style="margin-bottom:4px"><button class="btn" data-replay2teaser="${r.id}" title="La vidéo envoyée comme replay est en fait la bande-annonce : la déplacer vers le teaser public">↪ C'est un teaser</button></div>` : ''}${muxBadge(r.mux_upload_status)}${r.mux_live_stream_id && r.live_mode !== 'pro' ? '<div class="em">🔴 live en cours</div>' : ''}${r.replay_expires_at ? `<div class="em">replay jusqu'au ${fmtDate(r.replay_expires_at)}</div>` : ''}${r.mux_playback_id ? `<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap"><button class="btn edit" data-replayplay="${r.id}" title="Lire le replay (HLS)">▶ Replay</button><a class="btn" style="text-decoration:none;display:inline-block" href="${esc(r.replay_mp4_url || '')}" target="_blank" rel="noopener" title="Télécharge le replay en MP4. Replay enregistré avant cette version : disponible après le prochain live, ou clique « Préparer le MP4 » (sinon le lien répond 404).">⬇ Replay MP4</a>${r.mux_asset_id ? `<button class="btn" data-replaymp4="${r.id}" title="Demande à Mux la version MP4 d'un replay existant (assets sans rendition)">🎞 Préparer le MP4</button>` : ''}</div>` : ''}` },
       { label: 'Date', render: (r) => fmtDate(r.start_date_time) },
-      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="teaser:${r.id}" title="Bande-annonce courte publique (accueil + popup À la une)">🎞 Teaser (accueil)</button><button class="btn grant" data-muxupload="event:${r.id}" title="Enregistrement du concert, réservé aux acheteurs d'un concert payant">🎬 Replay (vidéo du concert)</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button>${r.live_mode === 'pro' && r.mux_live_stream_id ? `<button class="btn" data-muxrekey="${r.id}" title="Supprime le flux Mux et en recrée un : à utiliser si la clé de stream a fuité">🔑 Nouvelle clé</button>` : ''}<button class="btn grant" data-feature="${r.id}">⭐ À la une</button><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn" data-guests="${r.id}">🎤 Invités</button><button class="btn" data-links="${r.id}">🎛 Régie</button><button class="btn" data-stage="${r.id}">🖥 Scène</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="teaser:${r.id}" title="Bande-annonce courte publique (accueil + popup À la une)">🎞 Teaser (accueil)</button><button class="btn grant" data-muxupload="event:${r.id}" title="Enregistrement du concert, réservé aux acheteurs d'un concert payant">🎬 Replay (vidéo du concert)</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button>${r.live_mode === 'pro' && r.mux_live_stream_id ? `<button class="btn" data-muxrekey="${r.id}" title="Supprime le flux Mux et en recrée un : à utiliser si la clé de stream a fuité">🔑 Nouvelle clé</button>` : ''}<button class="btn grant" data-feature="${r.id}">⭐ À la une</button><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn" data-invites="${r.id}" title="Un lien que l'artiste envoie lui-même : chaque invité entre son e-mail et sa place gratuite est réservée">🔗 Lien d'invitation</button><button class="btn" data-guests="${r.id}">🎤 Invités</button><button class="btn" data-links="${r.id}">🎛 Régie</button><button class="btn" data-stage="${r.id}">🖥 Scène</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
     ],
   });
   renderFeaturedBanner();
@@ -2420,6 +2460,8 @@ document.addEventListener('click', (e) => {
   if (fe) { featureEvent(fe.dataset.feature); return; }
   const gt = e.target.closest('[data-gifts]');
   if (gt) { showGiftTickets(gt.dataset.gifts); return; }
+  const iv = e.target.closest('[data-invites]');
+  if (iv) { showInvites(iv.dataset.invites); return; }
   const lk = e.target.closest('[data-links]');
   if (lk) { openLiveLink(lk.dataset.links, 'regie_url'); return; }
   const sg = e.target.closest('[data-stage]');

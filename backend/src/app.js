@@ -117,7 +117,7 @@ app.use('/api/admin/login', rateLimit({
 }));
 // Roue de la fortune et billetterie web : un tirage par e-mail côté serveur,
 // mais on freine aussi les rafales automatisées (20 / 15 min par IP).
-app.use(['/api/wheel/:slug/spin', '/api/tickets/web-checkout', '/api/watch/claim', '/api/watch/free', '/api/watch/resend'], rateLimit({
+app.use(['/api/wheel/:slug/spin', '/api/tickets/web-checkout', '/api/watch/claim', '/api/watch/free', '/api/watch/resend', '/api/watch/invite'], rateLimit({
   windowMs: WINDOW_15_MIN, max: 20, keyGenerator: ipOf,
   standardHeaders: true, legacyHeaders: false, message: LIMIT_MESSAGE,
 }));

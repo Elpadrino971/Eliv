@@ -281,6 +281,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
     $('meta').textContent=[d.artist,when(d.start_date_time)].filter(Boolean).join(' · ');
     poster(d.cover_image);
     $('eyebrow').textContent=d.state==='live'?'En direct maintenant':d.state==='ended'?'Concert terminé':'Concert en direct';
+    if(inviteActive) return; // carte « place offerte » en cours : ne pas écraser
     if(d.is_free){
       $('gateTitle').textContent='Réserve ta place gratuite';
       $('gateText').textContent='Concert gratuit : ton adresse e-mail suffit, et tu regardes juste après, ici même.';
@@ -589,6 +590,13 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
     var email=$('buyEmail').value.trim(), btn=$('buyBtn'), label=btn.textContent; $('buyMsg').textContent='';
     if(!validEmail(email)){ $('buyMsg').textContent='Entre une adresse e-mail valide.'; return; }
     busy(btn,true,'Un instant…');
+    if(inviteActive){
+      post('/watch/invite',{code:inviteCode,email:email}).then(function(d){
+        if(d.status==='success'){ track('invite_claimed'); inviteActive=false; start(d.data.token); return; }
+        $('buyMsg').textContent=d.message||'Erreur, réessaie.'; busy(btn,false,label);
+      }).catch(function(){ $('buyMsg').textContent='Réseau indisponible, réessaie.'; busy(btn,false,label); });
+      return;
+    }
     if(ev&&ev.is_free){
       post('/watch/free',{event_id:EVENT,email:email}).then(function(d){
         if(d.status==='success'){ track('free_reserved_web'); start(d.data.token); return; }
@@ -642,14 +650,35 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
     store(KEY,null); token=null; clearInterval(pollTimer); stopPlayer(); chatStart(false); showGate();
   });
 
+  // ── Lien d'invitation (?i=CODE) : place offerte par l'artiste ──
+  // La carte d'achat devient « Ta place est offerte » : l'e-mail suffit.
+  var inviteActive=false;
+  function inviteGate(){
+    var t=read(KEY); if(t){ start(t); return; } // déjà une place sur cet appareil
+    return fetch(API+'/watch/invite/'+encodeURIComponent(inviteCode),{cache:'no-store',credentials:'omit'}).then(function(r){return r.json();}).then(function(d){
+      showGate();
+      if(d.status!=='success'){ $('payNotice').innerHTML='<div class="notice warn">'+esc(d.message||'Lien invalide.')+'</div>'; return; }
+      var inv=d.data;
+      if(!inv.valid){ $('payNotice').innerHTML='<div class="notice warn">Toutes les places de cette invitation ont été prises. Tu peux encore prendre ta place ci-dessous.</div>'; return; }
+      inviteActive=true;
+      $('gateTitle').textContent='🎁 Ta place est offerte';
+      $('gateText').textContent=(inv.artist?inv.artist+' t\'invite':'Tu es invité')+' : entre ton e-mail, ta place est réservée tout de suite. Tu regardes ici, ou dans l\'app avec la même adresse.';
+      $('price').textContent='Offerte'; $('next').textContent='';
+      $('buyBtn').textContent='Réserver ma place offerte';
+      $('haveBtn').hidden=true;
+      var u=me(); if(u&&u.email) $('buyEmail').value=u.email;
+    }).catch(function(){ showGate(); });
+  }
+
   // ── Démarrage ──
   if(!EVENT||EVENT<1){
     overlay('Ce lien ne mène à aucun concert. <a href="/" style="color:var(--gold)">Voir les concerts</a>',false);
     return;
   }
-  var sid=q.get('session_id'), k=q.get('k'), paid=q.get('paiement');
+  var sid=q.get('session_id'), k=q.get('k'), paid=q.get('paiement'), inviteCode=(q.get('i')||'').trim().toUpperCase();
   loadEvent().then(function(){
     if(sid){ claim(sid,0); return; }
+    if(inviteCode){ return inviteGate(); }
     var t=k||read(KEY);
     if(t){ start(t); return; }
     // Connecté sur l'app web : la place du compte ouvre le live directement.

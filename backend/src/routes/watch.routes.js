@@ -24,6 +24,7 @@ const stripeService = require('../services/stripe');
 const webTickets = require('../services/web_tickets');
 const webWatch = require('../services/web_watch');
 const email = require('../services/email');
+const invites = require('../services/invites');
 
 const fail = (res, message, code = 422, extra = {}) => res.status(code).json({ status: 'error', message, ...extra });
 const ok = (res, data) => res.json({ status: 'success', data });
@@ -132,6 +133,40 @@ router.post('/free', async (req, res) => {
   // l'attend pas pour ouvrir le live.
   mailWatchLink(e, event, webWatch.issue(e, event.id, 'web_free_email'), false);
   return ok(res, { token, event_id: event.id, email: access.maskEmail(e) });
+});
+
+// Lien d'invitation (place offerte par l'artiste, voir services/invites.js).
+// GET : ce que la page affiche avant de demander l'e-mail (places restantes).
+router.get('/invite/:code', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const inv = invites.byCode(req.params.code);
+  if (!inv) return fail(res, "Ce lien d'invitation n'existe pas.", 404);
+  const event = eventById(inv.event_id);
+  if (!event) return fail(res, 'Concert introuvable.', 404);
+  const artist = db.prepare('SELECT artist_name, full_name FROM users WHERE id = ?').get(event.artist_id) || {};
+  return ok(res, {
+    event_id: event.id, event_name: event.name, artist: artist.artist_name || artist.full_name || '',
+    valid: !inv.disabled && inv.used < inv.max_uses, remaining: Math.max(0, inv.max_uses - inv.used), label: inv.label,
+  });
+});
+// POST : l'invité donne son e-mail -> place gratuite + clé d'accès immédiate.
+router.post('/invite', async (req, res) => {
+  const b = req.body || {};
+  const inv = invites.byCode(b.code);
+  if (!inv) return fail(res, "Ce lien d'invitation n'existe pas.", 404);
+  const event = eventById(inv.event_id);
+  if (!event) return fail(res, 'Concert introuvable.', 404);
+  if (webWatch.stateOf(event) === 'ended') return fail(res, 'Ce concert est terminé.', 410);
+  if (blocked(req, event)) return fail(res, GEO_MESSAGE, 451);
+  const e = access.normEmail(b.email);
+  if (!access.isValidEmail(e)) return fail(res, 'Entre une adresse e-mail valide.');
+  if (access.isDisposableEmail(e)) return fail(res, 'Utilise ton adresse e-mail habituelle.');
+  const r = invites.redeem(inv, e);
+  if (r.error) return fail(res, r.error, r.code);
+  console.log(`[invitations] ${inv.code} -> ${access.maskEmail(e)} (concert #${event.id}) : ${r.status}`);
+  const token = webWatch.issue(e, event.id, 'invite');
+  mailWatchLink(e, event, webWatch.issue(e, event.id, 'invite_email'), false);
+  return ok(res, { token, event_id: event.id, email: access.maskEmail(e), state: r.status });
 });
 
 // Compte déjà connecté sur l'app web (/web/) : clé d'accès sans ressaisir

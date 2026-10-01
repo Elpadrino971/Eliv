@@ -987,6 +987,44 @@ router.get('/events/:id/gift-tickets', requireAdmin, (req, res) => {
   return res.json({ status: 'success', data: { event: { id: ev.id, name: ev.name }, gifted_count: items.length, max: eventAccess.ARTIST_GIFT_MAX, items } });
 });
 
+// ─── Liens d'invitation : places gratuites distribuées par l'artiste lui-même ───
+// Voir services/invites.js. L'admin crée un lien (N places), l'artiste l'envoie.
+const invites = require('../services/invites');
+function inviteView(inv) {
+  return {
+    id: inv.id, code: inv.code, label: inv.label, max_uses: inv.max_uses, used: inv.used, disabled: !!inv.disabled,
+    created_at: inv.created_at,
+    url: `${REGIE_SITE_URL}/live.html?e=${inv.event_id}&i=${encodeURIComponent(inv.code)}`,
+  };
+}
+router.get('/events/:id/invites', requireAdmin, (req, res) => {
+  const ev = db.prepare('SELECT id, name FROM events WHERE id = ?').get(Number(req.params.id));
+  if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  return res.json({ status: 'success', data: { event: { id: ev.id, name: ev.name }, invites: invites.listForEvent(ev.id).map(inviteView) } });
+});
+router.post('/events/:id/invites', requireAdmin, (req, res) => {
+  const ev = db.prepare('SELECT e.id, e.name, u.artist_name FROM events e LEFT JOIN users u ON u.id = e.artist_id WHERE e.id = ?').get(Number(req.params.id));
+  if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  const b = req.body || {};
+  const inv = invites.create({
+    eventId: ev.id, label: String(b.label || '').trim().slice(0, 60) || null,
+    maxUses: b.max_uses, prefix: (ev.artist_name || ev.name || '').split(/\s+/)[0], adminId: req.admin?.id,
+  });
+  console.log(`[invitations] admin #${req.admin?.id} : lien ${inv.code} (${inv.max_uses} places) pour le concert #${ev.id}`);
+  return res.json({ status: 'success', message: `Lien créé : ${inv.max_uses} place(s).`, data: inviteView(inv) });
+});
+router.post('/invites/:id/disable', requireAdmin, (req, res) => {
+  const inv = invites.get(req.params.id);
+  if (!inv) return res.status(404).json({ status: 'error', message: 'Lien introuvable.' });
+  invites.setDisabled(inv.id, !(req.body && req.body.enable));
+  return res.json({ status: 'success', message: req.body && req.body.enable ? 'Lien réactivé.' : 'Lien désactivé.', data: inviteView(invites.get(inv.id)) });
+});
+router.get('/invites/:id/uses', requireAdmin, (req, res) => {
+  const inv = invites.get(req.params.id);
+  if (!inv) return res.status(404).json({ status: 'error', message: 'Lien introuvable.' });
+  return res.json({ status: 'success', data: { invite: inviteView(inv), uses: invites.uses(inv.id) } });
+});
+
 // ─── Artistes invités (lot 7) : partage de la part artiste, page Concerts ───
 // GET : invités + % + reste + répartition estimée au prix du concert.
 function adminGuestsPayload(ev) {
