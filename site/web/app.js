@@ -380,7 +380,7 @@
     $view.innerHTML = '<div class="empty">Chargement du studio…</div>';
     if (!studioLoading) {
       studioLoading = new Promise(function (ok, ko) {
-        var sc = document.createElement('script'); sc.src = 'studio.js?v=1'; sc.onload = ok; sc.onerror = ko; document.head.appendChild(sc);
+        var sc = document.createElement('script'); sc.src = 'studio.js?v=2'; sc.onload = ok; sc.onerror = ko; document.head.appendChild(sc);
       });
     }
     studioLoading.then(function () { if (location.hash.indexOf('#/studio') === 0 && window.VyStudio) window.VyStudio.render(); })

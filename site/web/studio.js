@@ -198,7 +198,7 @@
     var flip = isCoarse() && X.cams.length > 1 ? '<button type="button" class="btn btn-ghost" id="stFlip">Retourner la caméra</button>' : '';
     // L'aperçu est en miroir (comme toute webcam) : les fans, eux, voient
     // l'image réelle. Ce bouton coupe le miroir pour voir ce qu'ils voient.
-    flip += '<button type="button" class="btn btn-ghost" id="stMirror" aria-pressed="' + (X.noMirror ? 'false' : 'true') + '" title="L\'aperçu seulement : les fans voient toujours l\'image réelle">' + (X.noMirror ? 'Aperçu réel' : 'Aperçu miroir') + '</button>';
+    flip += mirrorBtn(X);
     var qual = '<div class="st-f"><label for="stQ">Qualité</label><select id="stQ">' + Object.keys(QUALITIES).map(function (k) { return opt(k, QUALITIES[k].label, k === X.q); }).join('') + '</select></div>';
     var seg = !resume && X.events.length ? '<div class="st-seg" role="group" aria-label="Type de live">' +
       '<button type="button" id="stModeNew" aria-pressed="' + !evMode + '">Nouveau live instantané</button>' +
@@ -224,7 +224,7 @@
     on('stCamSel', 'change', function () { X.camId = this.value; acquire(X); });
     on('stMicSel', 'change', function () { X.micId = this.value; acquire(X); });
     on('stFlip', 'click', function () { X.facing = X.facing === 'user' ? 'environment' : 'user'; X.camId = ''; acquire(X); });
-    on('stMirror', 'click', function () { X.noMirror = !X.noMirror; applyMirror(X); var b = $('stMirror'); if (b) { b.textContent = X.noMirror ? 'Aperçu réel' : 'Aperçu miroir'; b.setAttribute('aria-pressed', X.noMirror ? 'false' : 'true'); } });
+    on('stMirror', 'click', function () { toggleMirror(X); });
     on('stQ', 'change', function () { X.q = this.value; acquire(X); });
     on('stModeNew', 'click', function () { X.mode = 'new'; X.formErr = ''; paint(X); });
     on('stModeEv', 'click', function () { X.mode = 'event'; X.formErr = ''; paint(X); });
@@ -243,12 +243,14 @@
     p.innerHTML = '<div class="st-card">' +
       '<div class="st-stats" id="stStats"></div>' +
       '<div class="st-ctl"><button class="btn btn-ghost" id="stMic" aria-pressed="' + X.micOff + '">' + (X.micOff ? 'Réactiver le micro' : 'Couper le micro') + '</button>' +
-      '<button class="btn btn-ghost" id="stCamBtn" aria-pressed="' + X.camOff + '">' + (X.camOff ? 'Réactiver la caméra' : 'Couper la caméra') + '</button></div>' +
+      '<button class="btn btn-ghost" id="stCamBtn" aria-pressed="' + X.camOff + '">' + (X.camOff ? 'Réactiver la caméra' : 'Couper la caméra') + '</button>' +
+      mirrorBtn(X) + '</div>' +
       '<button class="btn btn-ghost btn-block" id="stShare">Partager le lien</button>' +
       '<p class="muted small">Garde cet onglet ouvert et au premier plan pendant le live.</p>' +
       '<div id="stEnd"><button class="btn btn-live btn-block" id="stStop">Terminer le live</button></div></div>';
     $('stMic').onclick = function () { toggleTrack(X, 'audio'); };
     $('stCamBtn').onclick = function () { toggleTrack(X, 'video'); };
+    on('stMirror', 'click', function () { toggleMirror(X); });
     $('stShare').onclick = function () { share(X); };
     $('stStop').onclick = function () {
       $('stEnd').innerHTML = '<p style="margin-bottom:10px">Terminer le live pour tous tes spectateurs ?</p><div class="st-ctl"><button class="btn btn-live" id="stYes">Oui, terminer</button><button class="btn btn-ghost" id="stNo">Continuer</button></div>';
@@ -277,6 +279,13 @@
   }
   // Miroir de l'aperçu uniquement (CSS) ; le flux envoyé n'est jamais inversé.
   function applyMirror(X) { var v = $('stVideo'); if (v) v.classList.toggle('mirror', !X.rearCam && !X.noMirror); }
+  function mirrorBtn(X) {
+    return '<button type="button" class="btn btn-ghost" id="stMirror" aria-pressed="' + (X.noMirror ? 'false' : 'true') + '" title="L\'aperçu seulement : les fans voient toujours l\'image réelle">' + (X.noMirror ? 'Aperçu réel' : 'Aperçu miroir') + '</button>';
+  }
+  function toggleMirror(X) {
+    X.noMirror = !X.noMirror; applyMirror(X);
+    var b = $('stMirror'); if (b) { b.textContent = X.noMirror ? 'Aperçu réel' : 'Aperçu miroir'; b.setAttribute('aria-pressed', X.noMirror ? 'false' : 'true'); }
+  }
 
   function acquire(X) {
     if (X.dead) return;
