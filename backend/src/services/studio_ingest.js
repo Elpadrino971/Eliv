@@ -66,6 +66,9 @@ let schemaReady = false;
 function ensureSchema() {
   if (schemaReady) return;
   try { db.exec('ALTER TABLE events ADD COLUMN studio_web INTEGER DEFAULT 0'); } catch (_) { /* déjà présente */ }
+  // Concert PROGRAMMÉ lancé depuis le navigateur (secours) : instantané JSON de l'état d'avant
+  // { status, live_mode, new_stream, live, at }. NULL = évènement créé par le studio lui-même.
+  try { db.exec('ALTER TABLE events ADD COLUMN studio_prev TEXT'); } catch (_) { /* déjà présente */ }
   schemaReady = true;
 }
 ensureSchema();
@@ -117,6 +120,54 @@ function send(ws, obj) {
 // ─── Sessions en base ───────────────────────────────────────────────────────
 function getEvent(id) { return db.prepare('SELECT * FROM events WHERE id = ?').get(id); }
 
+/** Instantané « avant studio » d'un concert programmé, ou null (évènement créé par le studio). */
+function prevOf(ev) {
+  if (!ev || !ev.studio_prev) return null;
+  try { const p = JSON.parse(ev.studio_prev); return p && typeof p === 'object' ? p : null; } catch (_) { return null; }
+}
+/** Le studio a-t-il déjà diffusé sur cet évènement ? (concert programmé déjà « live » via l'app : non) */
+function studioWasLive(ev) {
+  const prev = prevOf(ev);
+  return prev ? !!prev.live : ev.status === 'live';
+}
+function markPrevLive(eventId) {
+  const ev = getEvent(eventId);
+  const prev = prevOf(ev);
+  if (!prev || prev.live) return;
+  prev.live = true;
+  db.prepare('UPDATE events SET studio_prev = ? WHERE id = ?').run(JSON.stringify(prev), eventId);
+}
+
+/**
+ * Réserve un concert programmé pour une session studio : l'instantané de l'état
+ * précédent, studio_web=1 et live_mode='pro' (c'est ce qui fait lire le HLS aux
+ * fans de l'app). SYNCHRONE : à appeler dans le même tour que le contrôle
+ * d'unicité. Le prix, le titre, l'affiche et le replay ne sont pas touchés.
+ */
+function claimExisting(ev, { newStream }) {
+  const prev = { status: ev.status, live_mode: ev.live_mode === undefined ? null : ev.live_mode, new_stream: !!newStream, live: false, at: new Date().toISOString() };
+  db.prepare("UPDATE events SET studio_web = 1, studio_prev = ?, live_mode = 'pro' WHERE id = ?").run(JSON.stringify(prev), ev.id);
+  return prev;
+}
+
+/** Remet un concert programmé comme avant la session (jamais diffusé) ; supprime le flux Mux créé pour elle. */
+function revertExisting(ev, prev, why) {
+  const eventId = ev.id;
+  const keepStatus = ['published', 'live'].includes(ev.status) ? (prev.status || 'published') : ev.status;
+  db.prepare('UPDATE events SET status = ?, live_mode = ?, studio_web = 0, studio_prev = NULL WHERE id = ?')
+    .run(keepStatus, prev.live_mode === undefined ? null : prev.live_mode, eventId);
+  if (prev.new_stream && ev.mux_live_stream_id) {
+    const lsId = ev.mux_live_stream_id;
+    db.prepare('UPDATE events SET mux_live_stream_id = NULL, mux_stream_key = NULL, mux_live_playback_id = NULL WHERE id = ?').run(eventId);
+    try { db.prepare('UPDATE events SET mux_live_signed_playback_id = NULL WHERE id = ?').run(eventId); } catch (_) { /* colonne absente */ }
+    if (mux.isConfigured()) {
+      Promise.resolve().then(() => mux.deleteLiveStream(lsId))
+        .catch((e) => warn(`event #${eventId} : suppression flux Mux ignorée (${String(e.message).slice(0, 120)})`));
+    }
+  }
+  log(`event #${eventId} remis comme avant (${why}) : ${keepStatus}, live_mode=${prev.live_mode || 'mobile'}`);
+}
+
 /** Session studio active (préparée ou en direct) de cet artiste, ou undefined. */
 function activeSessionOf(userId) {
   reapStalePrepared();
@@ -126,23 +177,35 @@ function activeSessionOf(userId) {
   ).get(userId);
 }
 
-/** Sessions préparées jamais lancées depuis > 60 min : annulées (flux Mux supprimé). */
+/**
+ * Sessions préparées jamais lancées depuis > 60 min : annulées (flux Mux supprimé).
+ * Un concert PROGRAMMÉ (studio_prev) n'est jamais annulé : il est remis comme avant.
+ */
 function reapStalePrepared() {
   const rows = db.prepare(
     `SELECT id, mux_live_stream_id FROM events
-     WHERE studio_web = 1 AND status = 'published'
+     WHERE studio_web = 1 AND status = 'published' AND studio_prev IS NULL
        AND created_at < datetime('now', ?)`
   ).all(`-${PREPARED_TTL_MIN} minutes`);
   for (const r of rows) {
     if (sessions.has(r.id)) continue; // un navigateur est connecté : on attend
     endEvent(r.id, 'préparation expirée');
   }
+  const cutoff = Date.now() - PREPARED_TTL_MIN * 60 * 1000;
+  const sched = db.prepare("SELECT * FROM events WHERE studio_web = 1 AND studio_prev IS NOT NULL AND status IN ('published','live')").all();
+  for (const ev of sched) {
+    const prev = prevOf(ev);
+    if (!prev || prev.live || sessions.has(ev.id) || graces.has(ev.id)) continue;
+    if (new Date(prev.at).getTime() < cutoff) endEvent(ev.id, 'préparation expirée');
+  }
 }
 
 /**
  * Termine un évènement du studio : coupe ffmpeg/WebSocket, passe l'event en
- * « completed » (même effet que recording/stop de l'app) ou « cancelled » s'il
- * n'a jamais été en direct, et signale la fin à Mux. Idempotent.
+ * « completed » (même effet que recording/stop de l'app) et signale la fin à Mux.
+ * Évènement créé par le studio qui n'a jamais été en direct : « cancelled ».
+ * Concert PROGRAMMÉ (studio_prev) jamais diffusé : remis comme avant (status,
+ * live_mode), jamais annulé ni supprimé. Idempotent.
  */
 function endEvent(eventId, why) {
   clearGrace(eventId);
@@ -151,7 +214,13 @@ function endEvent(eventId, why) {
 
   const ev = getEvent(eventId);
   if (!ev || Number(ev.studio_web) !== 1) return null;
-  const wasLive = ev.status === 'live';
+  const prev = prevOf(ev);
+  const wasLive = ev.status === 'live' && studioWasLive(ev);
+  if (prev && !wasLive) {
+    if (!['published', 'live'].includes(ev.status)) return { wasLive: false };
+    revertExisting(ev, prev, why);
+    return { wasLive: false, reverted: true };
+  }
   if (wasLive) {
     db.prepare("UPDATE events SET status = 'completed', end_date_time = ? WHERE id = ? AND status = 'live'")
       .run(new Date().toISOString(), eventId);
@@ -318,6 +387,7 @@ function onFirstOutput(s) {
   s.liveAt = Date.now();
   const nowIso = new Date().toISOString();
   db.prepare("UPDATE events SET status = 'live' WHERE id = ? AND status = 'published'").run(s.eventId);
+  markPrevLive(s.eventId);
   // Plafond dur : 6 h à partir du premier direct.
   const ev = getEvent(s.eventId);
   if (ev && !s.resumed) {
@@ -348,7 +418,7 @@ function onConnection(ws, ctx) {
   const s = {
     eventId, userId, mime, ws,
     ff: null, closed: false, liveSent: false,
-    resumed: ev.status === 'live',
+    resumed: studioWasLive(ev),
     bytesIn: 0, lastStatBytes: 0, lastStatAt: Date.now(), lastDataAt: Date.now(),
     chunks: 0, alive: true,
   };
@@ -356,7 +426,7 @@ function onConnection(ws, ctx) {
 
   // Durée max : 6 h après le premier direct (end_date_time), sinon 6 h.
   let remaining = MAX_LIVE_MS;
-  if (ev.status === 'live' && ev.end_date_time) {
+  if (studioWasLive(ev) && ev.end_date_time) {
     const t = new Date(ev.end_date_time).getTime() - Date.now();
     if (Number.isFinite(t)) remaining = Math.min(MAX_LIVE_MS, t);
   }
@@ -489,7 +559,7 @@ module.exports = {
   WS_PATH, TOKEN_TTL_S, RECONNECT_GRACE_MS,
   enabled, hasFfmpeg, checkFfmpeg, rtmpBase,
   signIngestToken, verifyIngestToken, ingestInfo, urlsFor,
-  activeSessionOf, endEvent, getEvent,
+  activeSessionOf, endEvent, getEvent, prevOf, claimExisting, revertExisting,
   handleUpgrade, init, shutdown,
   buildFfmpegArgs, containerFromMime, containerFromMagic, isH264,
   _sessions: sessions,

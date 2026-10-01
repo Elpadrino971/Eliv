@@ -1,7 +1,8 @@
 /* VybzzZ web — Studio : l'artiste lance un live depuis son navigateur.
  * Chargé à la demande par app.js (route #/studio). Caméra + micro → MediaRecorder
  * → WebSocket d'ingestion (le serveur transcode avec ffmpeg et diffuse).
- * Contrat API : GET /studio/status, GET /studio/live/current, POST /studio/live,
+ * Contrat API : GET /studio/status, GET /studio/events (concerts programmés de l'artiste),
+ * GET /studio/live/current, POST /studio/live ({title,price,replay} ou {event_id}),
  * POST /studio/live/:id/stop ; chat via /event-logs (lecture) et /event-comment.
  */
 (function () {
@@ -81,6 +82,7 @@
       dead: false, state: 'loading', stream: null, rec: null, ws: null, mime: '',
       q: '720', facing: 'user', camId: '', micId: '', cams: [], mics: [],
       title: '', price: 0, replay: true, current: null,
+      events: [], mode: 'new', evId: null, existing: false,
       micOff: false, camOff: false, ending: false, everLive: false, liveSince: 0,
       eventId: null, ingest: null, watchUrl: '', webUrl: '', createBody: null,
       attempt: 0, cycleStart: 0, retryTimer: 0, readyTimer: 0, tick: 0, chatTimer: 0,
@@ -104,6 +106,10 @@
         if (!X.mime) { unsupportedScreen('Ce navigateur ne sait pas enregistrer la vidéo pour la diffuser.'); return; }
         X.title = ('Live de ' + W.artistName(user)).slice(0, 80);
         return api('/studio/live/current').then(function (c) { if (c && c.data && c.data.event_id) X.current = c.data; }, function () {}).then(function () {
+          // Concerts programmés de l'artiste (plan de secours). Échec ou liste vide : écran habituel.
+          if (X.dead || X.current) return;
+          return api('/studio/events').then(function (d) { if (d && d.status === 'success' && Array.isArray(d.data)) setEvents(X, d.data); }, function () {});
+        }).then(function () {
           if (X.dead) return;
           buildShell(X); setState(X, 'setup'); acquire(X);
         });
@@ -164,21 +170,50 @@
 
   function opt(v, label, sel) { return '<option value="' + esc(v) + '"' + (sel ? ' selected' : '') + '>' + esc(label) + '</option>'; }
 
+  // ── Concert programmé (secours) ───────────────────────────────────────────
+  function setEvents(X, list) {
+    X.events = list.filter(function (e) { return e && e.id && e.name; });
+    if (!X.events.length) return;
+    X.evId = X.events[0].id;
+    // Un concert qui démarre dans moins de 3 h (ou déjà commencé) : c'est sans doute celui qu'on veut lancer.
+    var soon = X.events.some(function (e) { var t = Date.parse(e.start_date_time); return isFinite(t) && t - Date.now() < 3 * 3600 * 1000; });
+    X.mode = soon ? 'event' : 'new';
+    if (soon) {
+      X.evId = X.events.slice().sort(function (a, b) { return Math.abs(Date.parse(a.start_date_time) - Date.now()) - Math.abs(Date.parse(b.start_date_time) - Date.now()); })[0].id;
+    }
+  }
+  function evById(X, id) { for (var i = 0; i < X.events.length; i++) if (String(X.events[i].id) === String(id)) return X.events[i]; return null; }
+  function fmtEvDate(iso) {
+    var d = new Date(iso); if (isNaN(d)) return '';
+    try { return d.toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return d.toString(); }
+  }
+  function soldLabel(n) { n = +n || 0; return n + (n > 1 ? ' billets vendus' : ' billet vendu'); }
+  function evLabel(e) { return e.name + ' · ' + fmtEvDate(e.start_date_time) + ' · ' + soldLabel(e.tickets_sold); }
+
   function paintSetup(X, p) {
     var resume = !!X.current;
+    var evMode = !resume && X.events.length > 0 && X.mode === 'event';
     var camPick = X.cams.length > 1 ? '<div class="st-f"><label for="stCamSel">Caméra</label><select id="stCamSel">' + X.cams.map(function (d, i) { return opt(d.deviceId, d.label || ('Caméra ' + (i + 1)), d.deviceId === X.camId); }).join('') + '</select></div>' : '';
     var micPick = X.mics.length > 1 ? '<div class="st-f"><label for="stMicSel">Micro</label><select id="stMicSel">' + X.mics.map(function (d, i) { return opt(d.deviceId, d.label || ('Micro ' + (i + 1)), d.deviceId === X.micId); }).join('') + '</select></div>' : '';
     var flip = isCoarse() && X.cams.length > 1 ? '<button type="button" class="btn btn-ghost" id="stFlip">Retourner la caméra</button>' : '';
     var qual = '<div class="st-f"><label for="stQ">Qualité</label><select id="stQ">' + Object.keys(QUALITIES).map(function (k) { return opt(k, QUALITIES[k].label, k === X.q); }).join('') + '</select></div>';
-    var title = resume ? '' : '<div class="st-f"><label for="stTitle">Titre du live</label><input id="stTitle" maxlength="80" required placeholder="Ex. : Session acoustique" value="' + esc(X.title) + '" autocomplete="off"></div>' +
+    var seg = !resume && X.events.length ? '<div class="st-seg" role="group" aria-label="Type de live">' +
+      '<button type="button" id="stModeNew" aria-pressed="' + !evMode + '">Nouveau live instantané</button>' +
+      '<button type="button" id="stModeEv" aria-pressed="' + evMode + '">Mon concert programmé</button></div>' : '';
+    var evForm = evMode ? '<div class="st-f"><label for="stEvSel">Mon concert</label><select id="stEvSel">' +
+      X.events.map(function (e) { return opt(e.id, evLabel(e), String(e.id) === String(X.evId)); }).join('') + '</select></div>' +
+      '<p class="st-note">Les fans qui ont acheté leur place verront ton live sur le site et dans l\'app.</p>' +
+      '<p class="muted small">Ne lance pas aussi la diffusion depuis l\'application : une seule source à la fois.</p>' : '';
+    var title = resume || X.events.length && evMode ? '' : '<div class="st-f"><label for="stTitle">Titre du live</label><input id="stTitle" maxlength="80" required placeholder="Ex. : Session acoustique" value="' + esc(X.title) + '" autocomplete="off"></div>' +
       '<div class="st-grid"><div class="st-f"><label for="stPrice">Prix d\'entrée</label><select id="stPrice">' + PRICES.map(function (v) { return opt(v, priceLabel(v), v === X.price); }).join('') + '</select></div>' +
       '<div class="st-f" style="align-self:end"><label class="st-switch"><input type="checkbox" id="stReplay"' + (X.replay ? ' checked' : '') + '> Replay activé</label></div></div>';
-    var banner = resume ? '<div class="st-banner" style="position:static;border-color:var(--gold)">Un live est déjà ouvert sur ton compte (' + (X.current.state === 'live' ? 'en direct' : 'préparé') + '). Reprends-le ou termine-le.</div>' : '';
-    p.innerHTML = '<div class="st-card"><h1>' + (resume ? 'Reprendre ton live' : 'Lancer un live') + '</h1>' + banner +
+    var banner = resume ? '<div class="st-banner" style="position:static;border-color:var(--gold)">' + (X.current.existing ? 'Ton concert programmé est déjà ouvert' : 'Un live est déjà ouvert') + ' sur ton compte (' + (X.current.state === 'live' ? 'en direct' : 'préparé') + '). Reprends-le ou termine-le.</div>' : '';
+    var goLabel = resume ? 'Reprendre le live' : evMode ? 'Lancer mon concert' : 'Lancer le live';
+    p.innerHTML = '<div class="st-card"><h1>' + (resume ? 'Reprendre ton live' : evMode ? 'Lancer mon concert' : 'Lancer un live') + '</h1>' + banner + seg +
       (X.permErr ? '<p class="msg" role="alert">' + esc(X.permErr) + '</p><button class="btn btn-ghost" id="stRetryCam" type="button">Réessayer</button>' : '') +
-      '<div class="st-grid">' + camPick + micPick + qual + '</div>' + flip + title +
+      '<div class="st-grid">' + camPick + micPick + qual + '</div>' + flip + evForm + title +
       '<p class="msg" id="stMsg2" role="alert">' + esc(X.formErr) + '</p>' +
-      '<button class="btn btn-gold btn-block" id="stGo"' + (X.stream && !X.busy ? '' : ' disabled') + '>' + (resume ? 'Reprendre le live' : 'Lancer le live') + '</button>' +
+      '<button class="btn btn-gold btn-block" id="stGo"' + (X.stream && !X.busy ? '' : ' disabled') + '>' + goLabel + '</button>' +
       (resume ? '<button class="btn btn-ghost btn-block" id="stEndOld" type="button">Terminer ce live</button>' : '') + '</div>';
 
     function on(id, ev, fn) { var el = $(id); if (el) el['on' + ev] = fn; }
@@ -187,6 +222,9 @@
     on('stMicSel', 'change', function () { X.micId = this.value; acquire(X); });
     on('stFlip', 'click', function () { X.facing = X.facing === 'user' ? 'environment' : 'user'; X.camId = ''; acquire(X); });
     on('stQ', 'change', function () { X.q = this.value; acquire(X); });
+    on('stModeNew', 'click', function () { X.mode = 'new'; X.formErr = ''; paint(X); });
+    on('stModeEv', 'click', function () { X.mode = 'event'; X.formErr = ''; paint(X); });
+    on('stEvSel', 'change', function () { X.evId = this.value; });
     on('stTitle', 'input', function () { X.title = this.value; });
     on('stPrice', 'change', function () { X.price = parseFloat(this.value) || 0; });
     on('stReplay', 'change', function () { X.replay = this.checked; });
@@ -282,10 +320,14 @@
     if (X.busy || !X.stream) return;
     X.formErr = '';
     if (X.current) {
-      X.eventId = X.current.event_id; X.ingest = null; X.createBody = { title: (X.title || 'Live').slice(0, 80), price: 0, replay: X.replay };
+      X.eventId = X.current.event_id; X.ingest = null;
+      X.existing = !!X.current.existing;
+      if (X.existing) { var ce = X.current.event || {}; if (ce.name) X.title = ce.name; if (ce.replay_enabled !== undefined) X.replay = !!ce.replay_enabled; }
+      X.createBody = X.existing ? { event_id: X.current.event_id } : { title: (X.title || 'Live').slice(0, 80), price: 0, replay: X.replay };
       X.watchUrl = ''; X.webUrl = '';
       return beginConnect(X);
     }
+    if (X.mode === 'event' && X.events.length) return startExisting(X);
     var title = (X.title || '').trim();
     if (!title) { X.formErr = 'Donne un titre à ton live pour continuer.'; paint(X); $('stTitle').focus(); return; }
     if (title.length > 80) title = title.slice(0, 80);
@@ -305,6 +347,30 @@
       else if (d && d._code === 429) X.formErr = 'Trop de tentatives. Patiente quelques minutes puis réessaie.';
       else if (d && d._code === 401) X.formErr = 'Ta session a expiré. Reconnecte-toi puis réessaie.';
       else X.formErr = msgOf(d, 'Le live n\'a pas pu démarrer. Réessaie dans un instant.');
+      paint(X);
+    }).catch(function () { if (X.dead) return; X.busy = false; X.formErr = 'Réseau indisponible. Vérifie ta connexion puis réessaie.'; paint(X); });
+  }
+
+  // Lancer le concert programmé choisi : titre, prix et replay viennent de l'évènement.
+  function startExisting(X) {
+    var ev = evById(X, X.evId) || X.events[0];
+    X.title = ev.name; X.busy = true; X.formErr = ''; paint(X);
+    var body = { event_id: ev.id };
+    X.createBody = body;
+    api('/studio/live', { body: body }).then(function (d) {
+      if (X.dead) return;
+      X.busy = false;
+      var dd = d && d.data;
+      if (d && d.status === 'success' && dd && dd.ingest) {
+        X.eventId = dd.event_id; X.ingest = dd.ingest; X.watchUrl = dd.watch_url || ''; X.webUrl = dd.web_url || ''; X.existing = true;
+        X.replay = !(dd.event && dd.event.replay_enabled === false);
+        return beginConnect(X);
+      }
+      if (d && d._code === 409 && dd && dd.event_id) { X.current = { event_id: dd.event_id, state: dd.state || 'live', existing: !!dd.existing, event: dd.event }; X.formErr = 'Tu as déjà un live ouvert : reprends-le ou termine-le.'; }
+      else if (d && d._code === 403) X.formErr = msgOf(d, 'Tu ne peux pas lancer ce concert avec ce compte.');
+      else if (d && d._code === 429) X.formErr = 'Trop de tentatives. Patiente quelques minutes puis réessaie.';
+      else if (d && d._code === 401) X.formErr = 'Ta session a expiré. Reconnecte-toi puis réessaie.';
+      else X.formErr = msgOf(d, 'Le concert n\'a pas pu démarrer. Réessaie dans un instant.');
       paint(X);
     }).catch(function () { if (X.dead) return; X.busy = false; X.formErr = 'Réseau indisponible. Vérifie ta connexion puis réessaie.'; paint(X); });
   }

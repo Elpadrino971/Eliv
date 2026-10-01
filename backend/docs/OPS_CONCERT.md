@@ -191,7 +191,8 @@ ne changer que pour des tests), `STUDIO_WS_URL` (défaut dérivé de
   (latence `low`, fenêtre de reconnexion 60 s) et renvoie un jeton d'ingest de
   30 min. **La clé Mux ne quitte jamais le serveur** (ni réponse, ni journal).
 - Un artiste = une session à la fois (409 + la session en cours sinon). Une session
-  préparée mais jamais lancée est annulée après 60 min (flux Mux supprimé).
+  préparée mais jamais lancée est annulée après 60 min (flux Mux supprimé). Un concert
+  programmé repris avec `event_id` n'est jamais annulé : il est remis comme avant.
 - Coupure réseau du navigateur : ffmpeg est arrêté, le concert reste « live »
   90 s. Si le navigateur revient (`POST /api/studio/live/:id/token`, puis
   nouveau WebSocket), un **nouveau ffmpeg** reprend sur la même clé Mux ; sinon le
@@ -199,6 +200,47 @@ ne changer que pour des tests), `STUDIO_WS_URL` (défaut dérivé de
 - Plafond dur : 6 h de direct. Un serveur trop lent (retard > 6 Mo dans le tube
   ffmpeg) coupe la connexion au lieu de dériver.
 - Redémarrage du conteneur en plein live : le navigateur a 90 s pour se reconnecter.
+
+### Basculer le concert payant en secours
+
+Cas : le concert payant est programmé dans l'app (mode `mobile`, billets vendus sur
+le site et dans l'app), mais l'artiste ne peut pas diffuser depuis son téléphone.
+Il diffuse depuis un navigateur **sur le même concert** : les détenteurs de billet
+n'ont rien à refaire.
+
+1. L'artiste se connecte sur le site (`/web/`) avec **son compte artiste** (celui
+   qui possède le concert ; un admin ne peut pas lancer le concert d'un artiste).
+2. Menu **🎙 Lancer un live** (autoriser caméra et micro), puis **« Mon concert
+   programmé »** en haut de l'écran.
+3. Choisir le concert dans la liste (nom, date, « N billets vendus ») : titre, prix
+   et replay viennent du concert, rien à saisir. Appuyer sur **« Lancer mon concert »**.
+
+Ce qui se passe :
+
+- Le concert passe en `live_mode='pro'` : l'app lit alors le flux HLS Mux, comme pour
+  un concert régie. Il passe `live` dès la première image reçue (pas besoin du webhook
+  Mux). Prix, titre, affiche et replay ne sont pas modifiés ; la date programmée non
+  plus, on peut donc démarrer **en avance** (l'artiste décide).
+- Fans **avec billet** (app et site, y compris les places achetées sur le site sans compte)
+  voient le live. Un compte **sans billet** sur un concert payant ne reçoit pas
+  l'identifiant de lecture.
+- Flux Mux : s'il en existe déjà un (créé par le relais d'enregistrement de l'app), il est
+  **réutilisé** (même identifiant de lecture, donc pas d'URL qui change pour les fans) ; sa latence
+  reste `standard` (quelques secondes de plus que `low`). Sinon un flux `low` est créé,
+  comme le fait « Live Mux » dans l'admin. La clé de flux n'est jamais renvoyée.
+- **Navigateur planté ou coupure réseau** : rouvrir le studio avec le même compte
+  (« Reprendre le live ») **dans la minute** (le flux Mux garde 60 s, le serveur 90 s). Le
+  concert reste `live` et la diffusion reprend sur la même clé. Passé ce délai, le concert est terminé
+  (`completed`) et ne peut plus être relancé : Mux ne sait pas rouvrir un concert terminé.
+- **Terminer** : le concert passe `completed` (date de fin = maintenant), jamais supprimé ;
+  le replay suit les réglages du concert. Si le studio n'a **jamais** diffusé, le concert est
+  remis exactement comme avant (statut `published`, ancien `live_mode`) : jamais annulé, y compris
+  si la préparation expire (60 min).
+- **Le retour vers l'app n'est PAS automatique** : tant que la session studio est ouverte, le
+  concert reste en `pro`. Ne pas diffuser en même temps depuis l'app (même clé Mux si le flux est
+  réutilisé). Pour revenir à l'app avant d'avoir diffusé depuis le navigateur : « Terminer ce live »
+  dans le studio (remet l'ancien mode) ; après une diffusion navigateur, il faut recréer un concert.
+- Une seule session par artiste à la fois (409 sinon). Limite : 5 lancements / 15 min.
 
 ### CPU et débit
 

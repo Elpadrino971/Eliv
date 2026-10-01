@@ -391,6 +391,268 @@ async function main() {
   check('sans retour : Mux complete appelé', muxCalls.complete.length === completesBefore + 1);
   sink.stop();
 
+  // ─── Concert programmé payant lancé depuis le navigateur (plan de secours) ───
+  out('\n== Concert programmé : basculer en secours ==');
+  const { sign } = require('../src/auth');
+  const webWatch = require('../src/services/web_watch');
+  const { serializeEvent } = require('../src/helpers');
+  const mkArtist = (email, name) => {
+    const id = Number(db.prepare(
+      "INSERT INTO users (email, password, full_name, artist_name, role, is_artist, is_verified, status) VALUES (?, 'x', ?, ?, 'artist', 1, 1, 'active')"
+    ).run(email, name, name).lastInsertRowid);
+    return { id, email, token: sign({ id, email }) };
+  };
+  const wilson = mkArtist('dj.wilson@test.vybzzz', 'DJ Wilson');
+  const other = mkArtist('autre.artiste@test.vybzzz', 'Autre');
+  const inH = (h) => new Date(Date.now() + h * 3600 * 1000).toISOString();
+  const mkEvent = (artistId, o = {}) => Number(db.prepare(
+    `INSERT INTO events (artist_id, name, ticket_price, start_date_time, end_date_time, status, live_mode, cover_image, replay_enabled, replay_duration_days,
+        mux_live_stream_id, mux_stream_key, mux_live_playback_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 14, ?, ?, ?)`
+  ).run(artistId, o.name || 'DJ WILSON — BIRTHDAY LIVE', o.price || '49.99', o.start || inH(72), o.end || inH(75), o.status || 'published',
+    o.mode === undefined ? 'mobile' : o.mode, o.cover === undefined ? '/uploads/wilson.jpg' : o.cover, o.replay === undefined ? 1 : o.replay,
+    o.lsId || null, o.key || null, o.pb || null).lastInsertRowid);
+  const getEv = (id) => db.prepare('SELECT * FROM events WHERE id = ?').get(id);
+  const fanTicket = db.prepare("SELECT id FROM users WHERE email = 'demo@vybzzz.com'").get().id;
+  const fanNo = db.prepare("SELECT id FROM users WHERE email = 'fan1@vybzzz.com'").get().id;
+  const fanRefunded = db.prepare("SELECT id FROM users WHERE email = 'fan2@vybzzz.com'").get().id;
+  const giveTicket = (eventId, userId, status = 'active') => db.prepare(
+    "INSERT OR REPLACE INTO tickets (event_id, user_id, price_paid, receipt_number, status) VALUES (?, ?, '49.99', ?, ?)"
+  ).run(eventId, userId, `T${eventId}-${userId}`, status);
+
+  const evA = mkEvent(wilson.id);                       // le concert payant, 3 jours avant l'heure
+  const evSoon = mkEvent(wilson.id, { name: 'Soirée proche', price: '0', start: inH(2), end: inH(4) });
+  const evPast = mkEvent(wilson.id, { name: 'Commencé il y a 5 h', start: inH(-5), end: inH(-2) });
+  const evOld = mkEvent(wilson.id, { name: 'Trop ancien', start: inH(-30), end: inH(-27) });
+  const evDone = mkEvent(wilson.id, { name: 'Terminé', status: 'completed', start: inH(-3), end: inH(-1) });
+  const evCancel = mkEvent(wilson.id, { name: 'Annulé', status: 'cancelled' });
+  const evOther = mkEvent(other.id, { name: "Concert d'un autre" });
+  giveTicket(evA, fanTicket); giveTicket(evA, fanRefunded, 'refunded');
+
+  // Droits et refus
+  const noEv = await api('POST', '/studio/live', { token: wilson.token, body: { event_id: 999999 } });
+  check('event_id inconnu -> 404', noEv.status === 404 && /introuvable/i.test(noEv.json.message), noEv.json.message);
+  const badEv = await api('POST', '/studio/live', { token: wilson.token, body: { event_id: 'abc' } });
+  check('event_id invalide -> 422', badEv.status === 422);
+  const alien = await api('POST', '/studio/live', { token: wilson.token, body: { event_id: evOther } });
+  check("concert d'un autre artiste -> 403", alien.status === 403, alien.json.message);
+  const adminTok = sign(db.prepare("SELECT id, email FROM users WHERE role = 'admin' LIMIT 1").get());
+  const adm = await api('POST', '/studio/live', { token: adminTok, body: { event_id: evA } });
+  check('admin sur le concert d\'un artiste -> refusé (403)', adm.status === 403, adm.json.message);
+  const fanTry = await api('POST', '/studio/live', { token: fanTok, body: { event_id: evA } });
+  check('fan (non artiste) -> 403', fanTry.status === 403);
+  const doneTry = await api('POST', '/studio/live', { token: wilson.token, body: { event_id: evDone } });
+  check('concert terminé -> 409 (message clair)', doneTry.status === 409 && /terminé ou annulé/.test(doneTry.json.message), doneTry.json.message);
+  const cancTry = await api('POST', '/studio/live', { token: wilson.token, body: { event_id: evCancel } });
+  check('concert annulé -> 409', cancTry.status === 409);
+  check('refus : rien modifié, aucun flux Mux créé', getEv(evA).live_mode === 'mobile' && getEv(evA).studio_web === 0 && getEv(evDone).status === 'completed');
+
+  // Liste GET /studio/events
+  const lst0 = await api('GET', '/studio/events', { token: wilson.token });
+  const ids0 = (lst0.json.data || []).map((e) => e.id);
+  check('GET /studio/events -> 200', lst0.status === 200 && lst0.json.status === 'success');
+  check('liste : published/live à venir ou démarrés il y a < 12 h', ids0.includes(evA) && ids0.includes(evSoon) && ids0.includes(evPast), ids0.join(','));
+  check('liste : ni terminé, annulé, trop ancien, ni celui des autres', !ids0.includes(evDone) && !ids0.includes(evCancel) && !ids0.includes(evOld) && !ids0.includes(evOther));
+  check('liste : triée par date de début', ids0.indexOf(evPast) < ids0.indexOf(evSoon) && ids0.indexOf(evSoon) < ids0.indexOf(evA), ids0.join(','));
+  const itemA = (lst0.json.data || []).find((e) => e.id === evA) || {};
+  check('liste : champs id/name/status/start/prix/billets/affiche',
+    itemA.name === 'DJ WILSON — BIRTHDAY LIVE' && itemA.status === 'published' && itemA.start_date_time === getEv(evA).start_date_time
+    && itemA.ticket_price === '49.99' && itemA.cover_image === '/uploads/wilson.jpg' && 'tickets_sold' in itemA, JSON.stringify(itemA));
+  check('liste : billets vendus = non remboursés (1 sur 2)', itemA.tickets_sold === 1, String(itemA.tickets_sold));
+  require('../src/db_payments').run();
+  db.prepare("INSERT INTO pending_tickets (email, event_id, price_paid, source, ref) VALUES ('web.acheteur@example.com', ?, '49.99', 'stripe', 'cs_test_studio_1')").run(evA);
+  const lstP = await api('GET', '/studio/events', { token: wilson.token });
+  check('liste : compte aussi les places achetées sur le site (sans compte)', ((lstP.json.data || []).find((e) => e.id === evA) || {}).tickets_sold === 2);
+  db.prepare("DELETE FROM pending_tickets WHERE ref = 'cs_test_studio_1'").run();
+  const lstFan = await api('GET', '/studio/events', { token: fanTok });
+  check('GET /studio/events (fan) -> 403', lstFan.status === 403);
+  const lstAnon = await api('GET', '/studio/events');
+  check('GET /studio/events sans jeton -> 401', lstAnon.status === 401);
+
+  // Démarrage sur le concert existant (flux Mux créé : l'évènement n'en avait pas)
+  const createsBefore = muxCalls.create.length;
+  const goA = await api('POST', '/studio/live', { token: wilson.token, body: { event_id: evA, title: 'AUTRE TITRE', price: 0, replay: false } });
+  check('POST /live {event_id} -> 200', goA.status === 200 && goA.json.status === 'success', `${goA.status} ${goA.json.message || ''}`);
+  const dA = goA.json.data;
+  const rA = getEv(evA);
+  check('même évènement (aucun doublon créé)', dA.event_id === evA && db.prepare('SELECT COUNT(*) n FROM events WHERE artist_id = ?').get(wilson.id).n === 6);
+  check("live_mode passe à 'pro', status reste published, repéré studio", rA.live_mode === 'pro' && rA.status === 'published' && rA.studio_web === 1);
+  check('titre, prix, replay, affiche, dates inchangés (corps ignoré)', rA.name === 'DJ WILSON — BIRTHDAY LIVE' && rA.ticket_price === '49.99' && rA.replay_enabled === 1 && rA.replay_duration_days === 14
+    && rA.cover_image === '/uploads/wilson.jpg' && itemA.start_date_time === rA.start_date_time);
+  check('flux Mux créé (latence low) et ids rangés sur l\'évènement', muxCalls.create.length === createsBefore + 1
+    && muxCalls.create[createsBefore].latencyMode === 'low' && muxCalls.create[createsBefore].passthrough.id === evA
+    && rA.mux_live_stream_id && rA.mux_stream_key && rA.mux_live_playback_id);
+  check('réponse : existing, état prepared, jeton, jamais la clé Mux', dA.existing === true && dA.state === 'prepared' && typeof dA.ingest.token === 'string'
+    && !JSON.stringify(goA.json).includes(rA.mux_stream_key));
+  const prevA = JSON.parse(rA.studio_prev);
+  check("instantané de l'état précédent (published / mobile)", prevA.status === 'published' && prevA.live_mode === 'mobile' && prevA.live === false);
+  // Qui voit l'identifiant de lecture ?
+  const svT = serializeEvent(getEv(evA), { currentUserId: fanTicket });
+  const svN = serializeEvent(getEv(evA), { currentUserId: fanNo });
+  const svR = serializeEvent(getEv(evA), { currentUserId: fanRefunded });
+  const svAnon = serializeEvent(getEv(evA));
+  check("fan avec billet : live_mode 'pro' + id de lecture du live", svT.live_mode === 'pro' && svT.mux_live_playback_id === rA.mux_live_playback_id);
+  check('fan SANS billet (concert payant) : pas d\'id de lecture', svN.mux_live_playback_id === null && svN.live_mode === 'pro');
+  check('billet remboursé / anonyme : pas d\'id de lecture', svR.mux_live_playback_id === null && svAnon.mux_live_playback_id === null);
+  const apiT = await api('GET', `/event/${evA}`, { token: await login('demo@vybzzz.com') });
+  check('GET /event/:id (app, avec billet) : mode pro + id', apiT.json.data.live_mode === 'pro' && apiT.json.data.mux_live_playback_id === rA.mux_live_playback_id);
+  const apiN = await api('GET', `/event/${evA}`, { token: await login('fan1@vybzzz.com') });
+  check('GET /event/:id (app, sans billet) : pas d\'id', apiN.json.data.mux_live_playback_id === null);
+  // 2e session pendant celle-ci
+  const dup2 = await api('POST', '/studio/live', { token: wilson.token, body: { event_id: evSoon } });
+  check('un seul live à la fois par artiste (autre concert) -> 409', dup2.status === 409 && dup2.json.data.event_id === evA);
+  const dup3 = await api('POST', '/studio/live', { token: wilson.token, body: { title: 'instantané' } });
+  check('un seul live à la fois (nouveau live instantané) -> 409', dup3.status === 409);
+  const cur1 = await api('GET', '/studio/live/current', { token: wilson.token });
+  check('GET /current inclut le concert programmé (prepared, existing)', cur1.json.data && cur1.json.data.event_id === evA && cur1.json.data.state === 'prepared' && cur1.json.data.existing === true);
+  const lst1 = await api('GET', '/studio/events', { token: wilson.token });
+  check('liste : le concert en session reste listé', (lst1.json.data || []).some((e) => e.id === evA && e.in_session === true));
+
+  // Départ en avance : le concert est dans 72 h, l'artiste décide de passer en direct maintenant.
+  const sinkA = startSink(rA.mux_stream_key);
+  await sleep(900);
+  const cA = connect(dA.ingest.token, VARIANTS.h264webm.mime);
+  await cA.waitFor('ready', 5000);
+  const gA = startGen('h264webm', cA.ws);
+  check('départ en avance (72 h avant) : message live', !!(await cA.waitFor('live', 15000)));
+  const liveA = getEv(evA);
+  check("évènement passé 'live' par le studio (sans attendre le webhook Mux)", liveA.status === 'live', liveA.status);
+  check('date de début programmée conservée', liveA.start_date_time === rA.start_date_time);
+  check('instantané : diffusé par le studio', JSON.parse(liveA.studio_prev).live === true);
+  const cur2 = await api('GET', '/studio/live/current', { token: wilson.token });
+  check('GET /current -> state live, existing', cur2.json.data && cur2.json.data.state === 'live' && cur2.json.data.existing === true);
+  // Côté site : le fan qui a payé voit le live, celui sans billet non, le remboursé non.
+  process.env.WATCH_ALLOW_PUBLIC = '1';
+  const wTok = webWatch.issue('demo@vybzzz.com', evA, 'test');
+  const wStream = await api('POST', '/watch/stream', { body: { event_id: evA, token: wTok, device: 'dev-test-0001', want_url: true } });
+  check('site /watch/stream : ticket -> state live + URL HLS du live', wStream.status === 200 && wStream.json.data.state === 'live' && wStream.json.data.media === 'live'
+    && wStream.json.data.url === `https://stream.mux.com/${rA.mux_live_playback_id}.m3u8`, `${wStream.status} ${JSON.stringify(wStream.json.data || wStream.json).slice(0, 160)}`);
+  const wTokN = webWatch.issue('fan1@vybzzz.com', evA, 'test');
+  const wStreamN = await api('POST', '/watch/stream', { body: { event_id: evA, token: wTokN, device: 'dev-test-0002', want_url: true } });
+  check('site /watch/stream : sans billet -> 403, pas d\'URL', wStreamN.status === 403 && !JSON.stringify(wStreamN.json).includes('stream.mux.com'));
+  const wTokR = webWatch.issue('fan2@vybzzz.com', evA, 'test');
+  const wStreamR = await api('POST', '/watch/stream', { body: { event_id: evA, token: wTokR, device: 'dev-test-0003', want_url: true } });
+  check('site /watch/stream : billet remboursé -> 403', wStreamR.status === 403);
+  delete process.env.WATCH_ALLOW_PUBLIC;
+  const apiLive = await api('GET', `/event/${evA}`, { token: await login('demo@vybzzz.com') });
+  check("app : status 'live' + mode pro + id de lecture (billet)", apiLive.json.data.status === 'live' && apiLive.json.data.live_mode === 'pro' && !!apiLive.json.data.mux_live_playback_id);
+
+  // Coupure réseau puis reconnexion dans la fenêtre : le concert reste live.
+  gA.stop();
+  cA.ws.terminate();
+  await sleep(1500);
+  check("coupure : le concert reste 'live' (fenêtre de reconnexion)", getEv(evA).status === 'live');
+  const tkA = await api('POST', `/studio/live/${evA}/token`, { token: wilson.token });
+  check('POST /live/:id/token -> jeton', tkA.status === 200 && typeof tkA.json.data.ingest.token === 'string');
+  const cA2 = connect(tkA.json.data.ingest.token, VARIANTS.h264webm.mime);
+  await cA2.waitFor('ready', 5000);
+  const gA2 = startGen('h264webm', cA2.ws);
+  check('reconnexion : live à nouveau', !!(await cA2.waitFor('live', 15000)));
+  check("reconnexion : l'évènement n'a pas quitté 'live', mode pro, ids identiques",
+    getEv(evA).status === 'live' && getEv(evA).live_mode === 'pro' && getEv(evA).mux_live_playback_id === rA.mux_live_playback_id);
+  check('reconnexion : même clé de flux (même ingest, même playback id)', getEv(evA).mux_stream_key === rA.mux_stream_key && muxCalls.create.length === createsBefore + 1);
+  await sleep(2500);
+
+  // Arrêt : completed, l'évènement est conservé, jamais supprimé.
+  const completesA = muxCalls.complete.length;
+  const stopA = await api('POST', `/studio/live/${evA}/stop`, { token: wilson.token });
+  check('POST /stop -> stopped', stopA.status === 200 && stopA.json.data.stopped === true && stopA.json.data.state === 'completed' && stopA.json.data.reverted === false);
+  await cA2.waitFor('ended', 5000);
+  gA2.stop();
+  const doneA = getEv(evA);
+  check("stop : status 'completed', end_date_time = maintenant", doneA.status === 'completed' && Math.abs(Date.now() - new Date(doneA.end_date_time).getTime()) < 15000, doneA.end_date_time);
+  check("stop : l'évènement est conservé (titre, prix, billets, flux)", doneA.name === 'DJ WILSON — BIRTHDAY LIVE' && doneA.ticket_price === '49.99'
+    && db.prepare('SELECT COUNT(*) n FROM tickets WHERE event_id = ?').get(evA).n === 2 && doneA.mux_live_stream_id === rA.mux_live_stream_id);
+  check('stop : Mux complete appelé, flux Mux jamais supprimé', muxCalls.complete.length === completesA + 1 && muxCalls.complete.includes(rA.mux_live_stream_id) && !muxCalls.del.includes(rA.mux_live_stream_id));
+  const stopAgain = await api('POST', `/studio/live/${evA}/stop`, { token: wilson.token });
+  check('stop répété : idempotent (200, toujours completed)', stopAgain.status === 200 && getEv(evA).status === 'completed');
+  const curDone = await api('GET', '/studio/live/current', { token: wilson.token });
+  check('GET /current -> null après la fin', curDone.json.data === null);
+  const lstDone = await api('GET', '/studio/events', { token: wilson.token });
+  check('liste : le concert terminé n\'apparaît plus', !(lstDone.json.data || []).some((e) => e.id === evA));
+  const wd = await api('POST', `/studio/live`, { token: wilson.token, body: { event_id: evA } });
+  check('relancer un concert terminé -> 409', wd.status === 409);
+  sinkA.stop();
+
+  // Jamais lancé : retour à l'état d'avant, pas d'annulation.
+  const evC = mkEvent(wilson.id, { name: 'Concert C', mode: 'mobile' });
+  const delsBeforeC = muxCalls.del.length;
+  const goC = await api('POST', '/studio/live', { token: wilson.token, body: { event_id: evC } });
+  check('concert C : démarrage -> 200 (pro, flux créé)', goC.status === 200 && getEv(evC).live_mode === 'pro' && !!getEv(evC).mux_live_stream_id);
+  const lsC = getEv(evC).mux_live_stream_id;
+  const stopC = await api('POST', `/studio/live/${evC}/stop`, { token: wilson.token });
+  const rC = getEv(evC);
+  check("jamais en direct : status 'published' (PAS cancelled), live_mode d'avant", stopC.status === 200 && stopC.json.data.reverted === true && rC.status === 'published' && rC.live_mode === 'mobile', `${rC.status}/${rC.live_mode}`);
+  await sleep(50);
+  check('jamais en direct : flux Mux créé pour la session supprimé et ids effacés', muxCalls.del.length === delsBeforeC + 1 && muxCalls.del.includes(lsC) && !rC.mux_live_stream_id && !rC.mux_stream_key && !rC.mux_live_playback_id);
+  check('jamais en direct : plus repéré studio, concert intact', rC.studio_web === 0 && rC.studio_prev === null && rC.name === 'Concert C' && rC.ticket_price === '49.99');
+  const lstC = await api('GET', '/studio/events', { token: wilson.token });
+  check('liste : le concert C est de nouveau proposé', (lstC.json.data || []).some((e) => e.id === evC && e.in_session === false));
+  const curC = await api('GET', '/studio/live/current', { token: wilson.token });
+  check('GET /current -> null', curC.json.data === null);
+
+  // Préparation > 60 min jamais lancée : remis comme avant, jamais annulé (balayage).
+  const goC2 = await api('POST', '/studio/live', { token: wilson.token, body: { event_id: evC } });
+  check('concert C relancé -> 200', goC2.status === 200);
+  const aged = JSON.parse(getEv(evC).studio_prev); aged.at = new Date(Date.now() - 2 * 3600 * 1000).toISOString();
+  db.prepare('UPDATE events SET studio_prev = ? WHERE id = ?').run(JSON.stringify(aged), evC);
+  const curC2 = await api('GET', '/studio/live/current', { token: wilson.token });
+  const rC2 = getEv(evC);
+  check("préparation > 60 min : revert (published/mobile), jamais 'cancelled'", curC2.json.data === null && rC2.status === 'published' && rC2.live_mode === 'mobile' && rC2.studio_web === 0, `${rC2.status}/${rC2.live_mode}`);
+  // ... et un évènement créé par le studio, lui, est toujours annulé (inchangé).
+  const dj2 = mkArtist('dj2@test.vybzzz', 'DJ Deux');
+  const newOne = await createLive(dj2.token, { title: 'Instantané périmé' });
+  db.prepare("UPDATE events SET created_at = datetime('now', '-2 hours') WHERE id = ?").run(newOne.json.data.event_id);
+  await api('GET', '/studio/live/current', { token: dj2.token });
+  check("évènement créé par le studio, préparation expirée : 'cancelled' comme avant", getEv(newOne.json.data.event_id).status === 'cancelled');
+
+  // Flux Mux déjà présent (relais d'enregistrement de l'app) : réutilisé, même playback id.
+  const dj3 = mkArtist('dj3@test.vybzzz', 'DJ Trois');
+  const evD = mkEvent(dj3.id, { name: 'Concert D (relais app)', lsId: 'ls_mobile_relay', key: 'sk_mobile_relay_secret', pb: 'pb_mobile_relay' });
+  giveTicket(evD, fanTicket);
+  const createsD = muxCalls.create.length; const delsD = muxCalls.del.length;
+  const goD = await api('POST', '/studio/live', { token: dj3.token, body: { event_id: evD } });
+  const rD = getEv(evD);
+  check('flux existant : réutilisé (aucune création, aucune suppression Mux)', goD.status === 200 && muxCalls.create.length === createsD && muxCalls.del.length === delsD);
+  check("flux existant : mêmes ids (playback id connu des fans), live_mode 'pro'", rD.mux_live_stream_id === 'ls_mobile_relay' && rD.mux_stream_key === 'sk_mobile_relay_secret'
+    && rD.mux_live_playback_id === 'pb_mobile_relay' && rD.live_mode === 'pro');
+  check('flux existant : instantané new_stream=false', JSON.parse(rD.studio_prev).new_stream === false);
+  check('flux existant : clé jamais renvoyée', !JSON.stringify(goD.json).includes('sk_mobile_relay_secret'));
+  check('flux existant : le ticket voit le même playback id', serializeEvent(rD, { currentUserId: fanTicket }).mux_live_playback_id === 'pb_mobile_relay');
+  // Il n'est pas allé en direct : arrêt -> retour mobile, le flux (celui de l'app) n'est PAS supprimé.
+  const stopD = await api('POST', `/studio/live/${evD}/stop`, { token: dj3.token });
+  const rD2 = getEv(evD);
+  check("flux existant, jamais lancé : revert (published/mobile), flux conservé (celui de l'app)", stopD.json.data.reverted === true && rD2.status === 'published' && rD2.live_mode === 'mobile'
+    && rD2.mux_live_stream_id === 'ls_mobile_relay' && !muxCalls.del.includes('ls_mobile_relay'));
+  // Idem mais diffusé, puis navigateur disparu : completed après le délai de grâce.
+  const goD2 = await api('POST', '/studio/live', { token: dj3.token, body: { event_id: evD } });
+  const sinkD = startSink('sk_mobile_relay_secret');
+  await sleep(900);
+  const cD = connect(goD2.json.data.ingest.token, VARIANTS.vp8.mime);
+  await cD.waitFor('ready', 5000);
+  const gD = startGen('vp8', cD.ws);
+  check('flux existant : diffusion (transcodage vp8) -> live', !!(await cD.waitFor('live', 15000)) && getEv(evD).status === 'live');
+  await sleep(2500);
+  gD.stop(); cD.ws.terminate();
+  await sleep(1500);
+  check('navigateur disparu : toujours live pendant le délai de grâce', getEv(evD).status === 'live');
+  await sleep(6500);
+  const rD3 = getEv(evD);
+  check("sans retour : 'completed', concert conservé, end_date_time = maintenant", rD3.status === 'completed' && rD3.name === 'Concert D (relais app)' && Math.abs(Date.now() - new Date(rD3.end_date_time).getTime()) < 20000);
+  check('sans retour : Mux complete appelé sur le flux existant', muxCalls.complete.includes('ls_mobile_relay'));
+  sinkD.stop();
+  const probeD = probe(sinkD.files[0]);
+  check('flux existant : le récepteur a reçu h264 + aac', probeD.video && probeD.video.codec_name === 'h264' && probeD.audio && probeD.audio.codec_name === 'aac');
+
+  // Concert déjà « live » (diffusé depuis l'app, téléphone planté) puis studio sans image : retour à 'live'/mobile.
+  const dj4 = mkArtist('dj4@test.vybzzz', 'DJ Quatre');
+  const evE = mkEvent(dj4.id, { name: 'Concert E', status: 'live', start: inH(-1), end: inH(2), lsId: 'ls_e', key: 'sk_e', pb: 'pb_e' });
+  const goE = await api('POST', '/studio/live', { token: dj4.token, body: { event_id: evE } });
+  check("concert déjà 'live' (app) : démarrage accepté, état 'live'", goE.status === 200 && goE.json.data.state === 'live' && JSON.parse(getEv(evE).studio_prev).status === 'live');
+  const stopE = await api('POST', `/studio/live/${evE}/stop`, { token: dj4.token });
+  const rE = getEv(evE);
+  check("studio jamais diffusé : le concert reste 'live' côté app (pas 'completed'), mode d'avant", stopE.json.data.reverted === true && rE.status === 'live' && rE.live_mode === 'mobile', `${rE.status}/${rE.live_mode}`);
+
   // ─── Limiteur : 5 créations / 15 min / compte ───
   out('\n== Limiteur POST /live ==');
   const a6tok = await login('artist5@vybzzz.com');
