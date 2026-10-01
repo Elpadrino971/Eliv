@@ -1429,8 +1429,8 @@ function pageFeedClips() {
       : '<span style="color:#ff8a87" title="Clip non rattaché : coche-le et utilise « Rattacher à l\'artiste »">⚠ Sans artiste</span>' },
     { label: 'Source', render: (r) => `${r.mux_playback_id ? '🎬 Mux' : (r.video_url ? '📁 Fichier' : '—')}${muxBadge(r.upload_status)}${r.expires_at ? `<div class="em">expire le ${fmtDate(r.expires_at)}</div>` : ''}` },
     { label: 'Ordre', render: (r) => r.position ?? 0 },
-    { label: 'Statut', render: (r) => badge(r.active ? 'active' : 'pending') },
-    { label: 'Action', render: (r) => `${!r.active ? `<button class="btn status" data-approveclip="${r.id}">Approuver</button>` : ''}<button class="btn edit" data-edit="feedclip:${r.id}">Modifier</button><button class="btn dup" data-dup="feedclip:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="clip:${r.id}">🎬 Upload</button><button class="btn del" data-del="/feed-clips/${r.id}">Supprimer</button>` },
+    { label: 'Statut', render: (r) => r.active ? '<span style="color:var(--ok,#41d67e);font-weight:600">👁 Visible</span>' : '<span style="color:#ffb86b;font-weight:600" title="Cachée du feed (app et site), conservée dans l\'admin">🙈 Masquée</span>' },
+    { label: 'Action', render: (r) => `<button class="btn ${r.active ? 'status' : 'gold'}" data-hideclip="${r.id}" data-show="${r.active ? 0 : 1}" title="${r.active ? 'Cache cette vidéo du feed sans la supprimer' : 'Remet cette vidéo dans le feed'}">${r.active ? '🙈 Masquer' : '👁 Afficher'}</button><button class="btn edit" data-edit="feedclip:${r.id}">Modifier</button><button class="btn dup" data-dup="feedclip:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="clip:${r.id}">🎬 Upload</button><button class="btn del" data-del="/feed-clips/${r.id}">Supprimer</button>` },
   ];
   (async () => {
     view().innerHTML = '<div class="empty">Chargement…</div>';
@@ -1450,6 +1450,7 @@ function pageFeedClips() {
     const counts = {
       all: currentRows.length, for_you: currentRows.filter((r) => !isClips(r)).length, clips: currentRows.filter(isClips).length,
       nocap: currentRows.filter(noCaption).length, noartist: currentRows.filter(noArtist).length,
+      hidden: currentRows.filter((r) => !r.active).length,
     };
     // Les 3 surfaces de contenu de l'app, expliquées côte à côte. Cliquer sur
     // « Pour toi » / « Clips » filtre le tableau ; « Concerts » ouvre la page dédiée.
@@ -1477,6 +1478,7 @@ function pageFeedClips() {
         <span class="em" style="margin:0 2px 0 10px">Problèmes :</span>
         <button class="btn filter-chip" data-ff="nocap" style="padding:8px 14px" title="Clips dont la légende est vide">✎ Sans légende <span class="em">(${counts.nocap})</span></button>
         <button class="btn filter-chip" data-ff="noartist" style="padding:8px 14px" title="Clips non rattachés à un artiste">⚠ Sans artiste <span class="em">(${counts.noartist})</span></button>
+        <button class="btn filter-chip" data-ff="hidden" style="padding:8px 14px" title="Vidéos cachées du feed (conservées, pas supprimées)">🙈 Masquées <span class="em">(${counts.hidden})</span></button>
       </div>
       <div id="bulkbar" class="bulkbar">
         <button class="btn" id="chkAll" title="Coche / décoche tous les clips de la vue filtrée (toutes pages)">☑︎ Tout cocher</button>
@@ -1486,16 +1488,17 @@ function pageFeedClips() {
         <span style="display:flex;gap:6px;align-items:center"><select id="bulkArtist">${artistOpts}</select><button class="btn grant" id="bulkAttach" disabled>Rattacher</button></span>
         <button class="btn" id="bulkFeedFy" disabled title="Déplacer la sélection dans le feed Pour toi">→ 🟦 Pour toi</button>
         <button class="btn" id="bulkFeedClips" disabled title="Déplacer la sélection dans le feed Clips">→ 🟨 Clips</button>
-        <button class="btn status" id="bulkOff" disabled>Désactiver</button>
-        <button class="btn gold" id="bulkOn" disabled>✅ Activer</button>
+        <button class="btn status" id="bulkOff" disabled title="Cache la sélection du feed sans rien supprimer">🙈 Masquer du feed</button>
+        <button class="btn gold" id="bulkOn" disabled title="Remet la sélection dans le feed">👁 Afficher dans le feed</button>
       </div>
       ${tableShellInner(columns)}`;
     view().querySelector('.tcard-top .left').textContent = 'Afficher 20 entrées';
-    const filters = { tab: 'all', nocap: false, noartist: false };
+    const filters = { tab: 'all', nocap: false, noartist: false, hidden: false };
     const rowsFor = () => currentRows.filter((r) =>
       (filters.tab === 'all' || (filters.tab === 'clips' ? isClips(r) : !isClips(r)))
       && (!filters.nocap || noCaption(r))
-      && (!filters.noartist || noArtist(r)));
+      && (!filters.noartist || noArtist(r))
+      && (!filters.hidden || !r.active));
     // Barre d'actions groupées : compteur + état des boutons.
     const refreshBulk = () => {
       const n = selected.size;
@@ -1573,8 +1576,8 @@ function pageFeedClips() {
     };
     view().querySelector('#bulkFeedFy').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, feed: 'for_you' }), (n) => `${n} clip(s) déplacé(s) vers Pour toi`);
     view().querySelector('#bulkFeedClips').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, feed: 'clips' }), (n) => `${n} clip(s) déplacé(s) vers Clips`);
-    view().querySelector('#bulkOff').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, active: false }), (n) => `${n} clip(s) désactivé(s)`);
-    view().querySelector('#bulkOn').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, active: true }), (n) => `${n} clip(s) activé(s)`);
+    view().querySelector('#bulkOff').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, active: false }), (n) => `${n} clip(s) masqué(s) du feed`);
+    view().querySelector('#bulkOn').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, active: true }), (n) => `${n} clip(s) de nouveau visible(s)`);
     applyFilters();
     // Compteur concerts en arrière-plan : ne bloque plus l'affichage de la page.
     api('GET', '/events').then((ev) => {
@@ -2438,6 +2441,13 @@ document.addEventListener('click', (e) => {
   if (dup) { const [type, id] = dup.dataset.dup.split(':'); DUP[type]?.(id); return; }
   const gs = e.target.closest('[data-grantsub]');
   if (gs) { openGrantSubModal(gs.dataset.grantsub); return; }
+  const hc = e.target.closest('[data-hideclip]');
+  if (hc) {
+    const show = hc.dataset.show === '1';
+    api('POST', '/feed-clips/bulk-update', { ids: [Number(hc.dataset.hideclip)], active: show })
+      .then(() => { toast(show ? 'Vidéo remise dans le feed' : 'Vidéo masquée du feed'); route(); }).catch((err) => toast(err.message));
+    return;
+  }
   const ac = e.target.closest('[data-approveclip]');
   if (ac) { api('POST', `/feed-clips/${ac.dataset.approveclip}/approve`).then(() => { toast('Clip approuvé'); route(); }).catch((err) => toast(err.message)); return; }
   const al = e.target.closest('[data-approvelead]');
@@ -3249,10 +3259,10 @@ async function pageArtistMedia() {
       </div>
       <div class="mc-body">
         ${captionCell(c)}
-        <div class="em">#${c.id} · ${fmtDate(c.created_at)}${c.active ? '' : ' · <span style="color:var(--amber)">désactivé</span>'}</div>
+        <div class="em">#${c.id} · ${fmtDate(c.created_at)}${c.active ? '' : ' · <span style="color:var(--amber)">🙈 masquée</span>'}</div>
         <div class="mc-actions">
           ${c.video_url ? `<a class="btn" href="${esc(c.video_url)}" target="_blank" rel="noopener" style="text-decoration:none" title="Ouvrir la vidéo">▶</a>` : ''}
-          <button class="btn status" data-toggle="${c.id}" data-active="${c.active ? 1 : 0}">${c.active ? 'Désactiver' : 'Activer'}</button>
+          <button class="btn ${c.active ? 'status' : 'gold'}" data-toggle="${c.id}" data-active="${c.active ? 1 : 0}">${c.active ? '🙈 Masquer' : '👁 Afficher'}</button>
           <button class="btn del" data-rm="${c.id}">Supprimer</button>
         </div>
       </div>
@@ -3297,8 +3307,8 @@ https://stream.mux.com/xyz789.m3u8 | DJ Wilson – Live à Pointe-à-Pitre"></te
       <button class="btn del" id="am-bulkdel" disabled>🗑 Supprimer (<span class="bc">0</span>)</button>
       <button class="btn" id="am-bulkfy" disabled>→ 🟦 Pour toi</button>
       <button class="btn" id="am-bulkclips" disabled>→ 🟨 Clips</button>
-      <button class="btn status" id="am-bulkoff" disabled>Désactiver</button>
-      <button class="btn gold" id="am-bulkon" disabled>✅ Activer</button>
+      <button class="btn status" id="am-bulkoff" disabled>🙈 Masquer</button>
+      <button class="btn gold" id="am-bulkon" disabled>👁 Afficher</button>
     </div>
     ${clips.length ? `<div class="media-grid" id="am-grid">${clips.map(cardHtml).join('')}</div>` : '<div class="tcard"><div class="empty" id="am-grid">Aucune vidéo pour cet artiste : ajoute-en ci-dessus.</div></div>'}`;
 
@@ -3406,7 +3416,7 @@ https://stream.mux.com/xyz789.m3u8 | DJ Wilson – Live à Pointe-à-Pitre"></te
     const t = e.target.closest('[data-toggle]');
     if (t) {
       const active = t.dataset.active !== '1';
-      try { await api('POST', '/feed-clips/bulk-update', { ids: [Number(t.dataset.toggle)], active }); toast(active ? 'Clip activé' : 'Clip désactivé'); reload(); }
+      try { await api('POST', '/feed-clips/bulk-update', { ids: [Number(t.dataset.toggle)], active }); toast(active ? 'Vidéo remise dans le feed' : 'Vidéo masquée du feed'); reload(); }
       catch (err) { toast(err.message); }
       return;
     }
@@ -3434,8 +3444,8 @@ https://stream.mux.com/xyz789.m3u8 | DJ Wilson – Live à Pointe-à-Pitre"></te
   };
   view().querySelector('#am-bulkfy').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, feed: 'for_you' }), (n) => `${n} vidéo(s) déplacée(s) vers Pour toi`);
   view().querySelector('#am-bulkclips').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, feed: 'clips' }), (n) => `${n} vidéo(s) déplacée(s) vers Clips`);
-  view().querySelector('#am-bulkoff').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, active: false }), (n) => `${n} vidéo(s) désactivée(s)`);
-  view().querySelector('#am-bulkon').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, active: true }), (n) => `${n} vidéo(s) activée(s)`);
+  view().querySelector('#am-bulkoff').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, active: false }), (n) => `${n} vidéo(s) masquée(s) du feed`);
+  view().querySelector('#am-bulkon').onclick = () => runBulk((ids) => api('POST', '/feed-clips/bulk-update', { ids, active: true }), (n) => `${n} vidéo(s) de nouveau visible(s)`);
   refreshSel();
 }
 
