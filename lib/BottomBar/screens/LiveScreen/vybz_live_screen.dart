@@ -491,26 +491,18 @@ class _ForYouFeedState extends State<_ForYouFeed> with WidgetsBindingObserver {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              height(0.03),
+                              // Sous la pastille « Pour toi · En direct · Clips »
+                              // (top + 14, ~41 de haut), la croix (gauche) et le « + »
+                              // (droite) : sur un Samsung à grande barre d'état, le
+                              // logo « VybzzZ Originals » passait SOUS ces trois
+                              // éléments et les textes se chevauchaient. Le logo,
+                              // redondant avec les onglets, est retiré ; partage et
+                              // son descendent sous la pastille.
+                              SizedBox(
+                                height: MediaQuery.of(context).padding.top + 64,
+                              ),
                               Row(
                                 children: [
-                                  Text(
-                                    'VybzzZ',
-                                    style: TextStyle(
-                                      color: whiteColor,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  width(0.01),
-                                  Text(
-                                    'Originals',
-                                    style: TextStyle(
-                                      color: greyColor,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14,
-                                    ),
-                                  ),
                                   Spacer(),
                                   GestureDetector(
                                     onTap: () => myShare(
