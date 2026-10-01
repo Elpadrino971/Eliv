@@ -196,6 +196,9 @@
     var camPick = X.cams.length > 1 ? '<div class="st-f"><label for="stCamSel">Caméra</label><select id="stCamSel">' + X.cams.map(function (d, i) { return opt(d.deviceId, d.label || ('Caméra ' + (i + 1)), d.deviceId === X.camId); }).join('') + '</select></div>' : '';
     var micPick = X.mics.length > 1 ? '<div class="st-f"><label for="stMicSel">Micro</label><select id="stMicSel">' + X.mics.map(function (d, i) { return opt(d.deviceId, d.label || ('Micro ' + (i + 1)), d.deviceId === X.micId); }).join('') + '</select></div>' : '';
     var flip = isCoarse() && X.cams.length > 1 ? '<button type="button" class="btn btn-ghost" id="stFlip">Retourner la caméra</button>' : '';
+    // L'aperçu est en miroir (comme toute webcam) : les fans, eux, voient
+    // l'image réelle. Ce bouton coupe le miroir pour voir ce qu'ils voient.
+    flip += '<button type="button" class="btn btn-ghost" id="stMirror" aria-pressed="' + (X.noMirror ? 'false' : 'true') + '" title="L\'aperçu seulement : les fans voient toujours l\'image réelle">' + (X.noMirror ? 'Aperçu réel' : 'Aperçu miroir') + '</button>';
     var qual = '<div class="st-f"><label for="stQ">Qualité</label><select id="stQ">' + Object.keys(QUALITIES).map(function (k) { return opt(k, QUALITIES[k].label, k === X.q); }).join('') + '</select></div>';
     var seg = !resume && X.events.length ? '<div class="st-seg" role="group" aria-label="Type de live">' +
       '<button type="button" id="stModeNew" aria-pressed="' + !evMode + '">Nouveau live instantané</button>' +
@@ -221,6 +224,7 @@
     on('stCamSel', 'change', function () { X.camId = this.value; acquire(X); });
     on('stMicSel', 'change', function () { X.micId = this.value; acquire(X); });
     on('stFlip', 'click', function () { X.facing = X.facing === 'user' ? 'environment' : 'user'; X.camId = ''; acquire(X); });
+    on('stMirror', 'click', function () { X.noMirror = !X.noMirror; applyMirror(X); var b = $('stMirror'); if (b) { b.textContent = X.noMirror ? 'Aperçu réel' : 'Aperçu miroir'; b.setAttribute('aria-pressed', X.noMirror ? 'false' : 'true'); } });
     on('stQ', 'change', function () { X.q = this.value; acquire(X); });
     on('stModeNew', 'click', function () { X.mode = 'new'; X.formErr = ''; paint(X); });
     on('stModeEv', 'click', function () { X.mode = 'event'; X.formErr = ''; paint(X); });
@@ -271,6 +275,9 @@
   function stopTracks(X) {
     if (X.stream) { X.stream.getTracks().forEach(function (t) { t.onended = null; try { t.stop(); } catch (e) {} }); X.stream = null; }
   }
+  // Miroir de l'aperçu uniquement (CSS) ; le flux envoyé n'est jamais inversé.
+  function applyMirror(X) { var v = $('stVideo'); if (v) v.classList.toggle('mirror', !X.rearCam && !X.noMirror); }
+
   function acquire(X) {
     if (X.dead) return;
     stopTracks(X);
@@ -293,7 +300,7 @@
       var vt = s.getVideoTracks()[0], st = vt && vt.getSettings ? vt.getSettings() : {};
       if (st.deviceId) X.camId = st.deviceId;
       var at = s.getAudioTracks()[0]; if (at && at.getSettings && at.getSettings().deviceId) X.micId = at.getSettings().deviceId;
-      v.classList.toggle('mirror', st.facingMode !== 'environment');
+      X.rearCam = st.facingMode === 'environment'; applyMirror(X);
       setOverlay(''); X.busy = false;
       return navigator.mediaDevices.enumerateDevices().then(function (list) {
         X.cams = list.filter(function (d) { return d.kind === 'videoinput'; });

@@ -45,8 +45,6 @@ main{flex:1;width:100%;max-width:1120px;margin:0 auto;padding:0 16px 40px}
 .badge[hidden]{display:none}
 .sound{position:absolute;left:12px;bottom:52px;z-index:3;display:inline-flex;align-items:center;gap:6px;background:var(--gold);color:var(--navy);border:0;border-radius:999px;padding:7px 12px;font-weight:700;font-size:.85rem;cursor:pointer;box-shadow:0 10px 30px -10px rgba(0,0,0,.8)}
 .sound[hidden]{display:none}
-.wm{position:absolute;z-index:2;pointer-events:none;user-select:none;-webkit-user-select:none;font:600 clamp(10px,1.6vw,14px)/1.2 Inter,system-ui,sans-serif;color:rgba(244,239,227,.38);text-shadow:0 1px 2px rgba(0,0,0,.6);transition:top 1.2s var(--ease),left 1.2s var(--ease);white-space:nowrap}
-.wm[hidden]{display:none}
 .fs{position:absolute;right:12px;top:12px;z-index:3;width:40px;height:40px;border-radius:10px;border:0;background:rgba(7,12,24,.6);color:var(--ivory);font-size:18px;cursor:pointer;display:grid;place-items:center}
 .fs[hidden]{display:none}
 .tv{position:absolute;right:60px;top:12px;z-index:3;height:40px;padding:0 12px;border-radius:10px;border:0;background:rgba(7,12,24,.6);color:var(--ivory);font-weight:600;font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
@@ -138,7 +136,6 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
         <div class="poster" id="posterBg"></div>
         <img class="poster-img" id="posterImg" alt="" hidden />
         <video id="video" playsinline controls hidden controlslist="nodownload nofullscreen noplaybackrate noremoteplayback" disablepictureinpicture disableremoteplayback x-webkit-airplay="deny"></video>
-        <div class="wm" id="wm" hidden aria-hidden="true"></div>
         <button class="fs" id="fsBtn" type="button" hidden aria-label="Plein écran">⛶</button>
         <button class="hearts" id="heartBtn" type="button" hidden aria-label="Envoyer un cœur">♥</button>
         <button class="tv" id="tvBtn" type="button" hidden aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Sur la TV</button>
@@ -217,7 +214,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
       </div>
     </aside>
   </div>
-  <p class="legal">Ce concert est protégé. L'enregistrement, la capture et la rediffusion, même partielle, sont interdits (articles L.335-2 et L.335-4 du Code de la propriété intellectuelle) et engagent la responsabilité de leur auteur. Chaque diffusion est marquée au nom de la place qui la regarde.</p>
+  <p class="legal">Ce concert est protégé. L'enregistrement, la capture et la rediffusion, même partielle, sont interdits (articles L.335-2 et L.335-4 du Code de la propriété intellectuelle) et engagent la responsabilité de leur auteur. Chaque accès est nominatif : une diffusion illicite est rattachée à la place qui la regarde.</p>
 </main>
 
 <div class="sheet" id="tvSheet" hidden role="dialog" aria-modal="true" aria-labelledby="tvTitle">
@@ -238,7 +235,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
   var q=new URLSearchParams(location.search);
   var EVENT=parseInt(q.get('e'),10);
   var KEY='vy_watch_'+EVENT;
-  var ev=null, token=null, pollTimer=null, countTimer=null, hls=null, playing=null, retryTimer=null, wmTimer=null;
+  var ev=null, token=null, pollTimer=null, countTimer=null, hls=null, playing=null, retryTimer=null;
   // Identifiant de cet écran (une place = 2 écrans en même temps au plus).
   var DEVICE=(function(){ var k='vy_device', d=null; try{d=sessionStorage.getItem(k);}catch(e){}
     if(!d){ var a=new Uint8Array(12); (window.crypto||window.msCrypto).getRandomValues(a); d=Array.prototype.map.call(a,function(x){return ('0'+x.toString(16)).slice(-2);}).join(''); try{sessionStorage.setItem(k,d);}catch(e){} }
@@ -331,27 +328,16 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
     if(hls){try{hls.destroy();}catch(e){} hls=null;}
     var v=$('video'); try{v.pause();}catch(e){} v.removeAttribute('src'); v.load&&v.load(); v.hidden=true;
     $('liveBadge').hidden=true; $('soundBtn').hidden=true; $('fsBtn').hidden=true; $('tvBtn').hidden=true; $('heartBtn').hidden=true; playing=null;
-    watermark(false);
   }
-  // Filigrane : e-mail masqué + numéro de place, déplacé régulièrement. Une
-  // capture qui circule dit de quelle place elle vient.
-  var wmText='';
-  function watermark(on){
-    clearInterval(wmTimer); var w=$('wm');
-    if(!on||!wmText){ w.hidden=true; return; }
-    w.textContent=wmText; w.hidden=false;
-    function move(){
-      // Toujours entièrement dans l'image, quelle que soit la largeur.
-      var st=$('stage'), room=Math.max(0,st.clientWidth-w.offsetWidth-16), hRoom=Math.max(0,st.clientHeight-w.offsetHeight-60);
-      w.style.left=(8+Math.random()*room)+'px'; w.style.top=(56+Math.random()*Math.max(0,hRoom-48))+'px';
-    }
-    move(); wmTimer=setInterval(move,25000);
-  }
+  // Pas de filigrane sur l'image : l'e-mail du spectateur est une donnée
+  // personnelle, il n'a rien à faire incrusté dans la vidéo. L'accès reste
+  // nominatif côté serveur (clé liée à la place), ce qui suffit à remonter à
+  // la place d'où vient une capture.
   $('fsBtn').addEventListener('click',function(){
     var st=$('stage'), v=$('video');
     var fsEl=document.fullscreenElement||document.webkitFullscreenElement;
     if(fsEl){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); return; }
-    // Plein écran de la SCÈNE (vidéo + filigrane), pas de la vidéo seule.
+    // Plein écran de la SCÈNE (vidéo + boutons), pas de la vidéo seule.
     if(st.requestFullscreen) st.requestFullscreen().catch(function(){});
     else if(st.webkitRequestFullscreen) st.webkitRequestFullscreen();
     else if(v.webkitEnterFullscreen) v.webkitEnterFullscreen(); // iPhone : plein écran natif uniquement
@@ -361,8 +347,8 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
   // ── Sur la TV ──
   // La diffusion directe (AirPlay / Chromecast) enverrait le flux à la TV, qui
   // le demanderait sans passer par vybzzz.online : la protection du flux la
-  // refuse. On passe donc par la recopie de l'écran, qui garde la protection
-  // et le filigrane. Les étapes dépendent de l'appareil.
+  // refuse. On passe donc par la recopie de l'écran, qui garde la protection.
+  // Les étapes dépendent de l'appareil.
   function tvGuide(){
     var ua=navigator.userAgent, iOS=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1),
         android=/Android/.test(ua), mac=/Macintosh/.test(ua)&&!iOS, chromeLike=/Chrome|Chromium|Edg\//.test(ua)&&!/OPR/.test(ua);
@@ -406,7 +392,7 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
   }
   function play(url,isLive,media){
     stopPlayer(); playing=media||url;
-    var v=$('video'); v.hidden=false; $('fsBtn').hidden=false; $('tvBtn').hidden=false; $('heartBtn').hidden=!isLive; watermark(true);
+    var v=$('video'); v.hidden=false; $('fsBtn').hidden=false; $('tvBtn').hidden=false; $('heartBtn').hidden=!isLive;
     overlay(isLive?'Connexion au direct…':'Chargement du replay…',true);
     $('liveBadge').hidden=!isLive;
     function ready(){ overlay(null); tryPlay(v); }
@@ -441,7 +427,6 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
     renderEvent(d);
     $('gate').hidden=true; $('access').hidden=false;
     $('who').textContent=d.email?'Place de '+d.email:'';
-    wmText=d.email?(d.email+' · place n°'+d.seat):'';
     if(d.state==='ended') chatStart(false); else if($('chat').hidden) chatStart(true);
     if(d.state==='live'){
       countdown(false);
