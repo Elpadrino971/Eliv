@@ -130,3 +130,119 @@ noires sur une partie des appareils ; elle se négocie avec Mux.
 **Mode téléphone** : le site lit le relais Zego → Mux, créé seulement si le
 replay est activé sur le concert (réglage par défaut). Replay désactivé =
 pas de lecture sur le site pour ce concert.
+
+
+## Lancer un live depuis le navigateur (studio web)
+
+L'artiste ouvre le studio sur le site (webcam + micro), sans application. Le
+navigateur envoie son flux par WebSocket au backend ; le backend le passe à
+**ffmpeg**, qui le pousse en RTMP vers un Live Stream **Mux**. Le concert est
+créé en `live_mode='pro'` : les fans de l'app (lecteur HLS « pro ») et du site
+(`/api/watch/stream`) lisent le même HLS Mux. Rien à changer côté app.
+
+    navigateur --WebSocket--> backend (Node) --stdin--> ffmpeg --RTMPS--> Mux --HLS--> fans
+
+### Activer
+
+1. Dans `.vybzzz.env` : `STUDIO_WEB=1` (sans cette variable, toutes les routes
+   `/api/studio/*` répondent 404 « Indisponible. », sauf `GET /api/studio/status`).
+   Mux doit être configuré (`MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`, `MUX_WEBHOOK_SECRET`)
+   et les clés de lecture signée du site aussi (section précédente).
+2. Reconstruire l'image : `backend/Dockerfile` installe `ffmpeg`
+   (Debian bookworm, `--no-install-recommends`). Impact : environ **+170 à
+   250 Mo** sur l'image (mesure non faite : pas de démon Docker dans
+   l'environnement de développement ; à relever avec `docker images` avant/après).
+3. Ajouter le WebSocket côté **nginx de l'hôte API** (`api.vybzzz.online`), dans
+   le `server { … }` existant, **avant** le `location /` général :
+
+       location /api/studio/ingest {
+           proxy_pass http://127.0.0.1:8002;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection "upgrade";
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+           proxy_read_timeout 3600s;
+           proxy_send_timeout 3600s;
+           proxy_buffering off;
+           client_max_body_size 0;
+       }
+
+   Puis `nginx -t && systemctl reload nginx`. Sans ce bloc, le navigateur reste
+   sur « connexion… » (le `Upgrade` n'est pas transmis). `proxy_read_timeout
+   3600s` : le backend envoie un ping toutes les 15 s, la connexion tient donc
+   tant que le live dure ; si un live dépasse 1 h, le navigateur se reconnecte
+   tout seul (nouveau jeton) et Mux garde le flux ouvert 60 s.
+4. Redémarrer le conteneur, puis vérifier :
+   `curl https://api.vybzzz.online/api/studio/status` → `{"data":{"enabled":true,"ffmpeg":true}}`.
+   `ffmpeg:false` = image non reconstruite.
+
+Variables facultatives : `STUDIO_RTMP_BASE` (défaut `rtmps://global-live.mux.com:443/app` ;
+ne changer que pour des tests), `STUDIO_WS_URL` (défaut dérivé de
+`PUBLIC_BASE_URL`, sinon `wss://api.vybzzz.online/api/studio/ingest`),
+`STUDIO_FFMPEG` (chemin du binaire), `SITE_URL` (liens `watch_url` / `web_url`).
+
+### Comment ça se comporte
+
+- `POST /api/studio/live` (artiste, 5 lancements / 15 min) crée le concert
+  (prix de la grille, replay au choix, chat, fenêtre de 6 h), le flux Mux
+  (latence `low`, fenêtre de reconnexion 60 s) et renvoie un jeton d'ingest de
+  30 min. **La clé Mux ne quitte jamais le serveur** (ni réponse, ni journal).
+- Un artiste = une session à la fois (409 + la session en cours sinon). Une session
+  préparée mais jamais lancée est annulée après 60 min (flux Mux supprimé).
+- Coupure réseau du navigateur : ffmpeg est arrêté, le concert reste « live »
+  90 s. Si le navigateur revient (`POST /api/studio/live/:id/token`, puis
+  nouveau WebSocket), un **nouveau ffmpeg** reprend sur la même clé Mux ; sinon le
+  concert passe `completed` et Mux est notifié (`PUT /live-streams/:id/complete`).
+- Plafond dur : 6 h de direct. Un serveur trop lent (retard > 6 Mo dans le tube
+  ffmpeg) coupe la connexion au lieu de dériver.
+- Redémarrage du conteneur en plein live : le navigateur a 90 s pour se reconnecter.
+
+### CPU et débit
+
+- **Vidéo H.264 reçue (`mime` contient `h264` ou `avc1`)** : `-c:v copy`, quasi
+  aucun CPU (mesuré : ≈ 3 à 4 % d'un cœur pour 640×360). Seul l'audio est
+  ré-encodé en AAC 128 k.
+- **Autre codec (VP8/VP9, Firefox)** : transcodage `libx264 veryfast`, 2,5 Mb/s,
+  image clé toutes les 2 s, réduit à 720 p max. Mesuré sur une mire synthétique
+  (facile à encoder) : ≈ 14 % d'un cœur en 640×360, ≈ 25 % en 1280×720/30 i/s.
+  Une vraie webcam (mouvement, bruit) coûte 2 à 3 fois plus : **prévoir ≈ 0,5 à
+  0,75 cœur par live transcodé** et surveiller `docker stats` au premier concert.
+- Bande passante montante du serveur : ≈ 2,5 à 3 Mb/s par live (RTMPS vers Mux) ;
+  entrante : ce que le navigateur envoie (1 à 4 Mb/s).
+- Latence mesurée en local : premier morceau envoyé par le navigateur → première
+  image reçue côté Mux ≈ 2 à 2,5 s (message `live` après ≈ 1,2 à 1,6 s). S'y ajoute
+  la latence HLS de Mux en mode `low` (≈ 5 à 10 s) avant que les fans voient l'image.
+
+### Navigateurs
+
+| Navigateur | MediaRecorder | Chemin serveur |
+|---|---|---|
+| Chrome / Edge (ordinateur), Chrome Android | `video/webm;codecs=h264,opus` si disponible, sinon vp8/vp9 | copie si H.264, sinon transcodage |
+| Safari iOS ≥ 14.3 / macOS | `video/mp4` (H.264 + AAC) | copie |
+| Firefox | `video/webm;codecs=vp8,opus` | transcodage |
+
+La page du studio doit passer à `mime` le type **réellement** utilisé par le
+`MediaRecorder` (`recorder.mimeType`), URL-encodé. Si l'écran est verrouillé
+ou l'onglet passé en arrière-plan, certains navigateurs mobiles suspendent la
+caméra : prévenir l'artiste de garder l'écran allumé.
+
+### Check-list de test (avant un vrai concert)
+
+1. `GET /api/studio/status` → `enabled:true, ffmpeg:true`.
+2. Compte artiste : ouvrir le studio, créer un live **gratuit** « test », autoriser caméra/micro.
+3. Le studio affiche « en direct » en moins de ~3 s ; l'admin (Concerts → Live Mux)
+   montre le flux « ● reçu » et l'event passe `live`.
+4. Sur un téléphone, dans l'app, le concert apparaît « en direct » et la vidéo se lit ;
+   idem sur `live.html?e=<id>`.
+5. Couper le Wi-Fi de l'artiste 20 s, le rétablir : le studio se reconnecte, l'event
+   reste `live`, les fans ne voient qu'un blocage de quelques secondes.
+6. Couper 2 minutes (pas de retour) : l'event passe `completed`.
+7. Cliquer sur « Terminer » : `completed`, replay disponible quelques minutes après (webhook Mux).
+8. `docker stats` pendant le live : un seul processus `ffmpeg`, CPU conforme (copie vs transcodage).
+9. `docker logs` : lignes `[studio] …`, jamais de clé Mux ni de jeton.
+
+Test automatique sans Mux réel (faux Mux + récepteur RTMP local, ffmpeg requis) :
+`cd backend && node scripts/test-studio.js`.

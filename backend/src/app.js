@@ -333,6 +333,9 @@ app.use('/api/track', rateLimit({
   message: { status: 'error' },
 }));
 
+// Studio web : l'artiste lance son live depuis le navigateur (STUDIO_WEB=1).
+app.use('/api/studio', require('./routes/studio.routes'));
+
 // Toutes les routes API sous /api (comme baseAPI = mainIP/api)
 app.use('/api', authRoutes);
 app.use('/api', eventRoutes);

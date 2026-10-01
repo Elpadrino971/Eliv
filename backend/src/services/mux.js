@@ -189,6 +189,16 @@ function getLiveStream(id) {
   return muxFetch(`/video/v1/live-streams/${id}`);
 }
 
+/**
+ * Signale à Mux que le direct est terminé (PUT /live-streams/:id/complete,
+ * et NON POST) : Mux clôt l'enregistrement tout de suite au lieu d'attendre la
+ * fin de la fenêtre de reconnexion. Erreur 400 si le flux est déjà idle :
+ * l'appelant l'ignore (best effort).
+ */
+function completeLiveStream(id) {
+  return muxFetch(`/video/v1/live-streams/${id}/complete`, { method: 'PUT' });
+}
+
 function deleteLiveStream(id) {
   return muxFetch(`/video/v1/live-streams/${id}`, { method: 'DELETE' });
 }
@@ -273,6 +283,7 @@ module.exports = {
   deleteAsset,
   createLiveStream,
   getLiveStream,
+  completeLiveStream,
   deleteLiveStream,
   verifyWebhookSignature,
   createStaticRendition,

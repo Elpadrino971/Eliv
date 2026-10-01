@@ -17,6 +17,7 @@ process.on('uncaughtException', (err) => {
   if (process.stderr.writableLength === 0) process.exit(1);
 });
 
+const http = require('http');
 const app = require('./app');
 const { db } = require('./db');
 const { startMuxCleanupJob } = require('./jobs/muxCleanup');
@@ -50,7 +51,14 @@ startMuxCleanupJob();
 startFirebaseCleanupJob();
 startAgendaSyncJob();
 
-app.listen(PORT, () => {
+// Serveur HTTP explicite : le studio web (WebSocket /api/studio/ingest) a besoin
+// de l'évènement 'upgrade'. Tout autre upgrade est coupé.
+const studioIngest = require('./services/studio_ingest');
+const server = http.createServer(app);
+server.on('upgrade', (req, socket, head) => studioIngest.handleUpgrade(req, socket, head));
+studioIngest.init();
+
+server.listen(PORT, () => {
   console.log(`\n  VYBZZZ backend en écoute sur http://localhost:${PORT}`);
   console.log(`  API base: http://localhost:${PORT}/api`);
   console.log(`  (pointe l'app dessus via APIs.mainIP)\n`);
