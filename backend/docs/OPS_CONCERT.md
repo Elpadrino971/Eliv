@@ -288,3 +288,43 @@ caméra : prévenir l'artiste de garder l'écran allumé.
 
 Test automatique sans Mux réel (faux Mux + récepteur RTMP local, ffmpeg requis) :
 `cd backend && node scripts/test-studio.js`.
+
+### Chaîne caméra / son sur place (iPhone + ATEM Mini + console)
+
+Le studio web prend n'importe quelle webcam et n'importe quelle entrée son
+que le Mac connaît. L'ATEM Mini et la Scarlett apparaissent comme tels.
+Le seul piège : **un iPhone ne sort pas d'image par un hub USB-C**. Il faut
+l'adaptateur **officiel Apple** vers HDMI, selon le port :
+
+- iPhone 15 et plus (USB-C) : « USB-C vers AV numérique » → vraie sortie
+  vidéo propre (1080p). Brancher le chargeur sur l'adaptateur.
+- iPhone 14 et avant (Lightning) : « Lightning vers AV numérique » →
+  recopie d'écran compressée, un peu floue, petit décalage. Utilisable.
+
+Vidéo : iPhone (app Blackmagic Camera, paysage, trépied, verrouillage auto
+désactivé, mode Concentration, interface masquée) → adaptateur Apple →
+HDMI → **ATEM Mini entrée 1** → USB-C → Mac. Dans le studio, Caméra =
+« Blackmagic Design ».
+
+Son, au choix :
+
+1. Console (sortie Matrix/AUX) → jack 3,5 mm → **ATEM Mini MIC 1** (réglé en
+   « ligne » dans ATEM Software Control). Studio : Micro = « Blackmagic
+   Design ». Avantage : l'ATEM sait **retarder le son** de quelques images
+   pour le recaler sur la vidéo (l'iPhone en HDMI ajoute un petit décalage).
+2. Console → Scarlett → Mac. Studio : Micro = « Scarlett ». Très bien aussi,
+   mais pas de recalage possible. À garder en secours.
+
+Réglage du décalage : quelqu'un frappe dans ses mains devant l'iPhone ; sur
+un deuxième appareil qui regarde le live, si le son arrive avant l'image,
+augmenter le retard du MIC 1 dans ATEM Software Control jusqu'à ce que ça
+colle.
+
+Plan B si l'iPhone ne sort rien en HDMI : iPhone en USB directement sur le
+Mac (Caméra de continuité, fonction native), son par la Scarlett, sans ATEM.
+Ça marche à coup sûr, à une seule caméra.
+
+À vérifier sur place, avant tout le reste : **débit montant d'au moins
+5 Mbps** (speedtest.net, ligne « upload ») et test complet 20 à 30 minutes
+avant. Le direct a 15 à 30 s de décalage pour les fans : normal, ne pas
+l'annoncer comme du « temps réel ».
