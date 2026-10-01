@@ -23,6 +23,18 @@ Décidé avec le propriétaire le 1er octobre 2026. À attaquer le lundi 5 octob
 - Serveur : plusieurs photos par artiste ; catégorie « coulisses » pour les
   vidéos (admin + page Médias de l'artiste).
 
+## 2 bis. Photos dans le feed (demande d'un collaborateur)
+- Un post du feed peut être une **photo** ou un **carrousel de photos** (plusieurs
+  images dans un seul post, légende commune), en plus des vidéos.
+- Serveur : type `photo` sur `feed_clips`, images hébergées par nous, glisser-déposer
+  de plusieurs photos dans la page Médias de l'artiste (légende en une fois).
+- Web (/web/) : affichage immédiat, sans mise à jour d'app.
+- App : nécessite une nouvelle version. L'API ne servira les photos qu'aux
+  clients qui les demandent (sinon l'ancienne app tenterait de lire une image
+  comme une vidéo).
+- En attendant : transformer les photos en petite vidéo diaporama (CapCut) et
+  l'envoyer par la page Médias, ça marche dans toutes les versions.
+
 ## 3. Autres
 - Mode visiteur déjà dans la 1.2.0 (19) Android ; l'ajouter à la prochaine iOS.
 - Sections DJ / musicien / artiste / sport : branche `feat/departements`.
