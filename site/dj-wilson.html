@@ -146,6 +146,29 @@
   #dwSticky{display:flex}
   .dw .footer{padding-bottom:96px}
 }
+/* ── L'histoire d'un pionnier (vidéo verticale 9/16) ── */
+.story{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,360px);gap:48px;align-items:center;margin-top:30px}
+.story__txt p{color:var(--muted);line-height:1.7;max-width:60ch;margin:0 0 14px}
+.story__txt p b{color:var(--ivory,#F4EFE3)}
+.story__quote{margin:18px 0 0;padding:16px 20px;border-left:3px solid var(--gold);color:var(--ivory,#F4EFE3);font-family:Georgia,serif;font-style:italic;font-size:1.08rem;line-height:1.6}
+.story__ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.phone{position:relative;width:min(360px,86vw);aspect-ratio:9/16;margin:0 auto;border-radius:30px;overflow:hidden;background:#000;
+  box-shadow:0 40px 90px -30px rgba(0,0,0,.85),0 0 0 1px rgba(230,199,106,.35),0 0 0 8px #0A1226,0 0 0 9px rgba(230,199,106,.25)}
+.phone video{display:block;width:100%;height:100%;object-fit:cover;background:#000}
+.phone__play{position:absolute;inset:0;border:0;padding:0;cursor:pointer;background:linear-gradient(180deg,rgba(7,12,24,.1),rgba(7,12,24,.55));color:#0A1226;display:grid;place-items:center}
+.phone__play span{width:84px;height:84px;border-radius:50%;background:linear-gradient(120deg,var(--gold-2),var(--gold));display:grid;place-items:center;box-shadow:0 12px 30px -8px rgba(0,0,0,.7);transition:transform .25s var(--ease)}
+.phone__play:hover span{transform:scale(1.06)}
+.phone__play svg{width:34px;height:34px;margin-left:5px}
+.phone__play small{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:var(--ivory,#F4EFE3);font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+.phone__play[hidden]{display:none}
+.phone__msg{position:absolute;left:12px;right:12px;bottom:12px;padding:10px 14px;border-radius:12px;background:rgba(10,18,38,.9);color:var(--muted);font-size:.86rem;text-align:center}
+.phone__msg[hidden]{display:none}
+#histoire[hidden]{display:none}
+@media(max-width:900px){
+  .story{grid-template-columns:1fr;gap:30px}
+  .story__txt{order:1}
+  .phone{order:0}
+}
 @media(prefers-reduced-motion:reduce){.wheel svg{transition-duration:.01s}}
 </style>
 </head>
@@ -188,6 +211,33 @@
 <!-- Mobile : rappel « Réserver » collé en bas, masqué quand les CTA du hero,
      la roue, la billetterie ou le pied de page sont à l'écran. -->
 <a href="#billet" class="dw-sticky" id="dwSticky"><span>DJ Wilson · en direct</span><b>Réserver · <span class="js-price">4,99 €</span></b></a>
+
+<!-- L'histoire d'un pionnier : vidéo verticale (9/16) hébergée sur Mux.
+     La section reste masquée tant qu'aucun identifiant de lecture n'est renseigné
+     (STORY_PLAYBACK dans le script en bas de page). -->
+<section class="dw-sec" id="histoire" hidden>
+  <span class="eyebrow">L'histoire d'un pionnier</span>
+  <h2>Avant le live, <em>le chemin</em>.</h2>
+  <div class="story">
+    <div class="story__txt">
+      <p>Bien avant les lives et les playlists, il y avait des platines, des caisses de disques et des pistes à faire danser. <b>DJ Wilson</b> fait partie de ceux qui ont ouvert la voie : des premières soirées aux grandes scènes, il a traversé toutes les époques de la musique antillaise sans jamais lâcher le micro ni les platines.</p>
+      <p>Pour son anniversaire, il raconte lui-même ce parcours : les débuts, les rencontres, les nuits qui ont tout changé. Regarde la vidéo, puis viens le fêter avec lui en direct.</p>
+      <p class="story__quote">« Un pionnier, c'est quelqu'un qui a continué quand personne ne regardait. »</p>
+      <div class="story__ctas">
+        <a href="#roue" class="btn btn--gold"><span>Tente de gagner ta place</span></a>
+        <a href="#billet" class="btn btn--outline"><span>Réserver · <span class="js-price">4,99 €</span></span></a>
+      </div>
+    </div>
+    <div class="phone" id="storyPhone">
+      <video id="storyVideo" playsinline preload="none" controlslist="nodownload" aria-label="DJ Wilson : l'histoire d'un pionnier"></video>
+      <button class="phone__play" id="storyPlay" type="button" aria-label="Lire la vidéo">
+        <span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+        <small>Regarder son histoire</small>
+      </button>
+      <p class="phone__msg" id="storyMsg" hidden></p>
+    </div>
+  </div>
+</section>
 
 <section class="dw-sec" id="roue">
   <span class="eyebrow">Roue de la fortune</span>
@@ -310,7 +360,7 @@
       var any=Object.keys(seen).some(function(k){ return seen[k]; });
       bar.classList.toggle('is-hidden',any);
     },{threshold:0});
-    ['.dw-ctas','#roue','#billet','#site-footer'].forEach(function(sel){ var el=document.querySelector(sel); if(el) io.observe(el); });
+    ['.dw-ctas','#storyPhone','#roue','#billet','#site-footer'].forEach(function(sel){ var el=document.querySelector(sel); if(el) io.observe(el); });
   })();
 
   // ── Roue : 8 cases, 2 « place offerte » (1 chance sur 4, comme le tirage) ──
@@ -461,6 +511,33 @@
     var pk=$('payState'); pk.className='paystate ko'; pk.hidden=false;
     pk.innerHTML='Paiement annulé, rien n\'a été débité. Tu peux réessayer quand tu veux, juste en dessous.';
   }
+  // ── L'histoire d'un pionnier : vidéo Mux (identifiant de lecture PUBLIC) ──
+  // hls.js n'est chargé qu'au premier tap : la page reste légère.
+  var STORY_PLAYBACK='';
+  (function(){
+    if(!STORY_PLAYBACK) return;
+    var sec=$('histoire'), v=$('storyVideo'), btn=$('storyPlay'), msg=$('storyMsg');
+    if(!sec||!v) return;
+    sec.hidden=false;
+    v.poster='https://image.mux.com/'+STORY_PLAYBACK+'/thumbnail.webp?time=1&width=720';
+    var src='https://stream.mux.com/'+STORY_PLAYBACK+'.m3u8';
+    function fail(){ msg.textContent='La vidéo ne se lance pas ici. Essaie avec Chrome ou Safari.'; msg.hidden=false; btn.hidden=false; }
+    function go(){ v.muted=false; v.play().catch(function(){}); }
+    function start(){
+      btn.hidden=true; msg.hidden=true; v.controls=true; // commandes natives seulement une fois lancée
+      if(v.canPlayType('application/vnd.apple.mpegurl')){ v.src=src; go(); return; }
+      function withHls(){
+        if(!(window.Hls&&window.Hls.isSupported())){ fail(); return; }
+        var h=new window.Hls(); h.on(window.Hls.Events.MANIFEST_PARSED,go);
+        h.on(window.Hls.Events.ERROR,function(_,d){ if(d.fatal) fail(); });
+        h.loadSource(src); h.attachMedia(v);
+      }
+      if(window.Hls){ withHls(); return; }
+      var sc=document.createElement('script'); sc.src='vendor/hls.min.js'; sc.onload=withHls; sc.onerror=fail; document.head.appendChild(sc);
+    }
+    btn.addEventListener('click',start);
+    v.addEventListener('ended',function(){ v.controls=false; btn.hidden=false; });
+  })();
 })();
 </script>
 <script src="vy.js?v=d7c3196c" defer></script>
