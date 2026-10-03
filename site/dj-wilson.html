@@ -532,7 +532,7 @@
     function go(){ v.muted=false; var p=v.play(); if(p&&p.catch) p.catch(function(){ v.controls=true; }); }
     // Secours MP4 : on prend le premier rendu disponible (selon ce que Mux a généré).
     function mp4(code){
-      var names=['capped-1080p.mp4','highest.mp4','high.mp4','medium.mp4'], i=0;
+      var names=['1080p.mp4','capped-1080p.mp4','720p.mp4','highest.mp4','high.mp4','medium.mp4'], i=0;
       (function next(){
         if(i>=names.length){ fail(code||'mp4'); return; }
         var u=base+'/'+names[i++];
