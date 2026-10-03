@@ -154,7 +154,7 @@
 .story__ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
 .phone{position:relative;width:min(360px,86vw);aspect-ratio:9/16;margin:0 auto;border-radius:30px;overflow:hidden;background:#000;
   box-shadow:0 40px 90px -30px rgba(0,0,0,.85),0 0 0 1px rgba(230,199,106,.35),0 0 0 8px #0A1226,0 0 0 9px rgba(230,199,106,.25)}
-.phone video{display:block;width:100%;height:100%;object-fit:cover;background:#000}
+.phone video{display:block;width:100%;height:100%;object-fit:cover;background:#000} /* fichier en 3/4 avec bandes noires : le cadre 9/16 les rogne */
 .phone__play{position:absolute;inset:0;border:0;padding:0;cursor:pointer;background:linear-gradient(180deg,rgba(7,12,24,.1),rgba(7,12,24,.55));color:#0A1226;display:grid;place-items:center}
 .phone__play span{width:84px;height:84px;border-radius:50%;background:linear-gradient(120deg,var(--gold-2),var(--gold));display:grid;place-items:center;box-shadow:0 12px 30px -8px rgba(0,0,0,.7);transition:transform .25s var(--ease)}
 .phone__play:hover span{transform:scale(1.06)}
@@ -220,7 +220,7 @@
   <h2>Avant le live, <em>le chemin</em>.</h2>
   <div class="story">
     <div class="story__txt">
-      <p>Bien avant les lives et les playlists, il y avait des platines, des caisses de disques et des pistes à faire danser. <b>DJ Wilson</b> fait partie de ceux qui ont ouvert la voie : des premières soirées aux grandes scènes, il a traversé toutes les époques de la musique antillaise sans jamais lâcher le micro ni les platines.</p>
+      <p>Bien avant les lives et les playlists, il y avait des platines, des caisses de disques et des pistes à faire danser. <b>Depuis 1996</b>, DJ Wilson fait partie de ceux qui ont ouvert la voie : des premières soirées aux grandes scènes, il a traversé toutes les époques de la musique antillaise sans jamais lâcher le micro ni les platines.</p>
       <p>Pour son anniversaire, il raconte lui-même ce parcours : les débuts, les rencontres, les nuits qui ont tout changé. Regarde la vidéo, puis viens le fêter avec lui en direct.</p>
       <p class="story__quote">« Un pionnier, c'est quelqu'un qui a continué quand personne ne regardait. »</p>
       <div class="story__ctas">
@@ -513,7 +513,7 @@
   }
   // ── L'histoire d'un pionnier : vidéo Mux (identifiant de lecture PUBLIC) ──
   // hls.js n'est chargé qu'au premier tap : la page reste légère.
-  var STORY_PLAYBACK='';
+  var STORY_PLAYBACK='QNc8HqItvJ003Rl2WXvcZHS0019Uaq5sF15SCVvSoGwWY';
   (function(){
     if(!STORY_PLAYBACK) return;
     var sec=$('histoire'), v=$('storyVideo'), btn=$('storyPlay'), msg=$('storyMsg');
