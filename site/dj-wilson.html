@@ -543,21 +543,27 @@
         }).catch(next);
       })();
     }
+    // Détail de l'erreur du lecteur natif (Safari est précis : « playlist
+    // introuvable », « serveur a répondu 403 »…), utile pour diagnostiquer.
+    function mediaErr(){ var e=v.error; return e?('natif '+e.code+(e.message?' '+e.message.slice(0,80):'')):'natif'; }
+    function native(){
+      if(!v.canPlayType('application/vnd.apple.mpegurl')){ fail('hls'); return; }
+      v.src=src; go();
+      v.addEventListener('error',function(){ fail(mediaErr()); },{once:true});
+    }
     function start(){
       btn.hidden=true; msg.hidden=true; v.controls=true; // commandes natives seulement une fois lancée
-      if(v.canPlayType('application/vnd.apple.mpegurl')){
-        v.src=src; go();
-        v.addEventListener('error',function(){ fail('natif'); },{once:true});
-        return;
-      }
+      // Même ordre que live.html (éprouvé sur les appareils de l'équipe) :
+      // hls.js d'abord partout où il tourne (Chrome, Firefox, Safari Mac,
+      // iPhone récents), lecture native seulement sinon.
       function withHls(){
-        if(!(window.Hls&&window.Hls.isSupported())){ fail('hls'); return; }
-        hlsObj=new window.Hls(); hlsObj.on(window.Hls.Events.MANIFEST_PARSED,go);
+        if(!(window.Hls&&window.Hls.isSupported())){ native(); return; }
+        hlsObj=new window.Hls({manifestLoadingMaxRetry:2}); hlsObj.on(window.Hls.Events.MANIFEST_PARSED,go);
         hlsObj.on(window.Hls.Events.ERROR,function(_,d){ if(d.fatal) fail(d.details||d.type); });
         hlsObj.loadSource(src); hlsObj.attachMedia(v);
       }
       if(window.Hls){ withHls(); return; }
-      var sc=document.createElement('script'); sc.src='vendor/hls.min.js'; sc.onload=withHls; sc.onerror=function(){ fail('script'); }; document.head.appendChild(sc);
+      var sc=document.createElement('script'); sc.src='vendor/hls.min.js'; sc.onload=withHls; sc.onerror=native; document.head.appendChild(sc);
     }
     btn.addEventListener('click',start);
     v.addEventListener('ended',function(){ v.controls=false; btn.hidden=false; });
