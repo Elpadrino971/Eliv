@@ -512,7 +512,10 @@
     pk.innerHTML='Paiement annulé, rien n\'a été débité. Tu peux réessayer quand tu veux, juste en dessous.';
   }
   // ── L'histoire d'un pionnier : vidéo Mux (identifiant de lecture PUBLIC) ──
-  // hls.js n'est chargé qu'au premier tap : la page reste légère.
+  // Safari lit le HLS nativement ; ailleurs hls.js n'est chargé qu'au premier
+  // tap (page légère). Si le HLS échoue, on bascule sur le MP4 de l'asset
+  // (« static renditions » à activer sur l'asset dans Mux) : un simple fichier
+  // que tout navigateur sait lire.
   var STORY_PLAYBACK='QNc8HqItvJ003Rl2WXvcZHS0019Uaq5sF15SCVvSoGwWY';
   (function(){
     if(!STORY_PLAYBACK) return;
@@ -520,20 +523,41 @@
     if(!sec||!v) return;
     sec.hidden=false;
     v.poster='https://image.mux.com/'+STORY_PLAYBACK+'/thumbnail.webp?time=1&width=720';
-    var src='https://stream.mux.com/'+STORY_PLAYBACK+'.m3u8';
-    function fail(){ msg.textContent='La vidéo ne se lance pas ici. Essaie avec Chrome ou Safari.'; msg.hidden=false; btn.hidden=false; }
-    function go(){ v.muted=false; v.play().catch(function(){}); }
+    var base='https://stream.mux.com/'+STORY_PLAYBACK, src=base+'.m3u8', hlsObj=null, triedMp4=false;
+    function fail(code){
+      if(!triedMp4){ triedMp4=true; mp4(code); return; }
+      msg.textContent='La vidéo ne se lance pas ici. Essaie avec Chrome ou Safari.'+(code?' (code : '+code+')':'');
+      msg.hidden=false; btn.hidden=false;
+    }
+    function go(){ v.muted=false; var p=v.play(); if(p&&p.catch) p.catch(function(){ v.controls=true; }); }
+    // Secours MP4 : on prend le premier rendu disponible (selon ce que Mux a généré).
+    function mp4(code){
+      var names=['capped-1080p.mp4','highest.mp4','high.mp4','medium.mp4'], i=0;
+      (function next(){
+        if(i>=names.length){ fail(code||'mp4'); return; }
+        var u=base+'/'+names[i++];
+        fetch(u,{method:'HEAD'}).then(function(r){ if(!r.ok) throw 0;
+          if(hlsObj){ try{hlsObj.destroy();}catch(e){} hlsObj=null; }
+          v.removeAttribute('src'); v.src=u; go();
+          v.addEventListener('error',function(){ fail('mp4'); },{once:true});
+        }).catch(next);
+      })();
+    }
     function start(){
       btn.hidden=true; msg.hidden=true; v.controls=true; // commandes natives seulement une fois lancée
-      if(v.canPlayType('application/vnd.apple.mpegurl')){ v.src=src; go(); return; }
+      if(v.canPlayType('application/vnd.apple.mpegurl')){
+        v.src=src; go();
+        v.addEventListener('error',function(){ fail('natif'); },{once:true});
+        return;
+      }
       function withHls(){
-        if(!(window.Hls&&window.Hls.isSupported())){ fail(); return; }
-        var h=new window.Hls(); h.on(window.Hls.Events.MANIFEST_PARSED,go);
-        h.on(window.Hls.Events.ERROR,function(_,d){ if(d.fatal) fail(); });
-        h.loadSource(src); h.attachMedia(v);
+        if(!(window.Hls&&window.Hls.isSupported())){ fail('hls'); return; }
+        hlsObj=new window.Hls(); hlsObj.on(window.Hls.Events.MANIFEST_PARSED,go);
+        hlsObj.on(window.Hls.Events.ERROR,function(_,d){ if(d.fatal) fail(d.details||d.type); });
+        hlsObj.loadSource(src); hlsObj.attachMedia(v);
       }
       if(window.Hls){ withHls(); return; }
-      var sc=document.createElement('script'); sc.src='vendor/hls.min.js'; sc.onload=withHls; sc.onerror=fail; document.head.appendChild(sc);
+      var sc=document.createElement('script'); sc.src='vendor/hls.min.js'; sc.onload=withHls; sc.onerror=function(){ fail('script'); }; document.head.appendChild(sc);
     }
     btn.addEventListener('click',start);
     v.addEventListener('ended',function(){ v.controls=false; btn.hidden=false; });
