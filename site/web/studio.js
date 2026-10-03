@@ -193,8 +193,13 @@
   function paintSetup(X, p) {
     var resume = !!X.current;
     var evMode = !resume && X.events.length > 0 && X.mode === 'event';
-    var camPick = X.cams.length > 1 ? '<div class="st-f"><label for="stCamSel">Caméra</label><select id="stCamSel">' + X.cams.map(function (d, i) { return opt(d.deviceId, d.label || ('Caméra ' + (i + 1)), d.deviceId === X.camId); }).join('') + '</select></div>' : '';
-    var micPick = X.mics.length > 1 ? '<div class="st-f"><label for="stMicSel">Micro</label><select id="stMicSel">' + X.mics.map(function (d, i) { return opt(d.deviceId, d.label || ('Micro ' + (i + 1)), d.deviceId === X.micId); }).join('') + '</select></div>' : '';
+    // Les sources vidéo et audio sont TOUJOURS listées (même une seule) : on
+    // voit ce que le navigateur détecte, et « Actualiser » recharge la liste
+    // après avoir branché un mélangeur (ATEM), une capture HDMI ou un iPhone.
+    var camPick = '<div class="st-f"><label for="stCamSel">Source vidéo</label><select id="stCamSel">' + (X.cams.length ? X.cams.map(function (d, i) { return opt(d.deviceId, d.label || ('Caméra ' + (i + 1)), d.deviceId === X.camId); }).join('') : opt('', 'Aucune caméra détectée', true)) + '</select></div>';
+    var micPick = '<div class="st-f"><label for="stMicSel">Source audio</label><select id="stMicSel">' + (X.mics.length ? X.mics.map(function (d, i) { return opt(d.deviceId, d.label || ('Micro ' + (i + 1)), d.deviceId === X.micId); }).join('') : opt('', 'Aucun micro détecté', true)) + '</select></div>';
+    var devHelp = '<div class="st-dev"><button type="button" class="btn btn-ghost" id="stRefresh">Actualiser les appareils</button>' +
+      (X.cams.length <= 1 && !isCoarse() ? '<p class="muted small">Ta régie (ATEM, boîtier HDMI, iPhone) n\'apparaît pas ? Branche-la en USB directement sur l\'ordinateur (pas via un hub), vérifie qu\'elle est allumée, puis « Actualiser ». Un iPhone en Caméra de continuité doit être déverrouillé, proche du Mac, avec Wi-Fi et Bluetooth actifs.</p>' : '') + '</div>';
     var flip = isCoarse() && X.cams.length > 1 ? '<button type="button" class="btn btn-ghost" id="stFlip">Retourner la caméra</button>' : '';
     // L'aperçu est en miroir (comme toute webcam) : les fans, eux, voient
     // l'image réelle. Ce bouton coupe le miroir pour voir ce qu'ils voient.
@@ -214,15 +219,16 @@
     var goLabel = resume ? 'Reprendre le live' : evMode ? 'Lancer mon concert' : 'Lancer le live';
     p.innerHTML = '<div class="st-card"><h1>' + (resume ? 'Reprendre ton live' : evMode ? 'Lancer mon concert' : 'Lancer un live') + '</h1>' + banner + seg +
       (X.permErr ? '<p class="msg" role="alert">' + esc(X.permErr) + '</p><button class="btn btn-ghost" id="stRetryCam" type="button">Réessayer</button>' : '') +
-      '<div class="st-grid">' + camPick + micPick + qual + '</div>' + flip + evForm + title +
+      '<div class="st-grid">' + camPick + micPick + qual + '</div>' + devHelp + flip + evForm + title +
       '<p class="msg" id="stMsg2" role="alert">' + esc(X.formErr) + '</p>' +
       '<button class="btn btn-gold btn-block" id="stGo"' + (X.stream && !X.busy ? '' : ' disabled') + '>' + goLabel + '</button>' +
       (resume ? '<button class="btn btn-ghost btn-block" id="stEndOld" type="button">Terminer ce live</button>' : '') + '</div>';
 
     function on(id, ev, fn) { var el = $(id); if (el) el['on' + ev] = fn; }
     on('stRetryCam', 'click', function () { acquire(X); });
-    on('stCamSel', 'change', function () { X.camId = this.value; acquire(X); });
-    on('stMicSel', 'change', function () { X.micId = this.value; acquire(X); });
+    on('stCamSel', 'change', function () { if (this.value) { X.camId = this.value; acquire(X); } });
+    on('stMicSel', 'change', function () { if (this.value) { X.micId = this.value; acquire(X); } });
+    on('stRefresh', 'click', function () { refreshDevices(X, true); });
     on('stFlip', 'click', function () { X.facing = X.facing === 'user' ? 'environment' : 'user'; X.camId = ''; acquire(X); });
     on('stMirror', 'click', function () { toggleMirror(X); });
     on('stQ', 'change', function () { X.q = this.value; acquire(X); });
@@ -240,8 +246,10 @@
   }
 
   function paintLive(X, p) {
+    var vt = X.stream && X.stream.getVideoTracks()[0], at = X.stream && X.stream.getAudioTracks()[0];
+    var srcLine = (vt || at) ? '<p class="muted small">Sources : ' + esc((vt && vt.label) || 'caméra') + ' · ' + esc((at && at.label) || 'micro') + '</p>' : '';
     p.innerHTML = '<div class="st-card">' +
-      '<div class="st-stats" id="stStats"></div>' +
+      '<div class="st-stats" id="stStats"></div>' + srcLine +
       '<div class="st-ctl"><button class="btn btn-ghost" id="stMic" aria-pressed="' + X.micOff + '">' + (X.micOff ? 'Réactiver le micro' : 'Couper le micro') + '</button>' +
       '<button class="btn btn-ghost" id="stCamBtn" aria-pressed="' + X.camOff + '">' + (X.camOff ? 'Réactiver la caméra' : 'Couper la caméra') + '</button>' +
       mirrorBtn(X) + '</div>' +
@@ -287,8 +295,33 @@
     var b = $('stMirror'); if (b) { b.textContent = X.noMirror ? 'Aperçu réel' : 'Aperçu miroir'; b.setAttribute('aria-pressed', X.noMirror ? 'false' : 'true'); }
   }
 
+  // Liste des caméras / micros. Avec `reopen`, on relance la capture (nouvel
+  // appareil branché : on le propose tout de suite). Le navigateur prévient
+  // aussi de lui-même quand on branche ou débranche quelque chose.
+  function refreshDevices(X, reopen) {
+    if (!navigator.mediaDevices.enumerateDevices) return Promise.resolve();
+    return navigator.mediaDevices.enumerateDevices().then(function (list) {
+      var before = X.cams.length;
+      X.cams = list.filter(function (d) { return d.kind === 'videoinput'; });
+      X.mics = list.filter(function (d) { return d.kind === 'audioinput'; });
+      if (X.dead || X.state !== 'setup') return;
+      if (reopen && X.cams.length > before && X.cams.length) {
+        // Une caméra vient d'arriver : c'est sûrement celle qu'on attend.
+        var fresh = X.cams[X.cams.length - 1]; if (fresh.deviceId) X.camId = fresh.deviceId;
+        acquire(X); return;
+      }
+      paint(X);
+    }, function () {});
+  }
+  function watchDevices(X) {
+    if (X.devWatch || !navigator.mediaDevices.addEventListener) return;
+    X.devWatch = function () { if (!X.dead) refreshDevices(X, true); };
+    navigator.mediaDevices.addEventListener('devicechange', X.devWatch);
+  }
+
   function acquire(X) {
     if (X.dead) return;
+    watchDevices(X);
     stopTracks(X);
     X.permErr = ''; X.busy = true; setOverlay('Autorisation de la caméra…'); paint(X);
     var q = QUALITIES[X.q];
@@ -625,6 +658,7 @@
     clearTimeout(X.retryTimer); clearTimeout(X.readyTimer);
     if (X.beforeUnload) { window.removeEventListener('beforeunload', X.beforeUnload); X.beforeUnload = null; }
     if (X.visHandler) { document.removeEventListener('visibilitychange', X.visHandler); X.visHandler = null; }
+    if (X.devWatch) { navigator.mediaDevices.removeEventListener('devicechange', X.devWatch); X.devWatch = null; }
     if (X.wake) { try { X.wake.release(); } catch (e) {} X.wake = null; }
     stopTracks(X);
     var v = $('stVideo'); if (v && v.srcObject) v.srcObject = null;
