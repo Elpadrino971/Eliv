@@ -111,6 +111,7 @@ const NAV = [
     { id: 'support', label: 'Support (tickets app)', ic: '🎧' },
     { id: 'agenda', label: 'Agenda régional', ic: '🗓️' },
     { id: 'campaign', label: 'Roue & billetterie', ic: '🎡' },
+    { id: 'tickets', label: 'Billets par concert', ic: '🎟️' },
     { id: 'ideas', label: 'Boîte à idées', ic: '💡' },
     { id: 'leads', label: 'Contacts / Leads', ic: '📞' },
     { id: 'faqs', label: 'FAQ', ic: '❓' },
@@ -1166,7 +1167,7 @@ async function pageEvents() {
       { label: 'Statut', render: (r) => `${badge(r.status)}<div>${liveModeBadge(r)}</div>` },
       { label: 'Vidéo', render: (r) => `${r.teaser_playback_id ? `<div style="margin-bottom:4px;display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span class="badge active" title="Bande-annonce publique affichée sur l'accueil et le popup À la une">Teaser ✓</span><button class="btn del" data-teaserdel="${r.id}">Retirer le teaser</button></div>` : ''}${!r.teaser_playback_id && r.mux_playback_id && !['completed', 'ended'].includes(r.status) ? `<div style="margin-bottom:4px"><button class="btn" data-replay2teaser="${r.id}" title="La vidéo envoyée comme replay est en fait la bande-annonce : la déplacer vers le teaser public">↪ C'est un teaser</button></div>` : ''}${muxBadge(r.mux_upload_status)}${r.mux_live_stream_id && r.live_mode !== 'pro' ? '<div class="em">🔴 live en cours</div>' : ''}${r.replay_expires_at ? `<div class="em">replay jusqu'au ${fmtDate(r.replay_expires_at)}</div>` : ''}${r.mux_playback_id ? `<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap"><button class="btn edit" data-replayplay="${r.id}" title="Lire le replay (HLS)">▶ Replay</button><a class="btn" style="text-decoration:none;display:inline-block" href="${esc(r.replay_mp4_url || '')}" target="_blank" rel="noopener" title="Télécharge le replay en MP4. Replay enregistré avant cette version : disponible après le prochain live, ou clique « Préparer le MP4 » (sinon le lien répond 404).">⬇ Replay MP4</a>${r.mux_asset_id ? `<button class="btn" data-replaymp4="${r.id}" title="Demande à Mux la version MP4 d'un replay existant (assets sans rendition)">🎞 Préparer le MP4</button>` : ''}</div>` : ''}` },
       { label: 'Date', render: (r) => fmtDate(r.start_date_time) },
-      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="teaser:${r.id}" title="Bande-annonce courte publique (accueil + popup À la une)">🎞 Teaser (accueil)</button><button class="btn grant" data-muxupload="event:${r.id}" title="Enregistrement du concert, réservé aux acheteurs d'un concert payant">🎬 Replay (vidéo du concert)</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button>${r.live_mode === 'pro' && r.mux_live_stream_id ? `<button class="btn" data-muxrekey="${r.id}" title="Supprime le flux Mux et en recrée un : à utiliser si la clé de stream a fuité">🔑 Nouvelle clé</button>` : ''}<button class="btn grant" data-feature="${r.id}">⭐ À la une</button><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn" data-invites="${r.id}" title="Un lien que l'artiste envoie lui-même : chaque invité entre son e-mail et sa place gratuite est réservée">🔗 Lien d'invitation</button><button class="btn" data-guests="${r.id}">🎤 Invités</button><button class="btn" data-links="${r.id}">🎛 Régie</button><button class="btn" data-stage="${r.id}">🖥 Scène</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
+      { label: 'Action', render: (r) => `<button class="btn edit" data-edit="event:${r.id}">Modifier</button><button class="btn dup" data-dup="event:${r.id}">Dupliquer</button><button class="btn grant" data-muxupload="teaser:${r.id}" title="Bande-annonce courte publique (accueil + popup À la une)">🎞 Teaser (accueil)</button><button class="btn grant" data-muxupload="event:${r.id}" title="Enregistrement du concert, réservé aux acheteurs d'un concert payant">🎬 Replay (vidéo du concert)</button><button class="btn status" data-muxlive="event:${r.id}:${r.mux_live_stream_id ? 1 : 0}">${r.mux_live_stream_id ? '⏹ Stop live' : '🔴 Live Mux'}</button>${r.live_mode === 'pro' && r.mux_live_stream_id ? `<button class="btn" data-muxrekey="${r.id}" title="Supprime le flux Mux et en recrée un : à utiliser si la clé de stream a fuité">🔑 Nouvelle clé</button>` : ''}<button class="btn grant" data-feature="${r.id}">⭐ À la une</button><a class="btn" href="#tickets?e=${r.id}" title="Qui a sa place : achats, roue, places offertes, invitations, avec export CSV">🎟 Billets</a><button class="btn" data-gifts="${r.id}">🎁 Places offertes</button><button class="btn" data-invites="${r.id}" title="Un lien que l'artiste envoie lui-même : chaque invité entre son e-mail et sa place gratuite est réservée">🔗 Lien d'invitation</button><button class="btn" data-guests="${r.id}">🎤 Invités</button><button class="btn" data-links="${r.id}">🎛 Régie</button><button class="btn" data-stage="${r.id}">🖥 Scène</button><button class="btn del" data-del="/events/${r.id}">Supprimer</button>` },
     ],
   });
   renderFeaturedBanner();
@@ -1835,6 +1836,65 @@ async function pageReports() {
       <div class="tcard"><h3 style="color:var(--gold);margin-bottom:10px">Top concerts (ventes)</h3>${(data.top_events || []).map((e) => `<div class="kv"><span>${esc(e.name)}</span><span>${e.sales}</span></div>`).join('') || '<div class="empty">—</div>'}</div>
       <div class="tcard"><h3 style="color:var(--gold);margin-bottom:10px">Concerts par genre</h3>${(data.by_genre || []).map((g) => `<div class="kv"><span>${esc(g.name)}</span><span>${g.events}</span></div>`).join('') || '<div class="empty">—</div>'}</div>
     </div>`;
+}
+
+// ─── Billets par concert : qui a sa place, toutes provenances, export CSV ───
+async function pageTickets() {
+  view().innerHTML = '<div class="empty">Chargement…</div>';
+  let events;
+  try { events = (await api('GET', '/events')).data || []; } catch (e) { view().innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  events.sort((a, b) => String(b.start_date_time || '').localeCompare(String(a.start_date_time || '')));
+  const param = new URLSearchParams(location.hash.split('?')[1] || '').get('e');
+  const now = Date.now();
+  const soonest = events.filter((e) => Date.parse(e.start_date_time) > now - 12 * 3600e3).sort((a, b) => Date.parse(a.start_date_time) - Date.parse(b.start_date_time))[0];
+  let current = Number(param) || (soonest ? soonest.id : (events[0] ? events[0].id : 0));
+  const STATE = { active: ['Place active', '#63d6a6'], pending: ['En attente de compte', '#e6c76a'], refunded: ['Remboursée', '#ff8a8a'] };
+  const box = (n, l) => `<div class="card"><div class="num">${n}</div><div class="lbl">${l}</div></div>`;
+  view().innerHTML = `<div class="tcard">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <select id="tk-ev" style="flex:1;min-width:280px;background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:8px;padding:9px">
+        ${events.map((e) => `<option value="${e.id}" ${e.id === current ? 'selected' : ''}>#${e.id} · ${esc(e.name)} · ${esc(fmtDateTime(e.start_date_time))}</option>`).join('')}</select>
+      <input id="tk-q" placeholder="Rechercher un e-mail ou un nom" style="min-width:240px;background:var(--navy-2);border:1px solid var(--line);color:var(--ivory);border-radius:8px;padding:9px">
+      <button class="btn" id="tk-csv">⬇ Export CSV</button>
+      <button class="btn" id="tk-refresh">↻ Actualiser</button>
+    </div>
+    <div class="cards" id="tk-totals"></div>
+    <div id="tk-list" class="empty">Chargement…</div>
+  </div>`;
+  let data = null;
+  const esel = $('tk-ev');
+  function render() {
+    if (!data) return;
+    const q = ($('tk-q').value || '').trim().toLowerCase();
+    const rows = data.items.filter((i) => !q || (i.email || '').toLowerCase().includes(q) || (i.name || '').toLowerCase().includes(q));
+    const t = data.totals;
+    $('tk-totals').innerHTML = box(t.seats, 'Places (actives + en attente)') + box(t.paid, 'Payées') + box(t.free, 'Offertes / gagnées / invitations') +
+      box(t.pending, 'En attente de compte') + box(t.revenue_eur.toFixed(2) + ' €', 'Encaissé (prix payé)') + (t.refunded ? box(t.refunded, 'Remboursées') : '');
+    $('tk-list').className = '';
+    $('tk-list').innerHTML = rows.length ? `<div style="overflow:auto"><table class="tbl"><thead><tr><th>#</th><th>E-mail</th><th>Nom</th><th>Provenance</th><th>Prix</th><th>État</th><th>Date</th></tr></thead>
+      <tbody>${rows.map((i, k) => { const st = STATE[i.state] || [i.state, '']; return `<tr><td>${k + 1}</td><td>${esc(i.email || '—')}</td><td>${esc(i.name || '')}</td><td>${esc(i.source)}</td><td>${i.price_paid > 0 ? i.price_paid.toFixed(2) + ' €' : 'gratuit'}</td><td><span style="color:${st[1]}">${esc(st[0])}</span></td><td>${esc(fmtDateTime(i.created_at))}</td></tr>`; }).join('')}</tbody></table></div>`
+      : '<div class="empty">Aucune place pour ce concert' + (q ? ' avec cette recherche' : '') + '.</div>';
+  }
+  async function load() {
+    current = Number(esel.value);
+    $('tk-list').className = 'empty'; $('tk-list').textContent = 'Chargement…';
+    try { data = (await api('GET', `/events/${current}/tickets`)).data; } catch (e) { $('tk-list').textContent = e.message; return; }
+    render();
+  }
+  esel.onchange = load;
+  $('tk-q').oninput = render;
+  $('tk-refresh').onclick = load;
+  $('tk-csv').onclick = () => {
+    if (!data) return;
+    const cell = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const lines = [['email', 'nom', 'provenance', 'prix_paye_eur', 'etat', 'date'].join(';')]
+      .concat(data.items.map((i) => [i.email, i.name, i.source, i.price_paid.toFixed(2), (STATE[i.state] || [i.state])[0], i.created_at].map(cell).join(';')));
+    const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `billets-concert-${current}.csv`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
+  if (current) load(); else $('tk-list').textContent = 'Aucun concert.';
 }
 
 // Roue & billetterie — campagne DJ Wilson (et suivantes).
@@ -3453,7 +3513,7 @@ const ROUTES = {
   dashboard: pageDashboard, lives: pageLives, users: pageUsers, geo: pageGeo, genres: pageGenres, 'user-genres': pageUserGenres,
   events: pageEvents, 'feed-clips': pageFeedClips, 'artist-media': pageArtistMedia, packages: pagePackages, gifts: pageGifts, subscriptions: pageSubscriptions, referrals: pageReferrals,
   abusive: pageAbusive, reviews: pageReviews, withdrawals: pageWithdrawals, transactions: pageTransactions,
-  reports: pageReports, support: pageSupport, agenda: pageAgenda, campaign: pageCampaign, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
+  reports: pageReports, support: pageSupport, agenda: pageAgenda, campaign: pageCampaign, tickets: pageTickets, ideas: pageIdeas, leads: pageLeads, faqs: pageFaqs, cms: pageCms, profile: pageProfile,
   splash: pageSplash, legal: pageLegal, challenge: pageChallenge, merch: pageMerch, audience: pageAudience, apporteurs: pageApporteurs, vibe: pageVibe, access: pageAccess, apikeys: pageApiKeys,
 };
 

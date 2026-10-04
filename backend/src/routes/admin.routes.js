@@ -978,6 +978,50 @@ router.delete('/featured-event', requireAdmin, (req, res) => {
   return res.json({ status: 'success', message: removed ? 'Mise en avant retirée.' : 'Aucune mise en avant en cours.', data: null });
 });
 
+// ─── Billets d'un concert : qui a sa place (page « Billets par concert ») ───
+// Toutes les places, d'où qu'elles viennent : achat dans l'app, carte sur le
+// site, roue, place offerte, lien d'invitation ; plus les places réservées à
+// un e-mail qui n'a pas encore de compte (elles deviennent des billets dès que
+// le compte est créé avec cette adresse).
+const SEAT_SOURCE = { stripe: 'site (carte)', wheel: 'roue', artist_gift: 'offerte / invitation' };
+router.get('/events/:id/tickets', requireAdmin, (req, res) => {
+  const ev = db.prepare('SELECT id, name, start_date_time, ticket_price FROM events WHERE id = ?').get(Number(req.params.id));
+  if (!ev) return res.status(404).json({ status: 'error', message: 'Concert introuvable.' });
+  const rows = db.prepare(
+    `SELECT t.id, t.status, t.price_paid, t.created_at, t.user_id, u.email, u.full_name, u.artist_name,
+            (SELECT p.source FROM pending_tickets p WHERE p.ticket_id = t.id ORDER BY p.id LIMIT 1) AS psource
+       FROM tickets t LEFT JOIN users u ON u.id = t.user_id
+      WHERE t.event_id = ? ORDER BY t.created_at ASC, t.id ASC`
+  ).all(ev.id);
+  const items = rows.map((r) => {
+    const price = parseFloat(r.price_paid) || 0;
+    return {
+      id: r.id, email: r.email || '', name: r.full_name || r.artist_name || '', user_id: r.user_id,
+      source: SEAT_SOURCE[r.psource] || (price > 0 ? 'app (store)' : 'app'),
+      price_paid: price, state: r.status === 'refunded' ? 'refunded' : 'active', created_at: r.created_at,
+    };
+  });
+  const pending = db.prepare(
+    `SELECT id, email, source, price_paid, created_at FROM pending_tickets
+      WHERE event_id = ? AND ticket_id IS NULL AND granted_at IS NULL AND refunded_at IS NULL
+      ORDER BY created_at ASC, id ASC`
+  ).all(ev.id).map((p) => ({
+    id: 'p' + p.id, email: p.email, name: '', user_id: null, source: SEAT_SOURCE[p.source] || p.source,
+    price_paid: parseFloat(p.price_paid) || 0, state: 'pending', created_at: p.created_at,
+  }));
+  const active = items.filter((i) => i.state === 'active');
+  const totals = {
+    seats: active.length + pending.length,
+    active: active.length,
+    paid: active.filter((i) => i.price_paid > 0).length,
+    free: active.filter((i) => i.price_paid <= 0).length,
+    pending: pending.length,
+    refunded: items.length - active.length,
+    revenue_eur: Math.round(active.reduce((t, i) => t + i.price_paid, 0) * 100) / 100,
+  };
+  return res.json({ status: 'success', data: { event: ev, totals, items: items.concat(pending) } });
+});
+
 // ─── Places offertes par l'artiste (lecture) : même contrat que
 // GET /api/events/:id/gift-tickets, pour la page Concerts de l'admin.
 router.get('/events/:id/gift-tickets', requireAdmin, (req, res) => {
