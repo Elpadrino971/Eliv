@@ -492,8 +492,16 @@ input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transp
 
   // ── Chat (mêmes messages que l'application : /event-logs, /event-comment) ──
   var chatTimer=null, chatSeen='';
+  // Un message ne reste que 2 minutes : au-delà il n'a plus de rapport avec
+  // le moment du concert. Dates serveur en UTC sans suffixe (« 2026-10-04 04:20:00 »).
+  var CHAT_TTL_MS=2*60*1000;
+  function chatFresh(a){
+    if(!a.created_at) return true;
+    var t=Date.parse(String(a.created_at).replace(' ','T')+(/[zZ]|[+-]\d\d:?\d\d$/.test(a.created_at)?'':'Z'));
+    return !isFinite(t)||Date.now()-t<=CHAT_TTL_MS;
+  }
   function chatRender(list){
-    var items=(list||[]).filter(function(a){return a.type==='comment'||a.type==='gift';}).slice(0,60).reverse();
+    var items=(list||[]).filter(function(a){return (a.type==='comment'||a.type==='gift')&&chatFresh(a);}).slice(0,60).reverse();
     var sig=items.map(function(a){return a.id;}).join(',');
     if(sig===chatSeen) return; chatSeen=sig;
     var ul=$('chatList'), atBottom=ul.scrollHeight-ul.scrollTop-ul.clientHeight<40;
