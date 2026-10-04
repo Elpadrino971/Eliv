@@ -540,11 +540,43 @@ router.post('/event-comment', optionalAuth, async (req, res) => {
 // POST /api/event-logs  (body: { event_id }) -> { status, activity: [...] }
 // Chemin le plus chaud d'un live (polling de tous les spectateurs) : requête
 // unique + cache 2 s (voir cachedActivities).
+// ─── Présence : qui regarde en ce moment ───
+// En mode régie (flux Mux), personne n'entre dans la salle Zego : le compteur
+// de la régie restait à 0 alors que des centaines de gens regardaient. Tout
+// spectateur (app toutes les 15 s, site toutes les 6 s) appelle /event-logs :
+// on note son passage et on compte ceux vus dans les 45 dernières secondes.
+const PRESENCE_TTL_MS = 45000;
+const presence = new Map(); // event_id -> Map(clé spectateur -> dernier passage)
+function notePresence(req, eventId) {
+  const auth = req.headers.authorization || '';
+  const key = auth.length > 20 ? 'a:' + auth.slice(-24) : 'w:' + (req.ip || '') + '|' + (req.headers['user-agent'] || '').slice(0, 60);
+  let m = presence.get(eventId);
+  if (!m) { m = new Map(); presence.set(eventId, m); }
+  m.set(key, Date.now());
+}
+function presenceCount(eventId) {
+  const m = presence.get(eventId); if (!m) return 0;
+  const now = Date.now();
+  for (const [k, t] of m) if (now - t > PRESENCE_TTL_MS) m.delete(k);
+  if (!m.size) presence.delete(eventId);
+  return m.size;
+}
+setInterval(() => { for (const id of presence.keys()) presenceCount(id); }, 60000).unref();
+
 router.post('/event-logs', (req, res) => {
   const eventId = Number(req.body?.event_id);
   if (!Number.isFinite(eventId) || eventId <= 0) return res.json({ status: 'success', activity: [] });
+  notePresence(req, eventId);
   res.set('Cache-Control', 'private, max-age=2');
   return res.json({ status: 'success', activity: cachedActivities(eventId) });
+});
+
+// GET /api/live/:id/viewers — spectateurs vus dans les 45 dernières secondes
+// (app + site). Public : ce n'est qu'un nombre.
+router.get('/live/:id/viewers', (req, res) => {
+  const eventId = Number(req.params.id);
+  res.set('Cache-Control', 'no-store');
+  return res.json({ status: 'success', data: { viewers: Number.isFinite(eventId) ? presenceCount(eventId) : 0 } });
 });
 
 // POST /api/events/update/:id  (body: { status })

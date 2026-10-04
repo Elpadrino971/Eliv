@@ -533,7 +533,14 @@ function addStream(st){if(PRO.on)return; // mode pro : pas de fans sur scène (o
   ZG.startPlayingStream(st.streamID).then(function(m){s.media=m;renderWallLive();}).catch(function(){});}
 function removeStream(id){var i=SLOTS.findIndex(function(s){return s.stream_id===id;});if(i<0)return;try{ZG.stopPlayingStream(id);}catch(_){}SLOTS.splice(i,1);renderWallLive();}
 // Spectateurs réels = utilisateurs de la salle Zego, hors écrans web (web_*) et hors artiste.
+// Mode régie pro : les spectateurs (app + site) ne sont pas dans la salle Zego,
+// on demande le compteur de présence au serveur toutes les 10 s.
+var PRO_VIEWERS=null;
+function pollProViewers(){if(!PRO.on)return;
+  fetch(API+'/live/'+EVID+'/viewers',{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+    PRO_VIEWERS=(j&&j.data&&+j.data.viewers)||0;renderViewers();}).catch(function(){});}
 function renderViewers(){var fans=0,webs=0,art=0;
+  if(PRO.on&&PRO_VIEWERS!=null){var pe=document.getElementById('viewers');if(pe)pe.textContent=PRO_VIEWERS.toLocaleString('fr-FR');return;}
   Object.keys(ROOM_USERS).forEach(function(id){if(/^web_/.test(id))webs++;else if(ARTIST_ID!=null&&id===ARTIST_ID)art++;else fans++;});
   var n=fans;if(ONLINE!=null)n=Math.max(fans,ONLINE-1-webs-art); // compteur Zego : inclut cet écran
   var el=document.getElementById('viewers');if(el)el.textContent=Math.max(0,n).toLocaleString('fr-FR');}
@@ -611,6 +618,7 @@ function proAttach(){
   }).catch(function(e){proWait((e&&e.message)||'Lecteur HLS indisponible');});}
 function proPlay(v){var p=v.play&&v.play();if(p&&p.catch)p.catch(function(){v.muted=true;v.play().catch(function(){});});}
 function startPro(playback){if(PRO.on)return;PRO.on=true;PRO.playback=playback||null;document.body.classList.add('pro');
+  pollProViewers();setInterval(pollProViewers,10000);
   SLOTS.forEach(function(s){try{ZG&&ZG.stopPlayingStream(s.stream_id);}catch(_){}});SLOTS=[];
   document.querySelector('.role').textContent='Console · DIRECT · RÉGIE PRO · concert #'+Q.get('event');
   if(!PRO.playback){PRO.msg='Aucun live stream Mux pour ce concert : crée-le depuis l\'admin (🔴 Live Mux).';renderWallLive();return;}
