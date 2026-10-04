@@ -93,6 +93,10 @@ svg{display:block}
 .leave{position:absolute;right:18px;display:flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;background:linear-gradient(180deg,#FF5E6E,#E23B4C);color:#fff;font-weight:700}
 .status{position:absolute;left:18px;display:flex;align-items:center;gap:12px;color:var(--muted-2);font-size:11px;font-weight:600}
 .status .hd{border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--muted)}
+.status .snd{display:none;padding:5px 10px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);color:var(--ivory);font-size:11px;font-weight:700}
+body.pro .status .snd{display:inline-block}
+.status .snd.off{color:var(--muted);border-color:var(--line)}
+.status .snd.on{color:var(--gold);border-color:var(--gold)}
 /* chrono de fin de live (prolonger / réduire) */
 .clockbox{display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:14px;background:var(--panel-2);border:1px solid var(--line);margin-right:6px}
 .clockbox .cl{font-size:14px;color:var(--muted)}
@@ -219,7 +223,7 @@ body.pro .pronote{display:block}
     </header>
     <div class="grid-wrap"><div class="grid" id="grid"></div></div>
     <div class="controls">
-      <div class="status"><span class="hd">HD</span><span id="micStatus">🔇 Aucun micro ouvert</span></div>
+      <div class="status"><span class="hd">HD</span><span id="micStatus">🔇 Aucun micro ouvert</span><button class="snd" id="proSound" type="button" title="Écouter / couper le son du direct sur cet écran (n'affecte pas le public)">🔊 Son du direct</button></div>
       <div class="clockbox" title="Fin du live — prolonger / réduire"><span class="cl">⏱</span><b id="cT">--:--</b><button data-dm="-5" title="Réduire de 5 min">−5</button><button data-dm="5" title="Prolonger de 5 min">+5</button><button data-dm="10" title="Prolonger de 10 min">+10</button><button id="cSet" title="Définir les minutes restantes / terminer">⚙</button></div>
       <button class="ctrl" id="muteAll"><svg class="icon" viewBox="0 0 24 24"><use href="#i-mic-off"/></svg><small>Couper tous les micros</small></button>
       <button class="ctrl" id="goQueue"><svg class="icon" viewBox="0 0 24 24"><use href="#i-hand"/></svg><small>File d'attente</small><span class="badge-n" id="qn">0</span></button>
@@ -571,6 +575,15 @@ function loadHlsJs(){
   return _hlsP;}
 function proUrl(){return 'https://stream.mux.com/'+encodeURIComponent(PRO.playback)+'.m3u8';}
 function proMuted(){return !(soundOk()&&ARTIST_SOUND);} // régie : on écoute le direct après un premier geste
+// Bouton « Son du direct » : met / retire le son du flux Mux sur CET écran
+// seulement (le public n'est pas concerné). Le clic compte comme geste, donc
+// le navigateur autorise le son dès le premier appui.
+function proSoundPaint(){var b=document.getElementById('proSound');if(!b)return;var on=ARTIST_SOUND&&soundOk();b.className='snd '+(on?'on':'off');b.textContent=on?'🔊 Son du direct : activé':'🔇 Son du direct : coupé';}
+document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('proSound');if(!b)return;
+  b.addEventListener('click',function(){GEST=true;ARTIST_SOUND=!ARTIST_SOUND;
+    if(PRO.video){PRO.video.muted=proMuted();if(!PRO.video.muted){PRO.video.volume=1;PRO.video.play().catch(function(){});}}
+    proSoundPaint();});
+  proSoundPaint();});
 function proDetach(){if(PRO.hls){try{PRO.hls.destroy();}catch(_){}PRO.hls=null;}
   if(PRO.video){try{PRO.video.pause();PRO.video.removeAttribute('src');PRO.video.load();}catch(_){}}}
 function proWait(msg){proDetach();PRO.state='wait';PRO.msg=msg||'';renderWallLive();clearTimeout(PRO.timer);PRO.timer=setTimeout(proProbe,5000);}
@@ -580,7 +593,7 @@ function proProbe(){if(!PRO.on||!PRO.playback)return;
     if(!r.ok)return proWait('Flux Mux indisponible ('+r.status+') — nouvel essai dans 5 s.');
     proAttach();
   }).catch(function(){proWait('Flux Mux injoignable — nouvel essai dans 5 s.');});}
-function proPlaying(){if(PRO.state==='play')return;PRO.state='play';PRO.msg='';renderWallLive();}
+function proPlaying(){if(PRO.state==='play')return;PRO.state='play';PRO.msg='';renderWallLive();proSoundPaint();}
 function proAttach(){
   var v=PRO.video;if(!v){v=document.createElement('video');v.className='camv';v.autoplay=true;v.playsInline=true;v.muted=true;PRO.video=v;
     v.addEventListener('playing',proPlaying);
