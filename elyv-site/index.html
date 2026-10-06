@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Elyv</title>
+  <meta name="description" content="Elyv : le mariage de ceux que vous aimez, en direct, de partout dans le monde. Une place à table, une enveloppe, un souvenir pour toujours." />
+  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500;700&display=swap" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="script.js" defer></script>
+</head>
+<body>
+<main class="site-shell">
+  <section class="cinema-scroll" id="cinema" aria-label="Histoire Elyv en défilement cinématique">
+    <div class="stage">
+      <div class="world">
+        <img class="scene-img sky-img" src="assets/scene-1.webp" alt="" />
+
+        <header class="site-header" aria-label="Navigation principale">
+          <a class="site-logo" href="#cinema" data-scroll="0">Elyv</a>
+          <nav class="site-nav" aria-label="Menu principal">
+            <a href="#cinema" data-scroll="0">Accueil</a>
+            <a href="#ceremonie" data-scroll="1100">La cérémonie</a>
+            <a href="#cagnotte" data-scroll="2340">La cagnotte</a>
+            <a href="#moments" data-scroll="3700">Les moments</a>
+          </nav>
+          <button class="language-switcher" type="button" aria-label="Changer de langue">
+            <span>FR</span>
+            <span aria-hidden="true">⌄</span>
+          </button>
+        </header>
+
+        <div class="back-stack">
+          <section class="sights-slider" id="moments" aria-label="Les moments du mariage">
+            <div class="sights-track">
+              <article class="sight-card" tabindex="0" role="button" aria-label="Ouvrir la carte La cérémonie">
+                <span class="sight-kicker">En direct</span>
+                <svg class="sight-pin" viewBox="0 0 64 64" aria-hidden="true"><circle cx="24" cy="36" r="14"/><circle cx="40" cy="36" r="14"/><path d="M24 22l-5-8h10z"/></svg>
+                <h3>La cérémonie</h3>
+                <p>Le oui, les larmes et les applaudissements, filmés par le vidéaste ou le téléphone d'un proche.</p>
+              </article>
+              <article class="sight-card" tabindex="0" role="button" aria-label="Ouvrir la carte Le mot du cœur">
+                <span class="sight-kicker">Enveloppe</span>
+                <svg class="sight-pin" viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="16" width="48" height="34" rx="4"/><path d="M8 20l24 18 24-18"/><path d="M8 50l18-16M56 50L38 34"/></svg>
+                <h3>Le mot du cœur</h3>
+                <p>Glissez une enveloppe avec un message : elle s'affiche à l'écran pendant la soirée.</p>
+              </article>
+              <article class="sight-card" tabindex="0" role="button" aria-label="Ouvrir la carte La première danse">
+                <span class="sight-kicker">Soirée</span>
+                <svg class="sight-pin" viewBox="0 0 64 64" aria-hidden="true"><circle cx="20" cy="46" r="8"/><circle cx="46" cy="40" r="8"/><path d="M28 46V14l26-6v32"/><path d="M28 24l26-6"/></svg>
+                <h3>La première danse</h3>
+                <p>Vivez la soirée comme si vous y étiez, jusqu'au dernier slow.</p>
+              </article>
+              <article class="sight-card" tabindex="0" role="button" aria-label="Ouvrir la carte La liste de mariage">
+                <span class="sight-kicker">Cagnotte</span>
+                <svg class="sight-pin" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="26" width="44" height="30" rx="3"/><path d="M6 18h52v8H6z"/><path d="M32 18v38"/><path d="M32 18c-6-10-18-8-14 0M32 18c6-10 18-8 14 0"/></svg>
+                <h3>La liste de mariage</h3>
+                <p>Le voyage, la robe, le DJ : chaque contribution fait monter la jauge en direct.</p>
+              </article>
+              <article class="sight-card" tabindex="0" role="button" aria-label="Ouvrir la carte Le replay">
+                <span class="sight-kicker">Souvenir</span>
+                <svg class="sight-pin" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="24"/><path d="M26 22l16 10-16 10z"/></svg>
+                <h3>Le replay</h3>
+                <p>Revoyez le mariage pendant des mois, et partagez-le avec ceux qui l'ont manqué.</p>
+              </article>
+            </div>
+          </section>
+          <img class="scene-img back-img back-bazaar" src="assets/scene-3.webp" alt="" />
+        </div>
+
+        <div class="sights-controls" aria-label="Commandes du carrousel">
+          <button class="sight-nav sight-prev" type="button" aria-label="Moment précédent">←</button>
+          <button class="sight-nav sight-next" type="button" aria-label="Moment suivant">→</button>
+        </div>
+
+        <h1 class="hero-title">ELYV</h1>
+
+        <img class="scene-img frame-two-img" src="assets/scene-2.webp" alt="" />
+        <img class="scene-img splitframe-img splitframe-left" src="assets/scene-4.webp" alt="" />
+        <img class="scene-img splitframe-img splitframe-right" src="assets/scene-4.webp" alt="" />
+        <div class="shade"></div>
+        <div class="hero-shade"></div>
+      </div>
+
+      <section class="intro-copy" aria-label="Présentation d'Elyv">
+        <p>Le mariage de ceux que vous aimez, en direct, de partout dans le monde. Une place à table, une enveloppe, et un souvenir pour toujours.</p>
+        <div class="hero-tags" aria-label="Ce que propose Elyv">
+          <span>En direct</span>
+          <span>Enveloppes</span>
+          <span>Liste de mariage</span>
+        </div>
+      </section>
+
+      <section class="story-panel story-panel-bridge" id="ceremonie" aria-label="La cérémonie en direct">
+        <h2>Votre place à table, où que vous soyez.</h2>
+        <p>Trop loin pour faire le voyage ? Réservez votre couvert, mettez votre plus belle tenue et vivez la cérémonie puis la soirée en direct, avec toute la famille.</p>
+        <dl class="facts">
+          <div><dt>1 couvert</dt><dd>Votre place réservée, votre nom au mur des convives</dd></div>
+          <div><dt>0 km</dt><dd>Entre vous et le premier baiser</dd></div>
+        </dl>
+      </section>
+
+      <section class="story-panel story-panel-bazaar" id="cagnotte" aria-label="La cagnotte du mariage">
+        <h2>La cagnotte qui fait monter le bonheur.</h2>
+        <p>Une enveloppe en un clic, une liste de mariage, un objectif qui grimpe en direct sous les yeux de tous les invités. Chaque euro va directement au couple.</p>
+        <button class="note-button" type="button" data-scroll="3700">
+          <span aria-hidden="true">↗</span>
+          <span>Créer notre cagnotte</span>
+        </button>
+      </section>
+    </div>
+  </section>
+</main>
+</body>
+</html>
