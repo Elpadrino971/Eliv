@@ -12,13 +12,15 @@ import 'package:artist/BottomBar/screens/profile/following_artists.dart';
 import 'package:artist/BottomBar/screens/profile/my_list_screen.dart';
 import 'package:artist/BottomBar/screens/profile/history.dart';
 import 'package:artist/BottomBar/screens/profile/user_wallet.dart';
-import 'package:artist/BottomBar/screens/profile/all_subscription_screen.dart';
+// Ecran d'achat d'abonnement : conserve pour reactivation future.
+// import 'package:artist/BottomBar/screens/profile/all_subscription_screen.dart';
 import 'package:artist/BottomBar/screens/profile/manage_subscription_screen.dart';
 import 'package:artist/BottomBar/screens/profile/idea_box_screen.dart';
 import 'package:artist/BottomBar/screens/profile/contant_page.dart';
 import 'package:artist/BottomBar/screens/profile/Support/all_support_chats.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:artist/widgets/my_container.dart';
+import 'package:artist/BottomBar/screens/profile/blocked_accounts_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -87,7 +89,7 @@ class _SettingsState extends State<Settings> {
   List<Map> get vybzzzAccountList => [
     {
       'icon': Icons.playlist_add_check_rounded,
-      'title': 'Ma liste',
+      'title': 'common_my_list'.tr,
       'subTitle': 'Les artistes que tu as enregistrés',
       'onTap': () => Get.to(() => const MyListScreen()),
     },
@@ -109,17 +111,21 @@ class _SettingsState extends State<Settings> {
       'subTitle': 'prof_wallet_sub'.tr,
       'onTap': () => Get.to(() => const UserWallet()),
     },
-    {
-      'icon': Icons.workspace_premium_outlined,
-      'title': 'prof_purchase_sub'.tr,
-      'subTitle': 'prof_become_artist_sub'.tr,
-      'onTap': () => Get.to(() => const AllSubscriptionScreen()),
-    },
+    // Achat d'abonnement artiste : entree retiree du menu (l'ecran reste dans
+    // le depot, reactivable). « Gerer mon abonnement » reste accessible.
     {
       'icon': Icons.card_membership_outlined,
       'title': 'prof_manage_sub'.tr,
       'subTitle': 'prof_manage_sub_sub'.tr,
       'onTap': () => Get.to(() => const ManageSubscriptionScreen()),
+    },
+    {
+      // Exigence App Store 1.2 : le blocage doit pouvoir être annulé par
+      // l'utilisateur lui-même, sans passer par le support.
+      'icon': Icons.block_rounded,
+      'title': 'mod_blocked_title'.tr,
+      'subTitle': 'mod_blocked_sub'.tr,
+      'onTap': () => Get.to(() => const BlockedAccountsScreen()),
     },
     {
       'icon': Icons.lightbulb_outline_rounded,
@@ -134,7 +140,8 @@ class _SettingsState extends State<Settings> {
       'onTap': () => Get.to(
         () => ContantPage(
           title: 'prof_privacy'.tr,
-          content: authController.settings['privacy_policy'],
+          content: (authController.settings['privacy_policy'] ?? '').toString(),
+          settingsKey: 'privacy_policy',
         ),
       ),
     },
@@ -145,7 +152,8 @@ class _SettingsState extends State<Settings> {
       'onTap': () => Get.to(
         () => ContantPage(
           title: 'prof_terms'.tr,
-          content: authController.settings['terms_and_conditions'],
+          content: (authController.settings['terms_and_conditions'] ?? '').toString(),
+          settingsKey: 'terms_and_conditions',
         ),
       ),
     },

@@ -6,7 +6,7 @@ import 'package:artist/Global/global.dart';
 // import 'package:artist/BottomBar/screens/homeScreen/live_performance_screen.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:flutter/material.dart';
@@ -180,7 +180,7 @@ class _PerformancesScreenState extends State<PerformancesScreen> {
                                     width(0.02),
 
                                     Text(
-                                      '${event.ticketPrice ?? '0.0'} €',
+                                      priceLabel(event.ticketPrice),
                                       style: TextStyle(
                                         color: ivory,
                                         fontSize: 16,

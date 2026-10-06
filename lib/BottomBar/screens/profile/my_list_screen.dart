@@ -2,7 +2,7 @@ import 'package:artist/BottomBar/screens/LiveScreen/artist_detail.dart';
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/widgets/image_widget.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -27,7 +27,7 @@ class _MyListScreenState extends State<MyListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppbar(title: 'Ma liste'),
+      appBar: MyAppbar(title: 'common_my_list'.tr),
       body: Obx(() {
         if (eventController.myListLoading.value) {
           return const Center(child: CircularProgressIndicator());

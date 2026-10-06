@@ -1,19 +1,56 @@
 import 'package:artist/Animation/gift_animation_manager.dart';
+import 'package:artist/BottomBar/screens/profile/user_wallet.dart';
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/point_packs.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/Models/gift_model.dart';
+import 'package:artist/Models/user_model.dart';
 import 'package:artist/ZegoCloud/zego_controller.dart';
-import 'package:artist/widgets/image_widget.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+/// Emoji de repli d'un cadeau, déduit de son nom (ou de son fichier image) :
+/// affiché si l'image ne charge pas, au lieu du visuel « no image ».
+String giftFallbackEmoji(Datum gift) {
+  final key = '${gift.name ?? ''} ${gift.image ?? ''}'.toLowerCase();
+  if (key.contains('rose')) return '🌹';
+  if (key.contains('coeur') || key.contains('cœur') || key.contains('heart')) {
+    return '❤️';
+  }
+  if (key.contains('etoile') || key.contains('étoile') || key.contains('star')) {
+    return '⭐';
+  }
+  if (key.contains('diamant') || key.contains('diamond')) return '💎';
+  if (key.contains('couronne') || key.contains('crown')) return '👑';
+  if (key.contains('flamme') || key.contains('feu') || key.contains('fire')) {
+    return '🔥';
+  }
+  if (key.contains('fusée') || key.contains('fusee') || key.contains('rocket')) {
+    return '🚀';
+  }
+  if (key.contains('chateau') || key.contains('château') || key.contains('castle')) {
+    return '🏰';
+  }
+  return '🎁';
+}
+
 class ZegoGifts extends StatefulWidget {
-  const ZegoGifts({super.key, required this.eventId, required this.onGiftSent});
+  const ZegoGifts({
+    super.key,
+    required this.eventId,
+    required this.onGiftSent,
+    this.broadcastToZego = true,
+  });
   final String eventId;
   final Function(List<Activity>) onGiftSent;
+
+  /// Faux pour un concert « pro » (régie vidéo) : pas de salle Zego, le
+  /// cadeau passe uniquement par le backend.
+  final bool broadcastToZego;
 
   @override
   State<ZegoGifts> createState() => _ZegoGiftsState();
@@ -22,67 +59,130 @@ class ZegoGifts extends StatefulWidget {
 class _ZegoGiftsState extends State<ZegoGifts> {
   final eventController = Get.find<EventController>();
 
-  @override
-  Widget build(BuildContext context) {
+  int get _balance {
+    final raw = (userModel.value.user?.points ?? '0').trim();
+    return int.tryParse(raw) ?? double.tryParse(raw)?.round() ?? 0;
+  }
+
+  // Solde du fan + raccourci vers le portefeuille (recharge de points).
+  Widget _balanceRow() {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.6,
+      padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
       decoration: BoxDecoration(
-        color: Get.isDarkMode ? darkmodeColor : whiteColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        color: cardDeep,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: goldSecondary.withValues(alpha: 0.35)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'live_send_gift'.tr,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              IconButton(
-                onPressed: () => Get.back(),
-                icon: const Icon(Icons.close),
-              ),
-            ],
-          ),
-          height(0.02),
           Expanded(
-            child: Obx(() {
-              final gifts = eventController.gifts.value.data ?? [];
-              if (gifts.isEmpty) {
-                return Center(child: Text('live_no_gifts'.tr));
-              }
-              return GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 15,
-                  mainAxisSpacing: 15,
-                  childAspectRatio: 0.85,
+            child: Obx(
+              () => Text(
+                'gift_balance'.trParams({'n': '$_balance'}),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: ivory,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
-                itemCount: gifts.length,
-                itemBuilder: (context, index) {
-                  final gift = gifts[index];
-                  return GiftSelectionCard(
-                    gift: gift,
-                    onTap: () => _confirmSendGift(gift),
-                  );
-                },
-              );
-            }),
+              ),
+            ),
+          ),
+          // Pas de pack achetable sur ce store -> pas de bouton « Recharger »
+          // qui mènerait à une page vide (cf. point_packs.dart).
+          if (canTopUpPoints)
+          TextButton(
+            onPressed: () {
+              Get.back(); // ferme la feuille : le live reste en dessous
+              Get.to(() => const UserWallet());
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: goldPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              minimumSize: const Size(0, 34),
+            ),
+            child: Text(
+              'gift_recharge'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
           ),
         ],
       ),
     );
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.55,
+      decoration: const BoxDecoration(
+        color: midnightSecondary,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'live_send_gift'.tr,
+                  style: const TextStyle(
+                    color: ivory,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Get.back(),
+                  icon: const Icon(Icons.close, color: ivory),
+                ),
+              ],
+            ),
+            _balanceRow(),
+            const SizedBox(height: 12),
+            Expanded(
+              child: Obx(() {
+                final gifts = eventController.gifts.value.data ?? [];
+                if (gifts.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'live_no_gifts'.tr,
+                      style: const TextStyle(color: textMuted),
+                    ),
+                  );
+                }
+                return GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 0.82,
+                  ),
+                  itemCount: gifts.length,
+                  itemBuilder: (context, index) {
+                    final gift = gifts[index];
+                    return GiftSelectionCard(
+                      gift: gift,
+                      onTap: () => _confirmSendGift(gift),
+                    );
+                  },
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _confirmSendGift(Datum gift) async {
-    final userPoints = int.tryParse(userModel.value.user?.points ?? '0') ?? 0;
-    final giftCost = int.tryParse(gift.coins ?? '0') ?? 0;
+    final userPoints = _balance;
+    final giftCost = gift.cost;
 
     if (userPoints < giftCost) {
       myWarningDialog(
@@ -93,7 +193,7 @@ class _ZegoGiftsState extends State<ZegoGifts> {
 
     await myAlertDialog(
       title: 'live_send_x'.trParams({'name': '${gift.name}'}),
-      content: 'live_spend_coins'.trParams({'coins': '${gift.coins}'}),
+      content: 'live_spend_coins'.trParams({'coins': '$giftCost'}),
       onTap: () async {
         Get.back(); // close dialog
         Get.back(); // close bottom sheet
@@ -103,15 +203,31 @@ class _ZegoGiftsState extends State<ZegoGifts> {
           context: context,
           giftImagePath: gift.image ?? 'assets/gift_icon.png',
           giftName: gift.name ?? 'Gift',
-          userName: Get.find<ZegoController>().userName,
+          // ZegoController n'est pas enregistré sur l'écran « pro » (régie
+          // vidéo) : on retombe alors sur le nom du profil.
+          userName: Get.isRegistered<ZegoController>()
+              ? Get.find<ZegoController>().userName
+              : (userModel.value.user?.artistName?.trim().isNotEmpty ?? false)
+              ? userModel.value.user!.artistName!.trim()
+              : (userModel.value.user?.fullName ?? ''),
         );
 
         final updatedActivities = await eventController.sendGift(
           eventId: widget.eventId,
           giftId: gift.id.toString(),
+          broadcastToZego: widget.broadcastToZego,
         );
 
         if (updatedActivities != null) {
+          // Le serveur a débité le fan : on répercute localement pour que le
+          // solde affiché (et le contrôle « solde insuffisant ») reste juste.
+          final u = userModel.value.user;
+          if (u != null && giftCost > 0) {
+            final left = userPoints - giftCost;
+            userModel.value = userModel.value.copyWith(
+              user: u.copyWith(user: User(points: '${left < 0 ? 0 : left}')),
+            );
+          }
           widget.onGiftSent(updatedActivities);
         }
       },
@@ -125,54 +241,71 @@ class GiftSelectionCard extends StatelessWidget {
   final Datum gift;
   final VoidCallback onTap;
 
+  Widget _emoji() => Center(
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        giftFallbackEmoji(gift),
+        style: const TextStyle(fontSize: 40),
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
+    final image = gift.image?.trim() ?? '';
+    final url = image.startsWith('http') ? image : '${APIs.giftImageIP}/$image';
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Get.isDarkMode ? midnightSecondary : boxColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: goldSecondary.withValues(alpha: 0.4)),
+          color: cardDeep,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: goldSecondary.withValues(alpha: 0.45),
+            width: 0.8,
+          ),
         ),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(6, 10, 6, 8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Expanded(
-              child: gift.image != null && gift.image!.isNotEmpty
-                  ? ImageWidget(
-                      url: '${APIs.giftImageIP}/${gift.image}',
-                      width: 120,
-                      height: 120,
-                    )
-                  : Image.asset('assets/gift_icon.png'),
+            // Flexible : l'icône rétrécit sur les petits écrans (pas de
+            // débordement de la carte), 64 px au maximum.
+            Flexible(
+              child: SizedBox(
+                width: 64,
+                height: 64,
+                child: image.isEmpty
+                    ? _emoji()
+                    : CachedNetworkImage(
+                        imageUrl: url,
+                        fit: BoxFit.contain,
+                        placeholder: (context, url) => const SizedBox.shrink(),
+                        errorWidget: (context, url, error) => _emoji(),
+                      ),
+              ),
             ),
-            height(0.01),
+            const SizedBox(height: 6),
             Text(
               gift.name ?? 'Gift',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: ivory,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
               textAlign: TextAlign.center,
             ),
-            height(0.005),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.stars_rounded,
-                  color: goldPrimary,
-                  size: 14,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'live_coins'.trParams({'coins': '${gift.coins}'}),
-                  style: const TextStyle(
-                    color: goldPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 2),
+            Text(
+              '🪙 ${gift.cost}',
+              style: const TextStyle(
+                color: goldPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),

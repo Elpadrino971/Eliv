@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:artist/Auth/create_passwrod.dart';
 import 'package:artist/Controllers/auth_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
@@ -101,7 +102,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
               ),
               Text(
-                "We've sent a code to ${widget.email}",
+                'otp_sent_to'.trParams({'email': widget.email}),
                 style: TextStyle(
                   color: textMuted,
                   fontWeight: FontWeight.w400,
@@ -121,12 +122,21 @@ class _OtpScreenState extends State<OtpScreen> {
                 children: List.generate(6, (i) {
                   return MyPinInputField(
                     controller: pins[i],
+                    autofocus: i == 0,
                     maxLength: i == 0 ? 6 : 1,
                     onChanged: (value) {
                       if (i == 0 && value.length > 1) {
                         handlePaste(value);
                       } else if (value.length == 1) {
-                        FocusScope.of(context).nextFocus();
+                        if (i == pins.length - 1) {
+                          FocusScope.of(context).unfocus();
+                        } else {
+                          FocusScope.of(context).nextFocus();
+                        }
+                      } else if (value.isEmpty && i > 0) {
+                        // Retour arrière : on remonte à la case précédente,
+                        // sinon l'utilisateur reste bloqué sur une case vide.
+                        FocusScope.of(context).previousFocus();
                       }
                     },
                   );
@@ -161,8 +171,11 @@ class _OtpScreenState extends State<OtpScreen> {
                     ),
               GestureDetector(
                 onTap: () async {
+                  // widget.email est TOUJOURS renseigné ; userModel pouvait
+                  // être vide et on envoyait alors une adresse vide au serveur,
+                  // qui répondait « aucun compte pour cet e-mail ».
                   await authController.forgetPassword(
-                    email: userModel.value.user?.email ?? "",
+                    email: widget.email,
                     froResent: true,
                   );
                   startTimer();
@@ -189,13 +202,30 @@ class _OtpScreenState extends State<OtpScreen> {
               MyButton(
                 label: 'auth_verify_code'.tr,
                 onTap: () async {
-                  if (formKey.currentState!.validate()) {
-                    await authController.verifyOtp(
-                      email: widget.email,
-                      otp: pins.map((e) => e.text).join(),
-                      fromForget: widget.fromForget,
-                    );
+                  if (!(formKey.currentState?.validate() ?? true)) return;
+                  final code = pins.map((e) => e.text).join().trim();
+                  if (code.isEmpty) {
+                    myWarningDialog(subtitle: 'otp_enter_code'.tr);
+                    return;
                   }
+                  if (widget.fromForget) {
+                    // Mot de passe oublié : PAS d'appel /verify ici (le code
+                    // y serait consommé puis perdu). Le code est transmis à
+                    // l'écran suivant et envoyé avec le nouveau mot de passe
+                    // à /reset-password.
+                    Get.to(
+                      () => CreatePasswrod(
+                        fromForget: true,
+                        email: widget.email,
+                        otp: code,
+                      ),
+                    );
+                    return;
+                  }
+                  await authController.verifyOtp(
+                    email: widget.email,
+                    otp: code,
+                  );
                 },
                 image: 'assets/arrow.png',
                 imageColor: midnightPrimary,

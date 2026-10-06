@@ -4,14 +4,19 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/BottomBar/screens/profile/contant_page.dart';
 import 'package:artist/widgets/my_button.dart';
-import 'package:artist/widgets/my_header.dart';
 import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class CreateAcount extends StatefulWidget {
-  const CreateAcount({super.key});
+  const CreateAcount({super.key, this.initialEmail, this.closable = false});
+
+  /// Ouvert depuis le mode visiteur (voir guest_gate.dart) : croix de retour.
+  final bool closable;
+
+  /// Email saisi sur l'écran de connexion, repris ici pour ne pas le retaper.
+  final String? initialEmail;
 
   @override
   State<CreateAcount> createState() => _CreateAcountState();
@@ -20,8 +25,9 @@ class CreateAcount extends StatefulWidget {
 class _CreateAcountState extends State<CreateAcount> {
   final authController = Get.find<AuthController>();
 
-  final emailController = TextEditingController();
-  final nameController = TextEditingController();
+  late final emailController = TextEditingController(
+    text: widget.initialEmail ?? '',
+  );
   final passwordController = TextEditingController();
   bool hiddinPassword = true;
   bool acceptedTerms = false;
@@ -31,6 +37,16 @@ class _CreateAcountState extends State<CreateAcount> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: widget.closable
+          ? AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.close_rounded, color: ivory),
+                onPressed: () => Get.back(),
+              ),
+            )
+          : null,
       body: Container(
         padding: myPadding,
         child: Form(
@@ -38,9 +54,7 @@ class _CreateAcountState extends State<CreateAcount> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              height(0.04),
-              MyHeader(activeIndex: 0),
-              height(0.035),
+              height(0.06),
 
               Text(
                 'auth_create_account'.tr,
@@ -53,7 +67,7 @@ class _CreateAcountState extends State<CreateAcount> {
               SizedBox(
                 width: Get.width * 0.65,
                 child: Text(
-                  "Join the ultimate virtual concert platform",
+                  'signup_subtitle'.tr,
                   style: TextStyle(
                     color: const Color.fromARGB(255, 212, 212, 212),
                     fontWeight: FontWeight.w400,
@@ -65,23 +79,6 @@ class _CreateAcountState extends State<CreateAcount> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      MyTextField(
-                        hintText: 'John Doe',
-                        controller: nameController,
-                        keyboardType: TextInputType.text,
-                        validation: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'val_enter_name'.tr;
-                          }
-                          return null;
-                        },
-                        leading: Image.asset(
-                          'assets/user_icon.png',
-                          width: 15,
-                          height: 15,
-                        ),
-                      ),
-
                       MyTextField(
                         hintText: 'name@email.com',
                         controller: emailController,
@@ -115,7 +112,7 @@ class _CreateAcountState extends State<CreateAcount> {
                             return 'val_enter_password'.tr;
                           }
                           if (value.length < 8) {
-                            return 'Password must be at least 8 characters';
+                            return 'val_password_min'.tr;
                           }
                           return null;
                         },
@@ -142,58 +139,6 @@ class _CreateAcountState extends State<CreateAcount> {
                                 ),
                         ),
                       ),
-                      height(0.02),
-
-                      Row(
-                        children: [
-                          Image.asset('assets/check.png'),
-                          width(0.02),
-
-                          Text(
-                            'auth_feat_streaming'.tr,
-                            style: TextStyle(
-                              color: Color(0xff737373),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      height(0.01),
-                      Row(
-                        children: [
-                          Image.asset('assets/check.png'),
-                          width(0.02),
-
-                          Text(
-                            'auth_feat_updates'.tr,
-                            style: TextStyle(
-                              color: Color(0xff737373),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      height(0.01),
-
-                      Row(
-                        children: [
-                          Image.asset('assets/check.png'),
-                          width(0.02),
-
-                          Text(
-                            'auth_feat_tickets'.tr,
-                            style: TextStyle(
-                              color: Color(0xff737373),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-
                       height(0.02),
 
                       // Consentement RGPD : l'utilisateur accepte CGU +
@@ -236,9 +181,8 @@ class _CreateAcountState extends State<CreateAcount> {
                                       ..onTap = () => Get.to(
                                             () => ContantPage(
                                               title: 'prof_terms'.tr,
-                                              content: authController
-                                                  .settings[
-                                                      'terms_and_conditions'],
+                                              content: (authController.settings['terms_and_conditions'] ?? '').toString(),
+                                              settingsKey: 'terms_and_conditions',
                                             ),
                                           ),
                                   ),
@@ -253,8 +197,8 @@ class _CreateAcountState extends State<CreateAcount> {
                                       ..onTap = () => Get.to(
                                             () => ContantPage(
                                               title: 'prof_privacy'.tr,
-                                              content: authController
-                                                  .settings['privacy_policy'],
+                                              content: (authController.settings['privacy_policy'] ?? '').toString(),
+                                              settingsKey: 'privacy_policy',
                                             ),
                                           ),
                                   ),
@@ -269,7 +213,7 @@ class _CreateAcountState extends State<CreateAcount> {
                       height(0.02),
 
                       MyButton(
-                        label: 'auth_send_code'.tr,
+                        label: 'auth_create_account'.tr,
                         onTap: () async {
                           if (!acceptedTerms) {
                             myWarningDialog(
@@ -278,10 +222,14 @@ class _CreateAcountState extends State<CreateAcount> {
                             return;
                           }
                           if (formKey.currentState!.validate()) {
+                            final email = emailController.text.trim();
                             await authController.signupUser(
-                              email: emailController.text,
+                              email: email,
                               password: passwordController.text,
-                              name: nameController.text,
+                              // Plus de champ « nom » : le prénom se règle
+                              // plus tard dans le profil. D'ici là, la partie
+                              // avant le @ sert de nom affiché.
+                              name: email.split('@').first,
                             );
                           }
                         },
@@ -304,7 +252,7 @@ class _CreateAcountState extends State<CreateAcount> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "Already have an account? ",
+              'auth_have_account'.tr,
               style: TextStyle(
                 color: Color(0xffA1A1A1),
                 fontWeight: FontWeight.w400,
@@ -315,10 +263,10 @@ class _CreateAcountState extends State<CreateAcount> {
 
             GestureDetector(
               onTap: () {
-                Get.to(() => LoginScreen());
+                Get.to(() => LoginScreen(closable: widget.closable));
               },
               child: Text(
-                "Log In",
+                'auth_sign_in'.tr,
                 style: TextStyle(
                   color: mainThemeColor,
                   fontWeight: FontWeight.bold,

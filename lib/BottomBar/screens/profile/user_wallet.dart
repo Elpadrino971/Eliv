@@ -1,11 +1,13 @@
-import 'dart:io';
+// import 'dart:io'; // plus utilise depuis le retrait de la banniere boutique
 
-import 'package:artist/BottomBar/screens/profile/points_store.dart';
+// Ecran de boutique de points : conserve pour reactivation future.
+// import 'package:artist/BottomBar/screens/profile/points_store.dart';
 import 'package:artist/BottomBar/screens/profile/topup_history.dart';
 import 'package:artist/Controllers/auth_controller.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/point_packs.dart';
 import 'package:artist/artist_bottom_bar/screen/Studio/artist_withdraw.dart';
 import 'package:artist/widgets/widget.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +25,8 @@ class _UserWalletState extends State<UserWallet> {
 
   Future<void> myInitMethod() async {
     await authController.getPackages();
+    await refreshPurchasablePointPacks();
+    if (mounted) setState(() {});
   }
 
   @override
@@ -35,7 +39,7 @@ class _UserWalletState extends State<UserWallet> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Get.isDarkMode ? darkmodeColor : whiteColor,
-      appBar: MyAppbar(title: 'Wallet'),
+      appBar: MyAppbar(title: 'wallet_title'.tr),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: myPadding,
@@ -115,17 +119,21 @@ class _UserWalletState extends State<UserWallet> {
                             ),
                           ],
                         ),
-                        height(0.01),
-                        MyButton(
-                          label: 'points_withdraw'.tr,
-                          onTap: () {
-                            Get.to(() => ArtistWithdraw());
-                          },
-                          buttonColor: whiteColor,
-                          labelColor: Get.isDarkMode
-                              ? goldPrimary
-                              : mainThemeColor,
-                        ),
+                        // Le retrait (virement bancaire) n'existe que pour
+                        // les artistes : un fan ne doit pas voir ce bouton.
+                        if (userModel.value.user?.isArtist == true) ...[
+                          height(0.01),
+                          MyButton(
+                            label: 'points_withdraw'.tr,
+                            onTap: () {
+                              Get.to(() => ArtistWithdraw());
+                            },
+                            buttonColor: whiteColor,
+                            labelColor: Get.isDarkMode
+                                ? goldPrimary
+                                : mainThemeColor,
+                          ),
+                        ],
                       ],
                     ),
                   ],
@@ -133,6 +141,10 @@ class _UserWalletState extends State<UserWallet> {
               ),
               height(0.03),
 
+              // Recharge : uniquement les packs réellement achetables sur le
+              // store (cf. point_packs.dart). Aucun disponible -> section masquée
+              // plutôt qu'une grille de packs qui répondent « introuvable ».
+              if (canTopUpPoints) ...[
               // Section Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -158,7 +170,14 @@ class _UserWalletState extends State<UserWallet> {
 
               // Grid
               Obx(() {
-                final packages = authController.packages.value.list ?? [];
+                final available = purchasablePointPacks.toSet();
+                final packages = (authController.packages.value.list ?? [])
+                    .where(
+                      (p) => available.contains(
+                        (p.revenuecatProductId ?? '').trim(),
+                      ),
+                    )
+                    .toList();
                 if (packages.isEmpty) {
                   return Center(child: Text('empty_no_packages'.tr));
                 }
@@ -213,6 +232,11 @@ class _UserWalletState extends State<UserWallet> {
                               mySuccessDialog(
                                 subtitle: 'wallet_topup_success'.tr,
                               );
+                            } else if (sub.lastPurchaseCancelled) {
+                              myWarningDialog(
+                                title: 'common_info'.tr,
+                                subtitle: 'pay_cancelled'.tr,
+                              );
                             } else {
                               myWarningDialog(
                                 subtitle: 'wallet_purchase_incomplete'.tr,
@@ -228,96 +252,16 @@ class _UserWalletState extends State<UserWallet> {
                   },
                 );
               }),
+              ],
               height(0.01),
 
-              // Store Banner — MASQUÉ sur iOS : PointsStore recharge des points
-              // via le backend (hors App Store) = violation App Store 3.1.1.
-              // La recharge CONFORME (IAP, via PointsCard) reste au-dessus.
-              if (!Platform.isIOS)
-                GestureDetector(
-                onTap: () => Get.to(
-                  () => PointsStore(
-                    packages: authController.packages.value.list ?? [],
-                  ),
-                ),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(25),
-                    gradient: Get.isDarkMode
-                        ? LinearGradient(
-                            colors: [goldPrimary.withValues(alpha: 0.8), goldPrimary],
-                          )
-                        : LinearGradient(
-                            colors: [
-                              mainThemeColor.withValues(alpha: 0.8),
-                              mainThemeColor,
-                            ],
-                          ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'points_store'.tr,
-                              style: TextStyle(
-                                color: whiteColor,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            height(0.005),
-                            Text(
-                              'points_store_desc'.tr,
-                              style: TextStyle(
-                                color: whiteColor.withValues(alpha: 0.9),
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      width(0.02),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: whiteColor,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              'VIEW ALL\nOFFERS',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Get.isDarkMode
-                                    ? goldPrimary
-                                    : mainThemeColor,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                height: 1.1,
-                              ),
-                            ),
-                            width(0.02),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              color: Get.isDarkMode ? goldPrimary : mainThemeColor,
-                              size: 12,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // Bannière « Boutique de points » retirée. Elle menait à
+              // PointsStore, qui appelait /api/packages/buy — un endpoint qui
+              // ne crédite aucun point mais répondait « succès » : sur Android
+              // on confirmait un achat, on lisait « achat réussi » et on ne
+              // recevait rien. La recharge conforme (achat intégré) est juste
+              // au-dessus. L'écran reste dans le dépôt, réactivable une fois
+              // branché sur un vrai paiement.
               height(0.03),
             ],
           ),

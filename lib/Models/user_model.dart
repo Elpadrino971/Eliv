@@ -77,6 +77,13 @@ class User {
   final bool? isLive;
   final int? liveEventId;
   final String? liveTicketPrice;
+  // Liens en bio (contact + réseaux), affichés/cliquables sur la fiche.
+  final String? contactEmail;
+  final String? linkWebsite;
+  final String? linkInstagram;
+  final String? linkTiktok;
+  final String? linkYoutube;
+  final String? linkSpotify;
   final List<Genre>? genres;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -110,6 +117,12 @@ class User {
     this.isLive,
     this.liveEventId,
     this.liveTicketPrice,
+    this.contactEmail,
+    this.linkWebsite,
+    this.linkInstagram,
+    this.linkTiktok,
+    this.linkYoutube,
+    this.linkSpotify,
     this.genres,
     this.createdAt,
     this.updatedAt,
@@ -149,6 +162,12 @@ class User {
     isLive: json["is_live"],
     liveEventId: json["live_event_id"],
     liveTicketPrice: json["live_ticket_price"]?.toString(),
+    contactEmail: json["contact_email"],
+    linkWebsite: json["link_website"],
+    linkInstagram: json["link_instagram"],
+    linkTiktok: json["link_tiktok"],
+    linkYoutube: json["link_youtube"],
+    linkSpotify: json["link_spotify"],
     genres: json["genres"] == null
         ? []
         : List<Genre>.from(json["genres"].map((x) => Genre.fromJson(x))),
@@ -189,6 +208,12 @@ class User {
       isLive: user?.isLive ?? isLive,
       liveEventId: user?.liveEventId ?? liveEventId,
       liveTicketPrice: user?.liveTicketPrice ?? liveTicketPrice,
+      contactEmail: user?.contactEmail ?? contactEmail,
+      linkWebsite: user?.linkWebsite ?? linkWebsite,
+      linkInstagram: user?.linkInstagram ?? linkInstagram,
+      linkTiktok: user?.linkTiktok ?? linkTiktok,
+      linkYoutube: user?.linkYoutube ?? linkYoutube,
+      linkSpotify: user?.linkSpotify ?? linkSpotify,
       genres: user?.genres ?? genres,
       createdAt: user?.createdAt ?? createdAt,
       updatedAt: user?.updatedAt ?? updatedAt,
@@ -217,6 +242,12 @@ class User {
     "wallet": wallet,
     "artist_bio": artistBio,
     "artist_profile": artistProfile,
+    "contact_email": contactEmail,
+    "link_website": linkWebsite,
+    "link_instagram": linkInstagram,
+    "link_tiktok": linkTiktok,
+    "link_youtube": linkYoutube,
+    "link_spotify": linkSpotify,
     "is_verified": isVerified,
     "is_featured": isFeatured,
     "user_subscription": userSubscription == null

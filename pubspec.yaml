@@ -16,7 +16,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.8+9
+version: 1.2.0+20
 
 environment:
   sdk: ^3.10.8
@@ -42,22 +42,29 @@ dependencies:
   intl: ^0.20.2
   get_storage: ^2.1.1
   url_launcher: ^6.3.1
-  http: any
-  shimmer: any
+  http: ^1.6.0
+  shimmer: ^3.0.0
   cached_network_image: ^3.4.1
   video_player: ^2.11.1
   zego_uikit_prebuilt_live_streaming: ^3.15.6
-  firebase_core: any
-  firebase_auth: any
-  firebase_messaging: any
-  flutter_local_notifications: any
-  google_sign_in: any
-  googleapis_auth: any
-  share_plus: any
+  # Demande caméra + micro AVANT d'ouvrir le live (sinon le kit Zego affiche
+  # sa propre fenêtre de permission au démarrage, parfois à tort).
+  permission_handler: ^12.0.1
+  firebase_core: ^4.7.0
+  firebase_messaging: ^16.2.0
+  flutter_local_notifications: ^21.0.0
+  google_sign_in: ^7.2.0
+  share_plus: ^12.0.2
   purchases_flutter: ^10.9.0
   sign_in_with_apple: ^8.1.0
   # Lit la version + le build de l'app (écran "À propos", conformité stores).
   package_info_plus: ^8.0.0
+  # « Partager → VYBZZZ » : reçoit une vidéo depuis le partage natif du
+  # téléphone (galerie, autre app). Aucune API/validation TikTok requise.
+  # Version FIGÉE à 1.8.1 (SANS caret ^) : 1.8.1 est la DERNIÈRE compatible
+  # CocoaPods ; la 1.9.0 est passée en Swift Package Manager only et casse
+  # le build iOS actuel. Ne pas remettre le ^ tant qu'on n'est pas sur SPM.
+  receive_sharing_intent: 1.8.1
 
 dev_dependencies:
   flutter_test:
@@ -110,6 +117,12 @@ flutter_native_splash:
 
 # The following section is specific to Flutter packages.
 flutter:
+  # iOS : on reste sur CocoaPods. Swift Package Manager (activé par défaut
+  # dans les Flutter récents) n'arrive pas à résoudre le paquet RevenueCat
+  # (purchases-hybrid-common) et casse le build.
+  config:
+    enable-swift-package-manager: false
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

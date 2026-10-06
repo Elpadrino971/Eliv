@@ -4,20 +4,26 @@ import 'dart:io';
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/guest_gate.dart';
 import 'package:artist/services/api_services.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 
 /// Créer un short : n'importe quel utilisateur connecté peut soumettre une
 /// vidéo pour le feed "Pour toi" ou "Clips". Elle reste invisible tant que
 /// l'admin ne l'a pas approuvée (rubrique "Clips (Feeds)" du backend) —
 /// pas de modération automatique, donc validation manuelle avant publication.
 class CreateShortScreen extends StatefulWidget {
-  const CreateShortScreen({super.key});
+  const CreateShortScreen({super.key, this.sharedVideoPath});
+
+  /// Vidéo reçue via « Partager → VYBZZZ » (partage natif). Si fournie, l'écran
+  /// s'ouvre avec la vidéo déjà chargée : l'artiste n'a plus qu'à publier.
+  final String? sharedVideoPath;
 
   @override
   State<CreateShortScreen> createState() => _CreateShortScreenState();
@@ -32,6 +38,44 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
   bool _busy = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Publier un clip demande un compte (mode visiteur) : sinon on referme.
+    if (isGuest) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!await requireAccount(reason: 'guest_reason_clip'.tr) && mounted) {
+          Get.back();
+        }
+      });
+    }
+    // Pré-remplissage depuis un partage entrant (galerie / autre app).
+    if (widget.sharedVideoPath != null && widget.sharedVideoPath!.isNotEmpty) {
+      _video = XFile(widget.sharedVideoPath!);
+      // Choix auto du feed selon l'orientation : vidéo verticale (façon TikTok)
+      // -> "Pour toi" ; horizontale (façon YouTube/clip musical) -> "Clips".
+      _autoSelectFeed(widget.sharedVideoPath!);
+    }
+  }
+
+  // Détecte l'orientation de la vidéo et pré-sélectionne le bon feed. L'artiste
+  // peut toujours changer avant de publier. Silencieux en cas d'échec.
+  Future<void> _autoSelectFeed(String path) async {
+    VideoPlayerController? c;
+    try {
+      c = VideoPlayerController.file(File(path));
+      await c.initialize();
+      final ar = c.value.aspectRatio;
+      if (mounted && ar > 0) {
+        setState(() => _feed = ar < 1.0 ? 'for_you' : 'clips');
+      }
+    } catch (_) {
+      // On garde le feed par défaut si la détection échoue.
+    } finally {
+      await c?.dispose();
+    }
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     super.dispose();
@@ -39,7 +83,11 @@ class _CreateShortScreenState extends State<CreateShortScreen> {
 
   Future<void> _pick() async {
     final v = await _picker.pickVideo(source: ImageSource.gallery);
-    if (v != null) setState(() => _video = v);
+    if (v != null) {
+      setState(() => _video = v);
+      _autoSelectFeed(v.path);
+      return;
+    }
   }
 
   /// Envoi direct vers Mux : le fichier PUT directement sur Mux, jamais sur

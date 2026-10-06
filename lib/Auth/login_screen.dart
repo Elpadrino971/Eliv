@@ -6,15 +6,38 @@ import 'package:artist/Controllers/auth_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/services/google_sign_in.dart';
-import 'package:artist/services/push_notification.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+/// Message DOUX quand la connexion Google n'aboutit pas (annulation ou
+/// indisponible). Remplace l'ancien gros « Warning » rouge, jugé agressif —
+/// surtout qu'une simple annulation du choix de compte le déclenchait.
+void _showGoogleUnavailable() {
+  // Annulation par l'utilisateur : rien à dire.
+  final reason = googleLastError;
+  if (reason == null) return;
+  Get.snackbar(
+    'google_signin_title'.tr,
+    '${'google_signin_failed'.tr} ($reason)',
+    snackPosition: SnackPosition.BOTTOM,
+    backgroundColor: cardDeep,
+    colorText: ivory,
+    margin: const EdgeInsets.all(14),
+    borderRadius: 14,
+    duration: const Duration(seconds: 4),
+    icon: const Icon(Icons.info_outline_rounded, color: goldPrimary),
+  );
+}
+
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.closable = false});
+
+  /// Ouvert depuis le mode visiteur (voir guest_gate.dart) : une croix
+  /// permet de revenir à ce qu'on regardait.
+  final bool closable;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -28,15 +51,10 @@ class _LoginScreenState extends State<LoginScreen> {
   var hiddinPassword = true;
   final formKey = GlobalKey<FormState>();
 
-  Future<void> init() async {
-    await PushNotificationSystem().requestIOSPermissions();
-  }
-
-  @override
-  void initState() {
-    init();
-    super.initState();
-  }
+  // La permission de notifications n'est PLUS demandée ici : un visiteur sans
+  // compte voyait surgir la fenêtre système "VybzzZ souhaite vous envoyer des
+  // notifications" dès l'écran de connexion. Elle est demandée après
+  // connexion, dans MyBottomBar.
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Image.asset('assets/logo2.png'),
                 Text(
                   textAlign: TextAlign.center,
-                  'Welcome',
+                  'login_welcome_to'.tr,
                   style: TextStyle(
                     color: Get.isDarkMode ? whiteColor : blackColor,
                     fontWeight: FontWeight.bold,
@@ -90,9 +108,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // « Bienvenue sur » (traduit) puis la marque VybzzZ.
                     Text(
                       textAlign: TextAlign.center,
-                      'To VyB',
+                      'VyB',
                       style: TextStyle(
                         color: Get.isDarkMode ? whiteColor : blackColor,
                         fontWeight: FontWeight.bold,
@@ -237,6 +256,37 @@ class _LoginScreenState extends State<LoginScreen> {
                           imageColor: midnightPrimary,
                           labelColor: midnightPrimary,
                         ),
+
+                        height(0.015),
+
+                        // Création de compte placée ICI, sous la connexion.
+                        // Tout en bas de l'écran, sous les boutons Google et
+                        // Apple, elle passait inaperçue : des gens tentaient de
+                        // se connecter avec un compte qui n'existait pas.
+                        MyButton(
+                          label: 'auth_create_account'.tr,
+                          onTap: () => Get.to(() => CreateAcount(
+                                closable: widget.closable,
+                                initialEmail: emailController.text.trim(),
+                              )),
+                          buttonColor: Colors.transparent,
+                          borderColor: goldPrimary,
+                          labelColor: goldPrimary,
+                        ),
+
+                        height(0.008),
+                        Center(
+                          child: Text(
+                            'login_first_time'.tr,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: textMuted,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+
                         height(0.02),
 
                         Row(
@@ -273,16 +323,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                   final user = await signInWithGoogle();
                                   if (user != null) {
                                     await authController.socialLogin(
-                                      email: user.email ?? '',
-                                      name: user.displayName ?? 'Google User',
-                                      phone: user.phoneNumber,
-                                      idToken: googleIdToken,
+                                      email: user.email,
+                                      name: user.name,
+                                      idToken: user.idToken,
                                       provider: 'google',
                                     );
                                   } else {
-                                    myWarningDialog(
-                                      subtitle: 'error_try_again'.tr,
-                                    );
+                                    _showGoogleUnavailable();
                                   }
                                 },
                                 child: SizedBox(
@@ -313,17 +360,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                       final user = await signInWithGoogle();
                                       if (user != null) {
                                         await authController.socialLogin(
-                                          email: user.email ?? '',
-                                          name:
-                                              user.displayName ?? 'Google User',
-                                          phone: user.phoneNumber,
-                                          idToken: googleIdToken,
+                                          email: user.email,
+                                          name: user.name,
+                                          idToken: user.idToken,
                                           provider: 'google',
                                         );
                                       } else {
-                                        myWarningDialog(
-                                          subtitle: 'error_try_again'.tr,
-                                        );
+                                        _showGoogleUnavailable();
                                       }
                                     },
                                     child: SizedBox(
@@ -372,9 +415,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           myPrint(
                                             'Apple sign in error: ${error.toString()}',
                                           );
-                                          myWarningDialog(
-                                            subtitle: 'error_try_again'.tr,
-                                          );
+                                          _showGoogleUnavailable();
                                         });
                                       } catch (e) {
                                         myPrint(e);
@@ -402,37 +443,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ],
                               ),
-                        height(0.03),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Don't have an account?",
-                              style: TextStyle(
-                                color: Color(0xffA1A1A1),
-                                fontWeight: FontWeight.w400,
-                                fontSize: 14,
-                              ),
-                            ),
-                            width(0.02),
-
-                            GestureDetector(
-                              onTap: () {
-                                Get.to(() => CreateAcount());
-                              },
-                              child: Text(
-                                "Join Now",
-                                style: TextStyle(
-                                  color: Get.isDarkMode
-                                      ? goldPrimary
-                                      : mainThemeColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),
@@ -442,6 +452,16 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+          if (widget.closable)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 6,
+              left: 8,
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded, color: ivory),
+                tooltip: 'guest_later'.tr,
+                onPressed: () => Get.back(),
+              ),
+            ),
         ],
       ),
     );

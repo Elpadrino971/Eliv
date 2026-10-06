@@ -10,6 +10,9 @@ import FirebaseMessaging
   /// Orientations autorisées à l'instant T. L'app est portrait par défaut ;
   /// le lecteur de clip la passe en paysage le temps de la lecture.
   var orientationLock: UIInterfaceOrientationMask = .portrait
+  /// Canal 'vybzzz/screen' : prévient Flutter quand l'écran est enregistré
+  /// ou recopié (voir lib/Global/screen_guard.dart).
+  var screenChannel: FlutterMethodChannel?
 
   override func application(
     _ application: UIApplication,
@@ -49,6 +52,28 @@ import FirebaseMessaging
           return
         }
         result(nil)
+      }
+    }
+
+    // Protection des concerts — canal 'vybzzz/screen'. iOS ne permet pas de
+    // bloquer une capture d'écran, mais signale l'enregistrement et la recopie
+    // d'écran (UIScreen.isCaptured) : Flutter masque alors la vidéo en noir.
+    if let controller = window?.rootViewController as? FlutterViewController {
+      let screen = FlutterMethodChannel(
+        name: "vybzzz/screen",
+        binaryMessenger: controller.binaryMessenger)
+      screenChannel = screen
+      screen.setMethodCallHandler { call, result in
+        if call.method == "secure" {
+          result(UIScreen.main.isCaptured)
+        } else {
+          result(FlutterMethodNotImplemented)
+        }
+      }
+      NotificationCenter.default.addObserver(
+        forName: UIScreen.capturedDidChangeNotification, object: nil, queue: .main
+      ) { [weak self] _ in
+        self?.screenChannel?.invokeMethod("captured", arguments: UIScreen.main.isCaptured)
       }
     }
 

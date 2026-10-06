@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/event_model.dart';
@@ -20,8 +22,38 @@ class LiveStreamChatPreview extends StatefulWidget {
   State<LiveStreamChatPreview> createState() => _LiveStreamChatPreviewState();
 }
 
+/// Un message ne reste à l'écran que 2 minutes : au-delà, le fil masquait
+/// la vidéo avec des commentaires qui n'avaient plus rien à voir avec le
+/// moment. Les cadeaux suivent la même règle.
+const Duration kLiveMessageLifetime = Duration(minutes: 2);
+
+/// Le serveur date les messages en UTC sans suffixe (« 2026-10-04 04:20:00 ») :
+/// Dart les lit alors en heure locale, décalés de plusieurs heures selon le
+/// pays. On les ramène en UTC avant de comparer.
+DateTime? _asUtc(DateTime? d) {
+  if (d == null || d.isUtc) return d;
+  return DateTime.utc(d.year, d.month, d.day, d.hour, d.minute, d.second);
+}
+
+bool isLiveMessageFresh(Activity msg, DateTime now) {
+  final created = _asUtc(msg.createdAt);
+  if (created == null) return true; // pas de date : on l'affiche
+  return now.difference(created) <= kLiveMessageLifetime;
+}
+
 class _LiveStreamChatPreviewState extends State<LiveStreamChatPreview> {
   final ScrollController _scrollController = ScrollController();
+  Timer? _sweep;
+
+  @override
+  void initState() {
+    super.initState();
+    // Les messages expirent même sans nouveau message : on réévalue
+    // régulièrement.
+    _sweep = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   void didUpdateWidget(covariant LiveStreamChatPreview oldWidget) {
@@ -45,6 +77,7 @@ class _LiveStreamChatPreviewState extends State<LiveStreamChatPreview> {
 
   @override
   void dispose() {
+    _sweep?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -59,6 +92,7 @@ class _LiveStreamChatPreviewState extends State<LiveStreamChatPreview> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: widget.messages
+              .where((m) => isLiveMessageFresh(m, DateTime.now().toUtc()))
               .map(
                 (msg) => Padding(
                   padding: const EdgeInsets.only(bottom: 15),

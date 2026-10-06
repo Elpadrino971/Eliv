@@ -4,6 +4,7 @@ import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:artist/Global/global.dart';
 import 'package:get/get.dart';
 import 'package:artist/Global/app_date.dart';
 
@@ -68,10 +69,7 @@ class UpcomingEventTile extends StatelessWidget {
                           size: 12, color: textMuted),
                       const SizedBox(width: 4),
                       Text(
-                        AppDate.format(
-                          event.startDateTime ?? DateTime.now(),
-                          'MMM dd',
-                        ),
+                        AppDate.dayDate(event.startDateTime ?? DateTime.now()),
                         style: TextStyle(
                           color: textMuted,
                           fontSize: 12,
@@ -82,10 +80,7 @@ class UpcomingEventTile extends StatelessWidget {
                       Icon(Icons.access_time, size: 12, color: textMuted),
                       const SizedBox(width: 4),
                       Text(
-                        AppDate.format(
-                          event.startDateTime ?? DateTime.now(),
-                          'hh:mm a',
-                        ),
+                        AppDate.time(event.startDateTime ?? DateTime.now()),
                         style: TextStyle(
                           color: textMuted,
                           fontSize: 12,
@@ -107,7 +102,7 @@ class UpcomingEventTile extends StatelessWidget {
                 border: Border.all(color: goldSecondary, width: 1.2),
               ),
               child: Text(
-                '${event.ticketPrice} €',
+                priceLabel(event.ticketPrice),
                 style: const TextStyle(
                   color: goldPrimary,
                   fontSize: 13,

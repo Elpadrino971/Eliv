@@ -4,7 +4,7 @@ import 'package:artist/Controllers/auth_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/widgets/image_widget.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_textfield.dart';
 import 'package:flutter/material.dart';
@@ -25,15 +25,29 @@ class _PersonalScreenState extends State<PersonalScreen> {
   final numberController = TextEditingController();
   final dateController = TextEditingController();
   final bioController = TextEditingController();
+  // Liens en bio (contact + réseaux).
+  final contactEmailController = TextEditingController();
+  final websiteController = TextEditingController();
+  final instagramController = TextEditingController();
+  final tiktokController = TextEditingController();
+  final youtubeController = TextEditingController();
+  final spotifyController = TextEditingController();
 
   File? showImage;
 
   Future myInitMethod() async {
-    nameController.text = userModel.value.user?.fullName ?? '';
-    emailController.text = userModel.value.user?.email ?? '';
-    numberController.text = userModel.value.user?.phoneNumber ?? '';
-    dateController.text = userModel.value.user?.dob ?? '';
-    bioController.text = userModel.value.user?.bio ?? '';
+    final u = userModel.value.user;
+    nameController.text = u?.fullName ?? '';
+    emailController.text = u?.email ?? '';
+    numberController.text = u?.phoneNumber ?? '';
+    dateController.text = u?.dob ?? '';
+    bioController.text = u?.bio ?? '';
+    contactEmailController.text = u?.contactEmail ?? '';
+    websiteController.text = u?.linkWebsite ?? '';
+    instagramController.text = u?.linkInstagram ?? '';
+    tiktokController.text = u?.linkTiktok ?? '';
+    youtubeController.text = u?.linkYoutube ?? '';
+    spotifyController.text = u?.linkSpotify ?? '';
   }
 
   @override
@@ -132,12 +146,12 @@ class _PersonalScreenState extends State<PersonalScreen> {
                     ),
 
                     MyTextField(
-                      hintText: 'Alex Harrison',
+                      hintText: 'hint_full_name'.tr,
                       controller: nameController,
                     ),
 
                     Text(
-                      'Email Address',
+                      'auth_email_address'.tr,
                       style: TextStyle(
                         color: greyColor,
                         fontSize: 14,
@@ -216,6 +230,49 @@ class _PersonalScreenState extends State<PersonalScreen> {
 
                     height(0.02),
 
+                    // ── Liens en bio (contact + réseaux) — façon TikTok ──
+                    Text(
+                      'links_section'.tr,
+                      style: TextStyle(
+                        color: greyColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    height(0.008),
+                    MyTextField(
+                      hintText: 'links_contact_email_hint'.tr,
+                      controller: contactEmailController,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    MyTextField(
+                      hintText: 'links_website_hint'.tr,
+                      controller: websiteController,
+                      keyboardType: TextInputType.url,
+                    ),
+                    MyTextField(
+                      hintText: 'links_instagram_hint'.tr,
+                      controller: instagramController,
+                      keyboardType: TextInputType.url,
+                    ),
+                    MyTextField(
+                      hintText: 'links_tiktok_hint'.tr,
+                      controller: tiktokController,
+                      keyboardType: TextInputType.url,
+                    ),
+                    MyTextField(
+                      hintText: 'links_youtube_hint'.tr,
+                      controller: youtubeController,
+                      keyboardType: TextInputType.url,
+                    ),
+                    MyTextField(
+                      hintText: 'links_spotify_hint'.tr,
+                      controller: spotifyController,
+                      keyboardType: TextInputType.url,
+                    ),
+
+                    height(0.02),
+
                     MyButton(
                       label: 'ba_update_profile'.tr,
                       onTap: () async {
@@ -225,6 +282,12 @@ class _PersonalScreenState extends State<PersonalScreen> {
                           birthDate: dateController.text,
                           profilePicture: showImage?.path ?? '',
                           about: bioController.text,
+                          contactEmail: contactEmailController.text.trim(),
+                          linkWebsite: websiteController.text.trim(),
+                          linkInstagram: instagramController.text.trim(),
+                          linkTiktok: tiktokController.text.trim(),
+                          linkYoutube: youtubeController.text.trim(),
+                          linkSpotify: spotifyController.text.trim(),
                           fromEdit: true,
                         );
                       },

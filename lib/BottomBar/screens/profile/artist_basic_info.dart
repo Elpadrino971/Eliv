@@ -78,7 +78,9 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                       Text(
                         'sec_protected'.tr,
                         style: TextStyle(
-                          color: ivory,
+                          // Fond du bandeau = vert clair (0xffF0FDF4) : un texte
+                          // ivoire y était illisible -> vert foncé lisible.
+                          color: Color(0xff166534),
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
@@ -112,12 +114,12 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
                       MyTextField(
-                        hintText: 'John Doe',
+                        hintText: 'hint_full_name'.tr,
                         controller: accountController,
                         validation: (v) {
                           if (v!.isEmpty) {
@@ -132,12 +134,12 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
                       MyTextField(
-                        hintText: 'Chase Bank',
+                        hintText: 'hint_bank_name'.tr,
                         controller: nameController,
                         validation: (v) {
                           if (v!.isEmpty) {
@@ -152,15 +154,18 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
+                      // IBAN / numéro de compte : lettres + chiffres, saisi en
+                      // clair et en majuscules (un champ masqué au clavier
+                      // numérique rendait la saisie impossible).
                       MyTextField(
-                        hintText: '••••••••••',
+                        hintText: 'FR76 …',
                         controller: numberController,
-
-                        keyboardType: TextInputType.number,
+                        keyboardType: TextInputType.text,
+                        textCapitalization: TextCapitalization.characters,
                         validation: (v) {
                           if (v!.isEmpty) {
                             return 'val_bank_account'.tr;
@@ -173,16 +178,15 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
                       MyTextField(
-                        hintText: '••••••••••',
+                        hintText: 'BNPAFRPP',
                         controller: swiftController,
-                        isObscure: true,
-
-                        keyboardType: TextInputType.number,
+                        keyboardType: TextInputType.text,
+                        textCapitalization: TextCapitalization.characters,
                         validation: (v) {
                           if (v!.isEmpty) {
                             return 'val_bank_swift'.tr;
@@ -195,14 +199,13 @@ class _ArtistBankInfoState extends State<ArtistBankInfo> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
                       MyTextField(
                         hintText: '••••••••••',
                         controller: routingController,
-                        isObscure: true,
                         keyboardType: TextInputType.number,
                         validation: (v) {
                           if (v!.isEmpty) {

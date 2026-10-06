@@ -1,14 +1,19 @@
+import 'dart:async';
+
+import 'package:artist/Controllers/auth_controller.dart';
+import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Global/locale_service.dart';
 import 'package:artist/Global/translations/app_translations.dart';
-import 'package:artist/OnBoarding/onboarding_1.dart';
 import 'package:artist/firebase_options.dart';
 import 'package:artist/services/push_notification.dart';
 import 'package:artist/spalash_screen.dart';
+import 'package:artist/widgets/mini_player.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -26,6 +31,11 @@ Future<void> main() async {
   ]);
 
   await GetStorage.init();
+  // Relance douce + mini-lecteur : suit le cycle de vie de l'app (voir
+  // _AppLifecycleWatcher). Enregistré AVANT le premier écran, mais sans
+  // écrire `last_active_at` maintenant : le splash doit d'abord lire la
+  // valeur de la session précédente pour décider s'il se joue en entier.
+  WidgetsBinding.instance.addObserver(_AppLifecycleWatcher());
   // Donnees de formatage des dates pour toutes les langues (mois/jours
   // localises selon la langue choisie).
   await initializeDateFormatting();
@@ -51,7 +61,72 @@ Future<void> main() async {
     debugPrint('⚠️ Push setup échouée (app continue): $e');
   }
 
+  // Contrôleurs globaux disponibles dès le PREMIER écran. Avant, seul
+  // l'Accueil enregistrait EventController : l'onglet Live (premier écran
+  // après le splash / la connexion) faisait Get.find<EventController>() sans
+  // qu'il existe -> exception -> page grise au lancement. `permanent` :
+  // jamais supprimés par GetX. Les Get.put() restants dans les écrans
+  // renvoient simplement ces instances.
+  final authController = Get.put(AuthController(), permanent: true);
+  Get.put(EventController(), permanent: true);
+  Get.put(SubscriptionController(), permanent: true);
+  // Textes légaux (CGU / confidentialité) demandés dès le démarrage, sans
+  // bloquer : ils sont ainsi prêts avant l'écran d'inscription.
+  unawaited(authController.getSettings());
+
+  // Hors version store (debug/profile) : un écran qui plante affiche le
+  // message d'erreur au lieu de la page grise muette, et l'erreur est écrite
+  // dans le terminal même sans débogueur attaché (utile en Wi-Fi).
+  if (!kReleaseMode) {
+    FlutterError.onError = (details) {
+      FlutterError.presentError(details);
+      // ignore: avoid_print
+      print('VYBZZZ_ERROR ${details.exceptionAsString()}\n${details.stack}');
+    };
+    ErrorWidget.builder = (details) => Material(
+          color: const Color(0xFF7A0000),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                '${details.exceptionAsString()}\n\n${details.stack}',
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
+          ),
+        );
+  }
+
   runApp(const MyApp());
+}
+
+/// Observateur global du cycle de vie de l'app :
+///  - mémorise l'instant de la dernière utilisation à chaque passage en
+///    arrière-plan (relance douce : un redémarrage à froid dans les 12 h
+///    ramène directement sur le dernier onglet, voir canSoftRelaunch) ;
+///  - met en pause le mini-lecteur flottant (global, hors de tout écran)
+///    quand l'app est suspendue et le relance au retour s'il jouait.
+/// Les lecteurs des feeds (Pour toi / Clips / bannière d'accueil) gèrent
+/// eux-mêmes leur cycle de vie dans leur State (libération + recréation).
+class _AppLifecycleWatcher with WidgetsBindingObserver {
+  bool _miniWasPlaying = false;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      touchLastActive();
+    }
+    if (!Get.isRegistered<MiniPlayerController>()) return;
+    final mini = MiniPlayerController.to;
+    if (state == AppLifecycleState.paused) {
+      _miniWasPlaying = _miniWasPlaying || mini.pauseForBackground();
+    } else if (state == AppLifecycleState.resumed) {
+      if (_miniWasPlaying) mini.resumeFromBackground();
+      _miniWasPlaying = false;
+    }
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -84,9 +159,14 @@ class MyApp extends StatelessWidget {
         theme: premiumTheme,
         darkTheme: premiumTheme,
         themeMode: ThemeMode.dark,
-        home: (box.read('init') == null)
-            ? const Onboarding1()
-            : const SpalashScreen(),
+        // Monte le mini-lecteur flottant (façon YouTube) AU-DESSUS de tous les
+        // écrans, pour qu'il survive aux changements de page.
+        builder: (context, child) =>
+            MiniPlayerHost(child: child ?? const SizedBox.shrink()),
+        // Pas d'écrans de présentation au premier lancement : chaque écran
+        // avant le contenu fait perdre des utilisateurs. Splash -> Live + Feed
+        // (ou connexion s'il n'y a pas de compte).
+        home: const SpalashScreen(),
       ),
     );
   }

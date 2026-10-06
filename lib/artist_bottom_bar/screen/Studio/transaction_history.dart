@@ -1,6 +1,6 @@
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:artist/widgets/transactions_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -66,7 +66,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                       style: TextStyle(
                         color: selectedText == 'All'
                             ? whiteColor
-                            : Color(0xff4A5565),
+                            : Color(0xff9FA8BC),
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
@@ -104,7 +104,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                           width: 15,
                           color: selectedText == 'Credit'
                               ? whiteColor
-                              : Color(0xff4A5565),
+                              : Color(0xff9FA8BC),
                         ),
                         width(0.01),
                         Text(
@@ -112,7 +112,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                           style: TextStyle(
                             color: selectedText == 'Credit'
                                 ? whiteColor
-                                : Color(0xff4A5565),
+                                : Color(0xff9FA8BC),
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
@@ -152,7 +152,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                           width: 15,
                           color: selectedText == 'Debit'
                               ? whiteColor
-                              : Color(0xff4A5565),
+                              : Color(0xff9FA8BC),
                         ),
                         width(0.01),
                         Text(
@@ -160,7 +160,7 @@ class _TranssactinHistoryState extends State<TranssactinHistory> {
                           style: TextStyle(
                             color: selectedText == 'Debit'
                                 ? whiteColor
-                                : Color(0xff4A5565),
+                                : Color(0xff9FA8BC),
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),

@@ -1,9 +1,10 @@
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Global/guest_gate.dart';
+import 'package:artist/Global/live_router.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/Models/user_model.dart';
-import 'package:artist/ZegoCloud/pre_stream_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -119,6 +120,7 @@ Future<void> showLiveJoinSheet(User artist) async {
   final priceLabel = price <= 0 ? 'Gratuit' : '${price.toStringAsFixed(2)} €';
 
   Future<void> join() async {
+    if (!await requireAccount(reason: 'guest_reason_live'.tr)) return;
     myLoadingDialog();
     final fetched = await eventCtrl.getEventById(liveId.toString());
     Get.back(); // ferme le loader
@@ -138,22 +140,70 @@ Future<void> showLiveJoinSheet(User artist) async {
             ? Get.find<SubscriptionController>()
             : Get.put(SubscriptionController());
         myLoadingDialog();
-        final paid = await sub.purchaseByProductId('ticket_${p.floor()}');
+        // Juste avant la feuille de paiement : on mémorise le concert -> si
+        // /buy-ticket échoue après le débit, la fiche proposera « J'ai déjà
+        // payé · récupérer mon billet ».
+        final paid = await sub.purchaseByProductId(
+          'ticket_${p.floor()}',
+          onBeforePurchase: () =>
+              box.write(EventController.pendingTicketKey, event.id),
+        );
         Get.back();
         if (!paid) {
-          myWarningDialog(subtitle: 'Paiement non finalisé.');
+          if (sub.lastPurchaseCancelled) {
+            // Annulé par le fan : rien n'a été débité.
+            box.remove(EventController.pendingTicketKey);
+          }
+          myWarningDialog(
+            title: sub.lastPurchaseCancelled ? 'common_info'.tr : null,
+            subtitle: sub.lastPurchaseCancelled
+                ? 'pay_cancelled'.tr
+                : 'pay_not_completed'.tr,
+          );
           return;
         }
       }
-      // Enregistre l'accès (billet gratuit, ou après paiement vérifié serveur).
+      // Enregistre l'accès (billet gratuit, ou après paiement vérifié
+      // serveur). Après un débit store : jusqu'à 3 nouveaux essais
+      // (2 s / 5 s / 10 s), le paiement est encaissé, il faut attacher le
+      // billet. Le loader est toujours refermé.
       myLoadingDialog();
-      final updated = await eventCtrl.registerTicketAndGet(event.id.toString());
+      Event? updated;
+      try {
+        updated = await eventCtrl.registerTicketAndGet(
+          event.id.toString(),
+          retry: p > 0,
+        );
+      } catch (e) {
+        myPrint('showLiveJoinSheet: registerTicketAndGet -> $e');
+        updated = null;
+      }
       Get.back();
-      if (updated != null) event = updated;
+      if (updated == null) {
+        if (p > 0) {
+          myWarningDialog(subtitle: 'ticket_attach_failed'.tr);
+        } else {
+          final err = eventCtrl.lastBuyTicketError;
+          if (err != null) {
+            parseError(err, doBack: false);
+          } else {
+            myWarningDialog(subtitle: 'common_error'.tr);
+          }
+        }
+        return;
+      }
+      event = updated;
     }
 
     Get.back(); // ferme le bandeau
-    Get.to(() => PreStreamScreen(event: event));
+    if (event.status == 'live') {
+      // Live déjà en cours : on entre DIRECTEMENT dans la salle Zego. Avant,
+      // on ouvrait PreStreamScreen dont le compte à rebours (déjà à zéro)
+      // fermait aussitôt l'écran -> le fan était éjecté du live.
+      joinLive(event);
+    } else {
+      openWaitingRoom(event);
+    }
   }
 
   Get.bottomSheet(

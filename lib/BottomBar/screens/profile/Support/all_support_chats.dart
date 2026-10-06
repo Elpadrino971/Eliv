@@ -45,7 +45,7 @@ class _AllSupportChatsState extends State<AllSupportChats> {
                 return EventTileShimmer();
               }
               if (supports.isEmpty) {
-                return Center(child: Text("No Support Tickets"));
+                return Center(child: Text('sup_no_tickets'.tr));
               }
               return Column(
                 children: [
@@ -97,7 +97,7 @@ class _AllSupportChatsState extends State<AllSupportChats> {
                                 height(0.005),
                                 Text(
                                   (ticket.metaData ?? []).isEmpty
-                                      ? 'No Description'
+                                      ? 'sup_no_description'.tr
                                       : ticket.metaData?.last.value ?? 'N/A',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,

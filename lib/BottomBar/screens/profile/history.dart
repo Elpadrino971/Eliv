@@ -3,7 +3,7 @@ import 'package:artist/Global/api.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/widgets/image_widget.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:artist/widgets/shimmer_loaders.dart';
 import 'package:flutter/material.dart';

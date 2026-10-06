@@ -5,7 +5,6 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/Global/live_router.dart';
 import 'package:artist/BottomBar/screens/homeScreen/check_out_screen.dart';
 import 'package:artist/Models/event_model.dart';
-import 'package:artist/ZegoCloud/pre_stream_screen.dart';
 import 'package:artist/widgets/image_widget.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_textfield.dart';
@@ -49,7 +48,7 @@ class _FutureScreenState extends State<FutureScreen> {
   }
 
   bool get _hasTicket =>
-      (event.ticketBuyerIds ?? []).contains(userModel.value.user?.id ?? 1);
+      (event.ticketBuyerIds ?? []).contains(userModel.value.user?.id ?? 0);
 
   /// Bouton circulaire "glass" premium (bleu nuit + contour or).
   Widget _glassButton({required VoidCallback onTap, required Widget child}) {
@@ -191,10 +190,10 @@ class _FutureScreenState extends State<FutureScreen> {
                               final time = AppDate.time(e.startDateTime);
                               await myShare(
                                 message: '🎟️ Tu es invité(e) au concert live !\n\n'
-                                    '🎤 ${e.name ?? 'Concert VYBZZZ'}'
+                                    '🎤 ${e.name ?? 'Concert VybzzZ'}'
                                     '${artist.isNotEmpty ? '\n★ $artist' : ''}'
                                     '\n📅 $date · $time'
-                                    '\n\nRejoins-moi en direct sur VYBZZZ 🔥\n${APIs.mainIP}',
+                                    '\n\nRejoins-moi en direct sur VybzzZ 🔥\nhttps://vybzzz.online',
                               );
                             },
                             child: const Icon(
@@ -426,12 +425,13 @@ class _FutureScreenState extends State<FutureScreen> {
                       borderColor: goldPrimary,
                       labelColor: goldPrimary,
                       onTap: () async {
-                        await Get.to(() => PreStreamScreen(event: event));
+                        await openWaitingRoom(event);
                         await myInitMethod();
                         final data = eventController.userJoinedEvents.value.data
-                            ?.firstWhere((element) => element.id == event.id);
-                        data != null ? event = data : null;
-                        setState(() {});
+                            ?.where((element) => element.id == event.id)
+                            .firstOrNull;
+                        if (data != null) event = data;
+                        if (mounted) setState(() {});
                       },
                     ),
                   ],
@@ -448,83 +448,151 @@ class _FutureScreenState extends State<FutureScreen> {
     );
   }
 
+  bool get _isFree => (double.tryParse(event.ticketPrice ?? '') ?? 0) <= 0;
+
+  /// Ouvre le replay du concert (vidéo Mux HLS, ou fichier hébergé par le
+  /// backend) dans le lecteur plein écran.
+  void _openReplay() {
+    final reel = event.videoReel ?? '';
+    if (reel.trim().isEmpty) return;
+    final url = reel.startsWith('http') ? reel : '${APIs.eventVideoIP}/$reel';
+    Get.to(
+      () => ReplayPlayerScreen(url: url, title: event.name, event: event),
+    );
+  }
+
+  /// « J'ai déjà payé » : ré-attache le billet SANS repasser par le store
+  /// (l'achat Apple a été lancé mais /buy-ticket avait échoué).
+  Future<void> _recoverTicket() async {
+    myLoadingDialog();
+    final updated = await eventController.buyTicketWithRetry(
+      event.id.toString(),
+      retry: true,
+    );
+    Get.back(); // ferme le loader
+    if (!mounted) return;
+    if (updated == null) {
+      myWarningDialog(subtitle: 'ticket_attach_failed'.tr);
+      setState(() {});
+      return;
+    }
+    setState(() => event = updated);
+    if (updated.status == 'live') {
+      joinLive(updated);
+      return;
+    }
+    mySuccessDialog(subtitle: 'msg_ticket_booked'.tr, ontap: () => Get.back());
+  }
+
   Widget _buildStickyBar(bool isLive) {
     final bool hasTicket = _hasTicket;
+    final bool completed = isEventCompleted(event);
 
     Widget content;
-    if (hasTicket) {
-      // Déjà acheté : action selon le statut de l'event
-      final completed = event.status == 'completed';
+    if (completed && (hasTicket || _isFree)) {
+      // Concert terminé : replay si lisible (vidéo présente, fenêtre non
+      // expirée), sinon « Replay bientôt disponible » (désactivé).
+      final bool canReplay = hasPlayableReplay(event);
       content = MyButton(
-        label: isLive
-            ? 'home_join_event'.tr
-            : completed
-                ? 'home_event_completed'.tr
-                : 'home_wait_for_live'.tr,
+        label: canReplay ? 'replay_watch'.tr : 'replay_soon'.tr,
+        image: canReplay ? 'assets/arrow.png' : null,
+        imageColor: midnightPrimary,
+        labelColor: midnightPrimary,
+        buttonColor: canReplay ? null : greyColor.withValues(alpha: 0.4),
+        onTap: canReplay ? _openReplay : () {},
+      );
+    } else if (hasTicket) {
+      // Déjà acheté : rejoindre si en direct, sinon attendre.
+      content = MyButton(
+        label: isLive ? 'home_join_event'.tr : 'home_wait_for_live'.tr,
         image: 'assets/arrow.png',
         imageColor: midnightPrimary,
         labelColor: midnightPrimary,
-        buttonColor: (isLive) ? null : greyColor.withValues(alpha: 0.4),
-        onTap: (!isLive || completed)
+        buttonColor: isLive ? null : greyColor.withValues(alpha: 0.4),
+        onTap: !isLive
             ? () {}
             : () async {
                 await joinLive(event);
                 await myInitMethod();
                 final data = eventController.userJoinedEvents.value.data
-                    ?.firstWhere((element) => element.id == event.id);
-                data != null ? event = data : null;
-                setState(() {});
+                    ?.where((element) => element.id == event.id)
+                    .firstOrNull;
+                if (data != null) event = data;
+                if (mounted) setState(() {});
               },
       );
     } else {
-      // Pas encore acheté : prix du palier + checkout
-      content = Row(
+      // Pas encore acheté : prix du palier + checkout. Si un achat store a
+      // été lancé pour ce concert sans billet attaché, on propose de le
+      // récupérer sans repayer.
+      final bool pending =
+          !_isFree && EventController.pendingTicketEventId() == event.id;
+      content = Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          Row(
             children: [
-              Text(
-                'home_total'.tr,
-                style: const TextStyle(color: textMuted, fontSize: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'home_total'.tr,
+                    style: const TextStyle(color: textMuted, fontSize: 12),
+                  ),
+                  Text(
+                    priceLabel(event.ticketPrice),
+                    style: const TextStyle(
+                      color: ivory,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(
+                    'home_full_access'.tr,
+                    style: const TextStyle(color: textMuted, fontSize: 11),
+                  ),
+                ],
               ),
-              Text(
-                '${event.ticketPrice} €',
-                style: const TextStyle(
-                  color: ivory,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
+              width(0.04),
+              Expanded(
+                child: MyButton(
+                  label: 'home_continue_to_checkout'.tr,
+                  image: 'assets/arrow.png',
+                  imageColor: midnightPrimary,
+                  labelColor: midnightPrimary,
+                  onTap: () async {
+                    final value = await Get.to(
+                      () => CheckOutScreen(event: event),
+                    );
+                    if (value is Event) {
+                      event = value;
+                    } else if (value != null) {
+                      event = event.copyWith(
+                        ticketBuyerIds: [
+                          ...(event.ticketBuyerIds ?? []),
+                          userModel.value.user?.id ?? 0,
+                        ],
+                      );
+                    }
+                    // Rebuild même sans résultat : un achat store lancé mais non
+                    // attaché fait apparaître le bouton de récupération.
+                    if (mounted) setState(() {});
+                  },
                 ),
-              ),
-              Text(
-                'home_full_access'.tr,
-                style: const TextStyle(color: textMuted, fontSize: 11),
               ),
             ],
           ),
-          width(0.04),
-          Expanded(
-            child: MyButton(
-              label: 'home_continue_to_checkout'.tr,
-              image: 'assets/arrow.png',
-              imageColor: midnightPrimary,
-              labelColor: midnightPrimary,
-              onTap: () async {
-                final value = await Get.to(
-                  () => CheckOutScreen(event: event),
-                );
-                if (value != null) {
-                  event = event.copyWith(
-                    ticketBuyerIds: [
-                      ...(event.ticketBuyerIds ?? []),
-                      userModel.value.user?.id ?? 1,
-                    ],
-                  );
-                  setState(() {});
-                }
-              },
+          if (pending) ...[
+            height(0.012),
+            MyButton(
+              label: 'ticket_recover_button'.tr,
+              buttonColor: Colors.transparent,
+              borderColor: goldPrimary,
+              labelColor: goldPrimary,
+              onTap: _recoverTicket,
             ),
-          ),
+          ],
         ],
       );
     }

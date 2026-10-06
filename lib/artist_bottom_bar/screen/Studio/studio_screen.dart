@@ -4,6 +4,7 @@ import 'package:artist/Global/global.dart';
 import 'package:artist/artist_bottom_bar/screen/Studio/artist_create_event.dart';
 import 'package:artist/artist_bottom_bar/screen/Studio/artist_events_screen.dart';
 import 'package:artist/artist_bottom_bar/screen/Studio/artist_withdraw.dart';
+import 'package:artist/artist_bottom_bar/screen/Studio/quick_live.dart';
 import 'package:artist/artist_bottom_bar/screen/Studio/revenue_screen.dart';
 import 'package:artist/widgets/widget.dart';
 import 'package:flutter/material.dart';
@@ -21,11 +22,11 @@ class _StudioScreenState extends State<StudioScreen> {
 
   Future<void> myInitMethod() async {
     await artistController.getArtistData(
-      artistId: '${userModel.value.user?.id ?? 1}',
+      artistId: '${userModel.value.user?.id ?? 0}',
     );
     await artistController.getGenres();
     await artistController.getArtistEvents(
-      artistId: '${userModel.value.user?.id ?? 1}',
+      artistId: '${userModel.value.user?.id ?? 0}',
     );
   }
 
@@ -91,7 +92,7 @@ class _StudioScreenState extends State<StudioScreen> {
                       onTap: () async {
                         await Get.to(() => ArtistCreateEvent());
                         await artistController.getArtistEvents(
-                          artistId: '${userModel.value.user?.id ?? 1}',
+                          artistId: '${userModel.value.user?.id ?? 0}',
                         );
                       },
                       child: Get.isDarkMode
@@ -101,7 +102,35 @@ class _StudioScreenState extends State<StudioScreen> {
                   ],
                 ),
 
-                height(0.01),
+                height(0.015),
+                // Live instantané : titre + un bouton, sans formulaire.
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: openQuickLive,
+                    icon: const Icon(
+                      Icons.fiber_manual_record,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    label: Text(
+                      'quick_live_btn'.tr,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE0245E),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+                height(0.015),
                 GetBuilder<ArtistController>(
                   builder: (controller) {
                     final event = controller.artistData.value.data;
@@ -139,7 +168,7 @@ class _StudioScreenState extends State<StudioScreen> {
                         ArtistGridCard(
                           img: 'assets/studio_icon3.png',
                           title: 'rev_revenue'.tr,
-                          count: '\$${event.totalRevenue ?? '0'}',
+                          count: '${event.totalRevenue ?? '0'} €',
                           onTap: () {
                             Get.to(() => RevenueScreen());
                           },
@@ -147,7 +176,7 @@ class _StudioScreenState extends State<StudioScreen> {
                         ArtistGridCard(
                           img: 'assets/studio_icon4.png',
                           title: 'rev_balance'.tr,
-                          count: '\$${event.currentWallet ?? '0'}',
+                          count: '${event.currentWallet ?? '0'} €',
                           onTap: () {
                             Get.to(() => RevenueScreen());
                           },

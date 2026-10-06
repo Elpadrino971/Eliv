@@ -2,7 +2,7 @@ import 'package:artist/Controllers/auth_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/BottomBar/screens/profile/contant_page.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -82,7 +82,8 @@ class AboutScreen extends StatelessWidget {
                       onTap: () => Get.to(
                         () => ContantPage(
                           title: 'prof_privacy'.tr,
-                          content: authController.settings['privacy_policy'],
+                          content: (authController.settings['privacy_policy'] ?? '').toString(),
+                          settingsKey: 'privacy_policy',
                         ),
                       ),
                       minTileHeight: 40,
@@ -105,8 +106,8 @@ class AboutScreen extends StatelessWidget {
                       onTap: () => Get.to(
                         () => ContantPage(
                           title: 'prof_terms'.tr,
-                          content:
-                              authController.settings['terms_and_conditions'],
+                          content: (authController.settings['terms_and_conditions'] ?? '').toString(),
+                          settingsKey: 'terms_and_conditions',
                         ),
                       ),
                       minTileHeight: 40,

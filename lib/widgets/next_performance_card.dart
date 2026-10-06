@@ -5,7 +5,9 @@ import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/image_widget.dart';
+import 'package:artist/widgets/teaser_video.dart';
 import 'package:flutter/material.dart';
+import 'package:artist/Global/global.dart';
 import 'package:get/get.dart';
 
 import 'dart:async';
@@ -57,6 +59,29 @@ class _NextPerformanceCardState extends State<NextPerformanceCard> {
 
   String _two(int v) => v.toString().padLeft(2, '0');
 
+  Widget _coverImage() {
+    return Image.network(
+      '${APIs.eventImageIP}/${widget.event.coverImage}',
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Container(color: cardDeep),
+      loadingBuilder: (context, child, progress) =>
+          progress == null ? child : Container(color: cardDeep),
+    );
+  }
+
+  /// Teaser vidéo (muet, en boucle) quand le concert en a un, sinon
+  /// l'affiche ; l'affiche sert aussi de secours si la vidéo échoue.
+  Widget _media() {
+    final teaser = teaserUrlOf(widget.event);
+    if (teaser == null) return _coverImage();
+    return TeaserVideo(
+      url: teaser,
+      poster: teaserPosterOf(widget.event),
+      fit: BoxFit.cover,
+      fallback: _coverImage(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -71,13 +96,7 @@ class _NextPerformanceCardState extends State<NextPerformanceCard> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(
-              '${APIs.eventImageIP}/${widget.event.coverImage}',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(color: cardDeep),
-              loadingBuilder: (context, child, progress) =>
-                  progress == null ? child : Container(color: cardDeep),
-            ),
+            _media(),
             const DecoratedBox(
               decoration: BoxDecoration(gradient: kImageOverlay),
             ),
@@ -91,7 +110,7 @@ class _NextPerformanceCardState extends State<NextPerformanceCard> {
                       _countdownBadge(),
                       const Spacer(),
                       Text(
-                        '${widget.event.ticketPrice} €',
+                        priceLabel(widget.event.ticketPrice),
                         style: const TextStyle(
                           color: ivory,
                           fontWeight: FontWeight.w700,
@@ -162,9 +181,9 @@ class _NextPerformanceCardState extends State<NextPerformanceCard> {
                             borderRadius: BorderRadius.circular(30),
                             border: Border.all(color: goldSecondary, width: 1.2),
                           ),
-                          child: const Text(
-                            'GET TICKET',
-                            style: TextStyle(
+                          child: Text(
+                            'home_get_tickets'.tr.toUpperCase(),
+                            style: const TextStyle(
                               fontFamily: AppFonts.ui,
                               color: goldPrimary,
                               fontWeight: FontWeight.w700,

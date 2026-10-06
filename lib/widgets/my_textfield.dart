@@ -40,9 +40,13 @@ class MyTextField extends StatelessWidget {
     this.contentPadding,
     this.elevation,
     this.textColor,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   final ValueChanged<String>? onSubmit;
+
+  /// Majuscules automatiques (ex. BIC / IBAN : TextCapitalization.characters).
+  final TextCapitalization textCapitalization;
   final String hintText;
   final double? hintSize;
   final double? elevation;
@@ -98,6 +102,7 @@ class MyTextField extends StatelessWidget {
         controller: controller,
         readOnly: readOnly,
         obscureText: isObscure,
+        textCapitalization: textCapitalization,
         keyboardType: keyboardType,
         onChanged: onChanged,
         cursorHeight: 20,

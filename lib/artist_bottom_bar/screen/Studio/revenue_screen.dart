@@ -8,7 +8,7 @@ import 'package:artist/artist_bottom_bar/screen/Studio/add_acount.dart';
 import 'package:artist/artist_bottom_bar/screen/Studio/artist_withdraw.dart';
 import 'package:artist/artist_bottom_bar/screen/Studio/transaction_history.dart';
 import 'package:artist/services/api_services.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:flutter/material.dart';

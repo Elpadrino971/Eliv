@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
-import 'package:artist/Auth/login_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/api.dart';
@@ -10,6 +9,7 @@ import 'package:artist/Global/app_fonts.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/user_model.dart';
+import 'package:artist/widgets/featured_event_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -69,11 +69,58 @@ class _SpalashScreenState extends State<SpalashScreen>
   String _animationStyle = 'sparkles';
   VideoPlayerController? _videoController;
 
+  // ── Relance douce ──
+  // iOS tue l'app suspendue (mémoire/inactivité) : sans ceci, chaque retour
+  // rejouait le splash complet + « glisser pour entrer ». Si un utilisateur
+  // est connecté et que l'app a été utilisée il y a moins de 12 h
+  // (canSoftRelaunch), on affiche seulement le logo ~700 ms puis on ramène
+  // directement sur le dernier onglet ouvert.
+  late final bool _soft = canSoftRelaunch();
+  Timer? _softTimer;
+  static const Duration _softLogoDuration = Duration(milliseconds: 700);
+
   @override
   void initState() {
     super.initState();
-    _introController.forward();
-    unawaited(_loadSplashConfig());
+    if (_soft) {
+      // Logo seul (fondu + zoom courts) ; pas d'appel splash-settings ni de
+      // vidéo de fond : rien à charger, on repart tout de suite.
+      _introController.duration = _softLogoDuration;
+      _introController.forward();
+      _softTimer = Timer(_softLogoDuration, _softEnter);
+    } else {
+      _introController.forward();
+      unawaited(_loadSplashConfig());
+    }
+    // Le feed « Pour toi » (premier écran après le splash) se charge pendant
+    // l'animation, pour être prêt à l'arrivée sur l'onglet Live.
+    unawaited(preloadLiveFeed());
+    // Concert « à la une » (popup après le splash) : l'appel part dès
+    // maintenant pour que le popup s'affiche sans délai à l'arrivée.
+    unawaited(prefetchFeaturedEvent());
+  }
+
+  /// Recharge la session locale (`box['user']`) et l'identité RevenueCat.
+  /// Renvoie vrai si un utilisateur est connecté.
+  bool _restoreSession() {
+    final hasUser = box.read('user') != null;
+    if (hasUser) {
+      userModel.value = UserModel.fromJson(box.read('user'));
+      final id = userModel.value.user?.id;
+      if (id != null) unawaited(SubscriptionController.syncIdentity(id));
+    }
+    return hasUser;
+  }
+
+  /// Relance douce : retour direct sur le dernier onglet (Live par défaut),
+  /// sans geste. Le popup « À la une » garde sa propre règle (une fois par
+  /// session / fermé aujourd'hui).
+  void _softEnter() {
+    if (!mounted) return;
+    // Avec ou sans compte (mode visiteur) : retour direct sur le dernier onglet.
+    _restoreSession();
+    Get.offAll(() => MyBottomBar(index: readLastTab() ?? 2));
+    unawaited(showFeaturedEventIfAny());
   }
 
   Future<void> _loadSplashConfig() async {
@@ -309,20 +356,21 @@ class _SpalashScreenState extends State<SpalashScreen>
     // Petit punch haptique + flash lumineux, puis navigation
     HapticFeedback.heavyImpact();
     await _flashController.forward();
-    final hasUser = box.read('user') != null;
-    if (hasUser) {
-      userModel.value = UserModel.fromJson(box.read('user'));
-      final id = userModel.value.user?.id;
-      if (id != null) unawaited(SubscriptionController.syncIdentity(id));
-    }
-    // Ouverture directe sur le Live + Feed (VybzLiveScreen = index 2) au lieu de
-    // l'Accueil : l'utilisateur tombe tout de suite dans "Pour toi / En direct /
-    // Clips". Le X de cet écran ramène à l'Accueil (MyBottomBar index 0).
-    Get.offAll(() => hasUser ? MyBottomBar(index: 2) : LoginScreen());
+    if (!mounted) return;
+    _restoreSession();
+    // Ouverture directe sur le Live + Feed (VybzLiveScreen = index 2), AVEC OU
+    // SANS compte : un visiteur regarde tout de suite ; le compte n'est
+    // demandé qu'au moment d'une action (voir guest_gate.dart). Exiger un
+    // compte dès l'ouverture faisait fuir les gens. Le X de cet écran ramène à
+    // l'Accueil (MyBottomBar index 0).
+    Get.offAll(() => MyBottomBar(index: 2));
+    // Popup « À la une » (non bloquant, silencieux en cas d'échec réseau).
+    unawaited(showFeaturedEventIfAny());
   }
 
   @override
   void dispose() {
+    _softTimer?.cancel();
     _introController.dispose();
     _sparkleController.dispose();
     _flashController.dispose();
@@ -330,10 +378,36 @@ class _SpalashScreenState extends State<SpalashScreen>
     super.dispose();
   }
 
+  /// Écran de relance douce : fond bleu nuit (mêmes assets que le splash),
+  /// halo qui respire et logo en fondu — pas de piliers ni de slider.
+  Widget _softBuild(double w, double h) {
+    return Scaffold(
+      backgroundColor: midnightPrimary,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          _localBackgroundFallback(),
+          _breathingHalo(w, align: Alignment.center),
+          Center(
+            child: FadeTransition(
+              opacity: _logoFade,
+              child: ScaleTransition(
+                scale: _logoScale,
+                child: _localLogo(w, h),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final h = Get.height;
     final w = Get.width;
+
+    if (_soft) return _softBuild(w, h);
 
     return Scaffold(
       body: Stack(
@@ -419,18 +493,18 @@ class _SpalashScreenState extends State<SpalashScreen>
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: const [
+                          children: [
                             _Pillar(
                               icon: Icons.explore_outlined,
-                              label: 'DISCOVER',
+                              label: 'common_discover'.tr,
                             ),
-                            _PillarDivider(),
-                            _Pillar(
+                            const _PillarDivider(),
+                            const _Pillar(
                               icon: Icons.confirmation_number_outlined,
                               label: 'BOOK',
                             ),
-                            _PillarDivider(),
-                            _Pillar(icon: Icons.graphic_eq, label: 'LIVE'),
+                            const _PillarDivider(),
+                            const _Pillar(icon: Icons.graphic_eq, label: 'LIVE'),
                           ],
                         ),
                         const SizedBox(height: 26),

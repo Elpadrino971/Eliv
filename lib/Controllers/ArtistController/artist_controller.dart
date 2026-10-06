@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:artist/Global/api.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/artist_data_model.dart';
@@ -52,11 +54,14 @@ class ArtistController extends GetxController {
     required String visualVideo,
     String replayEnabled = '1',
     String replayDurationDays = '60',
+    // Artistes invités (partage des revenus) : JSON string
+    // `[{"user_id":12,"share_pct":30}]`. Non envoyé si vide.
+    String? guests,
   }) async {
     myLoadingDialog();
     response.typeSetter = 'post';
     response.urlSetter = APIs.eventsAPI;
-    response.bodySetter = {
+    final Map<String, String> body = {
       'user_id': userModel.value.user?.id.toString() ?? '1',
       'name': name,
       'description': description,
@@ -69,6 +74,10 @@ class ArtistController extends GetxController {
       'replay_enabled': replayEnabled,
       'replay_duration_days': replayDurationDays,
     };
+    if (guests != null && guests.trim().isNotEmpty) {
+      body['guests'] = guests;
+    }
+    response.bodySetter = body;
     await response
         .hitMultipartAPI(
           coverImg,
@@ -80,7 +89,7 @@ class ArtistController extends GetxController {
           if (value.split(' ').first != 'error') {
             update();
             mySuccessDialog(
-              subtitle: 'Event created successfully',
+              subtitle: 'msg_event_created'.tr,
               ontap: () {
                 Get.close(3);
               },
@@ -97,6 +106,57 @@ class ArtistController extends GetxController {
             subtitle: "Connexion impossible. Réessaie.",
           );
         });
+  }
+
+  /// Live instantané : crée un concert gratuit qui commence maintenant (titre
+  /// + image facultative, pas de date à choisir) et renvoie l'event prêt à
+  /// être diffusé. null si la création a échoué (message déjà affiché).
+  /// [coverPath] : chemin local d'une image choisie, envoyée en multipart sous
+  /// `cover_image` (comme createEvent) ; sans image, le serveur met son image
+  /// par défaut.
+  Future<Event?> createQuickLive({
+    required String title,
+    String? coverPath,
+  }) async {
+    myLoadingDialog();
+    final now = DateTime.now().toUtc();
+    final req = ApiResponse();
+    req.typeSetter = 'post';
+    req.urlSetter = APIs.eventsAPI;
+    req.bodySetter = {
+      'name': title,
+      'description': '',
+      // Une minute de marge : le bouton « Lancer » des listes vérifie que
+      // l'heure actuelle est dans le créneau du concert.
+      'start_date_time':
+          now.subtract(const Duration(minutes: 1)).toIso8601String(),
+      'end_date_time': now.add(const Duration(hours: 4)).toIso8601String(),
+      'ticket_price': '0',
+      'is_private': '0',
+      'has_live_chat': '1',
+      'replay_enabled': '1',
+      'replay_duration_days': '60',
+    };
+    try {
+      final cover = coverPath?.trim() ?? '';
+      final value = cover.isEmpty
+          ? await req.hitMultipartAPI('')
+          : await req.hitMultipartAPI(cover, key: 'cover_image');
+      Get.back(); // ferme le loader
+      if (value is String && value.split(' ').first != 'error') {
+        final data = jsonDecode(value)['data'];
+        if (data is Map<String, dynamic>) return Event.fromJson(data);
+        myWarningDialog(subtitle: 'quick_live_failed'.tr);
+        return null;
+      }
+      parseError(value, doBack: false);
+      return null;
+    } catch (e) {
+      myPrint('createQuickLive: exception -> $e');
+      Get.back();
+      myWarningDialog(subtitle: 'quick_live_failed'.tr);
+      return null;
+    }
   }
 
   Future<void> getArtistData({required String artistId}) async {
@@ -117,7 +177,7 @@ class ArtistController extends GetxController {
   Future<void> getEventStatsByUserId() async {
     response.typeSetter = 'post';
     response.urlSetter = APIs.getEventStatsByUserIdAPI;
-    response.bodySetter = {'user_id': '${userModel.value.user?.id ?? 1}'};
+    response.bodySetter = {'user_id': '${userModel.value.user?.id ?? 0}'};
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
         eventStats.value = eventModelFromJson(value, 'list');

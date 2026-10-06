@@ -113,11 +113,14 @@ class _DisscoverScreenState extends State<DisscoverScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          /// Featured Artists
-                          FeaturedArtistsAvatar(
-                            artists: controller.featuredArtists,
-                          ),
-                          height(0.02),
+                          /// Featured Artists (masqués si la liste est vide :
+                          /// un en-tête sans avatar faisait vide)
+                          if (controller.featuredArtists.isNotEmpty) ...[
+                            FeaturedArtistsAvatar(
+                              artists: controller.featuredArtists,
+                            ),
+                            height(0.02),
+                          ],
 
                           /// Live Now
                           if ((controller.liveNowEvents.value.data ?? [])

@@ -3,7 +3,8 @@ import 'dart:convert';
 
 import 'package:artist/BottomBar/screens/homeScreen/notification_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
-import 'package:artist/BottomBar/screens/profile/all_subscription_screen.dart';
+// Ecran d'achat d'abonnement : conserve pour reactivation future.
+// import 'package:artist/BottomBar/screens/profile/all_subscription_screen.dart';
 import 'package:artist/BottomBar/screens/profile/artist_onboarding_screen.dart';
 import 'package:artist/BottomBar/screens/profile/contant_page.dart';
 import 'package:artist/BottomBar/screens/profile/following_artists.dart';
@@ -56,7 +57,7 @@ class _ProfileState extends State<Profile> {
     await authController.getSettings();
     // Charge MON propre contenu (vidéos, concerts, abonnés) pour la grille du
     // profil — même pipeline que la fiche artiste, sur mon id.
-    final myId = '${userModel.value.user?.id ?? 1}';
+    final myId = '${userModel.value.user?.id ?? 0}';
     unawaited(eventController.getArtistClips(artistId: myId));
     unawaited(eventController.getArtistEvents(artistId: myId));
     unawaited(eventController.getArtistFollowers(artistId: myId));
@@ -93,7 +94,7 @@ class _ProfileState extends State<Profile> {
               'title': 'prof_switch_user'.tr,
               'subTitle': 'prof_switch_user_sub'.tr,
               'onTap': () {
-                Get.offAll(() => MyBottomBar());
+                Get.offAll(() => MyBottomBar(index: 2));
               },
             }
           : {
@@ -134,15 +135,10 @@ class _ProfileState extends State<Profile> {
         'subTitle': 'prof_wallet_sub'.tr,
         'onTap': () => Get.to(() => const UserWallet()),
       },
-      // Achat d'abonnement artiste : in-app via Apple IAP (produits vybzz_XX_1m
-      // approuvés sur l'App Store, conforme 3.1.1). Le paiement web/Stripe
-      // reste proposé côté site et masqué dans l'app iOS (anti-steering).
-      {
-        'icon': Icons.workspace_premium_outlined,
-        'title': 'prof_purchase_sub'.tr,
-        'subTitle': 'prof_become_artist_sub'.tr,
-        'onTap': () => Get.to(() => const AllSubscriptionScreen()),
-      },
+      // Achat d'abonnement artiste : ecran retire du menu. L'ecran
+      // AllSubscriptionScreen reste dans le depot et peut etre reactive en
+      // remettant cette entree. « Gerer mon abonnement » ci-dessous reste
+      // accessible (restauration d'achat, exigence App Store 3.1.1).
       {
         'icon': Icons.card_membership_outlined,
         'title': 'prof_manage_sub'.tr,
@@ -162,7 +158,8 @@ class _ProfileState extends State<Profile> {
         'onTap': () => Get.to(
           () => ContantPage(
             title: 'prof_privacy'.tr,
-            content: authController.settings['privacy_policy'],
+            content: (authController.settings['privacy_policy'] ?? '').toString(),
+            settingsKey: 'privacy_policy',
           ),
         ),
       },
@@ -173,7 +170,8 @@ class _ProfileState extends State<Profile> {
         'onTap': () => Get.to(
           () => ContantPage(
             title: 'prof_terms'.tr,
-            content: authController.settings['terms_and_conditions'],
+            content: (authController.settings['terms_and_conditions'] ?? '').toString(),
+            settingsKey: 'terms_and_conditions',
           ),
         ),
       },
@@ -210,11 +208,19 @@ class _ProfileState extends State<Profile> {
                 // Bascule Fan/Artiste : visible seulement si le compte est déjà
                 // artiste (sinon "Devenir artiste" plus bas reste le point
                 // d'entrée pour lancer l'abonnement + l'onboarding).
-                if (userModel.value.user?.isArtist == true)
-                  GestureDetector(
+                // Obx : sans lui, le bouton n'apparaissait qu'après avoir
+                // quitté puis rouvert l'écran, même une fois le statut
+                // artiste obtenu.
+                if (true)
+                  Obx(() => userModel.value.user?.isArtist != true
+                      ? const SizedBox.shrink()
+                      : GestureDetector(
                     onTap: () {
+                      // Retour sur le Profil fan (index 4) et non sur le plein
+                      // écran live (index 2), qui n'a pas de barre de
+                      // navigation : l'aller-retour est ainsi symétrique.
                       if (widget.fromArtist) {
-                        Get.offAll(() => MyBottomBar());
+                        Get.offAll(() => MyBottomBar(index: 4));
                       } else {
                         Get.offAll(() => ArtistBottomBar());
                       }
@@ -257,7 +263,7 @@ class _ProfileState extends State<Profile> {
                         ],
                       ),
                     ),
-                  ),
+                  )),
 
                 GestureDetector(
                   onTap: () async {

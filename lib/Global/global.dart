@@ -12,6 +12,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 
 Rx<UserModel> userModel = UserModel().obs;
@@ -27,6 +28,61 @@ const String themeKey = 'isDarkMode';
 
 const String revenueCatAppleApiKey = 'appl_KIbaeOroARylQdwdEhBeHEGIVms';
 const String revenueCatGoogleApiKey = 'goog_lDZjQunqqLrPCbshbXkMrbhoZAn';
+
+// ── Relance douce ───────────────────────────────────────────────────────────
+// iOS tue une app suspendue (mémoire, inactivité) : au retour, l'app repart à
+// froid sur le splash « glisser pour entrer ». Pour que cette relance reste
+// invisible, on mémorise l'instant de la dernière utilisation et le dernier
+// onglet ouvert ; le splash saute alors son animation interactive et ramène
+// directement sur cet onglet (voir SpalashScreen et MyBottomBar).
+
+/// Clé `box` : instant de la dernière utilisation (ms depuis epoch).
+const String lastActiveAtKey = 'last_active_at';
+
+/// Clé `box` : dernier onglet ouvert dans la barre de navigation (0..4).
+const String lastTabIndexKey = 'last_tab_index';
+
+/// Au-delà de ce délai d'inactivité, le splash complet est rejoué.
+const Duration softRelaunchWindow = Duration(hours: 12);
+
+/// Nombre d'onglets de [MyBottomBar] (bornes de [readLastTab]).
+const int _bottomBarTabCount = 5;
+
+/// Mémorise « l'app vient d'être utilisée » (passage en arrière-plan,
+/// ouverture d'un onglet…). Écriture non bloquante.
+void touchLastActive() {
+  box.write(lastActiveAtKey, DateTime.now().millisecondsSinceEpoch);
+}
+
+/// Mémorise l'onglet courant de la barre de navigation et rafraîchit
+/// l'instant de dernière utilisation.
+void rememberLastTab(int index) {
+  if (index >= 0 && index < _bottomBarTabCount) {
+    box.write(lastTabIndexKey, index);
+  }
+  touchLastActive();
+}
+
+/// Dernier onglet ouvert, ou null s'il est inconnu / hors bornes.
+int? readLastTab() {
+  final raw = box.read(lastTabIndexKey);
+  final index = raw is int ? raw : int.tryParse('${raw ?? ''}');
+  if (index == null || index < 0 || index >= _bottomBarTabCount) return null;
+  return index;
+}
+
+/// Vrai si un utilisateur est connecté ET que l'app a été utilisée il y a
+/// moins de [softRelaunchWindow] : le splash interactif est alors sauté.
+bool canSoftRelaunch() {
+  // Visiteur compris (mode sans compte) : même retour direct après une pause.
+  final raw = box.read(lastActiveAtKey);
+  final ms = raw is int ? raw : int.tryParse('${raw ?? ''}');
+  if (ms == null) return false;
+  final elapsed =
+      DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(ms));
+  // Horloge remontée dans le passé (elapsed négatif) -> splash complet.
+  return elapsed >= Duration.zero && elapsed < softRelaunchWindow;
+}
 
 Widget height(double height) {
   return SizedBox(height: Get.height * height);
@@ -99,7 +155,7 @@ Future mySuccessDialog({
       return Dialog(
         insetPadding: EdgeInsets.symmetric(horizontal: 15),
         child: SuccessDialog(
-          title: title ?? 'Success',
+          title: title ?? 'common_success'.tr,
           subtitle: subtitle,
           btnTitle: btnTitle,
           image: image,
@@ -142,7 +198,7 @@ Future myWarningDialog({
       return Dialog(
         insetPadding: EdgeInsets.symmetric(horizontal: 15),
         child: WarningDialog(
-          title: title ?? 'Warning',
+          title: title ?? 'common_warning'.tr,
           subtitle: subtitle,
           btnTitle: btnTitle,
           secondButtonTitle: secondBtnTitle,
@@ -164,7 +220,7 @@ Future<void> myLoadingDialog({String? title, bool showLoader = false}) async {
     barrierDismissible: showLoader,
     context: Get.context!,
     builder: (context) {
-      return LoadingDialog(message: title ?? "Loading");
+      return LoadingDialog(message: title ?? 'common_loading'.tr);
     },
   );
 }
@@ -247,14 +303,17 @@ Future<dynamic> myAlertDialog({
         content: Text(content, style: TextStyle(color: textMuted)),
         actions: [
           TextButton(
-            child: Text('No', style: TextStyle(color: greyColor)),
+            child: Text('common_no'.tr, style: TextStyle(color: greyColor)),
             onPressed: () {
               Get.back();
             },
           ),
           TextButton(
             onPressed: onTap,
-            child: Text('Yes', style: TextStyle(color: mainThemeColor)),
+            child: Text(
+              'common_yes'.tr,
+              style: TextStyle(color: mainThemeColor),
+            ),
           ),
         ],
       );
@@ -264,6 +323,11 @@ Future<dynamic> myAlertDialog({
 
 /// Parse Error
 
+// Un seul dialogue « Connexion impossible » à la fois : au démarrage,
+// plusieurs appels échouent en même temps hors ligne, et chacun affichait
+// son propre dialogue par-dessus les autres.
+bool _networkDialogOpen = false;
+
 dynamic parseError(
   String value, {
   bool doBack = false,
@@ -272,7 +336,8 @@ dynamic parseError(
   if (doBack) {
     Get.back();
   }
-  String message = 'Something went wrong';
+  String message = 'common_something_wrong'.tr;
+  String? code;
   try {
     final data = value.split('error ').last;
     final error = jsonDecode(data);
@@ -280,6 +345,9 @@ dynamic parseError(
     // Message principal renvoye par l'API
     if (error is Map && error['message'] != null) {
       message = error['message'].toString();
+    }
+    if (error is Map && error['code'] != null) {
+      code = error['code'].toString();
     }
 
     // Erreurs de validation detaillees (style Laravel : {"errors": {"champ": ["..."]}})
@@ -302,7 +370,16 @@ dynamic parseError(
     if (raw.isNotEmpty && raw.length < 200) message = raw;
   }
 
-  if (showDialog) myWarningDialog(subtitle: message);
+  if (!showDialog) return;
+  if (code == 'network') {
+    if (_networkDialogOpen) return;
+    _networkDialogOpen = true;
+    myWarningDialog(subtitle: message).whenComplete(() {
+      _networkDialogOpen = false;
+    });
+    return;
+  }
+  myWarningDialog(subtitle: message);
 }
 
 /// Calculate total watch time from a list of events
@@ -331,4 +408,57 @@ String calculateEventDuration(DateTime start, DateTime end) {
 
 Future myShare({required String message}) async {
   await SharePlus.instance.share(ShareParams(text: message));
+}
+
+/// Prix d'un concert tel qu'affiché aux fans : « Gratuit » quand le billet
+/// vaut 0 (ou n'est pas renseigné), sinon « 4.99 € ».
+String priceLabel(String? ticketPrice) {
+  final p = double.tryParse(ticketPrice ?? '') ?? 0;
+  if (p <= 0) return 'common_free'.tr;
+  final lang = Get.locale?.languageCode ?? 'en';
+  final txt = p.toStringAsFixed(2);
+  // « 4,99 € » en français et dans les langues à virgule décimale.
+  return lang == 'en' || lang == 'zh' || lang == 'ja' || lang == 'ko' || lang == 'hi'
+      ? '$txt €'
+      : '${txt.replaceAll('.', ',')} €';
+}
+
+
+/// Caméra + micro demandés AVANT d'ouvrir l'écran de live, avec les fenêtres
+/// système habituelles. Sans ça, le kit Zego lance sa propre demande au
+/// démarrage du direct, parfois alors que le micro est déjà autorisé.
+/// Renvoie true si les deux sont accordés ; sinon explique et propose les
+/// réglages, et renvoie false (le live n'est pas ouvert).
+bool _livePermSettingsShown = false;
+
+Future<bool> ensureLivePermissions() async {
+  Map<Permission, PermissionStatus> statuses;
+  try {
+    statuses = await [Permission.camera, Permission.microphone].request();
+  } catch (e) {
+    myPrint('ensureLivePermissions: $e');
+    return true; // on laisse le kit live gérer lui-même
+  }
+  final cam = statuses[Permission.camera] ?? PermissionStatus.granted;
+  final mic = statuses[Permission.microphone] ?? PermissionStatus.granted;
+  // Seul un refus explicite à l'instant (fenêtre système) bloque le départ.
+  // Les autres états (« refusé définitivement », restreint, limité) peuvent
+  // être faux positifs du plugin : on prévient une seule fois, puis on laisse
+  // le live s'ouvrir (le kit Zego a ses propres contrôles) — jamais de boucle
+  // Réglages ↔ app.
+  if ((cam.isGranted || cam.isLimited) && (mic.isGranted || mic.isLimited)) {
+    return true;
+  }
+  final justRefused = cam.isDenied || mic.isDenied;
+  if (!justRefused && _livePermSettingsShown) return true;
+  _livePermSettingsShown = true;
+  await myAlertDialog(
+    title: 'live_perm_title'.tr,
+    content: 'live_perm_msg'.tr,
+    onTap: () {
+      Get.back();
+      if (!justRefused) openAppSettings();
+    },
+  );
+  return false;
 }

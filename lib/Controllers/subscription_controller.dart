@@ -8,6 +8,7 @@ import 'package:artist/Models/susbcription_model.dart';
 import 'package:artist/Models/user_model.dart';
 import 'package:artist/artist_bottom_bar/artist_bottom_bar.dart';
 import 'package:artist/services/api_services.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -61,10 +62,44 @@ class SubscriptionController extends GetxController {
           },
         );
       } else {
-        final data = jsonDecode(value.split("error ").last);
-
-        myWarningDialog(title: 'common_error'.tr, subtitle: data['message']);
+        // Le voile de chargement n'est PAS refermable au doigt : sans ce
+        // Get.back(), une erreur serveur figeait l'application pour de bon,
+        // y compris juste après un débit Apple réussi.
+        Get.back();
+        String message = 'common_error'.tr;
+        bool pending = false;
+        try {
+          final data = jsonDecode(value.split("error ").last);
+          if (data is Map) {
+            // Le serveur répond 202 { status: 'pending' } quand l'achat n'est
+            // pas encore confirmé par le store : rien n'a été activé, mais ce
+            // n'est pas une erreur. On ne dit plus « Abonnement activé » et on
+            // ne dit pas non plus « Erreur » — on dit la vérité : c'est en
+            // cours, le webhook ouvrira l'accès tout seul.
+            pending = data['status'] == 'pending' || data['activated'] == false;
+            if (data['message'] != null) message = data['message'].toString();
+          }
+        } catch (_) {}
+        if (pending) {
+          mySuccessDialog(
+            title: 'sub_pending_title'.tr,
+            subtitle: message,
+            ontap: () {
+              if (fromArtist) {
+                Get.offAll(() => ArtistBottomBar());
+              } else {
+                Get.offAll(() => MyBottomBar(index: 4));
+              }
+            },
+          );
+        } else {
+          myWarningDialog(title: 'common_error'.tr, subtitle: message);
+        }
       }
+    }).catchError((e) {
+      // Une coupure réseau produisait exactement le même gel.
+      Get.back();
+      myWarningDialog(title: 'common_error'.tr, subtitle: 'sub_network_error'.tr);
     });
   }
 
@@ -154,7 +189,9 @@ class SubscriptionController extends GetxController {
   }
 
   static Future init() async {
-    await Purchases.setLogLevel(LogLevel.debug);
+    // Logs RevenueCat : verbeux en debug, sobres en release (pas de détails
+    // d'achat dans les journaux des appareils des utilisateurs).
+    await Purchases.setLogLevel(kReleaseMode ? LogLevel.warn : LogLevel.debug);
 
     if (Platform.isAndroid) {
       await Purchases.configure(PurchasesConfiguration(revenueCatGoogleApiKey));
@@ -173,12 +210,30 @@ class SubscriptionController extends GetxController {
     }
   }
 
+  /// Vrai quand le DERNIER achat tenté a été annulé par l'utilisateur lui-même
+  /// (il a fermé la feuille de paiement du store). Sans cette distinction, les
+  /// écrans affichaient « Achat incomplet » à quelqu'un qui avait simplement
+  /// changé d'avis : un message d'échec pour un geste volontaire.
+  bool lastPurchaseCancelled = false;
+
+  /// RevenueCat renvoie une PlatformException dont le code correspond à
+  /// PurchasesErrorCode.purchaseCancelledError quand la feuille de paiement
+  /// est fermée par l'utilisateur.
+  bool _isCancellation(Object e) {
+    if (e is PlatformException) {
+      return PurchasesErrorHelper.getErrorCode(e) ==
+          PurchasesErrorCode.purchaseCancelledError;
+    }
+    return false;
+  }
+
   Future<bool> purchasePackage(Package package) async {
+    lastPurchaseCancelled = false;
     try {
       await Purchases.purchase(PurchaseParams.package(package));
-      // await Purchases.purchasePackage(package);
       return true;
     } catch (e) {
+      lastPurchaseCancelled = _isCancellation(e);
       return false;
     }
   }
@@ -189,8 +244,15 @@ class SubscriptionController extends GetxController {
   /// Le webhook RevenueCat notifie ensuite le backend (crédit points / ticket).
   /// Retourne false si le produit est introuvable dans les offerings (pas
   /// encore configuré) ou si l'achat échoue/est annulé.
-  Future<bool> purchaseByProductId(String productId) async {
+  /// [onBeforePurchase] est appelé juste AVANT la feuille de paiement du
+  /// store (donc jamais si le produit est introuvable) : sert à mémoriser
+  /// qu'un paiement est peut-être en cours (billet à rattacher).
+  Future<bool> purchaseByProductId(
+    String productId, {
+    void Function()? onBeforePurchase,
+  }) async {
     if (productId.isEmpty) return false;
+    lastPurchaseCancelled = false;
     try {
       // 1. Si le produit est dans un offering (ex. abonnements artistes),
       //    on l'achète via son package. ISOLÉ dans son propre try/catch : si
@@ -203,6 +265,7 @@ class SubscriptionController extends GetxController {
         for (final offering in offerings.all.values) {
           for (final pack in offering.availablePackages) {
             if (pack.storeProduct.identifier == productId) {
+              onBeforePurchase?.call();
               await Purchases.purchase(PurchaseParams.package(pack));
               return true;
             }
@@ -219,12 +282,14 @@ class SubscriptionController extends GetxController {
         productCategory: ProductCategory.nonSubscription,
       );
       if (products.isNotEmpty) {
+        onBeforePurchase?.call();
         await Purchases.purchase(PurchaseParams.storeProduct(products.first));
         return true;
       }
       myPrint('purchaseByProductId: produit "$productId" introuvable (App Store)');
       return false;
     } catch (e) {
+      lastPurchaseCancelled = _isCancellation(e);
       myPrint('purchaseByProductId: $e');
       return false;
     }
@@ -242,6 +307,7 @@ class SubscriptionController extends GetxController {
   /// propagé sur l'App Store) ou si l'achat échoue/est annulé.
   Future<bool> purchaseSubscriptionByProductId(String productId) async {
     if (productId.isEmpty) return false;
+    lastPurchaseCancelled = false;
     try {
       final products = await Purchases.getProducts(
         [productId],
@@ -256,6 +322,7 @@ class SubscriptionController extends GetxController {
       );
       return false;
     } catch (e) {
+      lastPurchaseCancelled = _isCancellation(e);
       myPrint('purchaseSubscriptionByProductId: $e');
       return false;
     }

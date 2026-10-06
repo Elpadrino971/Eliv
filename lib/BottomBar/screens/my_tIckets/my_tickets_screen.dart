@@ -3,6 +3,7 @@ import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
 import 'package:artist/Controllers/event_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
+import 'package:artist/Models/event_model.dart';
 import 'package:artist/widgets/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -63,16 +64,30 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
 
             GetBuilder<EventController>(
               builder: (controller) {
-                final events = controller.userJoinedEvents.value.data;
-                if (events == null) {
+                final loaded = controller.userJoinedEvents.value.data;
+                // Squelette uniquement pendant le chargement ; une réponse
+                // vide ou un échec réseau donne le vrai état vide (plus de
+                // shimmer infini).
+                if (loaded == null && controller.isLoadingJoinedEvents) {
                   return const EventTileShimmer();
                 }
+                final events = loaded ?? const <Event>[];
+                // « postponed » reste à venir ; « ended » (live terminé) va
+                // dans l'historique — avant, ces billets disparaissaient.
                 final upcomingEvents = events
-                    .where((e) => e.status == 'published' || e.status == 'live')
+                    .where(
+                      (e) =>
+                          e.status == 'published' ||
+                          e.status == 'live' ||
+                          e.status == 'postponed',
+                    )
                     .toList();
                 final pastEvents = events
                     .where(
-                      (e) => e.status == 'completed' || e.status == 'cancelled',
+                      (e) =>
+                          e.status == 'completed' ||
+                          e.status == 'cancelled' ||
+                          e.status == 'ended',
                     )
                     .toList();
                 return Expanded(
@@ -83,11 +98,9 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
                       upcomingEvents.isEmpty
                           ? EmptyState(
                               icon: Icons.confirmation_number_outlined,
-                              title: 'No upcoming tickets yet',
-                              subtitle:
-                                  'Your next concert pass will appear here. '
-                                  'Discover live shows and grab your seat.',
-                              actionLabel: 'Explore Concerts',
+                              title: 'empty_no_tickets_t'.tr,
+                              subtitle: 'empty_no_tickets_s'.tr,
+                              actionLabel: 'empty_explore_concerts'.tr,
                               onAction: () => Get.offAll(
                                 () => const MyBottomBar(index: 1),
                               ),
@@ -113,12 +126,10 @@ class _MyTicketsScreenState extends State<MyTicketsScreen>
 
                       /// Past Events
                       pastEvents.isEmpty
-                          ? const EmptyState(
+                          ? EmptyState(
                               icon: Icons.history_rounded,
-                              title: 'No past events',
-                              subtitle:
-                                  'Concerts you\'ve attended will be kept here '
-                                  'so you can relive every moment.',
+                              title: 'empty_no_past_t'.tr,
+                              subtitle: 'empty_no_past_s'.tr,
                             )
                           : ListView.separated(
                               separatorBuilder: (context, index) {

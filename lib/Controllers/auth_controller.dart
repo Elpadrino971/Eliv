@@ -4,20 +4,24 @@ import 'dart:convert';
 import 'package:artist/Auth/login_screen.dart';
 import 'package:artist/Auth/otp_screen.dart';
 import 'package:artist/BottomBar/screens/my_bottom_bar.dart';
+import 'package:artist/Auth/login_failed_sheet.dart';
 import 'package:artist/Controllers/subscription_controller.dart';
 import 'package:artist/Global/api.dart';
+import 'package:artist/Global/colors.dart';
+import 'package:artist/Global/guest_gate.dart';
 import 'package:artist/Models/banks_model.dart';
 import 'package:artist/Models/follow_model.dart';
 import 'package:artist/Models/genre_model.dart';
 import 'package:artist/Models/packages_model.dart';
 import 'package:artist/Models/transactions_model.dart';
 import 'package:artist/Models/user_model.dart';
-import 'package:artist/Auth/complete_profile.dart';
 import 'package:artist/Auth/create_passwrod.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/artist_bottom_bar/artist_bottom_bar.dart';
 import 'package:artist/services/api_services.dart';
+import 'package:artist/widgets/featured_event_sheet.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -36,23 +40,53 @@ class AuthController extends GetxController {
     response.typeSetter = 'post';
     response.urlSetter = APIs.loginAPI;
     response.bodySetter = {'email': email, 'password': password};
-    await response.hitAPI().then((value) {
-      if (value.split(' ').first != 'error') {
-        userModel.value = userModelFromJson(value);
-        update();
-        if (userModel.value.user?.status == 'pending') {
-          Get.offAll(() => OtpScreen(email: email));
-        } else {
-          box.write('user', userModel.value.toJson());
-          final id = userModel.value.user?.id;
-          if (id != null) unawaited(SubscriptionController.syncIdentity(id));
-          Get.offAll(() => MyBottomBar());
-        }
-        Get.back();
+    final String value;
+    try {
+      value = await response.hitAPI();
+    } catch (_) {
+      // Filet de sécurité : hitAPI ne lève plus d'exception (une coupure
+      // réseau renvoie `error {"code":"network",…}`, traité plus bas via
+      // _errorCode), mais on garde ce chemin au cas où.
+      Get.back();
+      await showLoginFailedSheet(code: 'network', email: email);
+      return;
+    }
+    if (value.split(' ').first != 'error') {
+      userModel.value = userModelFromJson(value);
+      update();
+      if (userModel.value.user?.status == 'pending') {
+        Get.offAll(() => OtpScreen(email: email));
       } else {
-        parseError(value, doBack: true);
+        box.write('user', userModel.value.toJson());
+        final id = userModel.value.user?.id;
+        if (id != null) unawaited(SubscriptionController.syncIdentity(id));
+        // Compte demandé par une action (mode visiteur) : on revient sur
+        // l'écran d'origine, l'action reprend.
+        if (hasPendingAccountGate) {
+          Get.back(); // ferme le loader
+          completeAccountGate();
+          return;
+        }
+        // Après connexion : direct sur le Live + Feed (index 2), comme à l'ouverture.
+        Get.offAll(() => MyBottomBar(index: 2));
+        unawaited(showFeaturedEventIfAny());
       }
-    });
+      Get.back();
+    } else {
+      // Échec de connexion : feuille d'aide (créer un compte / mot de passe
+      // oublié) au lieu du dialogue "Warning" bloquant.
+      Get.back();
+      await showLoginFailedSheet(code: _errorCode(value), email: email);
+    }
+  }
+
+  /// Extrait le champ `code` d'une réponse d'erreur `error {json}`.
+  static String? _errorCode(String value) {
+    try {
+      final data = jsonDecode(value.split('error ').last);
+      if (data is Map && data['code'] != null) return data['code'].toString();
+    } catch (_) {}
+    return null;
   }
 
   Future socialLogin({
@@ -83,7 +117,10 @@ class AuthController extends GetxController {
         if (id != null) unawaited(SubscriptionController.syncIdentity(id));
         update();
         Get.back();
-        Get.offAll(() => MyBottomBar());
+        if (completeAccountGate()) return; // mode visiteur : retour à l'action
+        // Après connexion : direct sur le Live + Feed (index 2), comme à l'ouverture.
+        Get.offAll(() => MyBottomBar(index: 2));
+        unawaited(showFeaturedEventIfAny());
       } else {
         parseError(value, doBack: true);
       }
@@ -106,10 +143,58 @@ class AuthController extends GetxController {
     };
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
+        // Inscription en une étape : le serveur renvoie déjà un compte actif
+        // et son jeton. On entre directement dans l'app, sans écran de code
+        // ni formulaire de profil. La confirmation de l'e-mail reste possible
+        // via le lien reçu (elle rattache les places gagnées ou achetées sur
+        // le site), mais elle ne bloque plus l'entrée.
         userModel.value = userModelFromJson(value);
         update();
-        Get.back();
-        Get.off(() => OtpScreen(email: email));
+        Get.back(); // ferme le loader
+
+        // Exception : une place (roue ou billet acheté sur le site) attend
+        // cet e-mail -> le serveur renvoie `requires_verification: true`.
+        // Le compte reste en mémoire seulement (rien en stockage) tant que
+        // le code reçu n'est pas confirmé ; verifyOtp() finit l'entrée.
+        bool requiresVerification = false;
+        try {
+          final decoded = jsonDecode(value);
+          requiresVerification =
+              decoded is Map && decoded['requires_verification'] == true;
+        } catch (_) {}
+        if (requiresVerification) {
+          Get.off(() => OtpScreen(email: email));
+          Get.snackbar(
+            'signup_verify_place_title'.tr,
+            'signup_verify_place'.tr,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: cardDeep,
+            colorText: ivory,
+            margin: const EdgeInsets.all(14),
+            borderRadius: 14,
+            duration: const Duration(seconds: 6),
+          );
+          return;
+        }
+
+        box.write('user', userModel.value.toJson());
+        final id = userModel.value.user?.id;
+        if (id != null) unawaited(SubscriptionController.syncIdentity(id));
+        // Mode visiteur : retour sur l'écran qui a demandé le compte.
+        if (!completeAccountGate()) {
+          Get.offAll(() => MyBottomBar(index: 2));
+          unawaited(showFeaturedEventIfAny());
+        }
+        Get.snackbar(
+          'signup_welcome_title'.tr,
+          'signup_welcome_msg'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: cardDeep,
+          colorText: ivory,
+          margin: const EdgeInsets.all(14),
+          borderRadius: 14,
+          duration: const Duration(seconds: 5),
+        );
       } else {
         parseError(value, doBack: true);
       }
@@ -131,17 +216,24 @@ class AuthController extends GetxController {
         update();
         Get.back();
         mySuccessDialog(
-          subtitle: 'Otp Verified Successfully',
+          subtitle: 'msg_otp_verified'.tr,
           ontap: () async {
             if (fromForget) {
-              Get.to(() => CreatePasswrod(fromForget: true, email: email));
+              Get.to(
+                () => CreatePasswrod(fromForget: true, email: email, otp: otp),
+              );
             } else {
+              // Inscription confirmée (places rattachées côté serveur) :
+              // on mémorise la session et on entre directement sur le
+              // Live + Feed, comme après une inscription sans place.
               box.write('user', userModel.value.toJson());
               final id = userModel.value.user?.id;
               if (id != null) {
                 unawaited(SubscriptionController.syncIdentity(id));
               }
-              Get.to(() => CompleteProfile());
+              if (completeAccountGate()) return;
+              Get.offAll(() => MyBottomBar(index: 2));
+              unawaited(showFeaturedEventIfAny());
             }
           },
         );
@@ -158,7 +250,9 @@ class AuthController extends GetxController {
     response.bodySetter = {'email': email};
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
-        userModel.value = userModelFromJson(value);
+        // /forget ne renvoie PAS d'utilisateur, seulement un message. Le parser
+        // comme un profil écrasait userModel avec un objet vide, ce qui cassait
+        // les écrans suivants (et le renvoi de code lui-même).
         update();
         Get.back();
         froResent
@@ -170,24 +264,29 @@ class AuthController extends GetxController {
     });
   }
 
+  /// Mot de passe oublié : le code reçu par e-mail est envoyé AVEC le nouveau
+  /// mot de passe. Le backend (/reset-password) exige `otp_code` + `password`
+  /// — avant, l'app envoyait `new_password`/`confirm_password` sans le code,
+  /// donc toujours refusé.
   Future resetPassword({
     required String password,
     required String email,
+    required String otp,
   }) async {
     myLoadingDialog();
     response.typeSetter = 'post';
     response.urlSetter = APIs.resetPasswordAPI;
     response.bodySetter = {
-      'new_password': password,
-      "confirm_password": password,
       'email': email,
+      'otp_code': otp,
+      'password': password,
     };
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
-        userModel.value = userModelFromJson(value);
-        update();
+        // /reset-password ne renvoie qu'un message : rien à parser.
+        Get.back(); // ferme le loader avant le dialogue de succès
         mySuccessDialog(
-          subtitle: 'Password Reset Successfully',
+          subtitle: 'msg_password_reset'.tr,
           ontap: () {
             Get.offAll(() => LoginScreen());
           },
@@ -196,6 +295,34 @@ class AuthController extends GetxController {
         parseError(value, doBack: true);
       }
     });
+  }
+
+  /// Changement de mot de passe depuis « Mot de passe et sécurité »
+  /// (utilisateur connecté). Le backend (/update-password) attend
+  /// `old_password` + `password`.
+  Future<void> updatePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    myLoadingDialog();
+    response.typeSetter = 'post';
+    response.urlSetter = APIs.updatePasswordAPI;
+    response.bodySetter = {
+      'old_password': oldPassword,
+      'password': newPassword,
+    };
+    final value = await response.hitAPI();
+    if (value.split(' ').first != 'error') {
+      Get.back(); // ferme le loader
+      mySuccessDialog(
+        subtitle: 'sec_pwd_changed'.tr,
+        ontap: () {
+          Get.close(2); // dialogue + écran sécurité
+        },
+      );
+    } else {
+      parseError(value, doBack: true);
+    }
   }
 
   Future<void> getGenres() async {
@@ -235,6 +362,13 @@ class AuthController extends GetxController {
     String? accountNumber,
     String? swiftNumber,
     String? routingNumber,
+    // Liens en bio (contact + réseaux).
+    String? contactEmail,
+    String? linkWebsite,
+    String? linkInstagram,
+    String? linkTiktok,
+    String? linkYoutube,
+    String? linkSpotify,
     bool fromEdit = false,
     bool formArtist = false,
   }) async {
@@ -259,6 +393,12 @@ class AuthController extends GetxController {
       "swift_number": ?swiftNumber,
       "routing_number": ?routingNumber,
       "artist_bio": ?artistBio,
+      'contact_email': ?contactEmail,
+      'link_website': ?linkWebsite,
+      'link_instagram': ?linkInstagram,
+      'link_tiktok': ?linkTiktok,
+      'link_youtube': ?linkYoutube,
+      'link_spotify': ?linkSpotify,
       'experience': ?experience,
       if (primaryGenre != null) "primary_genre": jsonEncode([primaryGenre]),
       if (genres != null) 'genre_ids': jsonEncode(genres),
@@ -279,18 +419,18 @@ class AuthController extends GetxController {
             update();
             box.write('user', userModel.value.toJson());
             mySuccessDialog(
-              subtitle: 'Profile Updated Successfully',
+              subtitle: 'msg_profile_updated'.tr,
               ontap: () {
                 (fromEdit)
                     ? Get.close(2)
                     : (formArtist)
                     ? mySuccessDialog(
-                        subtitle: 'Profile Updated Successfully',
+                        subtitle: 'msg_profile_updated'.tr,
                         ontap: () {
                           Get.offAll(() => ArtistBottomBar());
                         },
                       )
-                    : Get.offAll(() => MyBottomBar());
+                    : Get.offAll(() => MyBottomBar(index: 2));
               },
             );
           } else {
@@ -300,6 +440,8 @@ class AuthController extends GetxController {
   }
 
   Future<void> getUserModel() async {
+    // Visiteur : rien à charger (sinon « User not found » à chaque accueil).
+    if (isGuest) return;
     response.typeSetter = 'post';
     response.urlSetter = APIs.getUserAPI;
     response.bodySetter = {'id': '${userModel.value.user?.id ?? ''}'};
@@ -334,7 +476,7 @@ class AuthController extends GetxController {
     response.urlSetter = APIs.purchasePackageAPI;
     response.bodySetter = {
       'package_id': packageId,
-      "user_id": "${userModel.value.user?.id ?? 1}",
+      "user_id": "${userModel.value.user?.id ?? 0}",
     };
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
@@ -343,7 +485,7 @@ class AuthController extends GetxController {
         box.write('user', userModel.value.toJson());
         update();
         mySuccessDialog(
-          subtitle: 'Package Purchased Successfully',
+          subtitle: 'msg_package_purchased'.tr,
           ontap: () {
             Get.close(2);
           },
@@ -359,7 +501,7 @@ class AuthController extends GetxController {
     response.urlSetter = APIs.getTransactionAPI;
     response.bodySetter = {
       "role": key ?? "points",
-      "user_id": "${userModel.value.user?.id ?? 1}",
+      "user_id": "${userModel.value.user?.id ?? 0}",
     };
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
@@ -378,7 +520,7 @@ class AuthController extends GetxController {
   Future<void> getFollowingArtists() async {
     response.typeSetter = 'post';
     response.urlSetter = APIs.getFollowingArtistsAPI;
-    response.bodySetter = {"user_id": "${userModel.value.user?.id ?? 1}"};
+    response.bodySetter = {"user_id": "${userModel.value.user?.id ?? 0}"};
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
         followingArtists.value = followModelFromJson(value, 'following');
@@ -400,7 +542,7 @@ class AuthController extends GetxController {
     response.typeSetter = 'post';
     response.urlSetter = APIs.addBankAPI;
     response.bodySetter = {
-      "user_id": "${userModel.value.user?.id ?? 1}",
+      "user_id": "${userModel.value.user?.id ?? 0}",
       "bank_name": bankName,
       "account_number": accountNumber,
       "account_name": accountHolderName,
@@ -412,7 +554,7 @@ class AuthController extends GetxController {
         banks.value = banksModelFromJson(value);
         update();
         mySuccessDialog(
-          subtitle: 'Bank Added Successfully',
+          subtitle: 'msg_bank_added'.tr,
           ontap: () {
             Get.close(3);
           },
@@ -426,7 +568,7 @@ class AuthController extends GetxController {
   Future<void> getBank() async {
     response.typeSetter = 'post';
     response.urlSetter = APIs.getBankAPI;
-    response.bodySetter = {"user_id": "${userModel.value.user?.id ?? 1}"};
+    response.bodySetter = {"user_id": "${userModel.value.user?.id ?? 0}"};
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
         banks.value = banksModelFromJson(value);
@@ -447,7 +589,7 @@ class AuthController extends GetxController {
         banks.value = banksModelFromJson(value);
         update();
         mySuccessDialog(
-          subtitle: 'Bank account deleted successfully',
+          subtitle: 'msg_bank_deleted'.tr,
           ontap: () {
             Get.close(2); // close success dialog
           },
@@ -466,14 +608,14 @@ class AuthController extends GetxController {
     response.typeSetter = 'post';
     response.urlSetter = APIs.withdrawAPI;
     response.bodySetter = {
-      "user_id": "${userModel.value.user?.id ?? 1}",
+      "user_id": "${userModel.value.user?.id ?? 0}",
       "bank_id": bankId,
       "amount": amount,
     };
     await response.hitAPI().then((value) {
       if (value.split(' ').first != 'error') {
         mySuccessDialog(
-          subtitle: 'Withdraw Request Sent Successfully',
+          subtitle: 'msg_withdraw_sent'.tr,
           ontap: () {
             Get.close(2);
           },
@@ -492,45 +634,66 @@ class AuthController extends GetxController {
         settings.value = jsonDecode(value)["data"] ?? {};
         update();
       } else {
-        parseError(value);
+        // Appelé dès le démarrage (main.dart), avant tout écran : pas de
+        // dialogue ici. La page CGU/confidentialité propose « Réessayer ».
+        parseError(value, showDialog: false);
       }
     });
   }
 
-  // Déconnexion complète (déplacée depuis l'écran Profil vers ⚙ Réglages).
-  Future<void> logout() async {
-    myLoadingDialog();
+  /// Oublie la session locale : sujets push, session Google, identité
+  /// RevenueCat, stockage et modèle en mémoire. Chaque étape est isolée :
+  /// un échec réseau (désabonnement push) ne doit jamais empêcher la purge
+  /// du stockage. Partagé par la déconnexion et la suppression de compte.
+  Future<void> _clearLocalSession() async {
     try {
       final id = userModel.value.user?.id;
       await FirebaseMessaging.instance.unsubscribeFromTopic('00$id');
       await FirebaseMessaging.instance.unsubscribeFromTopic('users');
       await FirebaseMessaging.instance.unsubscribeFromTopic('artist');
+    } catch (_) {}
+    try {
       if (userModel.value.user?.registrationType == 'social') {
         await GoogleSignIn.instance.signOut();
       }
+    } catch (_) {}
+    try {
       await SubscriptionController.clearIdentity();
+    } catch (_) {}
+    try {
       await box.remove('user');
     } catch (_) {}
+    userModel.value = UserModel();
+    update();
+  }
+
+  // Déconnexion complète (déplacée depuis l'écran Profil vers ⚙ Réglages).
+  Future<void> logout() async {
+    myLoadingDialog();
+    await _clearLocalSession();
     await Future.delayed(const Duration(seconds: 1));
-    Get.offAll(() => LoginScreen());
+    Get.offAll(() => MyBottomBar(index: 2)); // visiteur : on reste dans l'app
   }
 
   Future<void> deleteAccount() async {
     myLoadingDialog();
     response.typeSetter = 'post';
     response.urlSetter = APIs.deleteAccountAPI;
-    response.bodySetter = {"id": "${userModel.value.user?.id ?? 1}"};
-    await response.hitAPI().then((value) {
-      if (value.split(' ').first != 'error') {
-        mySuccessDialog(
-          subtitle: 'Account Deleted Successfully',
-          ontap: () {
-            Get.offAll(() => LoginScreen());
-          },
-        );
-      } else {
-        parseError(value, doBack: true);
-      }
-    });
+    response.bodySetter = {"id": "${userModel.value.user?.id ?? 0}"};
+    final value = await response.hitAPI();
+    if (value.split(' ').first != 'error') {
+      // Même purge qu'à la déconnexion : sans elle, l'app rouvrait sur le
+      // compte supprimé (encore en stockage) au prochain lancement.
+      await _clearLocalSession();
+      Get.back(); // ferme le loader
+      mySuccessDialog(
+        subtitle: 'msg_account_deleted'.tr,
+        ontap: () {
+          Get.offAll(() => MyBottomBar(index: 2)); // visiteur : on reste dans l'app
+        },
+      );
+    } else {
+      parseError(value, doBack: true);
+    }
   }
 }

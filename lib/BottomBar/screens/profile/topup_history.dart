@@ -143,11 +143,11 @@ class _TopupHistoryState extends State<TopupHistory> {
                 // Filter Tabs
                 Row(
                   children: [
-                    _filterTab('ALL'),
+                    _filterTab('ALL', 'filter_all'.tr),
                     width(0.02),
-                    _filterTab('PURCHASES'),
+                    _filterTab('PURCHASES', 'filter_purchases'.tr),
                     width(0.02),
-                    _filterTab('GIFT'),
+                    _filterTab('GIFT', 'filter_gifts'.tr),
                   ],
                 ),
                 height(0.03),
@@ -204,7 +204,7 @@ class _TopupHistoryState extends State<TopupHistory> {
     );
   }
 
-  Widget _filterTab(String label) {
+  Widget _filterTab(String label, String text) {
     bool isSelected = selectedFilter == label;
     return GestureDetector(
       onTap: () {
@@ -226,7 +226,7 @@ class _TopupHistoryState extends State<TopupHistory> {
               : null,
         ),
         child: Text(
-          label,
+          text,
           style: TextStyle(
             color: isSelected
                 ? (label == 'ALL' ? mainThemeColor : blackColor)

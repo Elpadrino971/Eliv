@@ -80,8 +80,8 @@ class _SupportScreenState extends State<SupportScreen> {
               height(0.02),
               Text(
                 isCustom
-                    ? 'Tell us what’s wrong'
-                    : 'Ticket for: $initialSubject',
+                    ? 'sup_tell_us'.tr
+                    : 'sup_ticket_for'.trParams({'subject': '$initialSubject'}),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -99,9 +99,12 @@ class _SupportScreenState extends State<SupportScreen> {
                 readOnly: !isCustom,
               ),
               height(0.02),
-              const Text(
-                'Description',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              Text(
+                'sup_description'.tr,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
               height(0.005),
               MyTextField(
@@ -115,7 +118,7 @@ class _SupportScreenState extends State<SupportScreen> {
                 onTap: () async {
                   if (subController.text.isEmpty ||
                       descController.text.isEmpty) {
-                    myWarningDialog(subtitle: 'All fields are required.');
+                    myWarningDialog(subtitle: 'val_all_fields'.tr);
                     return;
                   }
                   myLoadingDialog();
@@ -144,7 +147,7 @@ class _SupportScreenState extends State<SupportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: MyAppbar(
-        title: 'Create Support',
+        title: 'support_create_title'.tr,
         actions: [
           IconButton(
             onPressed: () {

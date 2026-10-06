@@ -96,7 +96,7 @@ class SuccessDialog extends StatelessWidget {
                         labelSize: 13,
                         // buttonColor: buttonColor,
                         labelColor: labelColor,
-                        label: btnTitle ?? 'Continue',
+                        label: btnTitle ?? 'common_continue'.tr,
                         onTap: ontap,
                       ),
                       MyButton(
@@ -104,13 +104,13 @@ class SuccessDialog extends StatelessWidget {
                         // buttonColor: secondButtonColor,
                         buttonWidth: secondButtonWidth,
                         labelColor: secondLabelColor,
-                        label: secondButtonLabel ?? 'Continue',
+                        label: secondButtonLabel ?? 'common_continue'.tr,
                         onTap: secondButtonOnTap!,
                       ),
                     ],
                   )
                 : MyButton(
-                    label: btnTitle ?? 'Continue',
+                    label: btnTitle ?? 'common_continue'.tr,
                     onTap: ontap,
 
                     // buttonColor: buttonColor ?? mainThemeColor,
@@ -197,7 +197,7 @@ class WarningDialog extends StatelessWidget {
                 GestureDetector(
                   onTap: ontap,
                   child: MyDefaultText(
-                    text: btnTitle ?? 'Continue',
+                    text: btnTitle ?? 'common_continue'.tr,
                     color: Get.isDarkMode ? whiteColor : blackColor,
                   ),
                 ),

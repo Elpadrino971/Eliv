@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:artist/Controllers/auth_controller.dart';
 import 'package:artist/Global/colors.dart';
 import 'package:artist/Global/global.dart';
-import 'package:artist/widgets/my_appBar.dart';
+import 'package:artist/widgets/my_appbar.dart';
 import 'package:artist/widgets/my_button.dart';
 import 'package:artist/widgets/my_container.dart';
 import 'package:artist/widgets/my_textfield.dart';
@@ -76,7 +76,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                         child: Text(
                           'ba_help_fans'.tr,
                           style: TextStyle(
-                            color: Color(0xff4A5565),
+                            color: Color(0xff9FA8BC),
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -89,7 +89,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                         child: Text(
                           'ba_profile_photo'.tr,
                           style: TextStyle(
-                            color: Color(0xff364153),
+                            color: ivory,
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -178,11 +178,11 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
 
                       height(0.01),
                       Text(
-                        'Artist Bio *',
+                        'onb_bio'.tr,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
@@ -196,7 +196,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                           if (value == null || value.isEmpty) {
                             return 'val_enter_bio'.tr;
                           }
-                          if (value.length < 50) {
+                          if (value.trim().length < 10) {
                             return 'val_bio_min'.tr;
                           }
                           return null;
@@ -210,7 +210,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                           Text(
                             'val_min_50'.tr,
                             style: TextStyle(
-                              color: Color(0xff6A7282),
+                              color: Color(0xff9FA8BC),
                               fontWeight: FontWeight.w500,
                               fontSize: 15,
                             ),
@@ -221,7 +221,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                           Text(
                             '${bioController.text.length}/500',
                             style: TextStyle(
-                              color: Color(0xff6A7282),
+                              color: Color(0xff9FA8BC),
                               fontWeight: FontWeight.w500,
                               fontSize: 15,
                             ),
@@ -230,16 +230,16 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                       ),
                       height(0.01),
                       Text(
-                        'Address *',
+                        'onb_address'.tr,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff364153),
+                          color: ivory,
                         ),
                       ),
 
                       MyTextField(
-                        hintText: 'Enter your address',
+                        hintText: 'hint_address'.tr,
                         controller: addressController,
                         validation: (value) {
                           if (value == null || value.isEmpty) {
@@ -258,7 +258,7 @@ class _ArtistBankDetailsState extends State<ArtistBankDetails> {
                         widget: Text(
                           'ba_agreement'.tr,
                           style: TextStyle(
-                            color: Color(0xff4A5565),
+                            color: Color(0xff9FA8BC),
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                           ),

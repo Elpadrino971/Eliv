@@ -64,7 +64,8 @@ class _AddAcountState extends State<AddAcount> {
                     Text(
                       'sec_protected'.tr,
                       style: const TextStyle(
-                        color: ivory,
+                        // Titre sur bandeau vert clair : vert foncé lisible.
+                        color: Color(0xff166534),
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
@@ -98,7 +99,7 @@ class _AddAcountState extends State<AddAcount> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                       ),
                     ),
                     MyTextField(
@@ -110,11 +111,11 @@ class _AddAcountState extends State<AddAcount> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                       ),
                     ),
                     MyTextField(
-                      hintText: 'Chase Bank',
+                      hintText: 'hint_bank_name'.tr,
                       controller: nameController,
                     ),
                     Text(
@@ -122,41 +123,42 @@ class _AddAcountState extends State<AddAcount> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                       ),
                     ),
+                    // IBAN / numéro de compte : lettres + chiffres, saisi en
+                    // clair et en majuscules.
                     MyTextField(
-                      hintText: '••••••••••',
+                      hintText: 'FR76 …',
                       controller: numberController,
-                      isObscure: true,
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.text,
+                      textCapitalization: TextCapitalization.characters,
                     ),
                     Text(
                       'bank_swift'.tr,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                       ),
                     ),
                     MyTextField(
-                      hintText: '••••••••••',
+                      hintText: 'BNPAFRPP',
                       controller: swiftController,
-                      isObscure: true,
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.text,
+                      textCapitalization: TextCapitalization.characters,
                     ),
                     Text(
                       'bank_routing'.tr,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff364153),
+                        color: Color(0xffF4EFE6),
                       ),
                     ),
                     MyTextField(
                       hintText: '••••••••••',
                       controller: routingController,
-                      isObscure: true,
                       keyboardType: TextInputType.number,
                     ),
                     height(0.02),

@@ -4,6 +4,7 @@ import 'package:artist/Global/api.dart';
 import 'package:artist/Global/global.dart';
 import 'package:artist/Models/user_model.dart';
 import 'package:artist/ZegoCloud/widgets/live_stream_chat_preview.dart';
+import 'package:artist/ZegoCloud/zego_cloud_keys.dart';
 import 'package:artist/services/api_services.dart';
 import 'package:get/get.dart';
 import 'package:zego_uikit_prebuilt_live_streaming/zego_uikit_prebuilt_live_streaming.dart';
@@ -21,6 +22,13 @@ class ZegoController extends GetxController {
   // dur). null tant qu'il n'a pas été récupéré : voir fetchZegoToken().
   final Rx<String?> zegoToken = Rx<String?>(null);
 
+  // AppID du projet Zego, fourni par le serveur avec le token (il doit
+  // correspondre au ServerSecret qui a signé ce token). Changer de compte ou de
+  // projet Zego ne demande alors qu'une mise à jour du serveur, pas une
+  // nouvelle version de l'app. Valeur compilée = secours si le serveur ne
+  // l'envoie pas.
+  final RxInt zegoAppId = ZegoCloudKeys.appId.obs;
+
   // Cible RTMP Mux pour l'enregistrement du replay (rtmps://.../app/<clé>),
   // récupérée via startRecording(). null si le replay est désactivé, Mux non
   // configuré, ou erreur. C'est cette URL que Zego doit relayer (voir la note
@@ -30,10 +38,16 @@ class ZegoController extends GetxController {
   String get userId =>
       currentUser.value?.id?.toString() ??
       "user_${DateTime.now().millisecondsSinceEpoch}";
-  String get userName =>
-      currentUser.value?.fullName ??
-      currentUser.value?.artistName ??
-      "User $userId";
+  // Nom affiché par Zego (barre du haut du live) : nom d'artiste (court) en
+  // priorité, nom complet seulement s'il est vide — sinon un nom long pousse
+  // le bouton de fermeture Zego hors de l'écran.
+  String get userName {
+    final artist = currentUser.value?.artistName?.trim();
+    if (artist != null && artist.isNotEmpty) return artist;
+    final full = currentUser.value?.fullName?.trim();
+    if (full != null && full.isNotEmpty) return full;
+    return "User $userId";
+  }
 
   /// À appeler avant d'ouvrir un écran de live (start/join/pré-live) :
   /// récupère un token courte-durée depuis le backend. Retourne false si
@@ -53,6 +67,11 @@ class ZegoController extends GetxController {
       if (token == null) {
         myPrint('fetchZegoToken: pas de token dans la réponse -> $res');
         return false;
+      }
+      final serverAppId =
+          int.tryParse('${jsonDecode(res)['data']?['app_id'] ?? ''}');
+      if (serverAppId != null && serverAppId > 0) {
+        zegoAppId.value = serverAppId; // avant le token : l'écran s'ouvre dessus
       }
       zegoToken.value = token;
       return true;

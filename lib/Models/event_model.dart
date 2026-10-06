@@ -50,6 +50,12 @@ class Event {
   final int? genreId;
   final String? description;
   final String? videoReel;
+  /// Teaser vidéo court (15–60 s) en HLS Mux
+  /// (`https://stream.mux.com/<id>.m3u8`), joué muet en boucle à l'accueil et
+  /// dans le popup « À la une ». Nullable : `null` quand aucun teaser.
+  final String? teaserUrl;
+  /// Miniature du teaser (JPG/WEBP), affichée avant la première image vidéo.
+  final String? teaserPoster;
   final int? isPrivate;
   final int? hasLiveChat;
   final int? capacityLimit;
@@ -59,6 +65,13 @@ class Event {
   final int? likesCount;
   final String? streamKey;
   final String? streamUrl;
+  /// Playback id Mux du LIVE (mux_live_playback_id). Nullable : absent tant
+  /// que le backend n'a pas créé de flux Mux pour ce concert.
+  final String? muxLivePlaybackId;
+  /// Mode de diffusion (live_mode) : 'mobile' (défaut, live depuis le
+  /// téléphone via ZegoCloud) ou 'pro' (régie vidéo OBS/ATEM -> Mux, les fans
+  /// regardent le HLS). Nullable : absent des anciennes réponses = 'mobile'.
+  final String? liveMode;
   final DateTime? replayExpiresAt;
   final bool? replayExpired;
   final DateTime? createdAt;
@@ -68,6 +81,9 @@ class Event {
   final User? artist;
   final List<Ticket>? tickets;
   final List<Activity>? activities;
+  /// Artistes invités (partage des revenus). Nullable : absent des anciennes
+  /// réponses, `[]` quand le concert n'a pas d'invité.
+  final List<EventGuest>? guests;
 
   Event({
     this.id,
@@ -80,6 +96,8 @@ class Event {
     this.genreId,
     this.description,
     this.videoReel,
+    this.teaserUrl,
+    this.teaserPoster,
     this.isPrivate,
     this.hasLiveChat,
     this.capacityLimit,
@@ -89,6 +107,8 @@ class Event {
     this.likesCount,
     this.streamKey,
     this.streamUrl,
+    this.muxLivePlaybackId,
+    this.liveMode,
     this.replayExpiresAt,
     this.replayExpired,
     this.createdAt,
@@ -98,7 +118,11 @@ class Event {
     this.artist,
     this.tickets,
     this.activities,
+    this.guests,
   });
+
+  /// Vrai si le concert est diffusé par une régie vidéo (OBS/ATEM -> Mux).
+  bool get isProLive => liveMode == 'pro';
 
   Event copyWith({
     int? id,
@@ -111,6 +135,8 @@ class Event {
     int? genreId,
     String? description,
     String? videoReel,
+    String? teaserUrl,
+    String? teaserPoster,
     int? isPrivate,
     int? hasLiveChat,
     int? capacityLimit,
@@ -120,6 +146,8 @@ class Event {
     int? likesCount,
     String? streamKey,
     String? streamUrl,
+    String? muxLivePlaybackId,
+    String? liveMode,
     DateTime? replayExpiresAt,
     bool? replayExpired,
     DateTime? createdAt,
@@ -129,6 +157,7 @@ class Event {
     User? artist,
     List<Ticket>? tickets,
     List<Activity>? activities,
+    List<EventGuest>? guests,
   }) => Event(
     id: id ?? this.id,
     artistId: artistId ?? this.artistId,
@@ -140,6 +169,8 @@ class Event {
     genreId: genreId ?? this.genreId,
     description: description ?? this.description,
     videoReel: videoReel ?? this.videoReel,
+    teaserUrl: teaserUrl ?? this.teaserUrl,
+    teaserPoster: teaserPoster ?? this.teaserPoster,
     isPrivate: isPrivate ?? this.isPrivate,
     hasLiveChat: hasLiveChat ?? this.hasLiveChat,
     capacityLimit: capacityLimit ?? this.capacityLimit,
@@ -149,6 +180,8 @@ class Event {
     likesCount: likesCount ?? this.likesCount,
     streamKey: streamKey ?? this.streamKey,
     streamUrl: streamUrl ?? this.streamUrl,
+    muxLivePlaybackId: muxLivePlaybackId ?? this.muxLivePlaybackId,
+    liveMode: liveMode ?? this.liveMode,
     replayExpiresAt: replayExpiresAt ?? this.replayExpiresAt,
     replayExpired: replayExpired ?? this.replayExpired,
     createdAt: createdAt ?? this.createdAt,
@@ -158,6 +191,7 @@ class Event {
     artist: artist ?? this.artist,
     tickets: tickets ?? this.tickets,
     activities: activities ?? this.activities,
+    guests: guests ?? this.guests,
   );
 
   factory Event.fromJson(Map<String, dynamic> json) => Event(
@@ -175,6 +209,8 @@ class Event {
     genreId: json["genre_id"],
     description: json["description"],
     videoReel: json["video_reel"],
+    teaserUrl: json["teaser_url"]?.toString(),
+    teaserPoster: json["teaser_poster"]?.toString(),
     isPrivate: json["is_private"],
     hasLiveChat: json["has_live_chat"],
     capacityLimit: json["capacity_limit"],
@@ -184,6 +220,8 @@ class Event {
     likesCount: json["likes_count"],
     streamKey: json["stream_key"],
     streamUrl: json["stream_url"],
+    muxLivePlaybackId: json["mux_live_playback_id"]?.toString(),
+    liveMode: json["live_mode"]?.toString(),
     replayExpiresAt: json["replay_expires_at"] == null
         ? null
         : DateTime.parse(json["replay_expires_at"]),
@@ -211,6 +249,12 @@ class Event {
         : List<Activity>.from(
             json["activity"]!.map((x) => Activity.fromJson(x)),
           ),
+    guests: json["guests"] is List
+        ? (json["guests"] as List)
+              .whereType<Map>()
+              .map((x) => EventGuest.fromJson(x))
+              .toList()
+        : null,
   );
 
   Map<String, dynamic> toJson() => {
@@ -224,6 +268,8 @@ class Event {
     "genre_id": genreId,
     "description": description,
     "video_reel": videoReel,
+    "teaser_url": teaserUrl,
+    "teaser_poster": teaserPoster,
     "is_private": isPrivate,
     "has_live_chat": hasLiveChat,
     "capacity_limit": capacityLimit,
@@ -233,6 +279,8 @@ class Event {
     "likes_count": likesCount,
     "stream_key": streamKey,
     "stream_url": streamUrl,
+    "mux_live_playback_id": muxLivePlaybackId,
+    "live_mode": liveMode,
     "replay_expires_at": replayExpiresAt?.toIso8601String(),
     "replay_expired": replayExpired,
     "created_at": createdAt?.toIso8601String(),
@@ -248,6 +296,80 @@ class Event {
     "activity": activities == null 
         ? []
         : List<dynamic>.from(activities!.map((x) => x.toJson())),
+    "guests": guests == null
+        ? null
+        : List<dynamic>.from(guests!.map((x) => x.toJson())),
+  };
+}
+
+/// Artiste invité sur un concert, avec sa part (en % de la part de l'artiste
+/// principal). `sharePct` vaut 0 tant que l'artiste principal ne l'a pas
+/// renseignée (objets publics des events : seul user_id / nom / photo).
+class EventGuest {
+  final int userId;
+  final String artistName;
+  final String? fullName;
+  final String? profileImage;
+  final int sharePct;
+
+  const EventGuest({
+    required this.userId,
+    required this.artistName,
+    this.fullName,
+    this.profileImage,
+    this.sharePct = 0,
+  });
+
+  /// Nom affiché : nom d'artiste, sinon nom complet, sinon « #id ».
+  String get displayName {
+    if (artistName.trim().isNotEmpty) return artistName;
+    final full = (fullName ?? '').trim();
+    if (full.isNotEmpty) return full;
+    return '#$userId';
+  }
+
+  EventGuest copyWith({
+    int? userId,
+    String? artistName,
+    String? fullName,
+    String? profileImage,
+    int? sharePct,
+  }) => EventGuest(
+    userId: userId ?? this.userId,
+    artistName: artistName ?? this.artistName,
+    fullName: fullName ?? this.fullName,
+    profileImage: profileImage ?? this.profileImage,
+    sharePct: sharePct ?? this.sharePct,
+  );
+
+  /// Accepte les objets de `/artists/search` (id) comme ceux de
+  /// `/events/:id/guests` (user_id).
+  factory EventGuest.fromJson(Map json) {
+    final rawId = json["user_id"] ?? json["id"];
+    final rawPct = json["share_pct"];
+    return EventGuest(
+      userId: rawId is int ? rawId : int.tryParse('${rawId ?? ''}') ?? 0,
+      artistName: (json["artist_name"] ?? '').toString(),
+      fullName: json["full_name"]?.toString(),
+      profileImage: json["profile_image"]?.toString(),
+      sharePct: rawPct is int
+          ? rawPct
+          : (double.tryParse('${rawPct ?? ''}') ?? 0).round(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    "user_id": userId,
+    "artist_name": artistName,
+    "full_name": fullName,
+    "profile_image": profileImage,
+    "share_pct": sharePct,
+  };
+
+  /// Format attendu par POST /events et PUT /events/:id/guests.
+  Map<String, dynamic> toShareJson() => {
+    "user_id": userId,
+    "share_pct": sharePct,
   };
 }
 

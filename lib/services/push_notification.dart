@@ -66,26 +66,29 @@ class PushNotificationSystem {
       messaging.subscribeToTopic("vybzzz");
       messaging.subscribeToTopic("users");
       messaging.subscribeToTopic("artist");
-      messaging.subscribeToTopic("00${userModel.value.user?.id}");
+      final uid = userModel.value.user?.id;
+      if (uid != null) messaging.subscribeToTopic("00$uid"); // visiteur : pas de sujet perso
 
       return registrationToken!;
     } catch (e) {
       messaging.subscribeToTopic("vybzzz");
       messaging.subscribeToTopic("users");
       messaging.subscribeToTopic("artist");
-      messaging.subscribeToTopic("00${userModel.value.user?.id}");
+      final uid = userModel.value.user?.id;
+      if (uid != null) messaging.subscribeToTopic("00$uid"); // visiteur : pas de sujet perso
       return '';
     }
   }
 
   // permission method for granting notification permission
   Future<void> requestNotificationPermission() async {
+    // Pas de `criticalAlert` : cette option exige un droit spécial d'Apple
+    // (Critical Alerts entitlement) que l'app n'a pas.
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,
       announcement: true,
       badge: true,
       carPlay: true,
-      criticalAlert: true,
       provisional: true,
       sound: true,
     );
@@ -98,10 +101,17 @@ class PushNotificationSystem {
 
   // function to show visible notification when app is active
   Future<void> showNotification(RemoteMessage message) async {
+    // Message « données seules » (sans bloc notification) : rien à afficher.
+    // Avant, `message.notification!` plantait sur ce type de message.
+    final notification = message.notification;
+    if (notification == null) return;
+    final title = notification.title ?? 'VybzzZ';
+    final body = notification.body ?? '';
+
     // Define the Android notification details
     AndroidNotificationChannel channel = const AndroidNotificationChannel(
       '1',
-      'High Importance Notifications',
+      'Notifications VybzzZ',
       importance: Importance.max,
     );
     AndroidNotificationDetails androidNotificationDetails =
@@ -110,7 +120,7 @@ class PushNotificationSystem {
           channel.name.toString(),
           icon: "@mipmap/ic_launcher",
           color: greyColor,
-          channelDescription: 'My Channel Discription',
+          channelDescription: 'Notifications VybzzZ',
           importance: Importance.high,
           priority: Priority.high,
           ticker: 'ticker',
@@ -133,8 +143,8 @@ class PushNotificationSystem {
     Future.delayed(Duration.zero, () async {
       await _flutterLocalNotificationsPlugin.show(
         id: 0,
-        title: message.notification!.title.toString(),
-        body: message.notification!.body.toString(),
+        title: title,
+        body: body,
         notificationDetails: notificationDetails,
         payload:
             message.data['message']?.toString() ??

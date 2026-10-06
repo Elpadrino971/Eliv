@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import '../Services/theme_service.dart';
+import '../services/theme_service.dart';
 
 class ThemeController extends GetxController {
   final ThemeService _service = ThemeService();

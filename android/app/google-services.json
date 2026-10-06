@@ -12,7 +12,20 @@
           "package_name": "com.app.vybzz"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "284585255358-55um589bu6pr4tf9eji6hh4r9eb3kqol.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.app.vybzz",
+            "certificate_hash": "e0a366fcd9cfa80d41efed46f5cab92d2a6a00e6"
+          }
+        },
+        {
+          "client_id": "284585255358-raknf147buj3vn5ch4ia67u8742fhgt2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAgsXfrCf8-ZmbVTGUe_MwliTgAhNI76WE"
@@ -20,7 +33,20 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "284585255358-raknf147buj3vn5ch4ia67u8742fhgt2.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "284585255358-c5us844q11m010pa2l4suppl6j5qbevt.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.app.vybzz",
+                "app_store_id": "6772495371"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +57,12 @@
           "package_name": "com.vybzzz.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "284585255358-raknf147buj3vn5ch4ia67u8742fhgt2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAgsXfrCf8-ZmbVTGUe_MwliTgAhNI76WE"
@@ -39,7 +70,20 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "284585255358-raknf147buj3vn5ch4ia67u8742fhgt2.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "284585255358-c5us844q11m010pa2l4suppl6j5qbevt.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.app.vybzz",
+                "app_store_id": "6772495371"
+              }
+            }
+          ]
         }
       }
     }
